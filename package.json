@@ -1,0 +1,47 @@
+{
+  "name": "aidure",
+  "version": "0.67.0",
+  "private": false,
+  "description": "Claude Code · Codex 겸용 협업 워크스페이스 프레임워크",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lsnwan/aidure.git"
+  },
+  "bin": {
+    "aikit": "bin/aikit.js"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "dependencies": {
+    "@clack/core": "^1.5.1",
+    "@clack/prompts": "^1.8.1"
+  },
+  "files": [
+    "bin",
+    "packs",
+    "templates",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "!**/*.test.js",
+    "!**/*.test.py",
+    "!**/__pycache__",
+    "!bin/selftest.js"
+  ],
+  "scripts": {
+    "test": "node bin/selftest.js",
+    "models": "node bin/models.js check",
+    "models:doc": "node bin/models.js doc",
+    "models:livebench": "node bin/models.js livebench",
+    "models:watch": "node bin/models.js watch",
+    "docs": "node bin/docs.js"
+  },
+  "homepage": "https://lsnwan.github.io/aidure/",
+  "bugs": {
+    "url": "https://github.com/lsnwan/aidure/issues"
+  }
+}

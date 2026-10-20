@@ -1,0 +1,14 @@
+// Fixture: lower-case keywords must parse the same as capitalized ones.
+function lp01()
+  lp02();
+end // end lp01
+
+function lp02()
+  add RLOW;
+end // end lp02
+
+record RLOW type sqlRecord {
+  tableNames = [["LOWV", "T1"]]
+  }
+  3 KEYA KEYA { column = "KEY_A" } ;
+end // end RLOW

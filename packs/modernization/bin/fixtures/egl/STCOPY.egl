@@ -1,0 +1,145 @@
+// Fixture: generic "copy a store" online program (EGL). Used by asis-parse.test.js only.
+Function PAA()
+  if (W.SOURCE == "C")
+    P14(); /* copy from plan */
+  else
+    P15(); /* copy from simulation */
+  end
+  PW1(); /* page weight update after copy */
+end // end PAA
+
+Function P14()
+  PCP();
+end // end P14
+
+Function P15()
+  PCP();
+  PLC();
+end // end P15
+
+Function PCP()
+  add RHDR;
+  add RLNK with
+    #sql{
+      insert into LNKV (CD_TARGET, ID_STORE) values (:CDTARGET, :KSTORE)
+    };
+  P72();
+  P7C();
+end // end PCP
+
+Function PLC()
+  execute #sql{
+    insert into LNKV
+      (CD_TARGET, ID_STORE) values (:CDTARGET, :KSTORE)
+  };
+end // end PLC
+
+Function P72()
+  if (W.KFSC == " ")
+    if (W.ACTIVE == "Y")
+      set RDTL empty;
+      RDTL.UNITS = 0;
+      get RINV;
+      add RDTL;
+    end
+  end
+end // end P72
+
+Function P7C()
+  RDTL.UNITS = W.QTY * W.FACTOR;
+  replace RDTL;
+  move RSRC to RDTL;
+  open CUR1 with #sql{
+    select ID_FSC, NUM_UNITS from DTLV T1
+      join HDRV T2 on T1.ID_STORE = T2.ID_STORE
+     where T1.CMP_ID = :KCAMP and T1.TAG_DELETE = ' '
+     order by T1.ID_FSC
+  } for RDTL;
+  get RHDR forupdate with #sql{
+    select CD_TARGET from HDRV where ID_STORE = :KSTORE for update of CD_TARGET
+  };
+  get REXT;
+end // end P7C
+
+Function PW1()
+  RDTL.WEIGHT = 1;
+  replace RDTL;
+end // end PW1
+
+Function PDL()
+  execute #sql{
+    DELETE
+      FROM CMTV
+     WHERE CMP_ID = :KCAMP
+  };
+  execute #sql{
+    delete from
+      LINEV where ID_STORE = :KSTORE
+  };
+  delete RHDR;
+end // end PDL
+
+Record RHDR type sqlRecord {
+  tableNames = [["HDRV", "T1"]],
+  defaultSelectCondition =
+    #sqlCondition{
+       ID_STORE = :KSTORE
+    }
+  }
+  3 KSTORE KSTORE { column = "ID_STORE", isSQLNullable = yes} ;
+  3 CDTARGET CDTARGET { column = "CD_TARGET", isSQLNullable = yes} ;
+end // end RHDR
+
+Record RLNK type sqlRecord {
+  tableNames = [["LNKV", "T1"]]
+  }
+  3 KSTORE KSTORE { column = "ID_STORE", isSQLNullable = yes} ;
+end // end RLNK
+
+Record RDTL type sqlRecord {
+  tableNames = [["DTLV", "T1"]]
+  }
+  3 KSTORE KSTORE { column = "ID_STORE", isSQLNullable = yes} ;
+  3 UNITS UNITS { column = "NUM_UNITS", isSQLNullable = yes} ;
+  3 WEIGHT WEIGHT { column = "PCT_WEIGHT", isSQLNullable = yes} ;
+end // end RDTL
+
+Record RINV type sqlRecord{tableNames =[["INVV","T1"]
+  ], defaultSelectCondition =
+    #sqlCondition{
+       ID_PROF = :KPROF
+         AND ID_FSC = :KFSC
+         AND TAG_DELETE = ' '
+         AND CD_STATUS <> 'D'
+    }
+  }
+  3 KPROF KPROF { column = "ID_PROF", isSQLNullable = yes} ;
+  3 KFSC KFSC { column = "ID_FSC", isSQLNullable = yes} ;
+end // end RINV
+
+Record RCDL type sqlRecord{tableNames = [["CLONE_LIST","T1"]]}
+  3 KCAMP KCAMP { column = "CMP_ID", isSQLNullable = yes} ;
+end // end RCDL
+
+Record RJN type sqlRecord {
+  tableNames = [["DTLV", "T1"],
+                ["HDRV", "T2"],
+                ["DTLV", "T3"]],
+  keyItems = [KSTORE]
+  }
+  3 KSTORE KSTORE { column = "T1.ID_STORE", isSQLNullable = yes} ;
+end // end RJN
+
+Record RCF type sqlRecord {
+  tableNames = [["ITEM_MASTER"]]
+  }
+  3 KFSC KFSC { column = "ID_FSC", isSQLNullable = yes} ;
+end // end RCF
+
+Record RSO type sqlRecord {
+  tableNames = [["SOV", "T1"]]
+  }
+  3 A1 A1 { column = "COL_A1", isSQLNullable = yes} ;
+  3 A2 A2 { column = "COL_A2", isSQLNullable = yes} ;
+end // end RSO
+  3 STRAY STRAY { column = "STRAY_COL", isSQLNullable = yes} ;

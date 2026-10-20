@@ -1,0 +1,16 @@
+{
+  "name": "desktop",
+  "title": "데스크톱 앱 공통 원칙",
+  "summary": "UI 스레드·권한 경계·서명·업데이트·OS 경로",
+  "description": "프레임워크와 무관한 데스크톱 앱 원칙: UI 스레드 규칙, 화면과 로컬 권한 사이 IPC 경계, 원격 코드에 로컬 권한 주지 않기, 서명·공증·업데이트 무결성, OS별 경로·로컬 저장 보안, 개인정보 없는 크래시 보고, 접근성·고해상도(DPI), 웹 기술 셸(Electron·Tauri 류)과 네이티브 툴킷(WPF·WinForms·JavaFX·Qt 류)의 작업별 규칙",
+  "category": "layer",
+  "layer": "desktop",
+  "requires": [
+    "core"
+  ],
+  "vars": {},
+  "notes": [
+    "스택 팩(예: 특정 데스크톱 프레임워크 전용 팩)은 이 원칙 위에 그 기술의 구체 규칙만 더한다. 같은 내용을 스택 팩에 반복하지 않는다.",
+    "근거 문서 목록은 docs/SOURCES.md"
+  ]
+}

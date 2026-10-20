@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="aikit docs">
+<title>8. 바꿀 때 · aikit 문서</title>
+<script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="icon" href="data:,">
+</head>
+<body data-root="../">
+<header>
+  <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+</header>
+<div class="layout">
+  <nav class="side" id="side-nav" data-page="docs/workflow--8-바꿀-때.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
+  <main id="main"><article class="page">
+<div class="page-head"><div><div class="crumb">쓰는 법</div><h1>8. 바꿀 때</h1></div><a class="src" href="https://github.com/lsnwan/aidure/blob/main/docs/workflow.md" title="원본 md">원본 workflow.md</a></div>
+
+<div class="diagram"><div class="diagram-tools"><button class="mm-zoom" type="button" title="크게 보기">확대</button><button class="mm-open" type="button" title="새 창에서 보기">새 창</button></div><pre class="mermaid">flowchart TD
+    Q{&quot;무엇을 바꾸나&quot;}
+    Q --&gt;|&quot;모델&quot;| MO[&quot;aikit models&quot;]
+    MO --&gt; MW{&quot;무엇을 바꿀까요?&quot;}
+    MW --&gt;|&quot;프로필 바꾸기&quot;| SC1{&quot;적용 범위&lt;br/&gt;내 PC 만 · 팀 기본값&quot;}
+    SC1 --&gt; PF[&quot;프로필 고르기 → sync&lt;br/&gt;(역할별로 직접 고르기 → 기준 프로필 → 역할마다)&quot;]
+    MW --&gt;|&quot;역할별로 한 번에 고르기&quot;| SC3{&quot;적용 범위&quot;}
+    SC3 --&gt; TL4[&quot;어느 도구의 역할&quot;]
+    TL4 --&gt; RL[&quot;메인 → 역할 전부 → 교차 검토(상대 도구)&lt;br/&gt;각각 프로필대로 · 목록 · 직접 입력 → sync&quot;]
+    MW --&gt;|&quot;역할 에이전트 하나&quot;| TL1[&quot;어느 도구의 모델&quot;]
+    TL1 --&gt; SC2{&quot;적용 범위&quot;}
+    SC2 --&gt; MD[&quot;&amp;lt;도구&amp;gt; 모델&lt;br/&gt;(목록 · 메인과 같게 · 직접 입력 → &amp;lt;도구&amp;gt; 모델 ID)&quot;]
+    MW --&gt;|&quot;메인 모델 (팀 기본값)&quot;| TL2[&quot;어느 도구의 모델 → 모델&quot;]
+    MW --&gt;|&quot;교차 검토 모델&quot;| TL3[&quot;어느 도구의 모델 → 모델&quot;]
+    Q --&gt;|&quot;퇴역 모델 교체&quot;| MG[&quot;aikit models --migrate&quot;]
+    Q --&gt;|&quot;팀 구성 방식&quot;| TMO[&quot;aikit team-mode auto · fixed&lt;br/&gt;prefer &amp;lt;역할&amp;gt; &amp;lt;도구:모델&amp;gt;&lt;br/&gt;enforce name off · warn · block (팀 모드에서 이름 없는 역할 에이전트)&lt;br/&gt;enforce roster off · warn (첫 역할 에이전트 때 구성표 알림)&lt;br/&gt;enforce review off · warn · block (commit · push 전 리뷰 확인, 기본 꺼짐)&lt;br/&gt;enforce idle off · warn · block (대기로 오래 남은 팀원 알림)&lt;br/&gt;enforce status off · block (기다리며 멈출 때 상태 줄)&lt;br/&gt;enforce ask off · block (결정 질문을 글로 끝낼 때)&lt;br/&gt;enforce run off · warn · block (오래 일하는 팀원 · 위임, 기본 60분)&lt;br/&gt;enforce check off · warn · block (리뷰 전 검사 줄)&lt;br/&gt;enforce plan off · warn · block (코드 수정 전 착수 전 확인)&lt;br/&gt;--team 은 팀 기본값(관리자) → sync&quot;]
+    Q --&gt;|&quot;비밀값 (토큰)&quot;| SEC[&quot;aikit secret set &amp;lt;이름&amp;gt; [--global] (숨김 입력)&lt;br/&gt;list · test &amp;lt;이름&amp;gt; · rm · import · exec -- &amp;lt;명령&amp;gt;&lt;br/&gt;→ OS 저장소 (키체인 · 자격 증명 관리자 · libsecret)&quot;]
+    Q --&gt;|&quot;기존 폴더 가져오기&quot;| IMP[&quot;aikit import &amp;lt;폴더&amp;gt;&lt;br/&gt;분류 · 절대경로 · 비밀값 의심 줄 (읽기만)&lt;br/&gt;옮기기는 import 스킬: 계획 → 승인 → 반영&quot;]
+    Q --&gt;|&quot;리뷰 확인&quot;| RVW[&quot;aikit review status · mark · skip --reason &amp;lt;사유&amp;gt;&lt;br/&gt;commit · push 전 리뷰 안 된 줄 수 (훅이 알림 · 막기)&lt;br/&gt;켜기: aikit team-mode enforce review warn · block --team&quot;]
+    Q --&gt;|&quot;파이프라인 보기&quot;| GLP[&quot;aikit gitlab pipeline [--ref 브랜치 · --mr 번호 · --id ID] [--log]&lt;br/&gt;최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분 (읽기만)&quot;]
+    Q --&gt;|&quot;답변 시각 표시&quot;| TS[&quot;aikit timestamp on · off · team [--team]&lt;br/&gt;답변 첫 줄에 요청 받은 시각 (기본 켜짐, Claude Code)&lt;br/&gt;→ .agents/local.json (팀은 workspace.json)&quot;]
+    Q --&gt;|&quot;진행 방식&quot;| APR[&quot;aikit approach sprint · full · issue (관리자)&lt;br/&gt;스프린트: 최소 기능부터, 스프린트마다 데모 · 회고 · 전체: 전체 설계 뒤 구축 · 이슈형: 단계 대신 이슈 보드&lt;br/&gt;→ sync · 기본 단계 그대로인 로드맵은 새 뼈대 (이슈형은 고친 로드맵 앞에도 이슈 보드)&quot;]
+    Q --&gt;|&quot;유형 바꾸기&quot;| TYP[&quot;aikit type &amp;lt;유형&amp;gt; [--approach a] [--code 이름,…] (관리자)&lt;br/&gt;고칠 repo (현행 → 개발 repo) → 진행 방식&lt;br/&gt;→ 유형 팩 교체 · 로드맵 새 뼈대 (지난 로드맵은 아래에 남김) → sync&quot;]
+    Q --&gt;|&quot;요금제&quot;| PLN[&quot;aikit ai (화면) · aikit ai plan claude|gpt &amp;lt;요금제&amp;gt;&lt;br/&gt;--team 은 팀 기본값 → sync&quot;]
+    Q --&gt;|&quot;연결 방식 · 인자&quot;| AGT[&quot;aikit agent (5절)&quot;]
+    Q --&gt;|&quot;내 프로필 (팀과 같거나 낮게)&quot;| MP[&quot;aikit models profile (화면에서 고름)&lt;br/&gt;인자: rich · standard · lean · team (되돌리기)&quot;]
+    Q --&gt;|&quot;팀원의 높은 프로필 허용&quot;| AH[&quot;aikit models allow-higher (관리자)&lt;br/&gt;팀원이 팀보다 높은 프로필을 써도 되나요? · 인자 on · off&quot;]
+    Q --&gt;|&quot;AI 연결 방식만&quot;| AIC[&quot;aikit ai (화면) · aikit ai show&lt;br/&gt;aikit ai direct claude,gpt · gateway [--url --key-env] · refresh&lt;br/&gt;aikit ai compose mix · vendor · single · main claude · gpt [--team]&quot;]
+    Q --&gt;|&quot;repo 스택&quot;| DT[&quot;aikit detect (4절)&quot;]
+    Q --&gt;|&quot;팀 상황 · 인수&quot;| TM[&quot;aikit team [id] [--take 번호] (9절)&quot;]
+    Q --&gt;|&quot;설정 수정 권한&quot;| LK[&quot;aikit team edit allow · deny&lt;br/&gt;aikit team admins &amp;lt;id&amp;gt;&lt;br/&gt;deny: 관리자만 workspace.json · 팩 수정, 팀원은 자기 handoffs/ 와 로드맵만 커밋&quot;]
+    Q --&gt;|&quot;알림 · 텔레그램&quot;| NS[&quot;aikit notify setup: 무엇을 설정할까요?&lt;br/&gt;알림 수준(전체 · 결과와 결정 · 진행 현황 · 끄기) · 양방향 대화(이 프로젝트 봇 토큰 · 다시 점검 · 끄기 · 제거) · 자리 비움&lt;br/&gt;개인 알림 봇(개인 봇 토큰 · 바꾸기 · 제거) · 팀 방 알림(팀 봇 토큰 · 팀 방 ID · 팀 봇 제거)&lt;br/&gt;고급(결과 알림 기준 · PC 앞이면 생략 · 진행 현황 알림) · 시험 메시지 · 알림 설정을 모두 지울까요?&lt;br/&gt;→ .agents/local.json · ~/.config/aikit/telegram.env (팀 방은 workspace.json)&quot;]
+    Q --&gt;|&quot;이 PC 설정을 처음 상태로&quot;| RST[&quot;aikit reset: 무엇을 초기화할까요?&lt;br/&gt;이 PC 설정 · 텔레그램 채널 · 세션 임시 기록 · 개인 지침 · 텔레그램 토큰&lt;br/&gt;→ 선택한 항목을 초기화할까요? → sync&lt;br/&gt;팀 설정 · repos · 핸드오프는 그대로. 화면 없이: aikit reset local,channel --yes&quot;]
+    Q --&gt;|&quot;팀 명단&quot;| TA[&quot;aikit team add · remove &amp;lt;id&amp;gt; · members&lt;br/&gt;aikit team restrict on · off (명단 밖 aikit start 막기)&lt;br/&gt;→ workspace.json team → commit · push&quot;]
+    Q --&gt;|&quot;규칙&quot;| RL[&quot;aikit rules (켤 규칙 고르기)&lt;br/&gt;aikit rules list · off &amp;lt;ID&amp;gt; · on &amp;lt;ID&amp;gt;&lt;br/&gt;aikit rules ondemand · always &amp;lt;ID&amp;gt; (AGENTS.md 줄이기)&quot;]
+    RL --&gt; RL2[&quot;끈 규칙은 AGENTS.md 에서 빠짐 → workspace.json commit · push&lt;br/&gt;바꾸기: packs/project/rules 에 replaces: &amp;lt;ID&amp;gt;&quot;]
+    Q --&gt;|&quot;repo 빼기&quot;| RRM[&quot;aikit repo remove &amp;lt;이름&amp;gt; [--delete] (관리자)&lt;br/&gt;workspace.json · 리뷰 대상에서 지움 → sync&lt;br/&gt;이름이 남은 문서 알림 · 폴더는 --delete 때만&quot;]
+    Q --&gt;|&quot;repo 추가&quot;| RA[&quot;aikit repo add [주소 · 폴더 · 이름] [--group &amp;lt;그룹&amp;gt;]&quot;]
+    RA --&gt; RK{&quot;repo 종류&quot;}
+    RK --&gt; RI[&quot;repository&lt;br/&gt;방식: clone · 기존 로컬 폴더 · 새로 만들기 (레거시 제외)&lt;br/&gt;→ git 주소 · 폴더 경로 · 이름&quot;]
+    RI --&gt; RG[&quot;그룹 폴더 (이미 그룹을 쓰는 워크스페이스만)&lt;br/&gt;기존 그룹 · 그룹 없음 · 새 그룹 → 새 그룹 이름&lt;br/&gt;→ repos/&amp;lt;그룹&amp;gt;/&amp;lt;이름&amp;gt;&quot;]
+    RG --&gt; RH[&quot;이 repo 의 협업 도구&lt;br/&gt;(주소로 GitHub·GitLab 을 모를 때만)&quot;]
+    RH --&gt; RX[&quot;clone · 링크 · 새로 만들기 → 스택 확인 → sync&quot;]
+    Q --&gt;|&quot;repo 를 그룹 폴더로&quot;| RMV[&quot;aikit repo move &amp;lt;이름&amp;gt; --group &amp;lt;그룹&amp;gt; · --no-group (관리자)&lt;br/&gt;폴더 옮김 · workspace.json group · 문서의 옛 경로 → sync&quot;]
+    Q --&gt;|&quot;새로 만든 repo 를 원격에 올림&quot;| RP[&quot;git -C repos/&amp;lt;이름&amp;gt; remote add origin &amp;lt;주소&amp;gt; → push&quot;]
+    RP --&gt; RF[&quot;sync 가 workspace.json 에 remote 기록 (local 삭제)&lt;br/&gt;→ workspace.json commit · push → 팀원 git pull · aikit install&quot;]
+    Q --&gt;|&quot;킷 새 버전 반영&quot;| UP[&quot;aikit upgrade [--add 팩]&lt;br/&gt;bin·팩 교체 → sync → commit · push&lt;br/&gt;몇 버전 뒤져도 한 번에 · 꺼진 기본 팩 · 진행 방식은 알림만&quot;]
+    Q --&gt;|&quot;워크스페이스 지우기&quot;| RM[&quot;aikit remove [이름] [--force]&quot;]
+    RM --&gt; RW{&quot;여기가 워크스페이스 루트인가 (이름을 줬으면 목록에서 찾음)&quot;}
+    RW --&gt;|&quot;아니오&quot;| RX([&quot;안내: 그 루트에서 aikit remove 또는 aikit remove &amp;lt;이름&amp;gt; (aikit list)&quot;])
+    RW --&gt;|&quot;예&quot;| RC{&quot;저장 안 된 작업이 있나&quot;}
+    RC --&gt;|&quot;있음&quot;| RS([&quot;멈춤. 커밋·push 하거나 --force&quot;])
+    RC --&gt;|&quot;없음&quot;| RN{&quot;이 워크스페이스를 지울까요? (이름을 줬으면 &amp;lt;경로&amp;gt; 를 지울까요?)&quot;}
+    RN --&gt;|&quot;예&quot;| RD([&quot;비움 (.git·README·LICENSE 는 남김 · .gitignore 는 킷 줄 제거)&quot;])
+    RN --&gt;|&quot;아니오&quot;| RK([&quot;그대로 둠&quot;])</pre></div>
+<div class="table"><table><thead><tr><th>명령</th><th>하는 일</th></tr></thead><tbody><tr><td><code>aikit list</code></td><td>이 PC 에서 만들거나 쓴 워크스페이스 목록</td></tr><tr><td><code>aikit sync</code></td><td>정본(<code>packs/</code>·<code>workspace.json</code>)으로 생성물을 다시 만든다</td></tr><tr><td><code>aikit check</code></td><td>생성물이 정본과 같은지 (pre-commit 이 부른다)</td></tr><tr><td><code>aikit doctor</code></td><td>설치·설정 진단</td></tr><tr><td><code>aikit notify setup</code></td><td>알림 설정 화면: 알림 수준(전체 · 결과와 결정 · 진행 현황 · 끄기) · 양방향 대화 · 자리 비움 · 개인 봇 · 팀 방 · 고급</td></tr><tr><td><code>aikit notify my remote done|quiet|send</code></td><td>리모트 컨트롤로 Claude 앱에 이어진 세션: done = 작업 끝만 텔레그램(기본, 결정은 앱이 알린다) · quiet = 쉼 · send = 모두</td></tr><tr><td><code>aikit notify my desk &lt;초&gt;|off</code></td><td>PC 앞이면(그 안에 키보드 · 마우스를 만짐, 기본 120초) 요청 결과 · 위임 끝 · 음성 알림을 보내지 않는다. 결정 대기는 보낸다</td></tr><tr><td><code>aikit notify my voice on|off</code></td><td>음성 알림: 결정 질문(기본) · 끝남 보고를 읽어 음성 메시지로 (<code>scope</code> · <code>name &lt;목소리&gt;</code> · <code>test</code>). 대화로 &quot;음성 켜줘&quot; 도 된다</td></tr><tr><td><code>aikit notify [my|team …]</code></td><td>화면 없이 같은 일: <code>my level</code> · <code>my away</code> · <code>my setup</code> · <code>my channel on</code> 은 봇 토큰을 숨김 입력으로 받는다 (봇 바꾸기 <code>--new</code>). <code>my channel on</code> 은 양방향 대화(기본 꺼짐, 프로젝트마다 전용 봇, <code>aikit start</code> 가 <code>--channels</code> 를 붙인다)</td></tr><tr><td><code>aikit handoff find &lt;작업&gt;</code></td><td>핸드오프 기록 찾기 (<code>check</code> · <code>index</code> · <code>archive</code> · <code>organize</code> 도)</td></tr><tr><td><code>aikit team-mode</code></td><td><div class="ds-fold">팀 구성: 자동(리더가 작업마다 역할 · 모델) · 고정(프로필대로), <code>prefer</code> 역할별 선호 모델.<details class="ds-more"><summary>더 보기</summary><div><code>enforce &lt;대상&gt;</code> 은 훅으로 지키게 하는 수준(off · warn · block)이고, 대상(name · roster · idle · status · ask · run · check · plan · review)과 기본값은 <a href="commands.html">명령</a>. <code>--team</code> 은 팀 기본값</div></details></div></td></tr><tr><td><code>aikit ai plan claude|gpt &lt;요금제&gt;</code></td><td>회사별 요금제 (빠듯 · 넉넉 · 종량). 보통은 <code>aikit ai</code> 화면에서</td></tr><tr><td><code>aikit secret</code></td><td>비밀값(토큰): <code>set &lt;이름&gt; [--global]</code>(숨김 입력) · <code>list</code> · <code>test &lt;이름&gt;</code>(권한 · 만료) · <code>rm</code> · <code>import</code>(옛 telegram.env · gitlab-token · 환경변수에서) · <code>exec -- &lt;명령&gt;</code>(그 명령에만 주입). OS 저장소에 프로젝트별 · 전역으로, 값은 출력하지 않는다</td></tr><tr><td><code>aikit timestamp</code></td><td>답변 첫 줄 시각 표시 (Claude Code, 기본 켜짐): 요청 받은 시각 yyyy-MM-dd HH:mm:ss. <code>on|off</code> 이 PC · <code>team</code> 이 PC 값 지우기 · <code>--team</code> 팀 기본값(관리자). 인자 없이 = 지금 값</td></tr><tr><td><code>aikit approach</code></td><td>진행 방식: 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 이슈 보드). 인자 없이 = 지금 값 (관리자)</td></tr><tr><td><code>aikit type</code></td><td>유형 바꾸기 (분석·설계 → 구축 · 고도화 등): 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대. 인자 없이 = 지금 값 (관리자)</td></tr><tr><td><code>aikit plan</code></td><td>로드맵(<code>handoffs/PLAN.md</code>): 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음. 이슈형은 이슈 보드(상태별 건수 · 진행 중 이슈 · 멈춘 이슈 ⚠) (<code>--short</code> · <code>--json</code> · <code>--report</code> 기간 보고 · <code>init</code> · <code>check</code> 도)</td></tr><tr><td><code>aikit docs build [repo]</code></td><td>기획 repo 의 md · 화면설계서 장 → 같은 경로 구조의 <code>docs-site/</code> (정의 ID 앵커 · 근거 색인 · 정의서 폴더마다 ERD). 묶음 · 포함 범위는 <code>docs-site.json</code>, 옛 <code>html/</code> 은 처음 build 때 옮긴다. <code>check</code> 는 md 와 어긋났는지. 둘 다 문서 점검 경고와 mermaid 문법 오류를 낸다. 자세히는 <a href="docs-site.html">문서 사이트</a></td></tr><tr><td><code>aikit docs show &lt;ID&gt;</code> · <code>refs &lt;ID&gt;</code></td><td>기획 문서를 ID 단위로: 정의 부분만 출력 · 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결])</td></tr><tr><td><code>aikit docs pages [on|off] [repo]</code></td><td>문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일(<code>.gitlab-ci.yml</code> · <code>.github/workflows/pages.yml</code>)을 두고 <code>docs-site/</code> 를 커밋 대상으로(원격이 없으면 둘 다), off = <code>.gitignore</code> 에 <code>/docs-site/</code> (CI 는 두어도 돌지 않는다)</td></tr><tr><td><code>aikit docs refs-quote &lt;파일…&gt;</code></td><td>본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「&gt; 근거:」 인용구로 옮긴다 (<code>--dry</code> = 수만)</td></tr><tr><td><code>aikit docs trace</code></td><td>기획 ID(<code>vars.docs.traceIds</code>)와 코드 주석의 구현 표시 대조: 코드에 표시 없는 ID(⚠) · 기획에 정의 없는 ID(✖)</td></tr><tr><td><code>aikit repo add … --group &lt;그룹&gt;</code> · <code>aikit repo move &lt;이름&gt; --group &lt;그룹&gt;</code></td><td>그룹 폴더 <code>repos/&lt;그룹&gt;/&lt;이름&gt;</code>: 더할 때 그룹을 주거나(이미 그룹을 쓰면 화면에서 고름) 있는 repo 를 옮긴다(폴더 · <code>workspace.json</code> · 문서의 옛 경로, <code>--no-group</code> 은 빼기) (관리자)</td></tr><tr><td><code>aikit repo remove &lt;이름&gt;</code></td><td>repo 빼기: <code>workspace.json</code> · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 <code>--delete</code> 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) (관리자)</td></tr><tr><td><code>aikit import</code></td><td>기존 AI 작업 폴더 훑기 (읽기만): 종류별 분류 · 큰 폴더 · 문서 속 절대경로 · 비밀값 의심 줄. 옮기기는 <code>import</code> 스킬 (계획 → 승인 → 반영)</td></tr><tr><td><code>aikit review</code></td><td>리뷰 확인 (기본 꺼짐, <code>aikit team-mode enforce review warn|block --team</code> 으로 켠다): <code>status</code> 대상 repo 마다 리뷰 안 된 줄 수 · <code>mark</code> 지금 상태를 리뷰했다고 기록 · <code>skip --reason</code> 사용자 승인 뒤 한 번 생략</td></tr><tr><td><code>aikit gitlab pipeline</code></td><td>GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · <code>--ref</code> · <code>--mr</code> · <code>--id</code> · <code>--log</code>(실패한 작업의 로그 끝부분)</td></tr><tr><td><code>aikit board</code></td><td>워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록(핸드오프 · 로드맵 · 모델 조사 · 설정 요약). 이 PC 의 <code>.agents/board/</code> 에 만들어 브라우저로 연다 (보기 전용)</td></tr><tr><td><code>aikit screens check [repo]</code></td><td>화면설계서 검사 (screens 팩): 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락(「화면 없음」 행은 뺀다) · 화면 목록과 장 대조 (이어지는 장 <code>data-continues</code> 는 뺀다)</td></tr><tr><td><code>aikit datamodel check [repo]</code></td><td>데이터 설계 검사 (datamodel 팩): 참조 대상 · 기본키 · 중복 · 표 형식(✖), 논리명 · 컨벤션(<code>vars.datamodel</code>) · 기능 ID 대조 · 논리 참조 대상 · 고정 스키마 기본키(⚠). ERD 는 <code>aikit docs build</code> 가 정의서 폴더마다 <code>erd.html</code> 로 만든다</td></tr><tr><td><code>aikit packs</code></td><td>팩 목록</td></tr><tr><td><code>aikit init-docs [폴더]</code></td><td>기획자 repo 뼈대 (화면 목록 · 장 양식 <code>_template.html</code> · Pages CI 포함)</td></tr></tbody></table></div>
+</article>
+  <div class="pager"><a class="prev" href="workflow--7-매일-aikit-start.html"><small>이전 · 쓰는 법</small>7. 매일 (aikit start)</a><a class="next" href="workflow--9-인수인계.html"><small>다음 · 쓰는 법</small>9. 인수인계</a></div></main>
+  <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><div class="empty">8. 바꿀 때</div></div></aside>
+</div>
+<script src="../assets/search.js"></script>
+<script src="../assets/nav.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "github",
+  "title": "GitHub 팀 워크플로",
+  "category": "workflow",
+  "summary": "브랜치 전략 · PR 생성 · 커밋 규칙",
+  "description": "GitHub 협업: 브랜치 전략(작업 브랜치 → PR, 머지는 사람만), 커밋 메시지, 이슈·PR 어조, gh CLI 로 PR 을 만드는 스킬",
+  "requires": [
+    "core"
+  ],
+  "vars": {
+    "branch.develop": {
+      "default": "develop",
+      "desc": "통합(개발 배포) 영구 브랜치 이름"
+    },
+    "branch.release": {
+      "default": "release",
+      "desc": "QA·운영 배포 영구 브랜치 이름"
+    },
+    "gitlab.commitNote": {
+      "default": "",
+      "desc": "커밋 메시지 추가 규칙 한 줄(선택). 비우면 아무것도 안 나온다. gitlab 팩과 같은 키를 써서 협업 호스트를 바꿔도 workspace.json 을 고치지 않는다. 예: \"- **고객사 repo 는 영어 한 줄만** — 괄호 부연·근거 금지\""
+    }
+  },
+  "notes": [
+    "PR 은 gh CLI 로 만든다. 설치 후 gh auth login (또는 환경변수 GH_TOKEN). 토큰은 출력하지 않는다.",
+    "gh 는 repos/<이름> 폴더의 git remote 로 대상 저장소를 찾는다. remote 가 여러 개면 repos[] 항목에 \"github\": {\"repo\": \"owner/name\"} 를 적어 --repo 로 넘긴다.",
+    "머지 후에도 지우지 않을 상시 작업 브랜치가 있으면 vars.github.persistentBranches 배열에 적고, 저장소 설정 'Automatically delete head branches' 와 브랜치 보호 규칙을 함께 확인한다."
+  ]
+}

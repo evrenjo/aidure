@@ -1,0 +1,12 @@
+*.docx binary
+*.doc  binary
+*.xlsx binary
+*.xls  binary
+*.pptx binary
+*.ppt  binary
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.md   text eol=lf

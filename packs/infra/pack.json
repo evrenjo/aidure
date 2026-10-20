@@ -1,0 +1,18 @@
+{
+  "name": "infra",
+  "title": "인프라·배포 계층 원칙",
+  "category": "layer",
+  "layer": "infra",
+  "summary": "환경 확정 · plan/diff 먼저 · 반영 승인 · 비밀 출처만",
+  "description": "도구와 무관한 인프라·배포 원칙: 대상 환경(클러스터·컨텍스트·계정·워크스페이스) 확정, 운영 직접 반영 금지와 plan·diff·dry-run 근거, 파괴적 작업(destroy·삭제·state 조작) 건별 승인, 비밀은 출처만, 버전·이미지 태그 고정, 컨테이너 이미지(비루트·다단계·헬스체크), Kubernetes·Helm(리소스·프로브·보안 컨텍스트), IaC(원격 state·잠금·버전 고정·import), Ansible(check·diff·멱등), 배포 파이프라인(권한 최소·승인 단계). infra 역할(인프라 담당)을 더한다",
+  "requires": [
+    "core"
+  ],
+  "vars": {},
+  "notes": [
+    "도구별 세부 문법은 공식 문서를 따른다. 이 팩은 어느 도구에나 통하는 원칙만 둔다.",
+    "실제 환경 표(클러스터·컨텍스트·클라우드 계정·state 위치)는 이 팩이 아니라 project 팩 룰에 둔다. 양식은 packs/infra/docs/environment-table-template.md.",
+    "비밀값은 어느 룰에도 적지 않는다. 출처(비밀 저장소 경로·CI 변수 이름)만 적는다.",
+    "근거와 룰별 대응표는 packs/infra/docs/SOURCES.md."
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "name": "core",
+  "title": "공통 코어",
+  "summary": "소통·검증 규칙 · 핸드오프 · 로드맵 · 문서 사이트 · 진단",
+  "description": "협업 워크스페이스 기본: 팀 구성(자동: 리더가 작업마다 역할·모델 선택, 고정: 프로필대로), 커뮤니케이션·근거/검증 원칙·변경 영향 점검, 핸드오프/재개/작업 시작, 진행 방식(스프린트: 최소 기능부터 기능 단위 스프린트 · 데모 · 회고 · 백로그, 전체: 전체 설계 뒤 구축, 이슈형: 운영 · 유지보수의 이슈 보드 · 주간 보고), 유형 바꾸기(aikit type), 로드맵(handoffs/PLAN.md: 종류 · 진행 방식별 기본 단계 · 단계 흐름도 · 영역 × 하위 작업 표 · 완료 보고 블록), 문서 사이트(aikit docs build: 기획 repo 의 md → 같은 경로 구조의 HTML, 가이드와 같은 화면 틀 · 정의 ID 앵커 · 근거 색인 ids.json · docs-site.json 묶음), 워크스페이스 현황판(aikit board), 컨텍스트 관리, 답변 첫 줄 시각 표시(요청 받은 시각, aikit timestamp), 시간 예산(budget.js: 예산 1.5배를 넘으면 계속할지 묻게 함), 리뷰 위임 차수(같은 범위 차수 · 앞 차수 블로커 · 3차부터 경고), 리뷰 전 검사(지시서의 검사: 줄), 착수 전 확인(코드 첫 수정 전 머리말), 오래 일하는 팀원 · 위임 알림(기본 60분), 레포 업데이트·죽은 참조 검사·핸드오프 알림 훅 · 텔레그램 알림(개인: 알림 수준 · 양방향 대화 · 자리 비움, 팀: 핸드오프·설정 변경·공지)",
+  "requires": [],
+  "vars": {
+    "language.docs": {
+      "default": "한국어",
+      "desc": "문서·대화 언어"
+    },
+    "language.code": {
+      "default": "영어",
+      "desc": "코드·커밋·식별자 언어"
+    },
+    "notify.level": {
+      "default": "",
+      "desc": "개인 알림 수준 팀 기본값: all = 전체, decisions = 결과와 결정, progress = 진행 현황, off = 끄기 (비우면 notify.events 를 본다). 각자 aikit notify setup 으로 덮는다"
+    },
+    "notify.events": {
+      "default": "",
+      "desc": "옛 값 (notify.level 이 비었을 때만): 값이 있으면 결과와 결정, 비우면 끄기"
+    },
+    "notify.minSeconds": {
+      "default": "60",
+      "desc": "결과와 결정 · 진행 현황 수준: 이 초보다 오래 걸린 요청만 결과를 알린다 (자리 비움이면 모두)"
+    },
+    "notify.teamChat": {
+      "default": "",
+      "desc": "팀 공지용 텔레그램 그룹방 ID (비우면 팀 알림 꺼짐). aikit notify team chat <id>"
+    },
+    "notify.team": {
+      "default": "handoff,settings,announce",
+      "desc": "팀 방에 보낼 것: handoff = 핸드오프 push, settings = workspace.json·packs·bin 변경 push, announce = 공지 명령"
+    },
+    "plan.ids": {
+      "default": "",
+      "desc": "로드맵 \"이번에 생긴 것\" 에서 셀 ID 접두사 (쉼표로, 예: REQ,TC). 단계 시작 이후 git 기록에 새로 나온 ID 수를 센다. 비우면 커밋·새 파일 수만"
+    },
+    "docs.forbid": {
+      "default": "",
+      "desc": "문서에 남으면 안 되는 표시 (정규식, 쉼표로. 예: \\[TODO-[^\\]]*\\]). check-docs.js 가 오류로 잡는다. 비우면 보지 않는다"
+    },
+    "docs.ids": {
+      "default": "",
+      "desc": "문서 ID 머리말 (쉼표로, 예: REQ,FN,POL). 문서 사이트와 화면설계서 뷰어가 이 머리말인데 정의가 없는 ID 를 빨간 물결로 표시하고 경고한다. 비우면 정의된 ID 만 링크한다"
+    },
+    "docs.traceIds": {
+      "default": "",
+      "desc": "코드에 구현 표시(주석의 ID)가 있어야 하는 기획 ID 머리말 (쉼표로, 예: FN). aikit docs trace 가 코드에 없는 ID 와 기획에 정의 없는 ID 를 알린다. 비우면 screens.functionIds 를 쓴다"
+    },
+    "docs.maxKB": {
+      "default": "60",
+      "desc": "기획 문서 한 개의 크기 상한(KB). aikit docs build · check 가 넘는 문서를 「문서 점검」 경고로 알린다 (「상태: 동결」 문서는 뺀다)"
+    },
+    "docs.cellMax": {
+      "default": "400",
+      "desc": "표 칸 하나의 글자 수 상한. 넘는 칸을 「긴 표 칸」 경고로 문서별 개수와 가장 긴 3곳(파일:줄)으로 알린다"
+    },
+    "docs.cellAvg": {
+      "default": "80",
+      "desc": "문서 안 표 칸의 평균 글자 수 상한. 넘는 문서를 「문단형 표」 로 알린다 (칸 10개 이상인 문서만)"
+    },
+    "docs.cellFold": {
+      "default": "200",
+      "desc": "문서 사이트에서 표 칸을 접는 글자 수. 넘는 칸은 첫 문장만 보이고 나머지는 「더 보기」"
+    },
+    "docs.codeMax": {
+      "default": "15",
+      "desc": "문서 사이트 문서 안 코드 블록의 줄 수 상한 (mermaid · tree · screen 제외). 넘는 블록을 「긴 코드 블록」 경고로 알린다. 사람이 읽는 문서는 표 · 그림과 짧은 설명으로"
+    },
+    "docs.figureKB": {
+      "default": "20",
+      "desc": "그림 없는 큰 문서 경고의 크기(KB). 넘는데 mermaid 가 없고 표 밖 「→」 「①」 가 20개 이상인 문서를 알린다"
+    }
+  },
+  "secrets": [
+    {
+      "name": "TELEGRAM_BOT_TOKEN",
+      "scope": "global",
+      "optional": true,
+      "purpose": "개인 알림 봇 (aikit notify)",
+      "test": "telegram"
+    },
+    {
+      "name": "TELEGRAM_TEAM_BOT_TOKEN",
+      "scope": "global",
+      "optional": true,
+      "purpose": "팀 방 알림 봇 (관리자에게 받음)",
+      "test": "telegram"
+    }
+  ]
+}

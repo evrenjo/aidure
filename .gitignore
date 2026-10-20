@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+# npm 토큰 (CI 가 만든다)
+.npmrc
+# 비밀값 · 키 파일
+.env
+.env.*
+*.pem
+*.key

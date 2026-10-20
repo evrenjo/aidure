@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="aikit docs">
+<title>6. 팀원 (aikit install) · aikit 문서</title>
+<script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="icon" href="data:,">
+</head>
+<body data-root="../">
+<header>
+  <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+</header>
+<div class="layout">
+  <nav class="side" id="side-nav" data-page="docs/workflow--6-팀원-aikit-install.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
+  <main id="main"><article class="page">
+<div class="page-head"><div><div class="crumb">쓰는 법</div><h1>6. 팀원 (<code>aikit install</code>)</h1></div><a class="src" href="https://github.com/lsnwan/aidure/blob/main/docs/workflow.md" title="원본 md">원본 workflow.md</a></div>
+
+<div class="diagram"><div class="diagram-tools"><button class="mm-zoom" type="button" title="크게 보기">확대</button><button class="mm-open" type="button" title="새 창에서 보기">새 창</button></div><pre class="mermaid">flowchart TD
+    S([&quot;워크스페이스 repo clone → aikit install&quot;]) --&gt; R[&quot;repos/ 채우기&lt;br/&gt;remote 는 clone · path 는 링크&lt;br/&gt;local(원격 없음)은 건너뜀: 아직 원격 없음&quot;]
+    R --&gt; F{&quot;clone 실패?&quot;}
+    F --&gt;|&quot;인증 필요&quot;| FA[&quot;이 호스트의 git 인증을 설정하고 다시 aikit install&quot;]
+    F --&gt;|&quot;성공&quot;| D[&quot;스택 감지 결과 표시&quot;]
+    D --&gt; HK[&quot;git 훅 등록&lt;br/&gt;core.hooksPath = .githooks&quot;]
+    HK --&gt; SY[&quot;sync: AGENTS.md · CLAUDE.md · .claude · .codex · .agents 생성&lt;br/&gt;repos/* 에 commit-msg 훅 (AI 서명 제거)&quot;]
+    SY --&gt; Q{&quot;이 PC 에 연결 방식이 정해졌나&quot;}
+    Q --&gt;|&quot;아니오 (처음)&quot;| AG[&quot;AI 연결 방식 · 항상 붙일 인자 (5절)&quot;]
+    Q --&gt;|&quot;예&quot;| J
+    AG --&gt; J{&quot;원격에 내 합류 기록이 있나&quot;}
+    J --&gt;|&quot;없음&quot;| JQ{&quot;팀에 합류 기록을 올릴까요?&quot;}
+    JQ --&gt;|&quot;예&quot;| JP[&quot;handoffs/&amp;lt;id&amp;gt;/TODO.md 를 워크스페이스 repo 에 push&lt;br/&gt;→ 팀 현황에 합류함&quot;]
+    JQ --&gt;|&quot;아니오&quot;| E
+    J --&gt;|&quot;있음&quot;| E
+    JP --&gt; E([&quot;다음: aikit start&quot;])</pre></div>
+</article>
+  <div class="pager"><a class="prev" href="workflow--5-ai-연결-방식과-모델-프로필.html"><small>이전 · 쓰는 법</small>5. AI 연결 방식과 모델 프로필</a><a class="next" href="workflow--7-매일-aikit-start.html"><small>다음 · 쓰는 법</small>7. 매일 (aikit start)</a></div></main>
+  <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><div class="empty">6. 팀원 (aikit install)</div></div></aside>
+</div>
+<script src="../assets/search.js"></script>
+<script src="../assets/nav.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

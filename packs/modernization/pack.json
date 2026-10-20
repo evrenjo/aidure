@@ -1,0 +1,44 @@
+{
+  "name": "modernization",
+  "title": "차세대 전환 (AS-IS → TO-BE)",
+  "summary": "AS-IS 대조 규칙 · 레거시 분석 도구",
+  "description": "레거시(AS-IS) 재구축 프로젝트: AS-IS 정합 원칙(저장·복사·조회 대조, grep -a, 뷰 정의 확인), 데이터 마이그레이션 원칙, COBOL·EGL 효과/읽기/필드 쓰기 추출 도구, AS-IS↔TO-BE 매핑·대조 도구, asis-compare 스킬",
+  "requires": [
+    "core"
+  ],
+  "vars": {
+    "asis.sourceRoot": {
+      "default": "",
+      "desc": "레거시 소스 루트 (워크스페이스 루트 기준 또는 절대 경로). 비우면 repos 의 kind: legacy 항목(+ sourceRoot 하위경로)에서 채운다. 도구에 파일명만 주면 이 아래에서 찾는다"
+    },
+    "asis.viewDir": {
+      "default": "",
+      "desc": "레거시 DB 뷰 정의 폴더 (CREATE VIEW 가 든 .sql 또는 ```sql 블록을 담은 .md). 비우면 뷰 체인을 안 쓴다"
+    },
+    "asis.viewVariant": {
+      "default": "",
+      "desc": "viewDir 아래 하위 폴더 기본값 (국가·법인별로 뷰 정의가 갈릴 때). 도구 --variant 로 바꾼다"
+    },
+    "asis.mappingSources": {
+      "default": "",
+      "desc": "마이그레이션 스텝 YAML 파일·폴더 (쉼표 구분 또는 배열). AS-IS 컬럼 → TO-BE 컬럼 매핑 근거"
+    },
+    "asis.mappingCanonical": {
+      "default": "",
+      "desc": "같은 AS-IS 표를 여러 스텝이 읽을 때 우선할 정본 YAML 파일명 (선택)"
+    },
+    "asis.tobeSchemaDir": {
+      "default": "",
+      "desc": "TO-BE 실 DDL(*.sql) 폴더 — 매핑 대상표를 실재 테이블로 거른다 (선택)"
+    },
+    "asis.tobeQueryTool": {
+      "default": "",
+      "desc": "TO-BE 쿼리 조건 추출기 경로 (선택). 비우면 packs/stack-spring/bin/query-predicates.js 를 쓴다"
+    }
+  },
+  "notes": [
+    "도구는 packs/modernization/bin/ — 사용법 docs/asis-tools.md, 방언 추가 docs/adding-a-dialect.md.",
+    "회귀 테스트: node packs/modernization/bin/asis-parse.test.js (fixtures 만 쓴다, 실 소스 불필요).",
+    "asis-tobe-diff 의 TO-BE 쪽은 stack-spring 팩의 query-predicates.js 를 쓴다(선택 의존). 다른 스택이면 같은 JSON 을 내는 추출기를 asis.tobeQueryTool 로 지정한다."
+  ]
+}

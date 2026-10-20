@@ -1,0 +1,27 @@
+{
+  "project": {
+    "name": "",
+    "title": "",
+    "type": "new",
+    "description": ""
+  },
+  "packs": ["core", "project"],
+  "repos": [],
+  "vars": {
+    "devIdSource": "워크스페이스 repo 의 git config user.name",
+    "language": {
+      "docs": "한국어",
+      "code": "영어"
+    },
+    "branch": {
+      "develop": "develop",
+      "release": "release"
+    }
+  },
+  "limits": {
+    "agentsMdBytes": 32768
+  },
+  "mcp": {},
+  "claude": { "settings": {} },
+  "codex": { "config": {} }
+}

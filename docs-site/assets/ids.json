@@ -1,0 +1,39 @@
+{
+ "docs": {
+  "README.md": "index.html",
+  "budget.md": "docs/budget.html",
+  "commands.md": "docs/commands.html",
+  "docs-site.md": "docs/docs-site.html",
+  "docs/budget.md": "docs/budget.html",
+  "docs/commands.md": "docs/commands.html",
+  "docs/docs-site.md": "docs/docs-site.html",
+  "docs/handoff.md": "docs/handoff.html",
+  "docs/kit-dev.md": "docs/kit-dev.html",
+  "docs/model-catalog.md": "docs/model-catalog.html",
+  "docs/notify.md": "docs/notify.html",
+  "docs/pack-making.md": "docs/pack-making.html",
+  "docs/packs.md": "docs/packs.html",
+  "docs/quickstart.md": "docs/quickstart.html",
+  "docs/rules.md": "docs/rules.html",
+  "docs/team-models.md": "docs/team-models.html",
+  "docs/workflow.md": "docs/workflow.html",
+  "docs/workspace.md": "docs/workspace.html",
+  "handoff.md": "docs/handoff.html",
+  "kit-dev.md": "docs/kit-dev.html",
+  "model-catalog.md": "docs/model-catalog.html",
+  "notify.md": "docs/notify.html",
+  "pack-making.md": "docs/pack-making.html",
+  "packs.md": "docs/packs.html",
+  "quickstart.md": "docs/quickstart.html",
+  "rules.md": "docs/rules.html",
+  "team-models.md": "docs/team-models.html",
+  "workflow.md": "docs/workflow.html",
+  "workspace.md": "docs/workspace.html"
+ },
+ "ids": {
+  "GPT-6": [
+   "docs/model-catalog.html#GPT-6"
+  ]
+ },
+ "prefixes": []
+}

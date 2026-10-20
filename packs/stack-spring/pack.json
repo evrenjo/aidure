@@ -1,0 +1,30 @@
+{
+  "name": "stack-spring",
+  "title": "Spring 백엔드 스택",
+  "summary": "Spring·JPA·QueryDSL 트랜잭션·쿼리 규칙",
+  "description": "Spring Boot + JPA + QueryDSL 구체 규칙: @Transactional 기본값·checked 예외 롤백 함정, 파생 쿼리/QueryDSL/네이티브 SQL 정책, 엔티티당 리포지토리, 복합 키 값 객체, 대량 처리 예외, MapStruct·Bean Validation + 쿼리 술어 추출기·QueryDSL 런타임 오류 검사기·로깅 검사기. 계층·API 계약 원칙은 backend 팩",
+  "category": "stack",
+  "layer": "backend",
+  "stacks": [
+    "spring"
+  ],
+  "requires": [
+    "core",
+    "backend"
+  ],
+  "vars": {
+    "spring.basePackage": {
+      "default": "com.example.app",
+      "desc": "애플리케이션 기준 패키지 (레이어 패키지가 이 아래에 온다). 도구가 소스 범위를 좁히는 데도 쓴다"
+    },
+    "spring.repo": {
+      "default": "",
+      "desc": "백엔드 repo 이름 (workspace.json repos[].name). 비우면 stack 에 spring 이 들어간 첫 repo"
+    }
+  },
+  "notes": [
+    "도구는 소스 루트를 workspace.json 에서 찾는다: vars.spring.repo (없으면 stack 에 spring 이 든 첫 repo) 의 src/main/java + vars.spring.basePackage. 어디서든 --root <경로> 로 덮을 수 있다.",
+    "도구 테스트는 fixtures·임시 폴더만 쓴다 — 실 프로젝트 없이 돈다: node packs/stack-spring/bin/*.test.js",
+    "응답 봉투·오류 코드·예외·메시지 방식은 이 팩이 정하지 않는다. 프로젝트의 기존 관례를 따르고, 관례가 없는 신규 프로젝트만 packs/stack-spring/docs/example-api-spec.md 를 참고안으로 쓴다."
+  ]
+}

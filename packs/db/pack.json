@@ -1,0 +1,18 @@
+{
+  "name": "db",
+  "title": "DB 계층 원칙",
+  "category": "layer",
+  "layer": "db",
+  "summary": "DB 환경 확정 · 파괴적 SQL 승인 · 무중단 스키마 변경",
+  "description": "DBMS 공통 DB 작업 원칙: 환경 확정·운영 직접 변경 금지·파괴적 SQL 건별 승인, 마이그레이션 도구 규율(적용된 파일 수정 금지)과 확장→전환→축소, 큰 테이블 잠금·묶음 처리, 멱등 백필·0 검증 쿼리·백업 확인, 바인드 파라미터·최소 권한·개인정보 가리기, 트랜잭션·교착·커넥션 풀·시간대, 테이블 설계(키·enum·외래키·소프트 삭제·감사 컬럼), 시드·테스트 데이터",
+  "requires": [
+    "core"
+  ],
+  "vars": {},
+  "notes": [
+    "DBMS 별 문법·함정은 stack 팩(stack-postgres 등)에 있다. 이 팩은 어느 DB 에나 통하는 원칙만 둔다.",
+    "실제 환경 표(인스턴스·스키마·계정 출처)는 이 팩이 아니라 project 팩 룰에 둔다 — 양식은 packs/db/docs/environment-table-template.md.",
+    "비밀번호는 어느 룰에도 적지 않는다. 출처(실행 설정 파일·키체인 항목 이름·비밀 저장소 경로)만 적는다.",
+    "근거와 룰별 대응표는 packs/db/docs/SOURCES.md. 작업별 순서는 docs/expand-contract-playbooks.md, 위험 작업 목록은 docs/dangerous-operations.md, DBMS 별 차이는 docs/dbms-notes.md, 백업은 docs/backup-and-restore.md."
+  ]
+}

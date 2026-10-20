@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="aikit docs">
+<title>3. 팀 리더 (aikit init) · aikit 문서</title>
+<script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="icon" href="data:,">
+</head>
+<body data-root="../">
+<header>
+  <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+</header>
+<div class="layout">
+  <nav class="side" id="side-nav" data-page="docs/workflow--3-팀-리더-aikit-init.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
+  <main id="main"><article class="page">
+<div class="page-head"><div><div class="crumb">쓰는 법</div><h1>3. 팀 리더 (<code>aikit init</code>)</h1></div><a class="src" href="https://github.com/lsnwan/aidure/blob/main/docs/workflow.md" title="원본 md">원본 workflow.md</a></div>
+
+<p>빈 repo 를 clone 한 폴더(또는 그 위 폴더)에서 실행한다. <strong>Esc = 이전 질문</strong> (워크스페이스를 만든 뒤의 스택·규칙·에이전트 질문도 같다), 첫 질문에서 Esc 는 취소, Ctrl+C 는 전체 취소. &quot;이대로 만들까요?&quot; 에서 예를 누르기 전에는 아무것도 만들지 않는다.</p>
+<div class="diagram"><div class="diagram-tools"><button class="mm-zoom" type="button" title="크게 보기">확대</button><button class="mm-open" type="button" title="새 창에서 보기">새 창</button></div><pre class="mermaid">flowchart TD
+    S([&quot;aikit init&quot;]) --&gt; N[&quot;프로젝트명&lt;br/&gt;영문 소문자와 -&quot;]
+    N --&gt; T{&quot;시작 유형&lt;br/&gt;(고르는 유형의 근거 · 넣는 repo · AI 가 하는 일을 아래에 보여 줌)&quot;}
+    T --&gt;|&quot;운영·고도화 (SM 포함)&quot;| AP{&quot;진행 방식&lt;br/&gt;이슈형 (운영 · 유지보수) · 스프린트 (고도화) · 전체 (고도화)&quot;}
+    T --&gt;|&quot;신규 구축 · 차세대 전환&quot;| FR
+    AP --&gt; FR{&quot;분석·설계 워크스페이스에서 이어 만들까요?&lt;br/&gt;(기본 아니오)&quot;}
+    FR --&gt;|&quot;예&quot;| FP[&quot;분석·설계 워크스페이스 폴더&lt;br/&gt;그 기획 · 이슈 repo 를 가져옴 (원격이 있으면 주소, 없으면 그 로컬 폴더)&lt;br/&gt;현행 repo 는 목록만 (차세대는 레거시로)&quot;]
+    FR --&gt;|&quot;아니오&quot;| C1
+    FP --&gt; C1[&quot;프로젝트 repository 주소&lt;br/&gt;신규 · 차세대: clone · 기존 로컬 폴더 · 새로 만들기 · 없음&lt;br/&gt;운영·고도화: clone · 기존 로컬 폴더, 1개 이상&quot;]
+    T --&gt;|&quot;컨설팅&quot;| D[&quot;기획 repository 주소&lt;br/&gt;(방식: clone · 기존 로컬 폴더 · 새로 만들기 · 없음)&quot;]
+    C1 --&gt; D
+    D --&gt; PG{&quot;기획 repo 를 넣었는가&quot;}
+    PG --&gt;|&quot;예&quot;| PQ{&quot;기획 문서 사이트를 Pages 로 올릴까요?&lt;br/&gt;(기본 아니오 · 나중에 aikit docs pages on | off)&quot;}
+    PG --&gt;|&quot;아니오&quot;| I
+    PQ --&gt; I[&quot;이슈 repository 주소&lt;br/&gt;(방식: clone · 기존 로컬 폴더 · 새로 만들기 · 없음)&quot;]
+    I --&gt; L{&quot;유형에 레거시가 있는가&quot;}
+    L --&gt;|&quot;차세대 전환&quot;| L1[&quot;레거시(AS-IS) repository 주소&lt;br/&gt;(방식: clone · 기존 로컬 폴더, 1개 이상)&quot;]
+    L --&gt;|&quot;컨설팅&quot;| L2[&quot;현행 시스템 repository 주소&lt;br/&gt;(방식: clone · 기존 로컬 폴더 · 없음)&quot;]
+    L --&gt;|&quot;그 밖&quot;| H
+    L1 --&gt; H
+    L2 --&gt; H
+    H{&quot;주소만으로 GitHub·GitLab 을&lt;br/&gt;모르는 호스트가 있는가&quot;}
+    H --&gt;|&quot;있음&quot;| H1[&quot;&amp;lt;호스트&amp;gt; 의 협업 도구&lt;br/&gt;GitLab · GitHub · 기타·없음&quot;]
+    H --&gt;|&quot;없음&quot;| OK
+    H1 --&gt; OK{&quot;이대로 만들까요?&quot;}
+    OK --&gt;|&quot;아니오&quot;| X([&quot;만들지 않고 끝&quot;])
+    OK --&gt;|&quot;예&quot;| MK[&quot;워크스페이스 생성 · repo clone&lt;br/&gt;스택 자동 감지&quot;]
+    MK --&gt; ST[&quot;스택 확인 (4절)&quot;]
+    ST --&gt; RQ{&quot;킷이 넣은 규칙을 지금 확인할까요?&lt;br/&gt;(기본 아니오)&quot;}
+    RQ --&gt;|&quot;예&quot;| RC[&quot;켤 규칙 (Space 로 켜고 끄기)&lt;br/&gt;필수 규칙(근거·안전·보안)은 목록에 없음&lt;br/&gt;→ workspace.json rules.off&quot;]
+    RQ --&gt;|&quot;아니오&quot;| AG
+    RC --&gt; AG[&quot;쓰는 AI · 팀 기본 모델 프로필 · 메인(리드) 모델 · 이 PC 의 실행 인자 (5절)&quot;]
+    AG --&gt; WR{&quot;워크스페이스 repo 에 원격이 있는가&quot;}
+    WR --&gt;|&quot;없음&quot;| WU[&quot;워크스페이스 repository 주소&lt;br/&gt;(빈 repo 주소, 없으면 Enter)&quot;]
+    WU --&gt; PS
+    WR --&gt;|&quot;있음&quot;| PS{&quot;지금 커밋·push 할까요?&quot;}
+    PS --&gt;|&quot;예&quot;| PD[&quot;commit · push → 팀원은 clone 뒤 aikit install&quot;]
+    PS --&gt;|&quot;아니오 · 원격 없음&quot;| END([&quot;공유하기 안내 → 다음: aikit start&quot;])
+    PD --&gt; END</pre></div>
+<ul><li>repo 마다 방식을 먼저 고르고 값을 넣는다: <strong>clone</strong>(git 주소) · <strong>기존 로컬 폴더</strong>(경로, <code>repos/&lt;이름&gt;</code> 에 링크. 원격 없이 로컬에서만 커밋하는 repo 도 됨, <code>~</code> 가능) · <strong>새로 만들기</strong>(이름, <code>repos/&lt;이름&gt;</code> 에 git init. 레거시 제외) · 없음(선택 항목). 여러 개는 추가·확정으로, Esc 는 방식 선택으로.</li><li>분석·설계 워크스페이스의 산출물 repo 를 개발 워크스페이스에서 참고하려면 「기획 repository 주소」에 그 repo 를 넣는다 (로컬에만 있으면 기존 로컬 폴더).</li><li>유형마다 붙는 규칙과 근거가 다르다: 신규·차세대는 기획 문서, 차세대는 레거시 소스도, 운영·고도화는 운영 중인 코드, 컨설팅은 코드를 고치지 않는다. 이슈·티켓 처리는 모든 유형 공통이다.</li></ul>
+</article>
+  <div class="pager"><a class="prev" href="workflow--2-설치-pc-마다-1번.html"><small>이전 · 쓰는 법</small>2. 설치 (PC 마다 1번)</a><a class="next" href="workflow--4-스택-확인-init-aikit-detect.html"><small>다음 · 쓰는 법</small>4. 스택 확인 (init · aikit detect)</a></div></main>
+  <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><div class="empty">3. 팀 리더 (aikit init)</div></div></aside>
+</div>
+<script src="../assets/search.js"></script>
+<script src="../assets/nav.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

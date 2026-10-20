@@ -1,0 +1,19 @@
+{
+  "name": "stack-postgres",
+  "title": "PostgreSQL 스택",
+  "category": "stack",
+  "layer": "db",
+  "stacks": [
+    "postgres"
+  ],
+  "summary": "PostgreSQL 문법 · 잠금 · 확장·시퀀스 함정",
+  "description": "PostgreSQL 전용 규칙: 트랜잭션 DDL 로 건수 시험, CONCURRENTLY 는 트랜잭션 밖, search_path·식별자 대소문자, 확장 설치 스키마, 시퀀스 보정, SELECT DISTINCT + ORDER BY 식, 스키마 순회 DO 블록, 잠금 시간 제한",
+  "requires": [
+    "core"
+  ],
+  "vars": {},
+  "notes": [
+    "DBMS 공통 원칙(환경 확정·운영 금지·파괴적 SQL 승인·스키마 변경 순서)은 db 팩에 있다. 이 팩은 PostgreSQL 에서만 성립하는 것만 둔다.",
+    "환경 표 양식은 packs/db/docs/environment-table-template.md."
+  ]
+}

@@ -1,0 +1,1019 @@
+{
+  "catalogVersion": "2026-10-01",
+  "reviewEveryDays": 45,
+  "note": "모델 목록과 실행 도구별 추천 프로필. 선택 화면(aikit agent · aikit models)이 쓴다. 목록에 없는 모델은 직접 입력할 수 있다. 근거(2026-10-01 확인): Claude — code.claude.com/docs/en/model-config · /sub-agents · platform.claude.com/docs/en/about-claude/pricing, Codex — learn.chatgpt.com/docs/models · /docs/agent-configuration/subagents · developers.openai.com/api/docs/pricing. 두 도구 모두 서브에이전트는 자기 회사 모델만 쓴다. 상대 회사 모델이 맡는 역할은 { tool, model, effort, fallback } 으로 적고, 그 도구의 비대화형 실행(delegate.js)으로 위임한다. fallback = 상대 도구가 없는 PC 에서 대신 쓰는 같은 도구 모델. profiles.<이름>.<도구> = 그 도구로 실행했을 때 역할별 모델 (문자열 또는 { model, effort }). limits = 역할 에이전트 상한 (한 요청에 동시 parallel 개 · 모두 total 개, workspace.json·.agents/local.json 의 agents.limits 로 덮는다). crossReview 는 그 도구 세션이 상대 도구에게 검토를 맡길 때 쓰는 상대 도구 모델이다. profiles 는 높은 순(최고 → 절약)으로 적는다. 팀은 workspace.json agents.profile, 개인은 .agents/local.json agents.profile 인데 개인 값은 팀보다 낮은 것만 적용한다 (높은 것은 workspace.json agents.allowHigherProfile 이 true 일 때만). 상한도 팀 값을 넘지 않는다. 역할별 직접 지정이 그 위에 덮인다. 모델이 새로 나오거나 퇴역하면 이 파일(tools · retired · profiles)을 고치고 catalogVersion 을 올린다. 워크스페이스는 aikit upgrade 로 받는다.",
+  "aliases": {
+    "claude": [
+      "opus",
+      "sonnet",
+      "haiku",
+      "fable",
+      "default",
+      "best",
+      "opusplan",
+      "inherit"
+    ]
+  },
+  "tools": {
+    "claude": [
+      {
+        "id": "fable",
+        "label": "Fable 5.1",
+        "hint": "가장 깊은 추론: 긴 조사·원인 분석 (API $10·$50)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://code.claude.com/docs/en/model-config",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://www.anthropic.com/claude-fable-and-mythos-5-1",
+          "https://livebench.ai/table_2026_06_25.csv"
+        ],
+        "released": "2026-09-01",
+        "bench": [
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "83.4 / 66.1",
+            "setting": "max, 독립 측정 2026-06-25 문제 세트, 문항당 $1.01",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "Terminal-Bench 4.0",
+            "score": "55.8%",
+            "setting": "effort 미기재, Anthropic 측정",
+            "source": "https://www.anthropic.com/claude-fable-and-mythos-5-1"
+          },
+          {
+            "name": "HLE (도구 사용)",
+            "score": "65.0%",
+            "setting": "Anthropic 측정",
+            "source": "https://www.anthropic.com/claude-fable-and-mythos-5-1"
+          }
+        ],
+        "livebench": [
+          "claude-fable-5-1-max-effort"
+        ],
+        "strengths": [
+          {
+            "variant": "claude-fable-5-1-max-effort",
+            "추론": 91.7,
+            "코딩": 86.4,
+            "에이전트 코딩": 66.1,
+            "수학": 97,
+            "데이터 분석": 80.3,
+            "언어": 89.5,
+            "지시 따르기": 73
+          }
+        ]
+      },
+      {
+        "id": "opus",
+        "label": "Opus 5.5",
+        "hint": "어려운 코딩·설계·리뷰 (API $4·$20)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://code.claude.com/docs/en/model-config",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://www.anthropic.com/claude-opus-5-5",
+          "https://livebench.ai/table_2026_06_25.csv"
+        ],
+        "released": "2026-09-22",
+        "bench": [
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "82.1 / 65.4",
+            "setting": "xhigh, 독립 측정 2026-06-25 문제 세트, 문항당 $0.20",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "83.2 / 71.7",
+            "setting": "max, 독립 측정 2026-06-25 문제 세트, 문항당 $0.67",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "Terminal-Bench 4.0",
+            "score": "66.4%",
+            "setting": "xhigh, Anthropic 측정 (Claude Code 하네스)",
+            "source": "https://www.anthropic.com/claude-opus-5-5"
+          },
+          {
+            "name": "HLE (도구 사용)",
+            "score": "67.7%",
+            "setting": "max, Anthropic 측정",
+            "source": "https://www.anthropic.com/claude-opus-5-5"
+          },
+          {
+            "name": "Terminal-Bench-Science 0.1",
+            "score": "58.7%",
+            "setting": "max, Anthropic 측정",
+            "source": "https://www.anthropic.com/claude-opus-5-5"
+          }
+        ],
+        "livebench": [
+          "claude-opus-5-5-max-effort",
+          "claude-opus-5-5-xhigh-effort"
+        ],
+        "strengths": [
+          {
+            "variant": "claude-opus-5-5-max-effort",
+            "추론": 92.2,
+            "코딩": 89.3,
+            "에이전트 코딩": 71.7,
+            "수학": 97.1,
+            "데이터 분석": 80.3,
+            "언어": 86.3,
+            "지시 따르기": 65.7
+          },
+          {
+            "variant": "claude-opus-5-5-xhigh-effort",
+            "추론": 90.7,
+            "코딩": 89.3,
+            "에이전트 코딩": 65.4,
+            "수학": 96.8,
+            "데이터 분석": 79.8,
+            "언어": 85.5,
+            "지시 따르기": 67
+          }
+        ]
+      },
+      {
+        "id": "opusplan",
+        "label": "Opus 계획 · Sonnet 실행",
+        "short": "opusplan",
+        "hint": "계획 모드는 Opus, 실행은 Sonnet (Claude Code 공식 별칭)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://code.claude.com/docs/en/model-config",
+          "https://platform.claude.com/docs/en/about-claude/pricing"
+        ],
+        "doc": "`opusplan` (계획 Opus · 실행 Sonnet)"
+      },
+      {
+        "id": "sonnet",
+        "label": "Sonnet 5.5",
+        "hint": "일상 코딩·테스트 (API $2·$10)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://code.claude.com/docs/en/model-config",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://www.anthropic.com/claude-sonnet-5-5",
+          "https://livebench.ai/table_2026_06_25.csv"
+        ],
+        "released": "2026-09-28",
+        "bench": [
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "77.8 / 39.3",
+            "setting": "xhigh, 독립 측정 2026-06-25 문제 세트, 문항당 $0.11",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "75.7 / 56.3",
+            "setting": "max, 독립 측정 2026-06-25 문제 세트, 문항당 $0.66",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "Terminal-Bench 4.0",
+            "score": "70.6%",
+            "setting": "effort 미기재, Anthropic 측정",
+            "source": "https://www.anthropic.com/claude-sonnet-5-5"
+          },
+          {
+            "name": "HLE (도구 사용)",
+            "score": "64.5%",
+            "setting": "Anthropic 측정",
+            "source": "https://www.anthropic.com/claude-sonnet-5-5"
+          }
+        ],
+        "livebench": [
+          "claude-sonnet-5-5-max-effort",
+          "claude-sonnet-5-5-xhigh-effort"
+        ],
+        "strengths": [
+          {
+            "variant": "claude-sonnet-5-5-max-effort",
+            "추론": 91.6,
+            "코딩": 91.4,
+            "에이전트 코딩": 56.3,
+            "수학": 96.1,
+            "데이터 분석": 59.5,
+            "언어": 78,
+            "지시 따르기": 56.8
+          },
+          {
+            "variant": "claude-sonnet-5-5-xhigh-effort",
+            "추론": 86.8,
+            "코딩": 88.9,
+            "에이전트 코딩": 39.3,
+            "수학": 96.7,
+            "데이터 분석": 78.6,
+            "언어": 83.4,
+            "지시 따르기": 70.5
+          }
+        ]
+      },
+      {
+        "id": "haiku",
+        "label": "Haiku 4.5",
+        "hint": "빠르고 저렴: 단순 조사·문서 (API $1·$5)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://code.claude.com/docs/en/model-config",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://www.anthropic.com/news/claude-haiku-4-5"
+        ],
+        "released": "2025-10-15",
+        "bench": [
+          {
+            "name": "SWE-bench Verified",
+            "score": "73.3%",
+            "setting": "50회 평균, 128K thinking",
+            "source": "https://www.anthropic.com/news/claude-haiku-4-5"
+          }
+        ]
+      }
+    ],
+    "codex": [
+      {
+        "id": "gpt-6-astra",
+        "label": "GPT-6 Astra",
+        "hint": "가장 높은 성능: 가장 까다로운 작업 (API $10·$50)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://learn.chatgpt.com/docs/models",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://openai.com/index/introducing-gpt-6-1-sol/",
+          "https://openai.com/index/gpt-6-astra/",
+          "https://livebench.ai/table_2026_06_25.csv"
+        ],
+        "bench": [
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "82.2 / 57.3",
+            "setting": "max, 독립 측정 2026-06-25 문제 세트, 문항당 $0.60",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "DeepSWE v1.1",
+            "score": "74.1%",
+            "setting": "xhigh (low 67.0 · high 73.2 · max 73.2), OpenAI 측정",
+            "source": "https://openai.com/index/introducing-gpt-6-1-sol/"
+          },
+          {
+            "name": "Terminal-Bench-Science 0.1",
+            "score": "68.1%",
+            "setting": "max, OpenAI 측정",
+            "source": "https://openai.com/index/introducing-gpt-6-1-sol/"
+          },
+          {
+            "name": "Terminal-Bench 4.0",
+            "score": "57.9%",
+            "setting": "effort 중 최고, OpenAI 측정",
+            "source": "https://openai.com/index/gpt-6-astra/"
+          }
+        ],
+        "livebench": [
+          "gpt-6-astra-max"
+        ],
+        "strengths": [
+          {
+            "variant": "gpt-6-astra-max",
+            "추론": 92.7,
+            "코딩": 80.4,
+            "에이전트 코딩": 57.3,
+            "수학": 96.8,
+            "데이터 분석": 83,
+            "언어": 89.4,
+            "지시 따르기": 75.6
+          }
+        ]
+      },
+      {
+        "id": "gpt-6.1-sol",
+        "label": "GPT-6.1 Sol",
+        "hint": "Astra 에 가까운 성능, 복잡한 에이전트 작업 (API $2·$10)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://learn.chatgpt.com/docs/models",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://openai.com/index/introducing-gpt-6-1-sol/",
+          "https://livebench.ai/table_2026_06_25.csv"
+        ],
+        "released": "2026-09-29",
+        "bench": [
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "81.1 / 56.8",
+            "setting": "xhigh, 독립 측정 2026-06-25 문제 세트, 문항당 $0.08",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "81.6 / 54.5",
+            "setting": "max, 독립 측정 2026-06-25 문제 세트, 문항당 $0.12",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "DeepSWE v1.1",
+            "score": "75.2%",
+            "setting": "high (low 64.4 · medium 73.0 · xhigh 71.9 · max 71.9), OpenAI 측정",
+            "source": "https://openai.com/index/introducing-gpt-6-1-sol/"
+          },
+          {
+            "name": "Terminal-Bench-Science 0.1",
+            "score": "57.0%",
+            "setting": "max (high 51.1), OpenAI 측정",
+            "source": "https://openai.com/index/introducing-gpt-6-1-sol/"
+          }
+        ],
+        "livebench": [
+          "gpt-6.1-sol-max",
+          "gpt-6.1-sol-xhigh"
+        ],
+        "strengths": [
+          {
+            "variant": "gpt-6.1-sol-max",
+            "추론": 92.6,
+            "코딩": 80.4,
+            "에이전트 코딩": 54.5,
+            "수학": 96.8,
+            "데이터 분석": 82.7,
+            "언어": 90.1,
+            "지시 따르기": 74.2
+          },
+          {
+            "variant": "gpt-6.1-sol-xhigh",
+            "추론": 91.6,
+            "코딩": 80.7,
+            "에이전트 코딩": 56.8,
+            "수학": 96.5,
+            "데이터 분석": 82.2,
+            "언어": 88.6,
+            "지시 따르기": 71.3
+          }
+        ]
+      },
+      {
+        "id": "gpt-6-sol",
+        "label": "GPT-6 Sol",
+        "hint": "이전 Sol (6.1 Sol 이 후속)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://learn.chatgpt.com/docs/models",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
+          "https://livebench.ai/table_2026_06_25.csv"
+        ],
+        "released": "2026-09-22",
+        "bench": [
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "79.2 / 52.9",
+            "setting": "max, 독립 측정 2026-06-25 문제 세트, 문항당 $0.21",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "DeepSWE v1.1",
+            "score": "68.8%",
+            "setting": "max (high 65.3), OpenAI 측정",
+            "source": "https://openai.com/index/introducing-gpt-6-sol-and-luna/"
+          }
+        ],
+        "livebench": [
+          "gpt-6-sol-max"
+        ],
+        "strengths": [
+          {
+            "variant": "gpt-6-sol-max",
+            "추론": 88.7,
+            "코딩": 81.8,
+            "에이전트 코딩": 52.9,
+            "수학": 96.4,
+            "데이터 분석": 81.2,
+            "언어": 85.3,
+            "지시 따르기": 68.6
+          }
+        ]
+      },
+      {
+        "id": "gpt-6-luna",
+        "label": "GPT-6 Luna",
+        "hint": "가장 효율적: 빠른 탐색·반복 작업, effort high 이상 권장 (API $0.10·$0.50)",
+        "checked": "2026-10-01",
+        "sources": [
+          "https://learn.chatgpt.com/docs/models",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
+          "https://livebench.ai/table_2026_06_25.csv"
+        ],
+        "released": "2026-09-22",
+        "bench": [
+          {
+            "name": "LiveBench 전체 / 에이전틱 코딩",
+            "score": "72.0 / 51.2",
+            "setting": "max, 독립 측정 2026-06-25 문제 세트, 문항당 $0.02",
+            "source": "https://livebench.ai/table_2026_06_25.csv"
+          },
+          {
+            "name": "DeepSWE v1.1",
+            "score": "66.6%",
+            "setting": "max (low 2.4 · medium 44.5 · high 59.3 · xhigh 61.3), OpenAI 측정",
+            "source": "https://openai.com/index/introducing-gpt-6-sol-and-luna/"
+          }
+        ],
+        "livebench": [
+          "gpt-6-luna-max"
+        ],
+        "strengths": [
+          {
+            "variant": "gpt-6-luna-max",
+            "추론": 81.8,
+            "코딩": 79,
+            "에이전트 코딩": 51.2,
+            "수학": 89.1,
+            "데이터 분석": 73.4,
+            "언어": 73.8,
+            "지시 따르기": 55.9
+          }
+        ]
+      }
+    ]
+  },
+  "retired": [
+    {
+      "tool": "codex",
+      "match": "^gpt-5\\.5(-|$)",
+      "label": "GPT-5.5",
+      "retiresAt": "2026-10-14",
+      "replacement": "gpt-6.1-sol",
+      "source": "https://learn.chatgpt.com/docs/models",
+      "note": "ChatGPT·Codex(ChatGPT 로그인)에서만 빠지고 API 에는 남는다. OpenAI 안내 대체는 gpt-6-sol(Plus 이상)·gpt-6-luna(Free·Go). 같은 가격에 벤치마크가 높은 6.1 Sol 로 옮긴다"
+    },
+    {
+      "tool": "codex",
+      "match": "^gpt-5\\.4(-|$)",
+      "label": "GPT-5.4 계열",
+      "retiresAt": "2026-08-31",
+      "replacement": "gpt-6.1-sol",
+      "source": "https://learn.chatgpt.com/docs/models"
+    },
+    {
+      "tool": "codex",
+      "match": "^gpt-5\\.3-codex-spark(-|$)",
+      "label": "GPT-5.3 Codex Spark",
+      "retiresAt": "2026-09-14",
+      "replacement": "gpt-6-luna",
+      "note": "Codex 앱·CLI·IDE 에서 빠짐",
+      "source": "https://learn.chatgpt.com/docs/models"
+    },
+    {
+      "tool": "codex",
+      "match": "^gpt-5\\.3-codex(?!-spark)(-|$)",
+      "label": "GPT-5.3 Codex",
+      "replacement": "gpt-6.1-sol",
+      "note": "공지에 날짜 없이 Codex(ChatGPT 로그인)에서 이미 지원 중단(2026-10-08 확인). 공식 대체 안내 없음, 킷 기본 코딩 모델로 옮긴다",
+      "source": "https://learn.chatgpt.com/docs/models"
+    },
+    {
+      "tool": "codex",
+      "match": "^gpt-5\\.2(-|$)",
+      "label": "GPT-5.2 계열",
+      "replacement": "gpt-6.1-sol",
+      "note": "공지에 날짜 없이 Codex(ChatGPT 로그인)에서 이미 지원 중단(2026-10-08 확인). 공식 대체 안내 없음, 킷 기본 코딩 모델로 옮긴다",
+      "source": "https://learn.chatgpt.com/docs/models"
+    },
+    {
+      "tool": "claude",
+      "match": "^claude-sonnet-4-5(-|$)",
+      "label": "Sonnet 4.5",
+      "retiresAt": "2026-11-30",
+      "replacement": "sonnet",
+      "note": "2026-09-30 퇴역 예고. 공식 대체는 Sonnet 5.5 (별칭 sonnet)",
+      "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations"
+    }
+  ],
+  "defaultProfile": "standard",
+  "profiles": {
+    "rich": {
+      "label": "최고",
+      "hint": "무제한·엔터프라이즈: 상위 모델 위주, 리뷰·테스트(Claude) 또는 설계·구현(Codex)은 상대 회사 모델에게 위임",
+      "limits": {
+        "parallel": 3,
+        "total": 8
+      },
+      "claude": {
+        "main": {
+          "model": "opus",
+          "effort": "xhigh"
+        },
+        "analyst": {
+          "model": "opus",
+          "effort": "xhigh"
+        },
+        "architect": {
+          "model": "opus",
+          "effort": "max"
+        },
+        "implementer": {
+          "model": "opus",
+          "effort": "xhigh"
+        },
+        "reviewer": {
+          "tool": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "fallback": "opus"
+        },
+        "tester": {
+          "tool": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "fallback": "sonnet"
+        },
+        "documenter": "haiku",
+        "crossReview": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        }
+      },
+      "codex": {
+        "main": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "analyst": {
+          "model": "gpt-6.1-sol",
+          "effort": "xhigh"
+        },
+        "architect": {
+          "tool": "claude",
+          "model": "opus",
+          "effort": "max",
+          "fallback": "gpt-6-astra"
+        },
+        "implementer": {
+          "tool": "claude",
+          "model": "opus",
+          "effort": "xhigh",
+          "fallback": "gpt-6.1-sol"
+        },
+        "reviewer": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "tester": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "documenter": {
+          "model": "gpt-6-luna",
+          "effort": "high"
+        },
+        "crossReview": {
+          "model": "opus",
+          "effort": "xhigh"
+        }
+      },
+      "grades": {
+        "claude": {
+          "high": {
+            "model": "opus",
+            "effort": "xhigh"
+          },
+          "standard": {
+            "model": "opus",
+            "effort": "high"
+          },
+          "low": {
+            "model": "sonnet",
+            "effort": "medium"
+          }
+        },
+        "codex": {
+          "high": {
+            "model": "gpt-6.1-sol",
+            "effort": "xhigh"
+          },
+          "standard": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          },
+          "low": {
+            "model": "gpt-6-luna",
+            "effort": "high"
+          }
+        }
+      }
+    },
+    "standard": {
+      "label": "표준",
+      "hint": "추천 기본: 설계·구현은 Opus, 리뷰는 다른 회사 모델, 테스트는 가성비 모델",
+      "limits": {
+        "parallel": 2,
+        "total": 5
+      },
+      "claude": {
+        "main": "opusplan",
+        "analyst": {
+          "model": "opus",
+          "effort": "high"
+        },
+        "architect": {
+          "model": "opus",
+          "effort": "xhigh"
+        },
+        "implementer": {
+          "model": "opus",
+          "effort": "high"
+        },
+        "reviewer": {
+          "tool": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "fallback": "opus"
+        },
+        "tester": {
+          "tool": "codex",
+          "model": "gpt-6-luna",
+          "effort": "max",
+          "fallback": "sonnet"
+        },
+        "documenter": "haiku",
+        "crossReview": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        }
+      },
+      "codex": {
+        "main": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "analyst": {
+          "model": "gpt-6.1-sol",
+          "effort": "xhigh"
+        },
+        "architect": {
+          "model": "gpt-6.1-sol",
+          "effort": "xhigh"
+        },
+        "implementer": {
+          "tool": "claude",
+          "model": "opus",
+          "effort": "high",
+          "fallback": "gpt-6.1-sol"
+        },
+        "reviewer": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "tester": {
+          "model": "gpt-6-luna",
+          "effort": "max"
+        },
+        "documenter": {
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        },
+        "crossReview": {
+          "model": "opus",
+          "effort": "high"
+        }
+      },
+      "grades": {
+        "claude": {
+          "high": {
+            "model": "sonnet",
+            "effort": "high"
+          },
+          "standard": {
+            "model": "sonnet",
+            "effort": "medium"
+          },
+          "low": "haiku"
+        },
+        "codex": {
+          "high": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          },
+          "standard": {
+            "model": "gpt-6.1-sol",
+            "effort": "medium"
+          },
+          "low": {
+            "model": "gpt-6-luna",
+            "effort": "medium"
+          }
+        }
+      }
+    },
+    "lean": {
+      "label": "절약",
+      "hint": "사용량이 빠듯할 때: 최상위 모델 없이. Claude 세션은 테스트만 저렴한 Luna 에게 위임",
+      "limits": {
+        "parallel": 1,
+        "total": 3
+      },
+      "claude": {
+        "main": "sonnet",
+        "analyst": {
+          "tool": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "fallback": "sonnet"
+        },
+        "architect": {
+          "model": "sonnet",
+          "effort": "high"
+        },
+        "implementer": "sonnet",
+        "reviewer": {
+          "tool": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "medium",
+          "fallback": "sonnet"
+        },
+        "tester": {
+          "tool": "codex",
+          "model": "gpt-6-luna",
+          "effort": "max",
+          "fallback": "sonnet"
+        },
+        "documenter": "haiku",
+        "crossReview": {
+          "model": "gpt-6.1-sol",
+          "effort": "medium"
+        }
+      },
+      "codex": {
+        "main": {
+          "model": "gpt-6.1-sol",
+          "effort": "medium"
+        },
+        "analyst": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "architect": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "implementer": {
+          "model": "gpt-6.1-sol",
+          "effort": "medium"
+        },
+        "reviewer": {
+          "model": "gpt-6.1-sol",
+          "effort": "high"
+        },
+        "tester": {
+          "model": "gpt-6-luna",
+          "effort": "max"
+        },
+        "documenter": {
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        },
+        "crossReview": "sonnet"
+      },
+      "grades": {
+        "claude": {
+          "high": {
+            "model": "sonnet",
+            "effort": "medium"
+          },
+          "standard": {
+            "model": "sonnet",
+            "effort": "low"
+          },
+          "low": "haiku"
+        },
+        "codex": {
+          "high": {
+            "model": "gpt-6.1-sol",
+            "effort": "medium"
+          },
+          "standard": {
+            "model": "gpt-6-luna",
+            "effort": "high"
+          },
+          "low": {
+            "model": "gpt-6-luna",
+            "effort": "medium"
+          }
+        }
+      }
+    }
+  },
+  "rooms": {
+    "tight": "빠듯",
+    "ample": "넉넉",
+    "metered": "종량"
+  },
+  "plans": {
+    "note": "여유도: tight = 기본 한도(Pro·Plus 급) · ample = 그보다 많이 (Max·Pro 등) · metered = 쓴 만큼 비용(API 키·Enterprise·게이트웨이). detect = 로그인 정보(Claude ~/.claude.json organizationType·RateLimitTier·seatTier, Codex ~/.codex/auth.json chatgpt_plan_type)에 맞는 정규식. 2026-10-07 실제 값으로 확인한 것은 Max 5x(default_claude_max_5x)·Plus(plus) 뿐, 나머지는 이름 규칙 추정. 못 맞추면 사용자에게 가장 가까운 것을 묻고 그전엔 tight",
+    "checked": "2026-10-07",
+    "claude": [
+      {
+        "id": "pro",
+        "label": "Pro",
+        "room": "tight",
+        "detect": "claude_pro",
+        "hint": "월 $20 · 기본 한도",
+        "sources": [
+          "https://claude.com/pricing"
+        ]
+      },
+      {
+        "id": "max5x",
+        "label": "Max 5x",
+        "room": "ample",
+        "detect": "max_5x",
+        "hint": "Pro 의 5배",
+        "sources": [
+          "https://claude.com/pricing"
+        ]
+      },
+      {
+        "id": "max20x",
+        "label": "Max 20x",
+        "room": "ample",
+        "detect": "max_20x",
+        "hint": "Pro 의 20배",
+        "sources": [
+          "https://claude.com/pricing"
+        ]
+      },
+      {
+        "id": "team-standard",
+        "label": "Team 표준 좌석",
+        "room": "tight",
+        "detect": "team.*standard|standard.*team",
+        "hint": "Pro 보다 조금 많음",
+        "sources": [
+          "https://claude.com/pricing"
+        ]
+      },
+      {
+        "id": "team-premium",
+        "label": "Team 프리미엄 좌석",
+        "room": "ample",
+        "detect": "premium",
+        "hint": "표준 좌석의 5배",
+        "sources": [
+          "https://claude.com/pricing"
+        ]
+      },
+      {
+        "id": "enterprise",
+        "label": "Enterprise",
+        "room": "metered",
+        "detect": "enterprise",
+        "hint": "좌석 + API 사용량",
+        "sources": [
+          "https://claude.com/pricing"
+        ]
+      },
+      {
+        "id": "api",
+        "label": "API 키",
+        "room": "metered",
+        "detect": "",
+        "hint": "쓴 만큼 (구독 아님)",
+        "sources": [
+          "https://platform.claude.com/docs/en/about-claude/pricing"
+        ]
+      }
+    ],
+    "codex": [
+      {
+        "id": "free",
+        "label": "Free",
+        "room": "tight",
+        "detect": "^free$",
+        "hint": "무료 · 한도 적음",
+        "sources": [
+          "https://learn.chatgpt.com/docs/pricing"
+        ]
+      },
+      {
+        "id": "go",
+        "label": "Go",
+        "room": "tight",
+        "detect": "^go$",
+        "hint": "월 $8",
+        "sources": [
+          "https://learn.chatgpt.com/docs/pricing"
+        ]
+      },
+      {
+        "id": "plus",
+        "label": "Plus",
+        "room": "tight",
+        "detect": "^plus$",
+        "hint": "월 $20 · 기본 한도",
+        "sources": [
+          "https://learn.chatgpt.com/docs/pricing"
+        ]
+      },
+      {
+        "id": "business",
+        "label": "Business",
+        "room": "tight",
+        "detect": "^(team|business)$",
+        "hint": "인당 월 $20 · Plus 와 같은 한도",
+        "sources": [
+          "https://learn.chatgpt.com/docs/pricing"
+        ]
+      },
+      {
+        "id": "pro",
+        "label": "Pro",
+        "room": "ample",
+        "detect": "^pro",
+        "hint": "월 $100 = Plus 의 5배 · $200 = 20배 (OpenAI 공지 2026-04-09) · $500 등급도 있다 (배수는 공식 문서에 없음). 로그인 값이 같아 금액은 구분하지 않는다",
+        "sources": [
+          "https://learn.chatgpt.com/docs/pricing",
+          "https://community.openai.com/t/introducing-new-100-month-pro-tier/1378752"
+        ],
+        "checked": "2026-10-08"
+      },
+      {
+        "id": "enterprise",
+        "label": "Enterprise · Edu",
+        "room": "ample",
+        "detect": "^(enterprise|edu)",
+        "hint": "계약에 따라",
+        "sources": [
+          "https://learn.chatgpt.com/docs/pricing"
+        ]
+      },
+      {
+        "id": "api",
+        "label": "API 키",
+        "room": "metered",
+        "detect": "",
+        "hint": "쓴 만큼 (구독 아님)",
+        "sources": [
+          "https://developers.openai.com/api/docs/pricing"
+        ]
+      }
+    ],
+    "watch": {
+      "claude": {
+        "url": "https://claude.com/pricing",
+        "words": [
+          "Enterprise",
+          "Free",
+          "Max",
+          "Max 20x",
+          "Max 5x",
+          "Premium",
+          "Pro",
+          "Standard",
+          "Team"
+        ],
+        "checked": "2026-10-06"
+      },
+      "codex": {
+        "url": "https://learn.chatgpt.com/docs/pricing",
+        "words": [
+          "Business",
+          "Edu",
+          "Enterprise",
+          "Free",
+          "Go",
+          "Plus",
+          "Pro",
+          "Standard",
+          "Team"
+        ],
+        "checked": "2026-10-06"
+      }
+    }
+  },
+  "livebenchReviewed": [
+    "claude-fable-5-max-effort",
+    "gpt-5.6-sol-max",
+    "gpt-5.5-xhigh",
+    "claude-opus-5-max-effort",
+    "gpt-5.4-xhigh",
+    "gpt-5.6-terra-max",
+    "claude-opus-4-7-xhigh-effort",
+    "claude-opus-4-8-max-effort",
+    "claude-sonnet-5-xhigh-effort",
+    "gpt-5.2-2025-12-11-high",
+    "claude-opus-4-6-thinking-auto-high-effort",
+    "gpt-5.2-codex",
+    "gpt-5.6-luna-max",
+    "claude-sonnet-4-6-thinking-auto-medium-effort",
+    "claude-opus-4-5-20251101-thinking-64k-high-effort"
+  ],
+  "strengthsSource": {
+    "name": "LiveBench",
+    "release": "2026-06-25",
+    "source": "https://livebench.ai/table_2026_06_25.csv",
+    "checked": "2026-10-06"
+  }
+}

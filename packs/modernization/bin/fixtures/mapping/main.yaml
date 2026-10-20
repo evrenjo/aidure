@@ -1,0 +1,33 @@
+- seq: 1
+  name: 'product: item_master (ITEM)'
+  target_table: item_master
+  source_sql: |-
+    SELECT
+      RTRIM(ID_FSC) AS fsc_code,
+      RTRIM(PROFILE_CD) AS profile_code,
+      RTRIM(DELETED_IN) AS deleted_flag
+    FROM ITEM
+- seq: 2
+  name: 'plan: detail_line (DTL)'
+  target_table: detail_line
+  source_sql: |-
+    SELECT
+      CAST(NUM_UNITS AS INTEGER) AS units_number,
+      'X' AS constant_col,
+      CURRENT TIMESTAMP AS created_at
+    FROM DTL
+- seq: 3
+  name: 'plan: store_link (LNK)'
+  target_table: store_link
+  source_sql: |-
+    SELECT
+      RTRIM(CD_TARGET) AS target_code,
+      CAST(ID_STORE AS INTEGER) AS store_id
+    FROM LNK
+- seq: 4
+  name: 'plan: retired_table (OLDT)'
+  target_table: retired_table
+  source_sql: |-
+    SELECT
+      RTRIM(KEY_A) AS key_a
+    FROM OLDT

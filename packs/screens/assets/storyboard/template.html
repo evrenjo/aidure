@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>&lt;프로젝트명&gt; 화면설계서</title>
+<!-- 뷰어 파일 경로와 body 의 data-root 는 aikit docs build 가 사이트 위치에 맞춰 바꾼다. 장은 <section class="sheet"> 를 이어 붙인다 -->
+<link rel="stylesheet" href="storyboard.css">
+<link rel="icon" href="data:,">
+</head>
+<body data-doc="&lt;프로젝트명&gt; 화면설계서" data-root="../">
+
+
+<!-- 0. 표지 -->
+<section class="sheet" id="cover" data-group="문서" data-label="표지">
+  <div class="cover">
+    <div class="hero">
+      <div class="proj">&lt;프로젝트명&gt;</div>
+      <h1>화면설계서</h1>
+      <div class="sub">&lt;대상 화면 범위 (예: 관리자 웹 · 모바일 앱)&gt;</div>
+    </div>
+    <table class="meta">
+      <tr><th>문서 ID</th><td>&lt;문서 ID&gt;</td></tr>
+      <tr><th>버전</th><td>v0.1</td></tr>
+      <tr><th>작성일</th><td>&lt;YYYY-MM-DD&gt;</td></tr>
+      <tr><th>작성자</th><td>&lt;역할&gt;</td></tr>
+      <tr><th>근거 문서</th><td>&lt;요구사항 · 화면 정책 문서 이름&gt;</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>&lt;프로젝트명&gt; 화면설계서 · v0.1</span><span class="page">1</span></div>
+</section>
+
+<!-- 1. 변경 이력 -->
+<section class="sheet" id="history" data-group="문서" data-label="변경 이력">
+  <div class="band"><div class="no"><small>NO.</small>0.1</div><div class="title">변경 이력</div><div class="doc">&lt;프로젝트명&gt;</div></div>
+  <div class="page-pad">
+    <table class="doc">
+      <tr><th style="width:80px">버전</th><th style="width:110px">일자</th><th style="width:90px">작성자</th><th style="width:160px">대상 화면</th><th>변경 내용</th></tr>
+      <tr><td class="c">v0.1</td><td class="c">&lt;YYYY-MM-DD&gt;</td><td class="c">&lt;역할&gt;</td><td class="c">전체</td><td>최초 작성</td></tr>
+      <tr><td class="c">&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td class="c">&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>&lt;프로젝트명&gt; 화면설계서 · v0.1</span><span class="page">2</span></div>
+</section>
+
+<!-- 2. 메뉴 구조: 루트 → 대분류(.col .h) → 하위(.i). 모바일 지원 화면은 .i.mob(M 배지), 메뉴 밖 화면은 .col.extra(점선) -->
+<section class="sheet" id="menu" data-group="공통" data-label="메뉴 구조">
+  <div class="band"><div class="no"><small>NO.</small>1.1</div><div class="title">메뉴 구조 (Menu Structure)</div><div class="doc">&lt;프로젝트명&gt;</div></div>
+  <div class="page-pad">
+    <div class="tree">
+      <div class="root">&lt;서비스 이름&gt;</div>
+      <div class="stem"></div>
+      <div class="branches">
+        <div class="col"><div class="h">① 대시보드</div><div class="i mob">현황 요약</div><div class="i">알림</div></div>
+        <div class="col"><div class="h">② &lt;업무 1&gt;</div><div class="i mob">목록</div><div class="i">상세 · 수정</div><div class="i">등록</div></div>
+        <div class="col"><div class="h">③ &lt;업무 2&gt;</div><div class="i">목록</div><div class="i">상세</div></div>
+        <div class="col"><div class="h">④ 시스템</div><div class="i">사용자 · 권한</div><div class="i">설정</div></div>
+      </div>
+      <div class="branches" style="margin-top:26px">
+        <div class="col extra"><div class="h">메뉴 밖</div><div class="i">로그인</div><div class="i">비밀번호 찾기</div></div>
+      </div>
+    </div>
+    <p class="legend"><span class="mob-badge"></span> 모바일 폭 지원 · 점선 = 메뉴 밖 화면 · 대분류와 하위 이름의 근거 &lt;REQ-000&gt;</p>
+  </div>
+  <div class="foot"><span>&lt;프로젝트명&gt; 화면설계서 · v0.1</span><span class="page">3</span></div>
+</section>
+
+<!-- 3. 화면 정책: 대구분 · 중구분 · Description · 비고(확정 + 근거 ID 는 .tag-ok, 결정 대기는 .tag-todo) -->
+<section class="sheet" id="policy" data-group="공통" data-label="화면 정책">
+  <div class="band"><div class="no"><small>NO.</small>1.2</div><div class="title">화면 정책 (Policy)</div><div class="doc">&lt;프로젝트명&gt;</div></div>
+  <div class="page-pad">
+    <table class="doc">
+      <tr><th style="width:110px">대구분</th><th style="width:120px">중구분</th><th>Description</th><th style="width:110px">비고</th></tr>
+      <tr><td class="c" rowspan="2">접근 · 오류</td><td class="c">권한 없음</td><td><ul><li>&lt;권한 없는 메뉴 · 버튼을 어떻게 보이는지&gt;</li></ul></td><td class="c tag-ok">확정<br>&lt;POL-000&gt;</td></tr>
+      <tr><td class="c">세션 만료</td><td><ul><li>&lt;로그인으로 보내고 원래 주소로 돌아오는지, 미저장 입력은 어떻게 하는지&gt;</li></ul></td><td class="c tag-todo">결정 대기</td></tr>
+      <tr><td class="c" rowspan="2">공통 표시</td><td class="c">숫자 · 날짜</td><td><ul><li>&lt;금액 · 비율 · 날짜 · 시각 표기 규칙&gt;</li></ul></td><td class="c tag-ok">확정<br>&lt;POL-000&gt;</td></tr>
+      <tr><td class="c">빈 · 로딩 · 오류</td><td><ul><li>&lt;목록이 비었을 때 · 불러오는 중 · 실패했을 때 보이는 것&gt;</li></ul></td><td class="c tag-ok">확정<br>&lt;POL-000&gt;</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>&lt;프로젝트명&gt; 화면설계서 · v0.1</span><span class="page">4</span></div>
+</section>
+
+<!-- 4. 화면: 왼쪽 = 메타 표 + 와이어프레임(번호 마커 .mk), 오른쪽 = Description(번호별 설명 + 근거 ID) · Check Point(미정은 .tag-todo) · 근거 줄.
+     내부 정보(뷰어 기본 보기 · 인쇄에서 숨김, 「내부 정보」 · I 키로 보임): Check Point · 근거 줄 · 설명 줄 안의 근거 ID 목록 · class="sb-dev" 요소(사용 API 같은 개발용 블록).
+     장의 id 는 화면 ID(SCR-…). 부품: wf · wf-img · wf-input · wf-btn · wf-link · wf-bar · wf-table · mk · area-label -->
+<section class="sheet" id="SCR-000" data-group="메뉴 밖" data-label="SCR-000 로그인">
+  <div class="band"><div class="no"><small>NO.</small>2.1</div><div class="title">로그인</div><div class="doc">&lt;프로젝트명&gt;</div></div>
+  <div class="body">
+    <div class="canvas">
+      <table class="meta screen-meta">
+        <tr><th>Page Title</th><td>로그인</td><th>Screen ID</th><td>SCR-000</td><th>Date</th><td>&lt;YYYY-MM-DD&gt;</td></tr>
+        <tr><th>Screen Path</th><td>메뉴 밖 &gt; 로그인</td><th>Related ID</th><td>&lt;기능 ID · 요구사항 ID&gt;</td><th>Author</th><td>&lt;역할&gt;</td></tr>
+      </table>
+      <span class="area-label">로그인</span>
+      <div class="wf fill" style="height:470px;display:flex;align-items:center;justify-content:center">
+        <div class="wf" style="width:360px;padding:24px 28px;position:relative">
+          <div class="wf-img" style="height:46px;margin-bottom:14px">LOGO</div>
+          <span class="mk" style="left:-11px;top:82px">1</span>
+          <div class="wf-label">아이디</div><div class="wf-input">아이디</div>
+          <div class="wf-label">비밀번호</div><div class="wf-input">••••••••</div>
+          <div style="margin-top:10px;position:relative"><span class="mk" style="left:-39px;top:-2px">2</span><span class="wf-link">비밀번호 찾기</span></div>
+          <div style="margin-top:16px"><span class="wf-btn primary" style="width:100%">로그인</span></div>
+          <p class="wf-note" style="margin:10px 0 0;position:relative"><span class="mk" style="left:-39px;top:-3px">3</span>아이디 또는 비밀번호를 확인해 주세요.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="side">
+      <h3>Description (화면 설명)</h3>
+      <ol class="desc">
+        <li><div>아이디 · 비밀번호 입력<ul><li>&lt;입력 규칙의 근거 ID&gt;</li></ul></div></li>
+        <li><div>비밀번호 찾기 화면으로 이동<ul><li>&lt;근거 ID&gt;</li></ul></div></li>
+        <li><div>실패 문구: 어떤 이유로 실패해도 같은 문구<ul><li>&lt;근거 ID&gt;</li></ul></div></li>
+      </ol>
+      <h3>Check Point</h3>
+      <div class="check">
+        <p>&lt;개발 · 테스트가 놓치기 쉬운 조건 (예: 잠금 · 재시도 제한)&gt;</p>
+        <p class="tag-todo">미정: &lt;아직 정하지 않은 것. 정하면 이 줄을 지우고 근거 ID 를 단다&gt;</p>
+      </div>
+      <h3 class="sb-dev">사용 API</h3>
+      <div class="check sb-dev"><p>&lt;이 화면이 부르는 API (개발용 블록 예시. 필요 없으면 지운다)&gt;</p></div>
+      <div class="refs">근거: &lt;기능 ID · 요구사항 ID · 정책 ID&gt;</div>
+    </aside>
+  </div>
+  <div class="foot"><span>&lt;프로젝트명&gt; 화면설계서 · v0.1</span><span class="page">5</span></div>
+</section>
+
+<script src="storyboard.js"></script>
+</body>
+</html>

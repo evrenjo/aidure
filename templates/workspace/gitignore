@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+# 개인 1회용 스크립트 — 공유 도구는 packs/*/bin 으로
+scripts/

@@ -1,0 +1,1478 @@
+{
+  "note": "스택 목록 : repo 를 보고 스택을 감지하는 조건. layer = 서버(backend)·클라이언트(frontend=웹·desktop·mobile·watch·tv)·db · 인프라(infra: 컨테이너 · Kubernetes · IaC). parent 가 있으면 그 프레임워크의 세부(예: spring-webflux). 전용 팩(pack)이 있으면 그 팩이, 없으면 layer 공통 팩만(있으면) 붙는다.",
+  "stacks": [
+    {
+      "id": "spring",
+      "label": "Spring",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot|org\\.springframework|libs\\.plugins\\.spring\\.boot"
+        },
+        {
+          "files": [
+            "application.properties",
+            "application.yml",
+            "application.yaml",
+            "application-*.properties",
+            "application-*.yml",
+            "application-*.yaml"
+          ],
+          "contains": "^spring(\\.[a-z]|:)"
+        },
+        {
+          "files": [
+            "*.java",
+            "*.kt"
+          ],
+          "contains": "@SpringBootApplication",
+          "depth": 9
+        }
+      ],
+      "note": "기존 항목 수정안. 기존 정규식은 Kotlin DSL(id(\"org.springframework.boot\"))·Maven parent(<groupId>org.springframework.boot)를 이미 잡는다. 빠지는 경우는 버전 카탈로그 — build.gradle.kts 에 alias(libs.plugins.spring.boot) 만 있고 좌표는 gradle/libs.versions.toml 에 있을 때. files 에 libs.versions.toml 추가 + libs.plugins.spring.boot 대안. 기존 pack: stack-spring 은 그대로 둔다.",
+      "pack": "stack-spring"
+    },
+    {
+      "id": "fastapi",
+      "label": "FastAPI",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "pyproject.toml",
+            "requirements*.txt",
+            "Pipfile"
+          ],
+          "contains": "fastapi"
+        }
+      ]
+    },
+    {
+      "id": "django",
+      "label": "Django",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "manage.py"
+          ]
+        },
+        {
+          "files": [
+            "pyproject.toml",
+            "requirements*.txt",
+            "Pipfile"
+          ],
+          "contains": "(^|[\"'\\s])django([\"'\\s=<>~]|$)"
+        }
+      ]
+    },
+    {
+      "id": "flask",
+      "label": "Flask",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "pyproject.toml",
+            "requirements*.txt",
+            "Pipfile"
+          ],
+          "contains": "(^|[\"'\\s])flask([\"'\\s=<>~]|$)"
+        }
+      ]
+    },
+    {
+      "id": "express",
+      "label": "Express",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\"express\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "nestjs",
+      "label": "NestJS",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\"@nestjs/core\""
+        }
+      ]
+    },
+    {
+      "id": "aspnet",
+      "label": "ASP.NET",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "*.csproj"
+          ],
+          "contains": "Microsoft\\.AspNetCore|Sdk=\"Microsoft\\.NET\\.Sdk\\.Web\""
+        }
+      ]
+    },
+    {
+      "id": "go",
+      "label": "Go",
+      "layer": "backend",
+      "detect": [
+        {
+          "files": [
+            "go.mod"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "react",
+      "label": "React",
+      "layer": "frontend",
+      "pack": "stack-react",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\"react\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "angular",
+      "label": "Angular",
+      "layer": "frontend",
+      "detect": [
+        {
+          "files": [
+            "angular.json"
+          ]
+        },
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\"@angular/core\""
+        }
+      ]
+    },
+    {
+      "id": "vue",
+      "label": "Vue",
+      "layer": "frontend",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\"vue\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "svelte",
+      "label": "Svelte",
+      "layer": "frontend",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\"svelte\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "postgres",
+      "label": "PostgreSQL",
+      "layer": "db",
+      "pack": "stack-postgres",
+      "detect": [
+        {
+          "files": [
+            "application*.yml",
+            "application*.yaml",
+            "application*.properties",
+            ".env*",
+            "docker-compose*.yml",
+            "docker-compose*.yaml",
+            "compose*.yml",
+            "pyproject.toml",
+            "requirements*.txt",
+            "package.json",
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "*.csproj",
+            "go.mod",
+            "settings.py"
+          ],
+          "contains": "jdbc:postgresql|postgres(ql)?://|psycopg|asyncpg|\"pg\"\\s*:|org\\.postgresql|Npgsql|jackc/pgx|lib/pq|image:\\s*postgres"
+        }
+      ]
+    },
+    {
+      "id": "mysql",
+      "label": "MySQL·MariaDB",
+      "layer": "db",
+      "detect": [
+        {
+          "files": [
+            "application*.yml",
+            "application*.yaml",
+            "application*.properties",
+            ".env*",
+            "docker-compose*.yml",
+            "docker-compose*.yaml",
+            "compose*.yml",
+            "pyproject.toml",
+            "requirements*.txt",
+            "package.json",
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "*.csproj",
+            "go.mod",
+            "settings.py"
+          ],
+          "contains": "jdbc:(mysql|mariadb)|mysql://|mariadb://|pymysql|mysqlclient|\"mysql2?\"\\s*:|mysql-connector|mariadb-java-client|Pomelo\\.EntityFrameworkCore\\.MySql|image:\\s*(mysql|mariadb)"
+        }
+      ]
+    },
+    {
+      "id": "oracle",
+      "label": "Oracle",
+      "layer": "db",
+      "detect": [
+        {
+          "files": [
+            "application*.yml",
+            "application*.yaml",
+            "application*.properties",
+            ".env*",
+            "pyproject.toml",
+            "requirements*.txt",
+            "package.json",
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "*.csproj"
+          ],
+          "contains": "jdbc:oracle|ojdbc|cx_Oracle|oracledb|Oracle\\.ManagedDataAccess"
+        }
+      ]
+    },
+    {
+      "id": "mssql",
+      "label": "SQL Server",
+      "layer": "db",
+      "detect": [
+        {
+          "files": [
+            "application*.yml",
+            "application*.yaml",
+            "application*.properties",
+            ".env*",
+            "docker-compose*.yml",
+            "pyproject.toml",
+            "requirements*.txt",
+            "package.json",
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "*.csproj",
+            "appsettings*.json"
+          ],
+          "contains": "jdbc:sqlserver|mssql-jdbc|pyodbc|pymssql|\"mssql\"\\s*:|\"tedious\"\\s*:|Microsoft\\.EntityFrameworkCore\\.SqlServer|Server=.*Database="
+        }
+      ]
+    },
+    {
+      "id": "mongodb",
+      "label": "MongoDB",
+      "layer": "db",
+      "detect": [
+        {
+          "files": [
+            "application*.yml",
+            "application*.yaml",
+            "application*.properties",
+            ".env*",
+            "docker-compose*.yml",
+            "pyproject.toml",
+            "requirements*.txt",
+            "package.json",
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "go.mod"
+          ],
+          "contains": "mongodb(\\+srv)?://|spring-boot-starter-data-mongodb|pymongo|motor|\"mongoose\"\\s*:|\"mongodb\"\\s*:|mongo-driver|image:\\s*mongo"
+        }
+      ]
+    },
+    {
+      "id": "android",
+      "label": "Android",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "AndroidManifest.xml"
+          ],
+          "contains": "<manifest"
+        },
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "libs.versions.toml"
+          ],
+          "contains": "com\\.android\\.application"
+        }
+      ],
+      "note": "기존 항목 확인 — 유효. 수정안: 버전 카탈로그(alias(libs.plugins.android.application))를 위해 libs.versions.toml 추가. Flutter·RN·Capacitor 저장소는 android/ 아래 매니페스트(깊이 4)로 함께 잡힌다."
+    },
+    {
+      "id": "ios",
+      "label": "iOS",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "project.pbxproj"
+          ],
+          "contains": "SDKROOT = iphoneos|SUPPORTED_PLATFORMS = \\\"[^\\\"]*\\biphoneos"
+        },
+        {
+          "files": [
+            "Info.plist"
+          ],
+          "contains": "<key>(LSRequiresIPhoneOS|UILaunchStoryboardName|UIRequiredDeviceCapabilities)</key>"
+        },
+        {
+          "files": [
+            "Package.swift"
+          ],
+          "contains": "\\.iOS\\s*\\("
+        }
+      ],
+      "note": "기존 항목 수정안. SDKROOT = iphoneos 만으로는 Xcode 멀티플랫폼 앱(SDKROOT = auto)을 놓친다(Apple sample-food-truck 실측: auto 4곳). 큰 앱의 pbxproj 는 512KB 를 넘어 내용 검사가 안 되므로 Info.plist 의 iOS 전용 키를 보조로. Package.swift 의 .iOS( 는 iOS 대상 패키지(라이브러리 포함)."
+    },
+    {
+      "id": "flutter",
+      "label": "Flutter",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "pubspec.yaml"
+          ],
+          "contains": "^\\s*flutter:\\s*$|sdk:\\s*flutter"
+        }
+      ],
+      "note": "기존 항목 확인 — 유효(변경 없음). 순수 Dart 패키지는 sdk: flutter 가 없어 제외된다."
+    },
+    {
+      "id": "react-native",
+      "label": "React Native",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\\\"react-native\\\"\\s*:"
+        }
+      ],
+      "note": "기존 항목 확인 — 유효. react-native-web 만 쓰는 웹앱은 키가 달라 제외된다."
+    },
+    {
+      "id": "watchos",
+      "label": "watchOS",
+      "layer": "watch",
+      "detect": [
+        {
+          "files": [
+            "project.pbxproj"
+          ],
+          "contains": "SDKROOT = watchos|SUPPORTED_PLATFORMS = \\\"[^\\\"]*\\bwatchos"
+        }
+      ],
+      "note": "기존 항목 확인 — 유효. 멀티플랫폼 대안만 추가."
+    },
+    {
+      "id": "wearos",
+      "label": "Wear OS",
+      "layer": "watch",
+      "detect": [
+        {
+          "files": [
+            "AndroidManifest.xml"
+          ],
+          "contains": "android\\.hardware\\.type\\.watch"
+        }
+      ],
+      "note": "기존 항목 확인 — 유효(변경 없음)."
+    },
+    {
+      "id": "tvos",
+      "label": "tvOS",
+      "layer": "tv",
+      "detect": [
+        {
+          "files": [
+            "project.pbxproj"
+          ],
+          "contains": "SDKROOT = appletvos|SUPPORTED_PLATFORMS = \\\"[^\\\"]*\\bappletvos"
+        }
+      ],
+      "note": "기존 항목 확인 — 유효. 멀티플랫폼 대안만 추가."
+    },
+    {
+      "id": "android-tv",
+      "label": "Android TV",
+      "layer": "tv",
+      "detect": [
+        {
+          "files": [
+            "AndroidManifest.xml"
+          ],
+          "contains": "android\\.software\\.leanback|LEANBACK_LAUNCHER"
+        }
+      ],
+      "note": "기존 항목 확인 — 유효. LEANBACK_LAUNCHER 인텐트 카테고리 대안 추가."
+    },
+    {
+      "id": "tizen",
+      "label": "Tizen",
+      "layer": "tv",
+      "detect": [
+        {
+          "files": [
+            "config.xml",
+            "tizen-manifest.xml"
+          ],
+          "contains": "tizen\\.org/ns/"
+        },
+        {
+          "files": [
+            "*.csproj",
+            "*.fsproj",
+            "*.vbproj"
+          ],
+          "contains": "Tizen\\.NET\\.Sdk|<TargetFramework[^>]*>[^<]*tizen"
+        }
+      ],
+      "note": "기존 항목 수정안. config.xml 은 W3C 위젯 형식이라 Cordova 도 같은 파일명을 쓴다 — tizen.org 네임스페이스(xmlns:tizen=\"http://tizen.org/ns/widgets\")로 가른다. 네이티브 앱의 tizen-manifest.xml(xmlns=\"http://tizen.org/ns/packages\")·.NET(Tizen.NET.Sdk) 추가. .NET 조건은 공식 문서로 확인하지 못한 관찰 기반."
+    },
+    {
+      "id": "webos",
+      "label": "webOS",
+      "layer": "tv",
+      "detect": [
+        {
+          "files": [
+            "appinfo.json"
+          ],
+          "contains": "\\\"vendor\\\"\\s*:[\\s\\S]*\\\"main\\\"\\s*:|\\\"main\\\"\\s*:[\\s\\S]*\\\"vendor\\\"\\s*:"
+        }
+      ],
+      "note": "기존 항목 수정안. appinfo.json 은 흔치 않은 이름이지만 \"id\" 만으로는 너무 약하다. webOS 필수 필드 vendor·main 을 함께 요구한다."
+    },
+    {
+      "id": "spring-mvc",
+      "label": "MVC",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-web(mvc)?(?![\\w-])|spring-webmvc"
+        }
+      ],
+      "note": "Boot 4 에서 starter-web → starter-webmvc 개명(구 이름 deprecated). 부정 전방탐색으로 starter-webflux·starter-web-services·starter-webmvc-test 를 배제한다."
+    },
+    {
+      "id": "spring-webflux",
+      "label": "WebFlux",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-webflux|spring-webflux"
+        }
+      ],
+      "note": "MVC 앱이 WebClient 만 쓰려고 starter-webflux 를 넣은 경우에도 잡힌다 — 두 id 가 같이 나오면 사람이 확인."
+    },
+    {
+      "id": "spring-batch",
+      "label": "Batch",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-batch|spring-batch-core|org\\.springframework\\.batch"
+        }
+      ]
+    },
+    {
+      "id": "spring-cloud-gateway",
+      "label": "Cloud Gateway (WebFlux)",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-cloud-starter-gateway(-server-webflux)?(?![\\w-])|spring-cloud-gateway-server-webflux"
+        }
+      ],
+      "note": "구 이름 spring-cloud-starter-gateway(= WebFlux 판)와 새 이름 -server-webflux 를 모두 잡는다."
+    },
+    {
+      "id": "spring-cloud-gateway-mvc",
+      "label": "Cloud Gateway (MVC)",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-cloud-starter-gateway-(server-webmvc|mvc)|spring-cloud-gateway-server-(webmvc|mvc)"
+        }
+      ]
+    },
+    {
+      "id": "spring-cloud-stream",
+      "label": "Cloud Stream",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-cloud-stream|spring-cloud-starter-stream-"
+        }
+      ]
+    },
+    {
+      "id": "spring-cloud-function",
+      "label": "Cloud Function",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-cloud-function|spring-cloud-starter-function"
+        }
+      ],
+      "note": "Cloud Stream 은 spring-cloud-function 을 전이 의존으로 쓰지만 빌드 파일에는 안 적히므로 Stream 앱이 여기 잡히지 않는다. 직접 적었으면 잡힌다."
+    },
+    {
+      "id": "spring-integration",
+      "label": "Integration",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-integration|org\\.springframework\\.integration|spring-integration-core"
+        }
+      ]
+    },
+    {
+      "id": "spring-graphql",
+      "label": "GraphQL",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-graphql|spring-graphql"
+        }
+      ]
+    },
+    {
+      "id": "spring-data-rest",
+      "label": "Data REST",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-data-rest|spring-data-rest-webmvc"
+        }
+      ]
+    },
+    {
+      "id": "spring-shell",
+      "label": "Shell",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-shell-starter|spring-shell-core|org\\.springframework\\.shell"
+        }
+      ]
+    },
+    {
+      "id": "spring-kafka",
+      "label": "Kafka",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-kafka|spring-kafka"
+        }
+      ],
+      "note": "spring-cloud-stream-binder-kafka 는 'spring-kafka' 부분 문자열이 아니라 잡히지 않는다(의도)."
+    },
+    {
+      "id": "spring-amqp",
+      "label": "AMQP (RabbitMQ)",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-amqp|spring-rabbit(?![\\w-])|org\\.springframework\\.amqp"
+        }
+      ],
+      "note": "spring-rabbit-test 등은 전방탐색으로 배제. Cloud Stream Rabbit 바인더는 잡히지 않는다."
+    },
+    {
+      "id": "spring-pulsar",
+      "label": "Pulsar",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-pulsar|spring-pulsar"
+        }
+      ]
+    },
+    {
+      "id": "spring-modulith",
+      "label": "Modulith",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-modulith"
+        }
+      ]
+    },
+    {
+      "id": "spring-authorization-server",
+      "label": "Authorization Server",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "oauth2-authorization-server"
+        }
+      ],
+      "note": "Boot 4 의 spring-boot-starter-(security-)oauth2-authorization-server 와 라이브러리 spring-security-oauth2-authorization-server 를 함께 잡는다."
+    },
+    {
+      "id": "spring-session",
+      "label": "Session",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-session-(data-redis|jdbc|hazelcast|data-mongodb|core)|spring-boot-starter-session-"
+        }
+      ]
+    },
+    {
+      "id": "spring-ws",
+      "label": "Web Services (SOAP)",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-web-?services|spring-ws-core"
+        }
+      ],
+      "note": "Boot 4 에서 starter-web-services → starter-webservices 개명. 둘 다 잡는다."
+    },
+    {
+      "id": "spring-rsocket",
+      "label": "RSocket",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-rsocket|io\\.rsocket"
+        }
+      ]
+    },
+    {
+      "id": "spring-websocket",
+      "label": "WebSocket",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-websocket|spring-websocket"
+        }
+      ]
+    },
+    {
+      "id": "spring-grpc",
+      "label": "gRPC",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-grpc-(server|client)|spring-grpc"
+        }
+      ],
+      "note": "Boot 4 starter-grpc-* 와 Spring gRPC 프로젝트(spring-grpc-*). 비 Spring gRPC 스타터(net.devh 등)는 잡지 않는다."
+    },
+    {
+      "id": "spring-jersey",
+      "label": "Jersey (JAX-RS)",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-boot-starter-jersey"
+        }
+      ]
+    },
+    {
+      "id": "spring-cloud-config-server",
+      "label": "Cloud Config Server",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-cloud-config-server"
+        }
+      ],
+      "note": "클라이언트(spring-cloud-starter-config)는 앱 구조를 바꾸지 않으므로 잡지 않는다."
+    },
+    {
+      "id": "spring-cloud-eureka-server",
+      "label": "Eureka Server",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-cloud-starter-netflix-eureka-server"
+        }
+      ],
+      "note": "eureka-client 는 제외(클라이언트 라이브러리)."
+    },
+    {
+      "id": "spring-cloud-task",
+      "label": "Cloud Task",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-cloud-(starter-)?task"
+        }
+      ]
+    },
+    {
+      "id": "spring-statemachine",
+      "label": "Statemachine",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "spring-statemachine-"
+        }
+      ]
+    },
+    {
+      "id": "spring-ai",
+      "label": "AI",
+      "layer": "backend",
+      "parent": "spring",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "org\\.springframework\\.ai|spring-ai-(bom|starter|client|model|openai|ollama|anthropic|vertex|azure|bedrock|mcp|pgvector|vector)"
+        }
+      ]
+    },
+    {
+      "id": "electron",
+      "label": "Electron",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\\\"electron\\\"\\s*:"
+        }
+      ],
+      "note": "electron 은 dependencies/devDependencies 의 키로만 잡는다(\"keywords\": [\"electron\"] 는 콜론이 없어 제외). 화면이 React 등이면 그 프런트 스택도 함께 잡히는 것이 정상."
+    },
+    {
+      "id": "tauri",
+      "label": "Tauri",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "tauri.conf.json",
+            "tauri.conf.json5",
+            "Tauri.toml"
+          ]
+        }
+      ],
+      "note": "설정 파일은 src-tauri/ 아래(깊이 1). 파일 존재만으로 충분 — Tauri 가 아닌 프로젝트가 이 이름을 쓰지 않는다."
+    },
+    {
+      "id": "neutralino",
+      "label": "Neutralinojs",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "neutralino.config.json"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wpf",
+      "label": "WPF",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "*.csproj",
+            "*.fsproj",
+            "*.vbproj"
+          ],
+          "contains": "<UseWPF>\\s*true\\s*</UseWPF>|60dc8134-eba5-43b8-bcc9-bb4bc16c2548|<Reference\\s+Include=\\\"PresentationFramework\\\""
+        }
+      ],
+      "note": "SDK 형식은 <UseWPF>true</UseWPF>. 옛 .NET Framework 형식은 WPF ProjectTypeGuid 또는 PresentationFramework 참조로 잡는다(GUID·참조는 공개 템플릿 관찰 기반 — 공식 문서 인용 아님)."
+    },
+    {
+      "id": "winforms",
+      "label": "WinForms",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "*.csproj",
+            "*.fsproj",
+            "*.vbproj"
+          ],
+          "contains": "<UseWindowsForms>\\s*true\\s*</UseWindowsForms>|<Reference\\s+Include=\\\"System\\.Windows\\.Forms\\\""
+        }
+      ],
+      "note": "WPF 앱이 WinForms 상호운용을 켠 경우 둘 다 잡힌다(정상)."
+    },
+    {
+      "id": "winui",
+      "label": "WinUI 3",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "*.csproj",
+            "*.fsproj",
+            "*.vbproj"
+          ],
+          "contains": "<UseWinUI>\\s*true\\s*</UseWinUI>"
+        }
+      ]
+    },
+    {
+      "id": "avalonia",
+      "label": "Avalonia",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "*.axaml"
+          ]
+        },
+        {
+          "files": [
+            "*.csproj",
+            "*.fsproj",
+            "*.vbproj",
+            "Directory.Packages.props"
+          ],
+          "contains": "Include=\\\"Avalonia(\\.Desktop)?\\\""
+        }
+      ],
+      "note": ".axaml 확장자는 Avalonia 전용. 공식 템플릿 csproj 에 PackageReference Include=\"Avalonia\"·\"Avalonia.Desktop\"."
+    },
+    {
+      "id": "maui",
+      "label": ".NET MAUI",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "*.csproj",
+            "*.fsproj",
+            "*.vbproj"
+          ],
+          "contains": "<UseMaui>\\s*true\\s*</UseMaui>"
+        }
+      ],
+      "note": "MAUI 는 모바일+데스크톱(Windows·Mac Catalyst) 단일 프로젝트. 한 항목은 layer 하나라 mobile 로 두었다 — 데스크톱 규칙도 걸려야 하면 layer 를 배열로 받게 하거나 desktop 으로 바꾸는 판단이 필요하다."
+    },
+    {
+      "id": "javafx",
+      "label": "JavaFX",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "org\\.openjfx|javafxplugin"
+        },
+        {
+          "files": [
+            "*.fxml"
+          ]
+        },
+        {
+          "files": [
+            "module-info.java"
+          ],
+          "contains": "requires\\s+(transitive\\s+)?javafx\\."
+        }
+      ],
+      "note": "Gradle 플러그인 id org.openjfx.javafxplugin, Maven groupId org.openjfx. .fxml 은 JavaFX 전용. JDK 8 번들 JavaFX 처럼 빌드 파일에 흔적이 없으면 .fxml·module-info 로만 잡힌다."
+    },
+    {
+      "id": "qt",
+      "label": "Qt",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "CMakeLists.txt"
+          ],
+          "contains": "find_package\\s*\\(\\s*(Qt[56]|QT\\s+NAMES\\s+Qt[56])[^)]*\\b(Widgets|Quick|Gui|Qml)\\b"
+        },
+        {
+          "files": [
+            "*.pro"
+          ],
+          "contains": "^\\s*QT\\s*[+*]?=.*\\b(gui|widgets|quick|qml)\\b"
+        },
+        {
+          "files": [
+            "*.qml"
+          ]
+        },
+        {
+          "files": [
+            "pyproject.toml",
+            "requirements*.txt",
+            "Pipfile",
+            "setup.py"
+          ],
+          "contains": "(^|[\\\"'\\s])(PySide[26]|PyQt[56])([\\\"'\\s=<>~\\[]|$)"
+        }
+      ],
+      "note": "Core 만 쓰는 콘솔 Qt 는 제외하려고 GUI 모듈(Widgets·Quick·Gui·Qml)을 요구한다. .pro 는 ProGuard(proguard-rules.pro)와 이름이 겹쳐 QT 변수 대입을 함께 본다."
+    },
+    {
+      "id": "flutter-desktop",
+      "label": "Flutter Desktop",
+      "layer": "desktop",
+      "parent": "flutter",
+      "detect": [
+        {
+          "files": [
+            "flutter_window.cpp",
+            "MainFlutterWindow.swift"
+          ]
+        },
+        {
+          "files": [
+            "my_application.cc"
+          ],
+          "contains": "flutter"
+        }
+      ],
+      "note": "flutter create 가 만드는 러너 파일: windows/runner/flutter_window.cpp · macos/Runner/MainFlutterWindow.swift · linux/runner/my_application.cc. 모바일 flutter 항목과 함께 잡힌다."
+    },
+    {
+      "id": "compose-desktop",
+      "label": "Compose Desktop",
+      "layer": "desktop",
+      "parent": "kmp",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "compose\\.desktop"
+        }
+      ],
+      "note": "compose.desktop.currentOs 의존성·compose.desktop { application { nativeDistributions } } 블록."
+    },
+    {
+      "id": "macos-native",
+      "label": "macOS (AppKit·SwiftUI)",
+      "layer": "desktop",
+      "detect": [
+        {
+          "files": [
+            "project.pbxproj"
+          ],
+          "contains": "SDKROOT = macosx|SUPPORTED_PLATFORMS = \\\"[^\\\"]*\\bmacosx"
+        }
+      ],
+      "note": "Xcode 멀티플랫폼 타깃은 SDKROOT = auto + SUPPORTED_PLATFORMS 목록이다. Xcode 로 만든 macOS 명령줄 도구도 잡힌다(알려진 거짓 양성). pbxproj 가 512KB 를 넘으면 detect.js 가 내용을 읽지 않아 놓친다."
+    },
+    {
+      "id": "expo",
+      "label": "Expo",
+      "layer": "mobile",
+      "parent": "react-native",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\\\"expo\\\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "kmp",
+      "label": "Kotlin Multiplatform",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "kotlin\\(\\s*\\\"multiplatform\\\"\\s*\\)|org\\.jetbrains\\.kotlin\\.multiplatform"
+        }
+      ],
+      "note": "KMP 는 서버·웹 대상도 가능하지만 대부분 모바일 공유 코드라 mobile 로 둔다."
+    },
+    {
+      "id": "compose-multiplatform",
+      "label": "Compose Multiplatform",
+      "layer": "mobile",
+      "parent": "kmp",
+      "detect": [
+        {
+          "files": [
+            "build.gradle",
+            "build.gradle.kts",
+            "pom.xml",
+            "libs.versions.toml"
+          ],
+          "contains": "org\\.jetbrains\\.compose"
+        }
+      ]
+    },
+    {
+      "id": "capacitor",
+      "label": "Capacitor",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "capacitor.config.json",
+            "capacitor.config.ts",
+            "capacitor.config.js"
+          ]
+        },
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\\\"@capacitor/core\\\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "ionic",
+      "label": "Ionic",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "ionic.config.json"
+          ]
+        },
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\\\"@ionic/(angular|react|vue|core)\\\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "cordova",
+      "label": "Cordova",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "config.xml"
+          ],
+          "contains": "cordova\\.apache\\.org"
+        },
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\\\"cordova-(android|ios)\\\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "nativescript",
+      "label": "NativeScript",
+      "layer": "mobile",
+      "detect": [
+        {
+          "files": [
+            "nativescript.config.ts",
+            "nativescript.config.js"
+          ]
+        },
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\\\"@nativescript/core\\\"\\s*:"
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "label": "Docker",
+      "layer": "infra",
+      "detect": [
+        {
+          "files": [
+            "Dockerfile",
+            "Dockerfile.*",
+            "*.Dockerfile",
+            "Containerfile"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docker-compose",
+      "label": "Docker Compose",
+      "layer": "infra",
+      "detect": [
+        {
+          "files": [
+            "docker-compose*.yml",
+            "docker-compose*.yaml",
+            "compose.yml",
+            "compose.yaml",
+            "compose.*.yml",
+            "compose.*.yaml"
+          ],
+          "contains": "^services:"
+        }
+      ]
+    },
+    {
+      "id": "kubernetes",
+      "label": "Kubernetes",
+      "layer": "infra",
+      "detect": [
+        {
+          "files": [
+            "kustomization.yaml",
+            "kustomization.yml"
+          ]
+        },
+        {
+          "files": [
+            "*.yaml",
+            "*.yml"
+          ],
+          "contains": "^kind:\\s*(Deployment|StatefulSet|DaemonSet|CronJob|Job|Ingress|HorizontalPodAutoscaler)\\s*$",
+          "caseSensitive": true,
+          "notIn": [
+            "test",
+            "tests",
+            "testdata",
+            "fixtures",
+            "__tests__",
+            "e2e",
+            "examples",
+            "example",
+            "samples"
+          ]
+        }
+      ],
+      "note": "Helm 차트 템플릿도 kind 줄이 있어 함께 잡힌다 (helm 의 부모)."
+    },
+    {
+      "id": "helm",
+      "label": "Helm",
+      "layer": "infra",
+      "parent": "kubernetes",
+      "detect": [
+        {
+          "files": [
+            "Chart.yaml"
+          ],
+          "contains": "^apiVersion:\\s*v[12]\\s*$"
+        },
+        {
+          "files": [
+            "helmfile.yaml",
+            "helmfile.yaml.gotmpl"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "terraform",
+      "label": "Terraform·OpenTofu",
+      "layer": "infra",
+      "detect": [
+        {
+          "files": [
+            "*.tf",
+            "*.tf.json",
+            "*.tofu",
+            ".terraform.lock.hcl",
+            "terragrunt.hcl"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ansible",
+      "label": "Ansible",
+      "layer": "infra",
+      "detect": [
+        {
+          "files": [
+            "ansible.cfg"
+          ]
+        },
+        {
+          "files": [
+            "*.yml",
+            "*.yaml"
+          ],
+          "contains": "ansible\\.builtin\\.|^-\\s+hosts:\\s*\\S+",
+          "notIn": [
+            "test",
+            "tests",
+            "testdata",
+            "fixtures",
+            "__tests__",
+            "e2e",
+            "examples",
+            "example",
+            "samples"
+          ],
+          "caseSensitive": true
+        }
+      ],
+      "note": "플레이북은 맨 앞 칸의 - hosts: 로 잡는다 (Ingress tls 의 들여쓴 hosts 는 제외)."
+    }
+  ],
+  "layers": {
+    "backend": "서버",
+    "frontend": "웹",
+    "desktop": "데스크톱",
+    "mobile": "모바일",
+    "watch": "워치",
+    "tv": "TV",
+    "db": "DB",
+    "infra": "인프라"
+  }
+}

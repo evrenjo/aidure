@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Office 잠금·임시 파일
+~$*
+*.tmp
+.~lock.*#

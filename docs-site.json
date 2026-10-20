@@ -1,0 +1,60 @@
+{
+  "title": "aikit 문서",
+  "logo": "ai",
+  "groups": [
+    {
+      "group": "시작",
+      "icon": "◆",
+      "files": [
+        "README.md",
+        "docs/quickstart.md"
+      ]
+    },
+    {
+      "group": "쓰는 법",
+      "icon": "⇢",
+      "files": [
+        "docs/workflow.md",
+        "docs/commands.md",
+        "docs/handoff.md",
+        "docs/docs-site.md",
+        "docs/notify.md",
+        "docs/team-models.md"
+      ],
+      "split": [
+        "docs/workflow.md"
+      ]
+    },
+    {
+      "group": "설정 · 참고",
+      "icon": "⚙",
+      "files": [
+        "docs/workspace.md",
+        "docs/rules.md",
+        "docs/budget.md",
+        "docs/model-catalog.md"
+      ]
+    },
+    {
+      "group": "팩",
+      "icon": "▦",
+      "files": [
+        "docs/packs.md",
+        "docs/pack-making.md"
+      ],
+      "split": [
+        "docs/packs.md"
+      ]
+    },
+    {
+      "group": "킷 개발",
+      "icon": "⚒",
+      "files": [
+        "docs/kit-dev.md"
+      ]
+    }
+  ],
+  "labels": {
+    "README.md": "소개"
+  }
+}

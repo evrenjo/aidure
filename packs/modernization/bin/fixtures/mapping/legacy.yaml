@@ -1,0 +1,16 @@
+- seq: 10
+  name: 'simulation: sim_key from links'
+  target_table: sim_key
+  source_sql: |-
+    SELECT
+      RTRIM(L.CD_TARGET) AS sim_target,
+      RTRIM(L.ID_STORE) AS store_ref
+    FROM LNK L
+    JOIN HDR H ON H.ID_STORE = L.ID_STORE
+- seq: 11
+  name: 'plan: new_table (OLDT)'
+  target_table: new_table
+  source_sql: |-
+    SELECT
+      RTRIM(KEY_A) AS key_code
+    FROM OLDT

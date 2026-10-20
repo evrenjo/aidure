@@ -1,0 +1,628 @@
+#!/usr/bin/env node
+// 문서 사이트: 기획 repo 의 md 를 같은 경로 구조의 HTML(docs-site/)로 만든다. 실행: aikit docs <명령> 또는 node packs/core/bin/docs-site.js <명령>
+/*
+ * 명령
+ *   build [repo|폴더] [--out docs-site] [--force]   만들기. repo 를 안 주면 workspace.json 의 기획 repo(kind: docs) 전부. 옛 출력 폴더 html/ 은 docs-site/ 로 한 번 옮긴다 (git mv)
+ *   check [repo|폴더]                          md 와 docs-site/ 가 어긋났는지 (어긋나면 exit 1). 정의 없는 ID 는 ⚠ 만
+ *   pages [on|off] [repo|폴더]                 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일을 두고 docs-site/ 를 커밋 대상으로, off = .gitignore 에 /docs-site/
+ *   refs-quote <md 파일…> [--dry]              본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다
+ *   hook <repo 폴더>                           기획 repo 의 pre-commit 이 부른다 (aikit docs build 로 만든 적이 없으면 아무것도 안 한다)
+ *   show <ID> [--in <파일 조각>] [--all]         그 ID 의 정의 부분만 출력 (문서를 통째로 읽지 않는다). --all = 정의가 여럿이면 모두
+ *   refs <ID> [--docs]                         그 ID 가 나오는 곳 (기획 · 코드 · 이슈 repo, 파일:줄). --docs = 기획 repo 만
+ *   trace [--ids FN,API] [--all] [--strict]     기획 ID 와 코드의 구현 표시(주석의 ID) 대조: 코드에 없는 ID(⚠) · 기획에 정의 없는 ID(✖, 오타 · 지운 기능).
+ *                                              머리말 = --ids, 없으면 vars.docs.traceIds, 그것도 없으면 vars.screens.functionIds. --strict = ✖ 이 있으면 exit 1
+ * build · check 는 문서 점검 경고도 낸다: 큰 문서(vars.docs.maxKB) · 문장형 제목 · 긴 코드 블록(vars.docs.codeMax) · 파일:줄 참조 · 머리말에 쌓인 변경 이력 · 여러 문서에 같은 문장 ·
+ *   긴 표 칸(vars.docs.cellMax) · 문단형 표(vars.docs.cellAvg) · 표 칸 안 경위 · 그림 없는 큰 문서(vars.docs.figureKB) · ASCII 그림 · 메뉴 「기타」 문서 (「상태: 동결」 문서는 뺀다)
+ * 기획 repo 의 docs-site.json (선택): { title, logo, version, source, ink: false(펜 필기 끔), printAll: { autoPrint: false }(전체 인쇄 쪽이 인쇄 창을 열지 않음), groups: [{ group, icon, files: [glob], split: true|[glob], collapsed, tree }], labels: { 'md 경로': '메뉴 이름' }, include: [glob], exclude: [glob], repos: { … } }. 메뉴 묶음 · 상단 바 · 원본 버튼 · 포함 범위.
+ *   groups[].files 는 나열한 순서대로 메뉴에 나온다 (glob 하나에 맞는 여러 문서는 파일 이름 순). 어느 묶음에도 안 맞는 문서는 「기타」 로 가고 경고한다.
+ *   collapsed: 처음엔 접힌 묶음 · tree: 묶음 안을 폴더 트리로. 메뉴는 쪽마다 넣지 않고 assets/nav.js 하나 (site.js 가 그린다).
+ *   repo 맨 위에 docs-site.extra.css · docs-site.extra.js 를 두면 assets/site.css · site.js 끝에 붙인다 (이 repo 만의 모양 · 동작).
+ *   출력 경로가 대소문자만 다르면(README.md · INDEX.md 가 한 폴더) 쓰지 않고 ✖. 문서 점검 경고는 사이트에 넣는 문서만 본다.
+ *   source 가 없으면 build 가 origin 으로 한 번 채워 둔다 (--no-source 로 끔).
+ *   워크스페이스 루트를 만들면 repos/<이름>/ (그룹이면 repos/<그룹>/<이름>/) 는 repo 마다 copy(사본) · link(그 repo 사이트로 가는 쪽 하나만) · off(뺌).
+ *   기본 = 종류별(legacy off · 그 밖 copy), docs-site.json repos 에 종류(legacy · docs · code) 또는 이름으로 바꾼다: "repos": { "docs": "link", "news-picker": { "mode": "off" }, "trader-jo-plans": { "mode": "link", "url": "https://…" } }.
+ *   원본 버튼은 그 repo 의 원격(workspace.json repos[].url, 없으면 그 repo 의 origin) + 기본 브랜치 + repo 안 경로. 원격이 없으면 버튼을 숨긴다.
+ * docs-site/assets/site.json 이 이 도구로 만든 표시다. 그 표시가 없는데 docs-site/ 에 파일이 있으면 다른 생성기의 것이라 덮지 않는다 (--force 로 덮는다).
+ * 화면설계서 장(class="sheet" 가 있는 .html)은 그대로 옮기고 뷰어(storyboard.css · js)를 docs-site/assets/storyboard/ 로 복사한다.
+ * 데이터 설계 정의서(「### 스키마.테이블」 + 컬럼 표)가 든 폴더마다 ERD 뷰어 <폴더>/erd.html 을 만들고 뷰어(datamodel 팩)를 docs-site/assets/erd/ 로 복사한다 (datamodel 팩이 있을 때).
+ */
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+const { build, globRe, wanted } = require('../lib/mdsite');
+const DR = require('../lib/docsref');
+const MC = require('../lib/mermaid-check');
+
+const PACKS = path.resolve(__dirname, '..', '..');
+const argv = process.argv.slice(2);
+const opt = (k) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : null; };
+const has = (k) => argv.includes(`--${k}`);
+const MANIFEST = 'assets/site.json';
+const OUT = 'docs-site';   // 출력 폴더 (0.59.0 전에는 html/)
+const OLD_OUT = 'html';
+/** 이 repo 의 출력 폴더: 아직 옛 html/ 만 있으면 그것 (check · hook 은 옮기지 않고 그대로 본다) */
+const outOf = (dir) => opt('out') || (!fs.existsSync(path.join(dir, OUT, MANIFEST)) && fs.existsSync(path.join(dir, OLD_OUT, MANIFEST)) ? OLD_OUT : OUT);
+const SKIP = new Set(['.git', 'node_modules']);
+
+function loadWs() {
+  // 이 도구가 놓인 워크스페이스 (기획 repo 의 pre-commit 처럼 다른 폴더에서 불려도 같은 변수를 쓴다)
+  try { return require('../lib/workspace').load(path.resolve(PACKS, '..')); } catch { return null; }
+}
+
+/** 대상 repo 폴더들. 인자가 폴더면 그 폴더, 이름이면 그 repo, 없으면 기획 repo 전부 */
+function targets(ws, arg) {
+  const repos = ws ? ws.repos : [];
+  if (arg && fs.existsSync(arg) && fs.statSync(arg).isDirectory()) {
+    // 워크스페이스의 repo 폴더면 그 이름으로 (안내 명령에 쓴다)
+    const real = (x) => { try { return fs.realpathSync(x); } catch { return path.resolve(x); } };
+    const r = repos.find((x) => real(x.dir) === real(arg));
+    return [{ name: r ? r.name : path.basename(path.resolve(arg)), dir: path.resolve(arg) }];
+  }
+  if (arg) {
+    const r = repos.find((x) => x.name === arg);
+    if (!r) throw new Error(`repo '${arg}' 가 없습니다 (workspace.json repos 이름 또는 폴더 경로)`);
+    return [r];
+  }
+  const docs = repos.filter((r) => r.kind === 'docs');
+  if (!docs.length) throw new Error('기획 repo(kind: docs)가 없습니다. aikit docs build <repo 이름|폴더>');
+  return docs;
+}
+
+function readTree(dir, out, keep = () => true) {
+  const files = {};
+  (function walk(rel) {
+    for (const e of fs.readdirSync(path.join(dir, rel), { withFileTypes: true })) {
+      const r = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) { if (!SKIP.has(e.name) && r !== out && keep(r, true)) walk(r); continue; }
+      if (!keep(r, false)) continue;
+      if (/\.md$/i.test(e.name)) files[r] = fs.readFileSync(path.join(dir, r), 'utf8');
+      else if (/\.html?$/i.test(e.name)) files[r] = fs.readFileSync(path.join(dir, r), 'utf8');
+      else if (/\.svg$/i.test(e.name)) {   /* SVG 는 주소로 직접 열면 안의 스크립트가 사이트에서 돈다: 스크립트 · on… 속성 · javascript: 가 있으면 넣지 않는다 */
+        const buf = fs.readFileSync(path.join(dir, r));
+        if (/<script|\son[a-z]+\s*=|javascript:/i.test(buf.toString('utf8'))) console.warn(`⚠ ${r}: SVG 안에 스크립트 · on… 속성이 있어 사이트에 넣지 않았습니다`);
+        else files[r] = buf;
+      } else if (/\.(png|jpe?g|gif|webp)$/i.test(e.name)) files[r] = fs.readFileSync(path.join(dir, r));
+    }
+  })('');
+  return files;
+}
+
+/** 프로젝트별 덧붙임: 기획 repo 맨 위의 docs-site.extra.css · docs-site.extra.js 가 있으면 assets/site.css · site.js 끝에 붙인다 (check · pre-commit 도 붙인 결과로 비교) */
+const EXTRA = { 'assets/site.css': 'docs-site.extra.css', 'assets/site.js': 'docs-site.extra.js' };
+function assets(dir) {
+  const a = {};
+  const add = (from, to) => { if (fs.existsSync(from)) a[to] = fs.readFileSync(from); };
+  add(path.join(PACKS, 'core', 'assets', 'docs-site', 'site.css'), 'assets/site.css');
+  add(path.join(PACKS, 'core', 'assets', 'docs-site', 'site.js'), 'assets/site.js');
+  for (const [to, name] of Object.entries(EXTRA)) {
+    const f = dir && path.join(dir, name);
+    if (!f || !a[to] || !fs.existsSync(f)) continue;
+    a[to] = Buffer.concat([a[to], Buffer.from(`\n/* ${name} (이 repo 덧붙임) */\n`), fs.readFileSync(f)]);
+  }
+  add(path.join(PACKS, 'screens', 'assets', 'storyboard', 'storyboard.css'), 'assets/storyboard/storyboard.css');
+  add(path.join(PACKS, 'screens', 'assets', 'storyboard', 'storyboard.js'), 'assets/storyboard/storyboard.js');
+  return a;
+}
+
+/** mermaid 그림: 킷에 넣은 파일(버전 고정 · 오프라인). 그림이 있는 사이트에만 docs-site/assets/mermaid/ 로 간다 */
+function mermaidAssets() {
+  const dir = path.join(PACKS, 'core', 'assets', 'mermaid');
+  const a = {};
+  for (const f of ['mermaid.min.js', 'mermaid-LICENSE.txt']) if (fs.existsSync(path.join(dir, f))) a[`assets/mermaid/${f}`] = fs.readFileSync(path.join(dir, f));
+  return a;
+}
+
+/** 사이트 제목: repo README 의 첫 제목 > 워크스페이스 제목 > repo 이름 */
+/** ERD 뷰어: datamodel 팩이 있으면 틀 · 파일 · 프로젝트 컨벤션(DB 종류 · 외래키를 DB 에 거는지) */
+const ERD_FILES = ['erd.css', 'erd.js', 'ddl.js', 'elk.bundled.js', 'elkjs-LICENSE.txt'];
+/** 화면설계서 색 프리셋 (vars.screens.theme, storyboard.css 의 [data-theme]). 기본 indigo 는 속성을 달지 않는다 */
+const SHEET_THEMES = ['indigo', 'blue', 'teal', 'orange', 'rose'];
+function sheetTheme(ws) {
+  const t = String((ws && ws.vars && ws.vars.screens && ws.vars.screens.theme) || '').trim().toLowerCase();
+  if (!t || t === 'indigo') return null;
+  if (!SHEET_THEMES.includes(t)) { console.error(`⚠ vars.screens.theme "${t}" 는 없는 색입니다 (${SHEET_THEMES.join(' · ')}). 기본 indigo 로 만듭니다`); return null; }
+  return t;
+}
+
+function erdOpts(ws) {
+  const dir = path.join(PACKS, 'datamodel', 'assets', 'erd');
+  if (!fs.existsSync(path.join(dir, 'viewer.html'))) return null;
+  const v = (ws && ws.vars && ws.vars.datamodel) || {};
+  const conv = { dialect: String(v.dialect || '').trim() };
+  if (/^(n|no|false|아니오|없음)$/i.test(String(v.fkInDb || '').trim())) conv.fkInDb = false;
+  // ERD 에서 선을 숨길 표: 목록(쉼표 · 배열) · 들어오는 관계가 이 수 이상이면 허브로 본다 (기본 10)
+  const list = (x) => (Array.isArray(x) ? x : String(x || '').split(',')).map((s) => String(s).trim()).filter(Boolean);
+  conv.hideEdgesTo = list(v.erdHideEdgesTo);
+  const hub = Number(v.erdHubMin);
+  if (Number.isInteger(hub) && hub > 0) conv.hubMin = hub;
+  return { shell: fs.readFileSync(path.join(dir, 'viewer.html'), 'utf8'), conv, assets: Object.fromEntries(ERD_FILES.map((f) => [`assets/erd/${f}`, fs.readFileSync(path.join(dir, f))])) };
+}
+
+function titleOf(dir, ws, name) {
+  try {
+    const m = /^#\s+(.+)$/m.exec(fs.readFileSync(path.join(dir, 'README.md'), 'utf8'));
+    if (m && !/[<>]/.test(m[1])) return m[1].trim();
+  } catch { /* README 없음 */ }
+  return (ws && ws.project && ws.project.title) || name;
+}
+
+function prefixesOf(ws) {
+  const v = ws && ws.vars && ws.vars.docs && ws.vars.docs.ids;
+  return String(v || '').split(',').map((x) => x.trim()).filter(Boolean);
+}
+
+const CONFIG = 'docs-site.json';
+function readConfig(dir) {
+  try { return JSON.parse(fs.readFileSync(path.join(dir, CONFIG), 'utf8')); } catch (e) {
+    if (fs.existsSync(path.join(dir, CONFIG))) throw new Error(`${CONFIG} 를 읽지 못했습니다: ${e.message}`);
+    return {};
+  }
+}
+
+const gitOut = (dir, args) => { try { return execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } };
+
+/** git 원격 주소 → 웹 주소 (https://호스트/경로). 인증 정보는 버린다. 모르는 꼴이면 null */
+function webOf(url) {
+  if (!url) return null;
+  let m = /^(?:ssh:\/\/)?[^@\s]+@([^:/\s]+)(?::\d+)?[:/](.+?)(?:\.git)?\/?$/.exec(url);
+  let web = m ? `https://${m[1]}/${m[2]}` : null;
+  if (!web && /^https?:\/\//.test(url)) web = url.replace(/\/\/[^@/]+@/, '//').replace(/\.git\/?$/, '').replace(/\/$/, '');
+  return web || null;
+}
+
+/** origin(또는 주어진 원격) 주소 → 원본 보기 주소 (https://호스트/경로/-/blob/<기본 브랜치>). 모르는 꼴이면 null */
+function sourceOf(dir, remote) {
+  const web = webOf(remote || gitOut(dir, ['remote', 'get-url', 'origin']));
+  if (!web) return null;
+  const branch = (gitOut(dir, ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']).replace(/^origin\//, '')) || gitOut(dir, ['rev-parse', '--abbrev-ref', 'HEAD']) || 'main';
+  return `${web}${/github\.com/i.test(web) ? '' : '/-'}/blob/${branch}`;
+}
+
+/** Pages: 원격 종류 · CI 파일 · 켜짐 여부. 켜짐 = 원격에 맞는 CI 파일이 있고 docs-site/ 를 .gitignore 로 빼지 않음 */
+const CI = { gitlab: '.gitlab-ci.yml', github: path.join('.github', 'workflows', 'pages.yml') };
+const CI_SRC = { gitlab: 'gitlab-ci.yml', github: 'github-pages.yml' };
+const CI_MARK = 'aikit docs pages';
+function hostOfRemote(dir) {
+  const url = gitOut(dir, ['remote', 'get-url', 'origin']);
+  if (!url) return null;
+  return /github/i.test(url) ? 'github' : 'gitlab';
+}
+const ciHasPages = (dir, h) => { try { const t = fs.readFileSync(path.join(dir, CI[h]), 'utf8'); return h === 'github' || /^pages:/m.test(t); } catch { return false; } };
+const ignored = (dir) => spawnOk(dir, ['check-ignore', '-q', '--no-index', `${OUT}/${MANIFEST}`]);
+function spawnOk(dir, args) { try { execFileSync('git', ['-C', dir, ...args], { stdio: 'ignore' }); return true; } catch { return false; } }
+function pagesState(dir) {
+  const host = hostOfRemote(dir);
+  const hosts = host ? [host] : ['gitlab', 'github'];
+  const ci = hosts.filter((h) => ciHasPages(dir, h));
+  const on = ci.length > 0 && !ignored(dir);
+  return { host, ci, on };
+}
+const HOST_NAME = { gitlab: 'GitLab', github: 'GitHub' };
+/** build 끝의 Pages 한 줄 */
+function pagesHint(dir, out) {
+  const st = pagesState(dir);
+  if (!st.host) return `Pages: 원격이 없습니다. 로컬로 보기: python3 -m http.server -d ${out} (file:// 로도 열린다)`;
+  if (st.on) return `Pages 켜짐 (${HOST_NAME[st.host]}): ${out}/ 를 커밋 · push 하면 ${CI[st.host]} 가 올린다. 끄기: aikit docs pages off`;
+  return `Pages 꺼짐 (${HOST_NAME[st.host]}): ${out}/ 는 이 PC 에서만 본다. 올리려면: aikit docs pages on`;
+}
+
+/** 기본 브랜치 (origin HEAD, 없으면 지금 브랜치, 그것도 없으면 main) */
+const defaultBranch = (dir) => gitOut(dir, ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']).replace(/^origin\//, '') || gitOut(dir, ['rev-parse', '--abbrev-ref', 'HEAD']).replace(/^HEAD$/, '') || 'main';
+
+/** .gitignore 에 /docs-site/ 줄을 넣거나 뺀다. 바꿨으면 true */
+function setIgnore(dir, on) {
+  const f = path.join(dir, '.gitignore');
+  const text = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+  const re = new RegExp(`^/?${OUT}/?\\s*$`, 'm');
+  if (on === re.test(text)) return false;
+  if (on) fs.writeFileSync(f, `${text}${text && !text.endsWith('\n') ? '\n' : ''}# aikit docs pages off: 문서 사이트는 이 PC 에서만 본다 (올리려면 aikit docs pages on)\n/${OUT}/\n`);
+  else fs.writeFileSync(f, text.replace(/^# aikit docs pages off:.*\n/m, '').replace(new RegExp(`^/?${OUT}/?\\s*\\n?`, 'm'), ''));
+  return true;
+}
+
+/** CI 파일 하나를 둔다. 이미 있으면: 우리 것이면 새 내용으로, 남의 .gitlab-ci.yml 이면 pages 작업이 있는지만 본다 */
+function putCi(dir, h) {
+  const f = path.join(dir, CI[h]);
+  let body = fs.readFileSync(path.join(PACKS, 'core', 'assets', 'pages', CI_SRC[h]), 'utf8');
+  if (h === 'github') body = body.replace('branches: [main]', `branches: [${defaultBranch(dir)}]`);
+  if (fs.existsSync(f)) {
+    const cur = fs.readFileSync(f, 'utf8');
+    if (cur === body) return '그대로';
+    if (!cur.includes(CI_MARK) && !/aikit docs build/.test(cur)) {
+      if (ciHasPages(dir, h)) return '그대로 (이미 pages 작업이 있음)';
+      return `직접 넣기: 이 repo 의 ${CI[h]} 에 packs/core/assets/pages/${CI_SRC[h]} 의 pages 작업을 붙인다`;
+    }
+  }
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, body);
+  return '만듦';
+}
+
+/** aikit docs pages [on|off] [repo|폴더] */
+function cmdPages(ws) {
+  const mode = ['on', 'off'].includes(argv[1]) ? argv[1] : null;
+  const arg = mode ? argv[2] : argv[1];
+  for (const t of targets(ws, arg && !arg.startsWith('--') ? arg : null)) {
+    migrate(t);
+    if (!mode) {
+      const st = pagesState(t.dir);
+      console.log(`${st.on ? '●' : '○'} ${t.name}: Pages ${st.on ? '켜짐' : '꺼짐'} · 원격 ${st.host ? HOST_NAME[st.host] : '없음'}${st.ci.length ? ` · CI ${st.ci.map((h) => CI[h]).join(' · ')}` : ''}. ${st.on ? '끄기: aikit docs pages off' : '켜기: aikit docs pages on'} ${t.name}`);
+      continue;
+    }
+    if (mode === 'off') {
+      const changed = setIgnore(t.dir, true);
+      const tracked = gitOut(t.dir, ['ls-files', `${OUT}/${MANIFEST}`]);
+      console.log(`○ ${t.name}: Pages 끔.${changed ? ' .gitignore 에 /docs-site/ 를 넣었습니다.' : ''} CI 파일은 두어도 돌지 않습니다`);
+      if (tracked) console.log(`  이미 커밋된 docs-site/ 는 남아 있습니다. 빼려면: git -C ${t.dir} rm -r --cached -q ${OUT} 뒤 커밋`);
+      continue;
+    }
+    const host = hostOfRemote(t.dir);
+    const hosts = host ? [host] : ['gitlab', 'github'];
+    const done = hosts.map((h) => `${CI[h]} ${putCi(t.dir, h)}`);
+    // 원격이 정해졌으면 안 쓰는 쪽 CI 는 우리 것일 때만 지운다
+    if (host) {
+      const other = host === 'gitlab' ? 'github' : 'gitlab';
+      const f = path.join(t.dir, CI[other]);
+      if (fs.existsSync(f) && fs.readFileSync(f, 'utf8').includes(CI_MARK)) { fs.rmSync(f); done.push(`${CI[other]} 지움 (원격이 ${HOST_NAME[host]})`); }
+    }
+    const unignored = setIgnore(t.dir, false);
+    console.log(`● ${t.name}: Pages 켬 (${host ? HOST_NAME[host] : '원격 없음: GitLab · GitHub 둘 다 둠'}). ${done.join(' · ')}${unignored ? ' · .gitignore 에서 /docs-site/ 뺌' : ''}`);
+    console.log(`  다음: aikit docs build ${t.name} → ${OUT}/ 와 CI 파일을 커밋 · push`);
+    if (host === 'github') console.log('  한 번만: GitHub 의 Settings > Pages > Source 를 「GitHub Actions」 로 (비공개 repo 는 유료 요금제)');
+    else console.log('  GitLab 서버에 Pages 기능과 러너가 있어야 한다 (Pages 는 서버 관리자가 켠다)');
+  }
+}
+
+/** 옛 출력 폴더 html/ → docs-site/ (한 번). git 이 아는 파일이면 git mv. 우리 CI 파일 · .gitignore 의 경로도 바꾼다 */
+function migrate(t) {
+  if (opt('out')) return;
+  const from = path.join(t.dir, OLD_OUT), to = path.join(t.dir, OUT);
+  if (!fs.existsSync(path.join(from, MANIFEST)) || fs.existsSync(to)) return;
+  const tracked = gitOut(t.dir, ['ls-files', `${OLD_OUT}/${MANIFEST}`]);
+  if (!(tracked && spawnOk(t.dir, ['mv', OLD_OUT, OUT]))) fs.renameSync(from, to);
+  const fixed = [], left = [];
+  for (const h of ['gitlab', 'github']) {
+    const f = path.join(t.dir, CI[h]);
+    if (!fs.existsSync(f)) continue;
+    const cur = fs.readFileSync(f, 'utf8');
+    if (/aikit docs build|site\.json/.test(cur)) {
+      const next = cur.split('\n').map(ciLine).join('\n');
+      const n = next.split('\n').filter((l, i) => l !== cur.split('\n')[i]).length;
+      if (n) { fs.writeFileSync(f, next); fixed.push(`${CI[h]} ${n}줄`); }
+    }
+    const rest = oldRefs(fs.readFileSync(f, 'utf8'));
+    if (rest.length) left.push(`${CI[h]} ${rest.join(' · ')}행`);
+  }
+  const gi = path.join(t.dir, '.gitignore');
+  if (fs.existsSync(gi)) { const g = fs.readFileSync(gi, 'utf8'); const n = g.replace(/^\/?html\/?\s*$/m, `/${OUT}/`); if (n !== g) { fs.writeFileSync(gi, n); fixed.push('.gitignore'); } }
+  console.log(`  출력 폴더를 ${OLD_OUT}/ → ${OUT}/ 로 옮겼습니다${tracked ? ' (git mv)' : ''}${fixed.length ? ` · 경로 고침: ${fixed.join(' · ')}` : ''}. 같이 커밋한다`);
+  for (const l of left) console.log(`  ⚠ ${l} 에 ${OLD_OUT}/ 경로가 남음. 손으로 ${OUT}/ 로 고친다`);
+}
+
+// CI 줄 안의 옛 출력 경로 (html · html/ · ./html/ · html/. · html/**): text/html · index.html 은 아니다
+const OLD_REF = /(^|[\s'"(=:,[])(\.\/)?html(?=\/|[\s'"\]),;]|$)/g;
+const ciLine = (l) => l.replace(/\bhtml\/ 이 없습니다/g, `${OUT}/ 가 없습니다`).replace(/\bhtml\/ 은 aikit docs build/g, `${OUT}/ 는 aikit docs build`)
+  .replace(OLD_REF, (m, a, dot) => `${a}${dot || ''}${OUT}`).replace(/문서 사이트\(html\/\)/g, `문서 사이트(${OUT}/)`);
+const oldRefs = (text) => text.split('\n').map((l, i) => (new RegExp(OLD_REF.source).test(l) || /문서 사이트\(html\/\)/.test(l) ? i + 1 : 0)).filter(Boolean);
+
+// 포함 범위: 「폴더/**」 는 그 폴더 전체, 그 밖에는 문서 메뉴와 같은 glob
+const globHit = (g, rel) => { const s = String(g).replace(/^\.?\//, ''); return s.endsWith('/**') ? rel === s.slice(0, -3) || rel.startsWith(s.slice(0, -2)) : globRe(s).test(rel); };
+const REPO_MODE = { legacy: 'off' }; // 종류별 기본 (없으면 copy)
+
+/**
+ * 포함 범위 → { keep(rel, isDir), srcOf(md) | null, extra: { 경로: 내용 }, plan: [{ name, kind, mode, why }] }
+ * 워크스페이스 루트면 repos/<이름>/ 를 repo 마다 copy · link · off 로, 원본 버튼은 그 repo 의 원격으로
+ */
+function scope(t, ws, config) {
+  const inc = [].concat(config.include || []);
+  const exc = [].concat(config.exclude || []);
+  const real = (x) => { try { return fs.realpathSync(x); } catch { return path.resolve(x); } };
+  const isRoot = !!(ws && ws.root && real(ws.root) === real(t.dir));
+  const plan = [];
+  const extra = {};
+  const repoOf = new Map();
+  if (isRoot) {
+    const rc = config.repos || {};
+    for (const r of ws.repos || []) {
+      const rel = ['repos', ...(r.group ? [r.group] : []), r.name].join('/'); // lib/workspace.js repoRel
+      if (!fs.existsSync(path.join(t.dir, rel))) continue;
+      const o = rc[r.name] != null ? rc[r.name] : rc[r.kind];
+      const mode = String((o && typeof o === 'object' ? o.mode : o) || REPO_MODE[r.kind] || 'copy');
+      const why = rc[r.name] != null ? '이름' : rc[r.kind] != null ? `종류 ${r.kind}` : `기본(${r.kind})`;
+      const blob = sourceOf(r.dir, r.url);
+      plan.push({ name: r.name, kind: r.kind, mode, why });
+      repoOf.set(rel, { mode, blob });
+      if (mode === 'link') {
+        const url = (o && typeof o === 'object' && o.url) || (blob ? blob.replace(/\/(-\/)?blob\/[^/]+$/, '') : '');
+        extra[`${rel}/README.md`] = `# ${r.name}\n\n이 repo(${r.kind})의 문서는 따로 본다. 이 사이트에는 사본을 넣지 않는다.\n\n${url ? `- 문서 · 원본: [${url}](${url})\n` : '- 원격 주소가 없습니다 (workspace.json repos[].url 또는 docs-site.json repos 의 url)\n'}`;
+      }
+    }
+  }
+  // 경로가 든 repo (repos/<이름>/… · repos/<그룹>/<이름>/…) → [repo 폴더, 그 안 경로]
+  const repoAt = (rel) => { for (const k of repoOf.keys()) if (rel === k || rel.startsWith(`${k}/`)) return [k, rel.slice(k.length + 1)]; return null; };
+  const keep = (rel, isDir) => {
+    const m = repoAt(rel);
+    if (m && repoOf.get(m[0]).mode !== 'copy') return false;
+    if (exc.some((g) => globHit(g, rel))) return false;
+    if (isDir || !inc.length) return true;
+    return inc.some((g) => globHit(g, rel));
+  };
+  const rootSrc = config.source ? String(config.source).replace(/\/+$/, '') : null;
+  const enc = (p) => p.split('/').map(encodeURIComponent).join('/');
+  const srcOf = isRoot ? (md) => {
+    const m = repoAt(md);
+    if (m && m[1]) { const r = repoOf.get(m[0]); return r.mode === 'copy' && r.blob ? `${r.blob}/${enc(m[1])}` : null; }
+    return rootSrc ? `${rootSrc}/${enc(md)}` : null;
+  } : null;
+  return { keep, srcOf, extra, plan };
+}
+
+function generate(t, ws, out) {
+  const config = readConfig(t.dir);
+  const sc = scope(t, ws, config);
+  const files = { ...readTree(t.dir, out, sc.keep), ...sc.extra };
+  const cellFold = Number(((ws && ws.vars && ws.vars.docs) || {}).cellFold) || undefined;
+  const res = build(files, { cellFold, title: titleOf(t.dir, ws, t.name), prefixes: prefixesOf(ws), assets: assets(t.dir), mermaid: mermaidAssets(), config, erd: erdOpts(ws), sheetTheme: sheetTheme(ws), ...(sc.srcOf ? { srcOf: sc.srcOf } : {}) });
+  res.plan = sc.plan;
+  const list = Object.keys(res.pages).sort();
+  res.files = files;
+  res.pages[MANIFEST] = `${JSON.stringify({ generator: 'aikit docs', note: '이 폴더는 aikit docs build 가 만든다. 손으로 고치지 않는다 (다시 만들면 사라진다)', files: list }, null, 1)}\n`;
+  return res;
+}
+
+const same = (a, b) => (Buffer.isBuffer(a) || Buffer.isBuffer(b) ? Buffer.compare(Buffer.from(a), Buffer.from(b)) === 0 : a === b);
+
+/** 디스크와 비교: 바뀐 · 없는 · 남은 파일 */
+function diff(outDir, pages) {
+  const changed = [];
+  for (const [p, c] of Object.entries(pages)) {
+    const f = path.join(outDir, p);
+    if (!fs.existsSync(f)) { changed.push(`+ ${p}`); continue; }
+    if (!same(fs.readFileSync(f, Buffer.isBuffer(c) ? null : 'utf8'), c)) changed.push(`~ ${p}`);
+  }
+  for (const p of oldFiles(outDir)) if (!(p in pages)) changed.push(`- ${p}`);
+  return changed;
+}
+function oldFiles(outDir) {
+  try { return JSON.parse(fs.readFileSync(path.join(outDir, MANIFEST), 'utf8')).files || []; } catch { return []; }
+}
+const ours = (outDir) => fs.existsSync(path.join(outDir, MANIFEST));
+
+function warnLines(res) {
+  if (!res.warnings.length) return [];
+  const head = res.warnings.slice(0, 10).map((w) => `⚠ ${w}`);
+  return res.warnings.length > 10 ? [...head, `⚠ … 외 ${res.warnings.length - 10}건 (정의 없는 ID: vars.docs.ids 머리말 기준)`] : head;
+}
+
+/** mermaid 문법 오류 줄 (✖). 그림이 없으면 mermaid 를 읽지 않는다 */
+async function mermaidLines(res) {
+  const bad = await MC.check(MC.blocks(res.files || {}));
+  return bad.map((b) => `✖ mermaid 문법 오류: ${b.file}:${b.line}  ${b.error}`);
+}
+/** ASCII 그림 경고 (⚠, 막지 않는다): 전체 개수와 문서별 개수, 첫 자리 */
+function artLines(res) {
+  const art = MC.asciiArt(res.files || {});
+  if (!art.length) return [];
+  const per = new Map();
+  for (const a of art) per.set(a.file, [...(per.get(a.file) || []), a.line]);
+  const list = [...per].sort((a, b) => b[1].length - a[1].length);
+  const top = list.slice(0, 10).map(([f, ls]) => `${f}:${ls[0]}${ls.length > 1 ? ` 외 ${ls.length - 1}` : ''}`).join(' · ');
+  return [`⚠ ASCII 그림 ${art.length}개 (문서 ${per.size}개): ${top}${list.length > 10 ? ` · 외 문서 ${list.length - 10}개` : ''}. \`\`\`mermaid 블록으로 바꾸면 사이트에 그림으로 나온다 (구성도는 architecture 스킬)`];
+}
+/** 메뉴 「기타」 경고: docs-site.json groups 를 쓰는데 어느 묶음에도 맞지 않은 문서 */
+function unlistedLines(res) {
+  const u = res.unlisted || [];
+  if (!u.length) return [];
+  return [`⚠ 메뉴 「기타」 문서 ${u.length}개 (docs-site.json groups 어느 묶음에도 안 맞음): ${u.slice(0, 8).join(' · ')}${u.length > 8 ? ` 외 ${u.length - 8}개` : ''}. groups[].files 에 넣는다 (나열한 순서대로 메뉴에 나온다)`];
+}
+
+/** 문서 점검 경고 줄 (경고만). 기준값 = vars.docs.maxKB · cellMax · cellAvg · figureKB · codeMax. 대상 = 사이트에 넣는 md (include · exclude · repos 범위 안) */
+function healthLines(t, ws, res) {
+  const v = (ws && ws.vars && ws.vars.docs) || {};
+  const docs = res && res.files ? Object.entries(res.files).filter(([k, c]) => /\.md$/i.test(k) && typeof c === 'string' && wanted(k)).map(([rel, text]) => ({ rel, text, sheet: false })) : undefined;
+  try { return DR.health(t.dir, { maxKB: v.maxKB, cellMax: v.cellMax, cellAvg: v.cellAvg, figureKB: v.figureKB, codeMax: v.codeMax, docs }).map((w) => `⚠ 문서 점검: ${w}`); } catch { return []; }
+}
+
+/** show: ID 의 정의 부분만 */
+function cmdShow(ws, id) {
+  if (!id) throw new Error('사용법: aikit docs show <ID> [--in <파일 조각>] [--all]');
+  const defs = DR.show(targets(ws, null), id, opt('in'));
+  if (!defs.length) {
+    console.log(`정의를 못 찾았습니다: ${id} (제목 · 표 첫 칸 · **${id}** 문단 · 화면설계서 장). 쓰는 곳: aikit docs refs ${id}`);
+    process.exitCode = 1;
+    return;
+  }
+  const many = defs.length > 1 && !has('all');
+  for (const d of many ? defs.slice(0, 1) : defs) {
+    const body = d.lines.length > 150 ? [...d.lines.slice(0, 150), `… ${d.lines.length - 150}줄 더 (${d.rel}:${d.line + 150} 부터)`] : d.lines;
+    console.log(`== ${d.repo}/${d.rel}:${d.line} (${d.kind})${d.frozen ? ' [동결]' : ''}`);
+    console.log(body.join('\n').replace(/\s+$/, ''));
+    console.log('');
+  }
+  if (many) console.log(`다른 정의 ${defs.length - 1}곳: ${defs.slice(1, 9).map((d) => `${d.rel}:${d.line}(${d.kind})`).join(' · ')}${defs.length > 9 ? ' …' : ''}. 모두 보기: --all, 문서 고르기: --in <파일 조각>`);
+}
+
+/** refs: ID 가 나오는 곳 */
+/** 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다. --dry 면 개수만 */
+function cmdRefsQuote(files) {
+  const list = files.filter((f) => !f.startsWith('--'));
+  if (!list.length) throw new Error('사용법: aikit docs refs-quote <md 파일…> [--dry]');
+  let total = 0;
+  for (const f of list) {
+    if (!fs.existsSync(f)) { console.log(`✖ ${f}: 파일이 없습니다`); process.exitCode = 1; continue; }
+    const cur = fs.readFileSync(f, 'utf8');
+    const r = DR.refsToQuote(cur);
+    total += r.moved;
+    if (!r.moved) { console.log(`- ${f}: 옮길 근거 없음`); continue; }
+    if (!has('dry')) fs.writeFileSync(f, r.text);
+    console.log(`${has('dry') ? '·' : '✔'} ${f}: 근거 ${r.moved}곳${has('dry') ? ' (옮길 곳, --dry)' : '을 인용구로 옮김'}`);
+  }
+  if (list.length > 1) console.log(`  모두 ${total}곳`);
+}
+
+function cmdRefs(ws, id) {
+  if (!id) throw new Error('사용법: aikit docs refs <ID> [--docs]');
+  const repos = ((ws && ws.repos) || []).filter((r) => (has('docs') ? r.kind === 'docs' : r.kind !== 'legacy'));
+  const hits = DR.refs(repos.length ? repos : targets(ws, null).map((t) => ({ ...t, kind: 'docs' })), id);
+  if (!hits.length) { console.log(`${id}: 나오는 곳 없음 (${repos.map((r) => r.name).join(', ') || '기획 repo'})`); return; }
+  const files = new Map();
+  for (const h of hits) { const k = `${h.repo}/${h.rel}`; if (!files.has(k)) files.set(k, []); files.get(k).push(h); }
+  console.log(`${id}: ${files.size}개 파일 · ${hits.length}곳 (★ 정의 · [동결] 은 고치지 않는 문서)`);
+  let shown = 0;
+  for (const [f, list] of files) {
+    console.log(`${f}${list[0].frozen ? ' [동결]' : ''}  ${list.length}곳`);
+    for (const h of list.slice(0, 4)) { if (shown++ < 80) console.log(`  ${h.def ? '★' : ' '} ${h.line}: ${DR.cut(h.text, 110)}`); }
+    if (list.length > 4) console.log(`    … 그 밖에 ${list.slice(4).map((h) => h.line).join(', ')}`);
+  }
+}
+
+function traceIds(ws) {
+  const v = (ws && ws.vars) || {};
+  return String(opt('ids') || (v.docs && v.docs.traceIds) || (v.screens && v.screens.functionIds) || '').split(',').map((x) => x.trim()).filter(Boolean);
+}
+
+/** trace: 기획 ID ↔ 코드의 구현 표시 */
+function cmdTrace(ws) {
+  const ids = traceIds(ws);
+  if (!ids.length) throw new Error('대조할 ID 머리말이 없습니다. aikit docs trace --ids FN 또는 workspace.json 의 vars.docs.traceIds (예: "FN")');
+  const docs = targets(ws, null);
+  const code = ((ws && ws.repos) || []).filter((r) => (r.kind || 'code') === 'code');
+  if (!code.length) throw new Error('코드 repo(kind: code)가 없습니다');
+  const res = DR.trace(docs, code, ids);
+  const all = has('all');
+  const many = (list, n) => (all || list.length <= n ? list : [...list.slice(0, n), `… 외 ${list.length - n}개 (모두: --all)`]);
+  const total = res.defined.size - res.skipped.frozen - res.skipped.later;
+  const skip = [res.skipped.later && `「다음 스프린트」 ${res.skipped.later}`, res.skipped.frozen && `동결 문서 ${res.skipped.frozen}`].filter(Boolean).join(' · ');
+  console.log(`기획 ID 대조 (머리말 ${ids.join(', ')} · 기획 ${docs.map((t) => t.name).join(', ')} · 코드 ${code.map((r) => r.name).join(', ')})`);
+  if (!res.defined.size) console.log(`정의된 ID 가 없습니다 (머리말 ${ids.join(', ')}: 제목 · 표 첫 칸 · **ID** 문단 · 화면설계서 장). 머리말이 맞는지 확인: --ids 또는 vars.docs.traceIds`);
+  if (res.defined.size) console.log(`${res.missing.length ? '⚠' : '✔'} 코드에 구현 표시가 있는 ID ${total - res.missing.length}/${total}${skip ? ` (뺀 것: ${skip})` : ''}`);
+  if (res.missing.length) {
+    console.log(`⚠ 코드에 표시 없음 ${res.missing.length}개 (아직 안 만들었거나, 만들었는데 주석에 ID 를 안 적음):`);
+    for (const id of many(res.missing, 30)) { const d = res.defined.get(id); console.log(d ? `  ${id}  ${d.repo}/${d.rel}:${d.line}` : `  ${id}`); }
+  }
+  if (res.unknown.length) {
+    console.log(`✖ 기획에 정의 없는 ID ${res.unknown.length}곳 (오타 · 지운 기능 · 아직 안 쓴 문서. 정의 확인: aikit docs show <ID>):`);
+    for (const u of many(res.unknown, 30)) console.log(typeof u === 'string' ? `  ${u}` : `  ${u.id}  ${u.repo}/${u.rel}:${u.line}`);
+    if (has('strict')) process.exitCode = 1;
+  }
+  if (!res.found.size && total) console.log('  구현한 코드의 함수 · 클래스 머리 주석에 기획 ID 를 한 번 적으면 대조된다 (예: // FN-001 수동 주문)');
+}
+
+/** 크기 한 줄: docs-site/ 전체 · 묶음(repos/<이름> · 첫 폴더)별, 워크스페이스 루트면 repo 마다 넣은 방식 */
+const SIZE_WARN_MB = 20;
+function sizeLines(res, out) {
+  const mb = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(n >= 10485760 ? 0 : 1)}MB` : `${Math.max(1, Math.round(n / 1024))}KB`);
+  const by = new Map();
+  let total = 0;
+  for (const [p, c] of Object.entries(res.pages)) {
+    const n = Buffer.byteLength(c);
+    total += n;
+    const parts = p.split('/');
+    const k = parts[0] === 'repos' && parts.length > 2 ? `repos/${parts[1]}` : parts.length > 1 ? parts[0] : '(맨 위)';
+    const v = by.get(k) || { n: 0, size: 0 };
+    v.n++; v.size += n; by.set(k, v);
+  }
+  const top = [...by.entries()].sort((a, b) => b[1].size - a[1].size);
+  const lines = [`${out}/ ${Object.keys(res.pages).length}개 · ${mb(total)}: ${top.slice(0, 6).map(([k, v]) => `${k} ${v.n}개 ${mb(v.size)}`).join(' · ')}${top.length > 6 ? ` 외 ${top.length - 6}묶음` : ''}`];
+  if ((res.plan || []).length) lines.push(`repos: ${res.plan.map((p) => `${p.name} ${{ copy: '사본', link: '링크만', off: '뺌' }[p.mode] || p.mode}(${p.why})`).join(' · ')}. 바꾸기: docs-site.json "repos": { "<종류|이름>": "copy|link|off" }`);
+  if (total > SIZE_WARN_MB * 1048576) lines.push(`⚠ ${out}/ 이 ${mb(total)} 입니다. 커밋 전에 docs-site.json 의 exclude(예: "repos/<이름>/docs/<외부 문서>/**") · repos 로 줄일 수 있다`);
+  return lines;
+}
+
+async function cmdBuild(ws) {
+  for (const t of targets(ws, argv[1] && !argv[1].startsWith('--') ? argv[1] : null)) {
+    migrate(t);
+    const out = opt('out') || OUT;
+    const outDir = path.join(t.dir, out);
+    if (fs.existsSync(outDir) && fs.readdirSync(outDir).length && !ours(outDir) && !has('force')) {
+      throw new Error(`${t.name}/${out}/ 에 다른 생성기가 만든 파일이 있습니다. 덮지 않습니다 (다른 폴더: --out <폴더>, 덮기: --force)`);
+    }
+    // 원본 보기 주소: docs-site.json 에 없으면 origin 으로 한 번 채워 둔다 (그 뒤로는 파일 값만 쓰므로 PC 마다 결과가 같다)
+    const config = readConfig(t.dir);
+    if (!config.source && !has('no-source')) {
+      const src = sourceOf(t.dir);
+      if (src) {
+        fs.writeFileSync(path.join(t.dir, CONFIG), `${JSON.stringify({ ...config, source: src }, null, 2)}\n`);
+        console.log(`  ${CONFIG} 에 원본 주소를 적었습니다: ${src} (같이 커밋한다)`);
+      }
+    }
+    const res = generate(t, ws, out);
+    if ((res.collisions || []).length) {
+      // 대소문자만 다른 출력 경로는 나중에 쓴 쪽이 이겨 쪽이 사라진다: 쓰지 않고 멈춘다
+      for (const c of res.collisions) console.log(`✖ ${t.name}: 대소문자를 구분하지 않는 PC 에서 같은 파일이 되는 경로: ${c}. 한쪽 이름을 바꾼다`);
+      process.exitCode = 1;
+      continue;
+    }
+    const stale = oldFiles(outDir).filter((p) => !(p in res.pages));
+    for (const p of stale) {
+      fs.rmSync(path.join(outDir, p), { force: true });
+      // 비게 된 폴더도 치운다 (정의서를 지우면 assets/erd/ 등)
+      for (let d = path.dirname(path.join(outDir, p)); d.startsWith(outDir + path.sep); d = path.dirname(d)) { try { fs.rmdirSync(d); } catch { break; } }
+    }
+    let wrote = 0;
+    for (const [p, c] of Object.entries(res.pages)) {
+      const f = path.join(outDir, p);
+      if (fs.existsSync(f) && same(fs.readFileSync(f, Buffer.isBuffer(c) ? null : 'utf8'), c)) continue;
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, c);
+      wrote++;
+    }
+    const sheets = res.docs.filter((d) => d.kind === 'sheets').length;
+    const erd = (res.erds || []).map((e) => `ERD ${e.page} (테이블 ${e.model.tables.length})`).join(' · ');
+    console.log(`✔ ${t.name}/${out}/ 문서 ${res.docs.length - sheets}${sheets ? ` · 화면설계서 ${sheets}` : ''}${erd ? ` · ${erd}` : ''} · ID ${Object.keys(res.index.ids).length} · 바뀐 파일 ${wrote}${stale.length ? ` · 지운 파일 ${stale.length}` : ''}`);
+    for (const l of await mermaidLines(res)) console.log(`  ${l}`);
+    for (const l of artLines(res)) console.log(`  ${l}`);
+    for (const l of unlistedLines(res)) console.log(`  ${l}`);
+    for (const l of warnLines(res)) console.log(`  ${l}`);
+    for (const l of healthLines(t, ws, res)) console.log(`  ${l}`);
+    for (const l of sizeLines(res, out)) console.log(`  ${l}`);
+    console.log(`  ${pagesHint(t.dir, out)}`);
+  }
+}
+
+async function cmdCheck(ws, dirArg, quietIfNone) {
+  let bad = 0;
+  for (const t of targets(ws, dirArg)) {
+    const out = outOf(t.dir);
+    const outDir = path.join(t.dir, out);
+    if (!ours(outDir)) { if (!quietIfNone) console.log(`- ${t.name}: 문서 사이트를 만든 적 없음 (aikit docs build)`); continue; }
+    const res = generate(t, ws, out);
+    const changed = diff(outDir, res.pages);
+    if (changed.length) {
+      bad++;
+      console.log(`✖ ${t.name}: md 와 ${out}/ 가 어긋났습니다 (${changed.length}개). 다시 만든다: aikit docs build ${t.name}`);
+      for (const c of changed.slice(0, 8)) console.log(`  ${c}`);
+    } else if (!quietIfNone) console.log(`✔ ${t.name}: ${out}/ 가 md 와 같음`);
+    const mm = await mermaidLines(res);
+    if (mm.length) { bad++; console.log(`✖ ${t.name}: mermaid 그림 ${mm.length}개가 문법 오류입니다 (사이트에는 원문과 오류 문구로 보입니다)`); }
+    for (const l of mm) console.log(`  ${l}`);
+    if (!quietIfNone) for (const l of [...artLines(res), ...unlistedLines(res)]) console.log(`  ${l}`);
+    for (const l of warnLines(res)) console.log(`  ${l}`);
+    if (!quietIfNone) for (const l of healthLines(t, ws, res)) console.log(`  ${l}`);
+  }
+  if (bad) process.exitCode = 1;
+}
+
+async function main() {
+  const cmd = argv[0];
+  const ws = loadWs();
+  try {
+    if (cmd === 'build') return await cmdBuild(ws);
+    if (cmd === 'check') return await cmdCheck(ws, argv[1] && !argv[1].startsWith('--') ? argv[1] : null, false);
+    if (cmd === 'hook') return await cmdCheck(ws, argv[1], true);
+    if (cmd === 'show') return cmdShow(ws, argv[1]);
+    if (cmd === 'refs') return cmdRefs(ws, argv[1]);
+    if (cmd === 'refs-quote') return cmdRefsQuote(argv.slice(1));
+    if (cmd === 'trace') return cmdTrace(ws);
+    if (cmd === 'pages') return cmdPages(ws);
+    console.log('사용법: aikit docs build [repo|폴더] [--out docs-site] [--force] · pages [on|off] [repo|폴더] · check [repo|폴더] · show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs] · refs-quote <md 파일…> [--dry] · trace [--ids FN] [--all] [--strict]');
+    process.exitCode = cmd ? 1 : 0;
+  } catch (e) {
+    console.error(`✖ ${e.message}`);
+    process.exitCode = 1;
+  }
+}
+
+if (require.main === module) main();
+module.exports = { generate, diff, assets, mermaidAssets, EXTRA, MANIFEST, OUT, OLD_OUT, pagesState, ciLine, oldRefs };

@@ -1,0 +1,6 @@
+{
+  "name": "project",
+  "title": "이 프로젝트 전용",
+  "description": "이 프로젝트에만 해당하는 룰·스킬. 킷 upgrade 가 건드리지 않는다.",
+  "requires": ["core"]
+}
