@@ -118,6 +118,14 @@ for (const r of ws.repos) {
   if (inRepo && r.local && !r.remote && !git(dir, ['remote', 'get-url', 'origin'])) add(WARN, `repo: ${r.name}`, '원격 없음: 팀원이 받을 수 없다', `원격 저장소를 만들고 git -C ${rel} remote add origin <주소> && git -C ${rel} push -u origin HEAD → aidure sync 가 workspace.json 에 기록`);
 }
 
+// 워크스페이스 repo 공개 여부: 작업 기록(handoffs/) · workspace.json 이 올라가므로 비공개여야 한다 (로그인 없이 받아지면 공개)
+try {
+  const origin = git(ROOT, ['remote', 'get-url', 'origin']);
+  const pub = origin ? require('../lib/visibility').isPublic(origin) : null;
+  if (pub === true) add(WARN, '워크스페이스 repo 공개 여부', `공개 repo (${origin}): handoffs/ 작업 기록 · workspace.json 이 누구에게나 보인다`, 'GitLab · GitHub 저장소 설정에서 비공개(Private)로 바꾼다');
+  else if (pub === false) add(OK, '워크스페이스 repo 공개 여부', '비공개');
+} catch { /* 옛 워크스페이스 (visibility.js 없음) */ }
+
 // 6. kit check (생성물 = 정본)
 const kit = path.join(ROOT, 'bin', 'kit.js');
 if (fs.existsSync(kit)) {

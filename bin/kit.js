@@ -1708,13 +1708,42 @@ const TEAM_SHARED = ['handoffs/PLAN.md', 'handoffs/MODELS.md'];
 /** 잠금일 때 보호하는 경로 (팀원은 자기 handoffs/<이름>/ 만 바꾼다) */
 const LOCKED_PATHS = ['workspace.json', 'packs/**', 'bin/**', 'AGENTS.md', 'CLAUDE.md', '.claude/settings.json', '.claude/skills/**', '.codex/**', '.githooks/**', '.agents/rules/**', '.agents/skills/**'];
 
-/** pre-commit: 잠금이 켜져 있고 관리자가 아니면, 자기 handoffs/ 밖 변경은 커밋하지 못한다 */
+/** 비밀값 모양 (클라우드 · 깃 호스트 · AI · 메신저 키, 토큰, 개인키). 줄에 gitleaks:allow 가 있으면 넘긴다 (시험용 가짜 값 등) */
+const SECRET_PATTERNS = [
+  ['AWS 키', /AKIA[0-9A-Z]{16}/], ['GitHub 토큰', /gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}/], ['GitLab 토큰', /glpat-[A-Za-z0-9_-]{20}/],
+  ['npm 토큰', /npm_[A-Za-z0-9]{30,}/], ['Anthropic 키', /sk-ant-[A-Za-z0-9_-]{16,}/], ['OpenAI 키', /sk-(proj-)?[A-Za-z0-9]{20,}/],
+  ['텔레그램 봇 토큰', /[0-9]{8,10}:AA[A-Za-z0-9_-]{30,}/], ['Slack 토큰', /xox[baprs]-[A-Za-z0-9-]{10,}/], ['개인키', /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
+];
+/** 글 → [{ line, kind }] */
+function secretHits(text) {
+  const out = [];
+  String(text).split('\n').forEach((l, i) => {
+    if (l.includes('gitleaks:allow')) return;
+    for (const [kind, re] of SECRET_PATTERNS) if (re.test(l)) { out.push({ line: i + 1, kind }); break; }
+  });
+  return out;
+}
+
+/** pre-commit: (1) 올리려는 파일에 비밀값 모양이 있으면 막는다 (handoffs 작업 기록 · workspace.json 포함, 관리자도). (2) 잠금이 켜져 있고 관리자가 아니면, 자기 handoffs/ 밖 변경은 커밋하지 못한다 */
 function cmdGuard(root) {
   const ws = loadWorkspace(root);
+  let staged = [];
+  try { staged = execFileSync('git', ['-C', root, 'diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean); } catch { return true; }
+  const leaks = [];
+  for (const f of staged) {
+    let body = '';
+    try { body = execFileSync('git', ['-C', root, 'show', `:${f}`], { encoding: 'utf8', maxBuffer: 4 << 20, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { continue; }   // 큰 파일 · 읽기 실패는 넘긴다
+    if (body.includes('\0')) continue;   // 바이너리
+    for (const h of secretHits(body)) leaks.push(`${f}:${h.line} (${h.kind})`);
+  }
+  if (leaks.length) {
+    console.error('✖ 비밀값으로 보이는 글이 있어 커밋을 막았습니다 (값은 찍지 않음)');
+    for (const l of leaks.slice(0, 10)) console.error(`  - ${l}`);
+    console.error('  그 줄의 값을 *** 로 가리고 다시 git add 하세요. 시험용 가짜 값이면 그 줄 끝에 gitleaks:allow 주석을 단다');
+    return false;
+  }
   const st = lockState(root, ws);
   if (st.admin) return true;
-  let staged = [];
-  try { staged = execFileSync('git', ['-C', root, 'diff', '--cached', '--name-only', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean); } catch { return true; }
   const bad = staged.filter((f) => !f.startsWith(`handoffs/${st.me}/`) && !TEAM_SHARED.includes(f)); // 팀 공용 기록: 단계를 끝낸 사람 · 모델을 조사한 사람이 고친다
   if (!bad.length) return true;
   console.error(`✖ 워크스페이스 잠금: ${st.me || '(git user.name 없음)'} 은(는) 관리자가 아니라 자기 handoffs/ 밖의 파일을 커밋할 수 없습니다`);
@@ -2148,4 +2177,4 @@ function main() {
 
 main();
 
-module.exports = { repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };
+module.exports = { SECRET_PATTERNS, secretHits, repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };

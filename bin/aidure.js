@@ -1240,6 +1240,15 @@ async function cmdInit(argv) {
   const remoteOf = () => spawnSync('git', ['-C', dir, 'remote'], { encoding: 'utf8' }).stdout.trim();
   let pushed = false;
   // n = 만든 뒤 몇 번째 질문인지 (쓰는 AI · 프로필 · 메인 모델 · 인자는 chooseAgent 안에서 3 · 4 · 5 · 6)
+  // 워크스페이스 repo 는 작업 기록(handoffs/) · workspace.json 이 올라가므로 비공개여야 한다. 공개 repo 면 한 번 더 묻는다 (기본 아니오)
+  const checkedPublic = new Set();
+  const privateOk = async (url, onNo = '아니오면 주소를 다시 묻습니다.') => {
+    checkedPublic.add(url);
+    const pub = require(path.join(KIT_ROOT, 'packs', 'core', 'lib', 'visibility.js')).isPublic(url);
+    if (pub === null) { p.log.warn('이 repo 가 공개인지 확인하지 못했습니다 (주소 · 네트워크). 공개 repo 면 작업 기록이 누구에게나 보이니 비공개인지 직접 확인하세요'); return true; }
+    if (!pub) { p.log.info('비공개 repo 입니다 (로그인 없이 받을 수 없음)'); return true; }
+    return yesNo({ message: '공개 repo 입니다. 그래도 워크스페이스 repo 로 쓸까요?', hint: `작업 기록(handoffs/: 명령 결과 · 로그 · 경로) · workspace.json(repo 주소 · 설정)이 누구에게나 보입니다. 비공개로 바꾼 뒤 다시 넣는 것을 권합니다. ${onNo}`, initialValue: false });
+  };
   const after = [
     { n: 1, run: () => reviewStacks(dir, { force: true }) },
     { n: 2, run: async () => { // 규칙 확인 (선택) — 킷이 넣은 규칙 중 우리 팀에 안 맞는 것을 끈다. 나중에 aidure rules
@@ -1254,14 +1263,28 @@ async function cmdInit(argv) {
     { n: 3, run: () => chooseAgent(dir, { force: true, askArgs: true, profileScope: 'team', progress: { at: preCount + 3, total } }) },
     // 워크스페이스 repo 원격 — 여기까지 해야 팀원이 clone 할 수 있다
     ...(remoteOf() ? [] : [{ n: 7, run: async () => {
-      const url = await input({ message: '워크스페이스 repository 주소', hint: 'GitLab·GitHub 에 만든 빈 repo 주소. 없으면 Enter (나중에 git remote add origin <주소>)', validate: (x) => (!x || kit.isGitUrl(String(x).trim()) ? undefined : 'git 주소 형식 (https://… 또는 git@…)') });
-      if (url === BACK || clack().isCancel(url)) return BACK;
-      const u = String(url || '').trim();
+      let u;
+      for (;;) {
+        const url = await input({ message: '워크스페이스 repository 주소', hint: 'GitLab·GitHub 에 만든 빈 비공개 repo 주소 (작업 기록 handoffs/ · workspace.json 이 올라간다). 없으면 Enter (나중에 git remote add origin <주소>)', validate: (x) => (!x || kit.isGitUrl(String(x).trim()) ? undefined : 'git 주소 형식 (https://… 또는 git@…)') });
+        if (url === BACK || clack().isCancel(url)) return BACK;
+        u = String(url || '').trim();
+        if (!u) break;
+        const ok = await privateOk(u);
+        if (ok === BACK || clack().isCancel(ok)) return BACK;
+        if (ok) break;
+      }
       if (u && !remoteOf()) { const r = spawnSync('git', ['-C', dir, 'remote', 'add', 'origin', u], { encoding: 'utf8' }); if (r.status !== 0) p.log.warn(`원격을 못 붙였습니다: ${(r.stderr || '').trim()}`); }
       return true;
     } }]),
     { n: remoteOf() ? 7 : 8, run: async () => {
       if (!remoteOf()) return true;
+      // 이미 원격이 있던 경우(clone 한 repo 에 만들었을 때)도 공개 repo 인지 본다. 주소 질문에서 확인한 주소면 다시 묻지 않는다
+      const origin = spawnSync('git', ['-C', dir, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).stdout.trim();
+      if (origin && !checkedPublic.has(origin)) {
+        const ok = await privateOk(origin, '아니오면 push 하지 않습니다.');
+        if (ok === BACK || clack().isCancel(ok)) return BACK;
+        if (!ok) { p.log.info('push 하지 않았습니다. repo 를 비공개로 바꾼 뒤 git push -u origin HEAD'); return true; }
+      }
       const yes = await yesNo({ message: '지금 커밋·push 할까요?', hint: 'chore: init workspace 로 커밋하고 origin 에 push 합니다. 팀원은 그 뒤 clone 할 수 있습니다.' });
       if (yes === BACK || clack().isCancel(yes)) return BACK;
       if (yes !== true) return true;

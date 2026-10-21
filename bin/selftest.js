@@ -260,6 +260,27 @@ for (const f of textFiles) {
 }
 record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ? hits.slice(0, 5).join(', ') : banned.length ? `${banned.length}개 낱말` : '목록 없음 (AIDURE_BANNED · ~/.config/aidure/banned.txt)');
 
+// 워크스페이스 커밋 훅의 비밀값 검사 · 공개 여부 주소 변환
+{
+  const dir = path.join(tmp, 'secret-guard');
+  run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new'], tmp);
+  const g = (...a) => spawnSync('git', ['-C', dir, ...a], { encoding: 'utf8' });
+  const guard = () => spawnSync(process.execPath, [path.join(dir, 'bin', 'kit.js'), 'guard'], { cwd: dir, encoding: 'utf8' });
+  fs.mkdirSync(path.join(dir, 'handoffs', 'me'), { recursive: true });
+  const fake = ['ghp', 'A'.repeat(36)].join('_');   // 시험용 가짜 토큰 (파일에 그대로 두지 않게 조립)
+  fs.writeFileSync(path.join(dir, 'handoffs', 'me', 'LATEST.md'), `# 기록\n로그: token=${fake}\n`);
+  g('add', 'handoffs/me/LATEST.md');
+  const blocked = guard();
+  fs.writeFileSync(path.join(dir, 'handoffs', 'me', 'LATEST.md'), `# 기록\n로그: token=***\n시험용: ${fake} gitleaks:allow\n`);
+  g('add', 'handoffs/me/LATEST.md');
+  const passed = guard();
+  const { anonUrl } = require(path.join(KIT, 'packs', 'core', 'lib', 'visibility.js'));
+  const urls = anonUrl('git@github.com:me/ws.git') === 'https://github.com/me/ws.git' && anonUrl('ssh://git@gitlab.example.com:2222/g/ws.git') === 'https://gitlab.example.com/g/ws.git' && anonUrl('https://u@host/a/b.git') === 'https://host/a/b.git';
+  const noValue = !blocked.stderr.includes(fake) && /LATEST\.md:2 \(GitHub 토큰\)/.test(blocked.stderr);
+  record('커밋 훅 비밀값 검사 · 공개 여부 주소', blocked.status === 1 && noValue && passed.status === 0 && urls,
+    `토큰 막음 ${blocked.status === 1} · 값 안 찍고 파일:줄 ${noValue} · 가린 뒤 · 예외 표시 통과 ${passed.status === 0} · 익명 주소 변환 ${urls}`);
+}
+
 // 원격 없이 새로 만드는 repo — init --code new:<이름> → git init·훅·local 등록 → 팀원 install 은 대기 → origin 을 달면 sync 가 remote 로 옮김
 {
   const dir = path.join(tmp, 'local-repo');
