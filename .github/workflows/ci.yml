@@ -1,4 +1,4 @@
-# 공개판 CI: push · PR 마다 test. v* 태그면 npm 발행 (저장소 비밀값 NPM_TOKEN) 과 문서 사이트(GitHub Pages)
+# 공개판 CI: push · PR 마다 test. v* 태그면 npm 발행 (신뢰 게시: 토큰 없이 OIDC, npmjs.com 패키지 설정에 이 저장소 · ci.yml 등록) 과 문서 사이트(GitHub Pages)
 name: ci
 on:
   push:
@@ -32,10 +32,9 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@^11.5.1   # 신뢰 게시(OIDC)는 npm 11.5.1 이상
       - run: npm ci
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --access public   # 신뢰 게시면 출처 증명(provenance)도 자동
   pages:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test
