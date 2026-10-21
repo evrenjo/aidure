@@ -1215,7 +1215,7 @@ async function cmdInit(argv) {
   p.log.message(log.filter((l) => l.trim() && !l.includes('스택 감지')).join('\n'));
   // clone 은 인증을 묻지 않게 막고 돌린다 (진행 표시 뒤에서 멈추지 않게). 직접 git clone 하면 되는 repo 가 여기서 빠질 수 있어,
   // 받지 못한 repo 를 바로 보이고 인증을 물을 수 있는 git clone 으로 다시 받을지 묻는다 (스택 확인 전에)
-  const failed = () => { try { return kit.loadWorkspace(dir).repos.filter((r) => r.remote && !fs.existsSync(path.join(dir, r.dir))); } catch { return []; } };
+  const failed = () => { try { return kit.loadWorkspace(dir).repos.filter((r) => r.remote && kit.repoSafe(r) && !fs.existsSync(path.join(dir, r.dir))); } catch { return []; } };
   if (failed().length) {
     const first = repoStatus(dir, res.repos || []);
     if (first) p.note(first.text, first.title);
@@ -1653,6 +1653,7 @@ function cmdRepoRemove(rest) {
   const rel = kit.repoRel(raw.repos.find((r) => r.name === name));
   const dir = path.join(root, rel);
   let folder = fs.existsSync(dir) ? '그대로 둠 (지우려면 --delete)' : '없음';
+  if (rest.includes('--delete') && !kit.repoSafe(raw.repos.find((r) => r.name === name))) fail(`repo 이름 · 그룹이 규칙에 맞지 않아 폴더를 지우지 않습니다: ${name} (--delete 없이 목록에서만 빼세요)`);
   if (rest.includes('--delete') && fs.existsSync(dir)) {
     if (fs.lstatSync(dir).isSymbolicLink()) { fs.unlinkSync(dir); folder = '링크 지움 (원래 폴더는 그대로)'; } else {
       const git = (...a) => spawnSync('git', ['-C', dir, ...a], { encoding: 'utf8' });
@@ -1670,14 +1671,14 @@ function cmdRepoRemove(rest) {
   fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n');
   const ok = runWorkspaceKit(root, ['sync', '--quiet']);
   // 사람이 쓴 문서에 남은 이름 (생성물 · repos/ 밖) — 고치는 건 사람 몫이라 알리기만 한다
-  const left = (spawnSync('git', ['-C', root, 'grep', '-l', '-F', name, '--', '*.md', ':!repos', ':!AGENTS.md', ':!CLAUDE.md', ':!.agents', ':!.claude', ':!.codex', ':!handoffs'], { encoding: 'utf8' }).stdout || '').trim().split('\n').filter(Boolean);
+  const left = (spawnSync('git', ['-C', root, 'grep', '-l', '-F', '-e', name, '--', '*.md', ':!repos', ':!AGENTS.md', ':!CLAUDE.md', ':!.agents', ':!.claude', ':!.codex', ':!handoffs'], { encoding: 'utf8' }).stdout || '').trim().split('\n').filter(Boolean);
   console.log(`✔ repo 뺌: ${name} · 폴더 ${folder}`);
   if (left.length) console.log(`  이 이름이 남은 문서: ${left.join(', ')} (필요하면 고치세요)`);
   console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다 (팀원 PC 의 repos/ 폴더는 그대로 남습니다)');
   if (!ok) process.exit(1);
 }
 
-const GROUP_NAME = /^[A-Za-z0-9._-]+$/;
+const GROUP_NAME = /^(?!\.{1,2}$)[A-Za-z0-9._][A-Za-z0-9._-]*$/; // bin/kit.js REPO_SEG 와 같다 ('.' · '..' · '-' 로 시작 금지)
 const NEW_GROUP = Symbol('new-group');
 /** 이 워크스페이스의 킷(bin/kit.js)이 그룹 폴더를 아는지 — 모르면 install 이 repos/<이름> 에 받아 버린다 */
 function requireGroups(root) {
@@ -1722,7 +1723,7 @@ function cmdRepoMove(rest) {
   fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n');
   // 사람이 쓴 문서 (워크스페이스 git 의 md · 생성물 · handoffs 제외) 의 옛 경로를 바꾼다
   const re = new RegExp(`(?<![\\w.-])${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.-])`, 'g');
-  const listed = (spawnSync('git', ['-C', root, 'grep', '-l', '-F', from, '--', '*.md', ':!repos', ':!AGENTS.md', ':!CLAUDE.md', ':!.agents', ':!.claude', ':!.codex', ':!handoffs'], { encoding: 'utf8' }).stdout || '').trim().split('\n').filter(Boolean);
+  const listed = (spawnSync('git', ['-C', root, 'grep', '-l', '-F', '-e', from, '--', '*.md', ':!repos', ':!AGENTS.md', ':!CLAUDE.md', ':!.agents', ':!.claude', ':!.codex', ':!handoffs'], { encoding: 'utf8' }).stdout || '').trim().split('\n').filter(Boolean);
   const fixed = [];
   for (const f of listed) {
     const file = path.join(root, f);

@@ -16,6 +16,8 @@ const { spawnSync } = require('child_process');
 
 const GLOBAL = 'global';
 const NAME_RE = /^[A-Z][A-Z0-9_]*$/;
+/** 범위 이름: 파일 이름 · 키체인 명령 줄에 들어간다. 공유 workspace.json 의 이름에 / · .. · 줄바꿈이 있으면 다른 파일에 쓰거나 security -i 에 명령을 끼워 넣을 수 있다 */
+const SCOPE_RE = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const STORE_LABEL = { keychain: '키체인', wincred: '자격 증명 관리자', libsecret: 'libsecret', file: '파일' };
 
 function configDir() {
@@ -28,7 +30,7 @@ const indexFile = () => path.join(secretsDir(), 'index.json');
 
 /** 프로젝트 범위 이름 = workspace.json project.name (없으면 null) */
 function projectOf(root) {
-  try { return JSON.parse(fs.readFileSync(path.join(root, 'workspace.json'), 'utf8')).project.name || null; } catch { return null; }
+  try { const n = JSON.parse(fs.readFileSync(path.join(root, 'workspace.json'), 'utf8')).project.name; return typeof n === 'string' && SCOPE_RE.test(n) ? n : null; } catch { return null; }
 }
 
 const has = (cmd, args = ['--help']) => { try { const r = spawnSync(cmd, args, { stdio: 'ignore', timeout: 5000 }); return !r.error; } catch { return false; } };
@@ -46,7 +48,8 @@ function backend() {
 
 // ───────── 저장소별 ─────────
 
-const q = (s) => `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+const q = (s) => { if (/[\0\r\n]/.test(String(s))) throw new Error('키체인 값에 줄바꿈을 넣을 수 없습니다'); return qq(s); };
+const qq = (s) => `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 const WINCRED_PS = `
 $ErrorActionPreference='Stop'
 [Console]::OutputEncoding=[Text.Encoding]::UTF8
@@ -103,7 +106,7 @@ const STORES = {
   },
 };
 
-const scopeFile = (scope) => path.join(secretsDir(), `${scope}.json`);
+const scopeFile = (scope) => { if (!SCOPE_RE.test(String(scope))) throw new Error(`범위 이름이 올바르지 않습니다: ${JSON.stringify(scope)}`); return path.join(secretsDir(), `${scope}.json`); };
 function readJson(file) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return {}; } }
 /** KEY=값 줄 파일 (옛 telegram.env 읽기용) */
 function readEnv(file) {
@@ -203,6 +206,7 @@ function set(name, value, { scope }) {
   if (!v) throw new Error('값이 비었습니다');
   if (/[\r\n]/.test(v)) throw new Error('값은 한 줄이어야 합니다');
   if (!scope) throw new Error('범위가 없습니다 (워크스페이스 밖이면 --global)');
+  if (!SCOPE_RE.test(scope)) throw new Error(`범위 이름은 영문 · 숫자 · - · _ 만: ${JSON.stringify(scope)}`);
   let store = backend();
   let fallback = false;
   if (store !== 'file') {
@@ -218,6 +222,7 @@ function set(name, value, { scope }) {
 
 /** 지우기 → 지웠으면 true (모든 저장소에서) */
 function rm(name, { scope }) {
+  if (!SCOPE_RE.test(String(scope))) throw new Error(`범위 이름이 올바르지 않습니다: ${JSON.stringify(scope)}`);
   let any = false;
   for (const st of [...new Set([backend(), 'file'])]) { try { any = STORES[st].del(scope, name) || any; } catch { /* 없음 */ } }
   const had = !!readIndex()[key(scope, name)];

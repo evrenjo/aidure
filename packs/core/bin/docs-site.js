@@ -70,6 +70,13 @@ function targets(ws, arg) {
   return docs;
 }
 
+/** SVG 를 사이트에 넣으면 안 되는가: 문자 참조(&#106; · &lt;)를 풀고 주소 안 탭 · 줄바꿈을 지운 뒤 스크립트 · on… 속성 · javascript: · iframe(srcdoc) · 끼워 넣기 · 사용자 엔티티 · XSLT 를 찾는다 */
+function svgUnsafe(text) {
+  const t = String(text).replace(/&#x([0-9a-f]+);?|&#(\d+);?/gi, (m, h, d) => { try { return String.fromCodePoint(h ? parseInt(h, 16) : Number(d)); } catch { return ''; } })
+    .replace(/&(lt|gt|quot|apos|amp);/gi, (m, n) => ({ lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' }[n.toLowerCase()])).replace(/[\t\n\r]/g, ' ');
+  return /<(?:[\w-]+:)?script|\son[a-z]+\s*=|j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:|<(?:[\w-]+:)?(?:iframe|embed|object|foreignObject|handler)\b|srcdoc|<!ENTITY|xml-stylesheet/i.test(t);
+}
+
 function readTree(dir, out, keep = () => true) {
   const files = {};
   (function walk(rel) {
@@ -81,7 +88,7 @@ function readTree(dir, out, keep = () => true) {
       else if (/\.html?$/i.test(e.name)) files[r] = fs.readFileSync(path.join(dir, r), 'utf8');
       else if (/\.svg$/i.test(e.name)) {   /* SVG 는 주소로 직접 열면 안의 스크립트가 사이트에서 돈다: 스크립트 · on… 속성 · javascript: 가 있으면 넣지 않는다 */
         const buf = fs.readFileSync(path.join(dir, r));
-        if (/<script|\son[a-z]+\s*=|javascript:/i.test(buf.toString('utf8'))) console.warn(`⚠ ${r}: SVG 안에 스크립트 · on… 속성이 있어 사이트에 넣지 않았습니다`);
+        if (svgUnsafe(buf.toString('utf8'))) console.warn(`⚠ ${r}: SVG 안에 스크립트 · on… 속성 · 끼워 넣은 문서가 있어 사이트에 넣지 않았습니다`);
         else files[r] = buf;
       } else if (/\.(png|jpe?g|gif|webp)$/i.test(e.name)) files[r] = fs.readFileSync(path.join(dir, r));
     }
@@ -672,12 +679,14 @@ function cmdServe(ws) {
   const server = http.createServer((req, res) => {
     let rel;
     try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { res.writeHead(400); res.end(); return; }
+    // 이 PC 의 주소로 온 요청만 (다른 사이트가 DNS 를 127.0.0.1 로 돌려 읽는 것을 막는다). NUL 이 든 경로는 파일 읽기가 예외로 죽는다
+    if (!/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/i.test(req.headers.host || '') || rel.includes('\0')) { res.writeHead(400); res.end(); return; }
     let f = path.join(dir, path.normalize(rel).replace(/^([/\\])+/, ''));
     if (f !== dir && !f.startsWith(dir + path.sep)) { res.writeHead(403); res.end(); return; }
     if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
     fs.readFile(f, (e, data) => {
       if (e) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); res.end(`없음: ${rel}`); return; }
-      res.writeHead(200, { 'content-type': TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-cache' });
+      res.writeHead(200, { 'content-type': TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
       res.end(data);
     });
   });

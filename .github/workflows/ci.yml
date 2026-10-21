@@ -1,4 +1,6 @@
 # 공개판 CI: push · PR 마다 test. v* 태그면 npm 발행 (신뢰 게시: 토큰 없이 OIDC, npmjs.com 패키지 설정에 이 저장소 · ci.yml 등록) 과 문서 사이트(GitHub Pages)
+# 공급망: 액션은 태그가 아니라 커밋 SHA 로 고정한다 (태그 바꿔치기 대비, 뒤 주석이 그 버전). 의존 설치는 --ignore-scripts (설치 스크립트가 토큰을 훔치는 웜 대비)
+# 올릴 때: gh api repos/actions/<이름>/git/ref/tags/<태그> 로 SHA 를 확인해 SHA 와 주석을 같이 바꾼다
 name: ci
 on:
   push:
@@ -11,11 +13,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      - run: npm ci
+      - run: npm ci --ignore-scripts   # 시험은 devDependencies(esbuild · playwright-core)의 설치 스크립트가 필요 없다
       - run: npm test
         env:
           AIDURE_NO_UPDATE_CHECK: '1'
@@ -27,13 +31,15 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      - run: npm install -g npm@^11.5.1   # 신뢰 게시(OIDC)는 npm 11.5.1 이상
-      - run: npm ci
+      - run: npm install -g --ignore-scripts npm@11.21.0   # 신뢰 게시(OIDC)는 npm 11.5.1 이상. 범위가 아닌 정확한 버전으로
+      # 발행에는 의존 설치가 필요 없다 (빌드 단계 없음). OIDC 토큰을 받을 수 있는 이 작업에서는 남의 설치 스크립트를 돌리지 않는다
       - run: npm publish --access public   # 신뢰 게시면 출처 증명(provenance)도 자동
   pages:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -45,9 +51,11 @@ jobs:
     environment:
       name: github-pages
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: docs-site
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

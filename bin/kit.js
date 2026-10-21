@@ -32,6 +32,12 @@ const MANIFEST = '.agents/.generated.json';
 const REPOS_DIR = 'repos'; // 코드·기획·레거시 repo 는 전부 워크스페이스 안 repos/<이름> (git 제외)
 /** repo 폴더 (워크스페이스 기준) — repos/<이름>, group 이 있으면 repos/<그룹>/<이름>. packs/core/lib/workspace.js · workspace.py 와 한 쌍 */
 const repoRel = (r) => [REPOS_DIR, ...(r.group ? [r.group] : []), r.name || ''].join('/');
+// repo 이름 · 그룹 = 폴더 한 단계. '.' · '..' 와 '-' 로 시작하는 것은 막는다 (repos/ 밖으로 나가거나 git 옵션으로 읽히지 않게)
+const REPO_SEG = /^(?!\.{1,2}$)[A-Za-z0-9._][A-Za-z0-9._-]*$/;
+// clone 주소: '-' 로 시작(git 옵션)하거나 '<이름>::' 전송 도우미(ext:: 는 명령을 실행한다)는 받지 않는다
+const safeRemote = (v) => typeof v === 'string' && !!v && !v.startsWith('-') && !/^[A-Za-z][A-Za-z0-9+.-]*::/.test(v);
+/** workspace.json 의 repo 항목을 디스크에 써도 되는지 (이름 · 그룹 · 주소). 팀원이 고친 workspace.json 도 이걸 거친 뒤에만 clone · 링크한다 */
+const repoSafe = (r) => REPO_SEG.test(r.name || '') && (r.group === undefined || (typeof r.group === 'string' && REPO_SEG.test(r.group))) && (!r.remote || safeRemote(r.remote));
 const LOCAL_CONFIG = '.agents/local.json'; // 이 PC·이 워크스페이스 전용 설정 (메인 에이전트 등)
 // 시작 유형 (SI 분류) — 유형마다 자동으로 들어가는 팩과, 필수·경고 대상 자료 종류
 const PROJECT_TYPES = {
@@ -222,9 +228,10 @@ function validateProject(ws, errors, warnings) {
   if (ap !== undefined && !APPROACHES[ap]) errors.push(`project.approach '${ap}': ${Object.keys(APPROACHES).join(' | ')} 중 하나 (aidure approach)`);
   for (const r of ws.repos) {
     if (!REPO_KINDS[r.kind]) errors.push(`repos '${r.name}': kind '${r.kind}': ${Object.keys(REPO_KINDS).join(' | ')} 중 하나`);
-    if (!r.name || !/^[A-Za-z0-9._-]+$/.test(r.name)) errors.push(`repos 항목 name 은 영문·숫자·._- 만: ${JSON.stringify(r.name)}`);
+    if (!r.name || !REPO_SEG.test(r.name)) errors.push(`repos 항목 name 은 영문·숫자·._- 만 ('-' 로 시작 · '.' · '..' 금지): ${JSON.stringify(r.name)}`);
+    if (r.remote && !safeRemote(r.remote)) errors.push(`repos '${r.name}': remote 는 git 주소만 ('-' 로 시작 · '<이름>::' 전송 금지): ${JSON.stringify(r.remote)}`);
     if (!r.remote && !r.path && !r.local) errors.push(`repos '${r.name}': remote(git 주소) · path(이미 있는 폴더) · local(워크스페이스에서 새로 만듦) 중 하나가 필요합니다`);
-    if (r.group !== undefined && (typeof r.group !== 'string' || !/^[A-Za-z0-9._-]+$/.test(r.group))) errors.push(`repos '${r.name}': group 은 영문·숫자·._- 만 (한 단계): ${JSON.stringify(r.group)}`);
+    if (r.group !== undefined && (typeof r.group !== 'string' || !REPO_SEG.test(r.group))) errors.push(`repos '${r.name}': group 은 영문·숫자·._- 만 (한 단계, '-' 로 시작 · '.' · '..' 금지): ${JSON.stringify(r.group)}`);
   }
   // 이름은 그룹이 달라도 하나만 (명령 · 링크가 이름으로 repo 를 찾는다). 그룹 폴더가 그룹 없는 repo 와 겹치면 안 된다
   const seen = new Set();
@@ -1876,6 +1883,7 @@ function installRepos(root, ws, { createLocal = false, onResult } = {}) {
   results.push = (x) => { push0(x); if (onResult) onResult(x, results.length, ws.repos.length); return results.length; };
   fs.mkdirSync(path.join(root, REPOS_DIR), { recursive: true });
   for (const r of ws.repos) {
+    if (!repoSafe(r)) { results.push({ name: String(r.name), state: 'fail', note: '이름 · 그룹 · 주소가 규칙에 맞지 않아 건너뜀 (node bin/kit.js check)' }); continue; }
     const dir = path.join(root, r.dir);
     fs.mkdirSync(path.dirname(dir), { recursive: true });
     if (exists(dir)) { results.push({ name: r.name, state: 'ok', note: '있음' }); continue; }
@@ -2140,4 +2148,4 @@ function main() {
 
 main();
 
-module.exports = { repoRel, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };
+module.exports = { repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };

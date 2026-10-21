@@ -1,5 +1,6 @@
 # aidure docs pages: 문서 사이트(docs-site/)를 GitHub Pages 로 올린다. docs-site/ 는 aidure docs build 로 만들어 커밋한 것을 그대로 쓴다.
 # 켜고 끄기: aidure docs pages on | off (끄면 docs-site/ 를 커밋하지 않아 이 작업이 돌지 않는다).
+# 액션은 커밋 SHA 로 고정한다 (태그 바꿔치기 대비, 뒤 주석이 그 버전). 킷을 올리고 aidure docs pages on 을 다시 하면 새 SHA 로 바뀐다.
 # 한 번만: Settings > Pages > Build and deployment > Source 를 「GitHub Actions」 로. 비공개 repo 는 유료 요금제여야 Pages 를 쓸 수 있다.
 name: pages
 on:
@@ -21,11 +22,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - run: test -f docs-site/assets/site.json || { echo "docs-site/ 가 없습니다. aidure docs build 로 만들어 커밋하세요"; exit 1; }
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: docs-site
       - id: deploy
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

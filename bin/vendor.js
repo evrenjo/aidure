@@ -2,7 +2,7 @@
 /**
  * 문서 사이트 외부 라이브러리 받기 (킷 개발용, `npm run vendor`). 의존성 없음.
  *
- * vendor.json 의 패키지를 공개 npm 레지스트리에서 `npm pack` 으로 받아(무결성은 npm 이 확인한다)
+ * vendor.json 의 패키지를 공개 npm 레지스트리에서 `npm pack` 으로 받아(무결성은 vendor.json 의 integrity 와 대조한다)
  * 브라우저용 파일만 out 폴더에 둔다. 빌드 도구는 쓰지 않는다:
  *   - UMD 파일은 그대로 (전역 이름: preact · preactHooks · htm · MiniSearch)
  *   - CommonJS 파일(global 이 있는 것)은 즉시 실행 함수로 감싸 그 전역 이름에 둔다
@@ -39,6 +39,11 @@ try {
     const r = spawnSync('npm', ['pack', `${pkg.name}@${pkg.version}`, `--registry=${conf.registry}`, '--pack-destination', tmp, '--silent'], { encoding: 'utf8', shell: process.platform === 'win32' });
     if (r.status !== 0) throw new Error(`${pkg.name}@${pkg.version} 받기 실패: ${r.stderr || r.stdout}`);
     const tgz = path.join(tmp, r.stdout.trim().split('\n').pop());
+    // 레지스트리가 주는 값이 아니라 vendor.json 에 적어 둔 값과 대조한다 (같은 버전을 바꿔치기한 tgz 대비)
+    if (!pkg.integrity) throw new Error(`${pkg.name}: vendor.json 에 integrity 가 없습니다 (npm view ${pkg.name}@${pkg.version} dist.integrity)`);
+    const [algo, want64] = pkg.integrity.split('-');
+    const got64 = require('crypto').createHash(algo).update(fs.readFileSync(tgz)).digest('base64');
+    if (got64 !== want64) throw new Error(`${pkg.name}@${pkg.version}: 받은 tgz 의 ${algo} 가 vendor.json integrity 와 다릅니다`);
     const dir = path.join(tmp, `${pkg.name}-x`);
     fs.mkdirSync(dir);
     const x = spawnSync('tar', ['xzf', tgz, '-C', dir]);

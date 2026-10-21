@@ -40,6 +40,16 @@ if (process.platform !== 'win32') assert.strictEqual(fs.statSync(path.join(S.sec
 // 값 검사: 이름 대문자 · 한 줄
 assert.throws(() => S.set('gitlab', 'x', { scope: 'alpha' }), /대문자/);
 assert.throws(() => S.set('X_TOKEN', 'a\nb', { scope: 'alpha' }), /한 줄/);
+// 범위 이름 검사: 공유 workspace.json 의 이름으로 다른 파일에 쓰거나 키체인 명령을 끼워 넣지 못하게
+assert.throws(() => S.set('X_TOKEN', 'v', { scope: '../../evil' }), /범위 이름/);
+assert.throws(() => S.set('X_TOKEN', 'v', { scope: 'a"\ndelete-keychain' }), /범위 이름/);
+assert.throws(() => S.rm('X_TOKEN', { scope: '../x' }), /범위 이름/);
+{
+  const bad = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-scope-'));
+  fs.writeFileSync(path.join(bad, 'workspace.json'), JSON.stringify({ project: { name: '../../x' } }));
+  assert.strictEqual(S.projectOf(bad), null, '경로 낱말이 든 프로젝트 이름은 범위로 쓰지 않는다');
+  fs.rmSync(bad, { recursive: true, force: true });
+}
 
 // 확인 결과 경고: 권한 부족 · 만료 임박 (api 가 있으면 read_api 도 된다)
 const today = new Date('2026-10-12');
