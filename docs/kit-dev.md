@@ -4,13 +4,13 @@
 
 ## 새 팩 추가
 
-여러 프로젝트에 두루 쓸 규칙이면 킷의 팩으로 만든다. 모든 워크스페이스가 `aikit upgrade` 로 받는다.
+여러 프로젝트에 두루 쓸 규칙이면 킷의 팩으로 만든다. 모든 워크스페이스가 `aidure upgrade` 로 받는다.
 
 1. 킷 repo 에 `packs/<이름>/pack.json` 을 만든다 (`name` · `title` · `summary` · `description` · `category` · `requires`).
 2. `rules/` · `skills/` · `hooks.json` · `bin/` 을 필요한 만큼 둔다. 종류(`category`)에 따라 붙는 조건이 정해진다 (`docs/packs.md`).
 3. 스택 팩이면 `packs/core/stacks.json` 에 감지 조건을 더한다.
 4. `npm test` 로 검사하고(생성 · 죽은 참조 · 예산 · 금지 문자열), `npm run docs` 로 팩 목록을 다시 만든다.
-5. 커밋 · push 하면 배포된다. 각 워크스페이스는 `aikit upgrade`.
+5. 커밋 · push 하면 배포된다. 각 워크스페이스는 `aidure upgrade`.
 
 ## 스택 목록 (`stacks.json`)
 
@@ -26,8 +26,8 @@ repo 를 보고 스택을 감지하는 조건이다. **새 기술은 여기에 �
 
 - `detect` 는 조건 목록(하나라도 맞으면 감지). 조건 = 파일 이름(`*` 허용, 깊이 4 까지) + 선택적 내용 정규식.
   소스 파일 표식처럼 깊은 곳을 봐야 하면 `"depth": 9` 처럼 적는다(최대 10). 깊은 조건은 느리니 빌드·설정 파일 조건 뒤에 둔다.
-- 프로젝트 전용 조건(사내 라이브러리 좌표)은 킷이 아니라 워크스페이스의 `workspace.json` `stackHints` 에 둔다 (`aikit detect --hint`).
-- 감지 결과는 `workspace.json` 의 `repos[].stacks` 에 저장되고 사람이 고칠 수 있다 (`aikit detect`).
+- 프로젝트 전용 조건(사내 라이브러리 좌표)은 킷이 아니라 워크스페이스의 `workspace.json` `stackHints` 에 둔다 (`aidure detect --hint`).
+- 감지 결과는 `workspace.json` 의 `repos[].stacks` 에 저장되고 사람이 고칠 수 있다 (`aidure detect`).
   멀티모듈 repo 는 스택별 모듈이 `repos[].stackPaths` 에 함께 저장되고, AGENTS.md repo 별 규칙 표에서 layer·stack 팩 규칙마다 모듈 경로가 붙는다.
 - `parent` 를 적으면 그 프레임워크의 세부가 된다 (예: `spring-webflux` → `spring`). 세부는 부모의 layer·팩을 함께 받는다.
 - 감지 조건마다 근거(공식 문서 URL)는 `docs/stack-catalog-sources.json` 에 둔다.
@@ -38,7 +38,7 @@ repo 를 보고 스택을 감지하는 조건이다. **새 기술은 여기에 �
 
 | 순서 | 어디 | 무엇 |
 |---|---|---|
-| 1 | `bin/aikit.js` `AGENTS` | 명령 이름 · 설치 명령 · 모델 플래그. "쓰는 AI" 선택지와 `ARG_PRESETS`(자주 쓰는 실행 인자)도 여기 |
+| 1 | `bin/aidure.js` `AGENTS` | 명령 이름 · 설치 명령 · 모델 플래그. "쓰는 AI" 선택지와 `ARG_PRESETS`(자주 쓰는 실행 인자)도 여기 |
 | 2 | `packs/core/lib/cli.js` | 설치 여부·실행 파일 찾기 (`findCli`) |
 | 3 | `bin/kit.js` | 그 도구의 설정 파일 생성: 규칙 파일 위치, 훅 등록 형식(`hookGroups`), 역할 에이전트 파일, 시작 도구 판정(`startToolOf`) |
 | 4 | `packs/core/lib/hook.js` · `packs/core/hooks/*.js` | 훅 입출력 계약이 다르면 `--agent=<도구>` 분기. 지원하지 않는 이벤트는 `hooks.json` 의 `agents` 로 제외 |

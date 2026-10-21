@@ -1,10 +1,10 @@
 // 비밀값(토큰) 저장 · 읽기: OS 저장소(macOS 키체인 · Windows 자격 증명 관리자 · Linux libsecret), 못 쓰면 권한 600 파일. 값은 어디에도 출력하지 않는다
 /*
  * 범위: 프로젝트(workspace.json project.name. 경로가 아니라 이름이라 다른 폴더에 clone 해도 같은 값) · 전역(global)
- * 찾는 순서 (get): 환경변수 > 프로젝트 > 전역 > 옛 파일(~/.config/aikit/telegram.env · gitlab-token · ci-npm-token). git credential 은 쓰는 도구가 마지막에 본다
- * 저장 키: macOS service=aikit:<범위> account=<이름> · Windows target=aikit:<범위>:<이름>(Generic) · Linux aikit-scope=<범위> aikit-name=<이름> · 파일 <설정 폴더>/secrets/<범위>.json
+ * 찾는 순서 (get): 환경변수 > 프로젝트 > 전역 > 옛 파일(~/.config/aidure/telegram.env · gitlab-token · ci-npm-token). git credential 은 쓰는 도구가 마지막에 본다
+ * 저장 키: macOS service=aidure:<범위> account=<이름> · Windows target=aidure:<범위>:<이름>(Generic) · Linux aidure-scope=<범위> aidure-name=<이름> · 파일 <설정 폴더>/secrets/<범위>.json
  * 목록(index.json, 같은 폴더)에는 이름 · 범위 · 저장소 · 저장일 · 마지막 확인 결과만 둔다 (값 없음). 읽을 때 목록에 있는 범위만 저장소를 찾아 훅이 느려지지 않게 한다
- * 시험용: AIKIT_CONFIG_DIR(설정 폴더) · AIKIT_SECRETS_BACKEND=file|keychain|wincred|libsecret
+ * 시험용: AIDURE_CONFIG_DIR(설정 폴더) · AIDURE_SECRETS_BACKEND=file|keychain|wincred|libsecret
  * 값은 인자(argv)로 넘기지 않는다: 키체인은 security -i 의 표준 입력(16진수 -X: 따옴표 · 역슬래시 · 한글이 깨지지 않게), libsecret 은 secret-tool 의 표준 입력, Windows 는 PowerShell 표준 입력(JSON)
  * 키체인 읽기는 -g 의 「password: "…"」 또는 「password: 0x…」 를 푼다 (-w 는 ASCII 밖 값을 16진수로 내보내 원래 값과 구별할 수 없다)
  */
@@ -19,9 +19,9 @@ const NAME_RE = /^[A-Z][A-Z0-9_]*$/;
 const STORE_LABEL = { keychain: '키체인', wincred: '자격 증명 관리자', libsecret: 'libsecret', file: '파일' };
 
 function configDir() {
-  if (process.env.AIKIT_CONFIG_DIR) return process.env.AIKIT_CONFIG_DIR;
-  if (process.platform === 'win32') return path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'aikit');
-  return path.join(os.homedir(), '.config', 'aikit');
+  if (process.env.AIDURE_CONFIG_DIR) return process.env.AIDURE_CONFIG_DIR;
+  if (process.platform === 'win32') return path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'aidure');
+  return path.join(os.homedir(), '.config', 'aidure');
 }
 const secretsDir = () => path.join(configDir(), 'secrets');
 const indexFile = () => path.join(secretsDir(), 'index.json');
@@ -35,7 +35,7 @@ const has = (cmd, args = ['--help']) => { try { const r = spawnSync(cmd, args, {
 let detected = null;
 /** 이 PC 의 OS 저장소 (없으면 file) */
 function backend() {
-  if (process.env.AIKIT_SECRETS_BACKEND) return process.env.AIKIT_SECRETS_BACKEND;
+  if (process.env.AIDURE_SECRETS_BACKEND) return process.env.AIDURE_SECRETS_BACKEND;
   if (detected) return detected;
   if (process.platform === 'darwin' && has('security', ['help'])) detected = 'keychain';
   else if (process.platform === 'win32' && has('powershell.exe', ['-NoProfile', '-Command', 'exit 0'])) detected = 'wincred';
@@ -53,30 +53,30 @@ $ErrorActionPreference='Stop'
 $in=[Console]::In.ReadToEnd()|ConvertFrom-Json
 Add-Type -TypeDefinition @"
 using System;using System.Runtime.InteropServices;using System.Text;
-public static class AikitCred{
+public static class AidureCred{
  [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Unicode)] public struct CREDENTIAL{public int Flags;public int Type;public string TargetName;public string Comment;public System.Runtime.InteropServices.ComTypes.FILETIME LastWritten;public int CredentialBlobSize;public IntPtr CredentialBlob;public int Persist;public int AttributeCount;public IntPtr Attributes;public string TargetAlias;public string UserName;}
  [DllImport("advapi32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool CredWrite(ref CREDENTIAL c,int flags);
  [DllImport("advapi32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool CredRead(string target,int type,int flags,out IntPtr c);
  [DllImport("advapi32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool CredDelete(string target,int type,int flags);
  [DllImport("advapi32.dll")] static extern void CredFree(IntPtr p);
- public static bool Write(string t,string v){var b=Encoding.UTF8.GetBytes(v);var c=new CREDENTIAL();c.Type=1;c.TargetName=t;c.UserName="aikit";c.Persist=2;c.CredentialBlobSize=b.Length;c.CredentialBlob=Marshal.AllocHGlobal(b.Length);Marshal.Copy(b,0,c.CredentialBlob,b.Length);try{return CredWrite(ref c,0);}finally{Marshal.FreeHGlobal(c.CredentialBlob);}}
+ public static bool Write(string t,string v){var b=Encoding.UTF8.GetBytes(v);var c=new CREDENTIAL();c.Type=1;c.TargetName=t;c.UserName="aidure";c.Persist=2;c.CredentialBlobSize=b.Length;c.CredentialBlob=Marshal.AllocHGlobal(b.Length);Marshal.Copy(b,0,c.CredentialBlob,b.Length);try{return CredWrite(ref c,0);}finally{Marshal.FreeHGlobal(c.CredentialBlob);}}
  public static string Read(string t){IntPtr p;if(!CredRead(t,1,0,out p))return null;try{var c=(CREDENTIAL)Marshal.PtrToStructure(p,typeof(CREDENTIAL));var b=new byte[c.CredentialBlobSize];Marshal.Copy(c.CredentialBlob,b,0,b.Length);return Encoding.UTF8.GetString(b);}finally{CredFree(p);}}
  public static bool Delete(string t){return CredDelete(t,1,0);}
 }
 "@
 switch($in.op){
- 'put'{ if(-not [AikitCred]::Write($in.target,$in.value)){ exit 2 } }
- 'get'{ $v=[AikitCred]::Read($in.target); if($v -eq $null){ exit 44 }; [Console]::Out.Write($v) }
- 'del'{ [void][AikitCred]::Delete($in.target) }
+ 'put'{ if(-not [AidureCred]::Write($in.target,$in.value)){ exit 2 } }
+ 'get'{ $v=[AidureCred]::Read($in.target); if($v -eq $null){ exit 44 }; [Console]::Out.Write($v) }
+ 'del'{ [void][AidureCred]::Delete($in.target) }
 }`;
 const wincred = (op, target, value) => spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', WINCRED_PS],
   { input: JSON.stringify({ op, target, value }), encoding: 'utf8', timeout: 20000, stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
 
 const STORES = {
   keychain: {
-    put: (scope, name, value) => spawnSync('security', ['-i'], { input: `add-generic-password -U -s ${q(`aikit:${scope}`)} -a ${q(name)} -l ${q(`aikit ${scope} ${name}`)} -X ${Buffer.from(value, 'utf8').toString('hex')}\n`, encoding: 'utf8', timeout: 15000, stdio: ['pipe', 'ignore', 'ignore'] }).status === 0,
+    put: (scope, name, value) => spawnSync('security', ['-i'], { input: `add-generic-password -U -s ${q(`aidure:${scope}`)} -a ${q(name)} -l ${q(`aidure ${scope} ${name}`)} -X ${Buffer.from(value, 'utf8').toString('hex')}\n`, encoding: 'utf8', timeout: 15000, stdio: ['pipe', 'ignore', 'ignore'] }).status === 0,
     get: (scope, name) => {
-      const r = spawnSync('security', ['find-generic-password', '-s', `aikit:${scope}`, '-a', name, '-g'], { encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'ignore', 'pipe'] });
+      const r = spawnSync('security', ['find-generic-password', '-s', `aidure:${scope}`, '-a', name, '-g'], { encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'ignore', 'pipe'] });
       if (r.status !== 0) return null;
       const line = (r.stderr.split('\n').find((l) => l.startsWith('password:')) || '').slice('password:'.length).trim();
       const hex = /^0x([0-9A-Fa-f]+)/.exec(line);
@@ -84,17 +84,17 @@ const STORES = {
       const m = /^"([\s\S]*)"$/.exec(line);
       return m ? m[1] : null;
     },
-    del: (scope, name) => spawnSync('security', ['delete-generic-password', '-s', `aikit:${scope}`, '-a', name], { stdio: 'ignore', timeout: 15000 }).status === 0,
+    del: (scope, name) => spawnSync('security', ['delete-generic-password', '-s', `aidure:${scope}`, '-a', name], { stdio: 'ignore', timeout: 15000 }).status === 0,
   },
   libsecret: {
-    put: (scope, name, value) => spawnSync('secret-tool', ['store', `--label=aikit ${scope} ${name}`, 'aikit-scope', scope, 'aikit-name', name], { input: value, timeout: 15000, stdio: ['pipe', 'ignore', 'ignore'] }).status === 0,
-    get: (scope, name) => { const r = spawnSync('secret-tool', ['lookup', 'aikit-scope', scope, 'aikit-name', name], { encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'ignore'] }); return r.status === 0 && r.stdout ? r.stdout.replace(/\n$/, '') : null; },
-    del: (scope, name) => spawnSync('secret-tool', ['clear', 'aikit-scope', scope, 'aikit-name', name], { stdio: 'ignore', timeout: 15000 }).status === 0,
+    put: (scope, name, value) => spawnSync('secret-tool', ['store', `--label=aidure ${scope} ${name}`, 'aidure-scope', scope, 'aidure-name', name], { input: value, timeout: 15000, stdio: ['pipe', 'ignore', 'ignore'] }).status === 0,
+    get: (scope, name) => { const r = spawnSync('secret-tool', ['lookup', 'aidure-scope', scope, 'aidure-name', name], { encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'ignore'] }); return r.status === 0 && r.stdout ? r.stdout.replace(/\n$/, '') : null; },
+    del: (scope, name) => spawnSync('secret-tool', ['clear', 'aidure-scope', scope, 'aidure-name', name], { stdio: 'ignore', timeout: 15000 }).status === 0,
   },
   wincred: {
-    put: (scope, name, value) => wincred('put', `aikit:${scope}:${name}`, value).status === 0,
-    get: (scope, name) => { const r = wincred('get', `aikit:${scope}:${name}`); return r.status === 0 ? r.stdout : null; },
-    del: (scope, name) => wincred('del', `aikit:${scope}:${name}`).status === 0,
+    put: (scope, name, value) => wincred('put', `aidure:${scope}:${name}`, value).status === 0,
+    get: (scope, name) => { const r = wincred('get', `aidure:${scope}:${name}`); return r.status === 0 ? r.stdout : null; },
+    del: (scope, name) => wincred('del', `aidure:${scope}:${name}`).status === 0,
   },
   file: {
     put: (scope, name, value) => { const f = scopeFile(scope); writeJson(f, { ...readJson(f), [name]: value }); return true; },
@@ -191,7 +191,7 @@ function get(name, opts = {}) {
   }
   if (opts.legacy !== false) {
     const l = legacySources().find((x) => x.name === name);
-    if (l) return { value: l.value, source: 'legacy', file: l.file, label: `옛 파일 ${l.file} (aikit secret import 로 옮긴다)` };
+    if (l) return { value: l.value, source: 'legacy', file: l.file, label: `옛 파일 ${l.file} (aidure secret import 로 옮긴다)` };
   }
   return null;
 }
@@ -284,7 +284,7 @@ async function test(kind, value, ctx = {}) {
       return { ok: j.active !== false && !j.revoked, info: { name: j.name, scopes: j.scopes || [], expires: j.expires_at || null }, ...(j.revoked ? { error: '취소된 토큰' } : {}) };
     }
     if (kind === 'telegram') {
-      const r = await fetch(`${process.env.AIKIT_TELEGRAM_API || 'https://api.telegram.org'}/bot${value}/getMe`, { signal: t() });
+      const r = await fetch(`${process.env.AIDURE_TELEGRAM_API || 'https://api.telegram.org'}/bot${value}/getMe`, { signal: t() });
       const j = await r.json().catch(() => ({}));
       return j.ok ? { ok: true, info: { user: `@${j.result.username}` } } : { ok: false, error: j.description || `${r.status}` };
     }

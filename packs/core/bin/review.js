@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// 리뷰 확인 (commit · push 전에 리뷰를 거쳤나): 지금 상태 · 리뷰했다고 기록 · 한 번 생략. 실행: aikit review <명령> 또는 node packs/core/bin/review.js <명령>
+// 리뷰 확인 (commit · push 전에 리뷰를 거쳤나): 지금 상태 · 리뷰했다고 기록 · 한 번 생략. 실행: aidure review <명령> 또는 node packs/core/bin/review.js <명령>
 /*
  * 명령
  *   status [--repo R]                 수준 · 대상 repo 마다 마지막 리뷰 기록과 리뷰 안 된 줄 수 (commit 기준 = 작업 폴더 · push 기준 = HEAD)
  *   mark [--repo R] [--by "<누가>"]    지금 상태를 리뷰했다고 기록 (훅이 알 수 없는 방법으로 리뷰했을 때: 사람이 봄 · 다른 도구)
  *   skip --reason "<사유>" [--repo R]  다음 commit · push 한 번은 확인을 건너뛴다 (1시간 안). 사용자가 승인했을 때만
- * 수준 · 대상은 aikit team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] (기본 꺼짐)
+ * 수준 · 대상은 aidure team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] (기본 꺼짐)
  * 기록은 이 PC 의 임시 상태 폴더에 둔다. 리뷰 기록은 reviewer 위임 · 교차 검토 · reviewer 역할 에이전트 때 자동으로도 남는다 (lib/review.js)
  */
 'use strict';
@@ -29,7 +29,7 @@ const repos = () => {
 };
 
 if (cmd === 'status' || !cmd) {
-  console.log(`리뷰 확인  ${LEVEL[st.level]}${st.level === 'off' ? ' (켜기: aikit team-mode enforce review warn --team)' : ''} · 대상 ${st.repos.join(', ')} · 기준 ${st.minLines}줄${st.paths.length ? ` · 경로 ${st.paths.join(', ')}` : ''}`);
+  console.log(`리뷰 확인  ${LEVEL[st.level]}${st.level === 'off' ? ' (켜기: aidure team-mode enforce review warn --team)' : ''} · 대상 ${st.repos.join(', ')} · 기준 ${st.minLines}줄${st.paths.length ? ` · 경로 ${st.paths.join(', ')}` : ''}`);
   const list = repos();
   if (!list.length) console.log('  대상 repo 가 없습니다 (workspace.json repos 의 코드 · 기획 repo 중 repos/ 에 있는 것)');
   for (const r of list) {
@@ -46,7 +46,7 @@ if (cmd === 'status' || !cmd) {
   console.log(Object.keys(done).length ? `✔ 리뷰했다고 기록: ${Object.keys(done).join(' · ')} (지금 상태 기준. 뒤에 고치면 고친 만큼 다시 센다)` : '기록할 대상 repo 가 없습니다');
 } else if (cmd === 'skip') {
   const reason = opt('reason');
-  if (!reason) die('사용: aikit review skip --reason "<사유>" [--repo R]  (사용자가 생략을 승인했을 때만)');
+  if (!reason) die('사용: aidure review skip --reason "<사유>" [--repo R]  (사용자가 생략을 승인했을 때만)');
   const name = opt('repo');
   if (name) repos();
   R.addSkip(ROOT, { reason, repo: name });

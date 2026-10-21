@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="aikit docs">
+<meta name="generator" content="aidure docs">
 <title>규칙 · aidure 문서</title>
-<script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<link rel="stylesheet" href="../assets/site.css?v=6c81c041">
+<script>try { var t = localStorage.getItem('aidure-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="../assets/site.css?v=149660a9">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="../">
@@ -36,21 +36,21 @@
   wf &amp; layer &amp; stack --&gt; table[&quot;AGENTS.md 「repo 별 작업 규칙」 표&lt;br/&gt;고치기 전에 읽을 규칙&quot;]</pre></div>
 <ul><li>협업 팩은 repo 마다 주소로 판단한다 (GitHub repo 와 GitLab repo 를 섞어 써도 된다).</li><li>layer 팩은 그 층의 스택이 있는 repo 에 자동으로 붙는다 (기술과 무관한 공통 원칙). stack 팩은 그 기술인 repo 에만 붙는다.</li></ul>
 <p>AGENTS.md 에는 <strong>&quot;repo 별 작업 규칙&quot; 표</strong>가 생긴다. repo 마다 스택과 &quot;고치기 전에 읽을 문서&quot;. 킷에 전용 팩이 없는 스택 (Angular·FastAPI·MySQL 등)은 <strong>&quot;전용 규칙 없음&quot;</strong> 으로 표시되고 layer 공통 규칙만 받는다. 스택 규칙이 repo 단위라 repo 가 10개여도 AGENTS.md 가 거의 커지지 않는다.</p>
-<p><strong>멀티모듈 repo</strong>: 한 repo 에 <code>api/</code>(Spring)·<code>client/</code>(React) 처럼 모듈을 나눠 두면 스택마다 모듈을 기록한다 (빌드 파일이 있는 가장 가까운 폴더 기준, 깊이 4까지). 표에 <code>Spring (api/) · React (client/)</code>, 규칙마다 <code>: `api/`</code> 가 붙어 에이전트는 고치는 모듈의 규칙만 읽는다. 이 기능 전에 만든 워크스페이스는 <code>aikit upgrade</code> 가 모듈 경로를 채운다.</p>
+<p><strong>멀티모듈 repo</strong>: 한 repo 에 <code>api/</code>(Spring)·<code>client/</code>(React) 처럼 모듈을 나눠 두면 스택마다 모듈을 기록한다 (빌드 파일이 있는 가장 가까운 폴더 기준, 깊이 4까지). 표에 <code>Spring (api/) · React (client/)</code>, 규칙마다 <code>: `api/`</code> 가 붙어 에이전트는 고치는 모듈의 규칙만 읽는다. 이 기능 전에 만든 워크스페이스는 <code>aidure upgrade</code> 가 모듈 경로를 채운다.</p>
 <p><strong>간접 의존</strong>: 사내 라이브러리(예: 사내 스타터)가 프레임워크를 전이 의존으로 끌어오면 빌드 파일에 프레임워크 이름이 없다. Spring 은 빌드 파일 외에 Spring Boot 설정 파일(<code>application[-프로필].properties·yml</code> 의 최상위 <code>spring</code> 키)과 소스의 <code>@SpringBootApplication</code> 으로도 잡는다. 그래도 못 잡으면 감지 결과에 &quot;빌드 파일은 있습니다&quot; 가 나온다. 그 라이브러리 좌표를 힌트로 한 번 적어 두면 팀 전원의 다음 감지부터 자동이다.</p>
-<div class="code"><button class="copy" type="button">복사</button><pre><code class="lang-bash">aikit detect --hint spring --contains 'com\.example\.platform:platform-starter'   # workspace.json stackHints 에 저장 → 다시 감지 → sync</code></pre></div>
+<div class="code"><button class="copy" type="button">복사</button><pre><code class="lang-bash">aidure detect --hint spring --contains 'com\.example\.platform:platform-starter'   # workspace.json stackHints 에 저장 → 다시 감지 → sync</code></pre></div>
 <p>감지하는 스택은 80종이다 (<a href="packs.html">팩 종류</a>의 스택 목록).</p>
 <div class="table"><table><thead><tr><th>분류</th><th>스택</th></tr></thead><tbody><tr><td>서버</td><td>Spring (+ 세부 27종: MVC · WebFlux · Batch · Cloud Gateway · Stream · Integration · GraphQL · Kafka · Modulith …), FastAPI, Django, Flask, Express, NestJS, ASP.NET, Go</td></tr><tr><td>웹</td><td>React, Angular, Vue, Svelte</td></tr><tr><td>데스크톱</td><td>Electron, Tauri, Neutralino, WPF, WinForms, WinUI, Avalonia, JavaFX, Qt, Flutter Desktop, Compose Desktop, macOS 네이티브</td></tr><tr><td>모바일 · 워치 · TV</td><td>Android, iOS, Flutter, React Native(Expo), .NET MAUI, Kotlin Multiplatform, Capacitor·Ionic, Cordova, NativeScript / watchOS, Wear OS / tvOS, Android TV, Tizen, webOS</td></tr><tr><td>인프라</td><td>Docker, Docker Compose, Kubernetes(Helm), Terraform·OpenTofu, Ansible</td></tr><tr><td>DB</td><td>PostgreSQL, MySQL·MariaDB, Oracle, SQL Server, MongoDB</td></tr></tbody></table></div>
 <p>공통 규칙 팩은 모든 층에 있다: 서버(<code>backend</code>) · 웹(<code>frontend</code>) · 데스크톱(<code>desktop</code>) · 모바일(<code>mobile</code>) · 워치(<code>watch</code>) · TV(<code>tv</code>) · DB(<code>db</code>). Wear OS repo 는 Android 로도 잡혀 <code>mobile</code> 도 받는다.</p>
 <div class="table"><table><thead><tr><th>팩</th><th>내용</th></tr></thead><tbody><tr><td><code>core</code></td><td>커뮤니케이션·검증 원칙, 변경 영향 체크리스트, 컨텍스트 관리, 핸드오프·재개·인수인계·팀 현황·진단 스킬, 레포 업데이트·죽은 참조 검사 훅</td></tr><tr><td><code>gitlab</code> · <code>github</code></td><td>브랜치 전략(에이전트는 MR·PR 까지, 머지는 사람), 커밋·문안 규칙, MR·PR 생성 스킬. repo 의 호스트에 따라 repo 마다</td></tr><tr><td><code>backend</code> · <code>frontend</code> · <code>desktop</code> · <code>mobile</code> · <code>watch</code> · <code>tv</code> · <code>db</code></td><td>기술과 무관한 공통 원칙. OWASP·WCAG·RFC·플랫폼 공식 문서 기반, 팩마다 <code>docs/SOURCES.md</code> 에 규칙별 근거</td></tr><tr><td><code>stack-spring</code> · <code>stack-react</code> · <code>stack-postgres</code></td><td>그 기술에만 해당하는 규칙과 검사 도구</td></tr><tr><td><code>modernization</code> · <code>enhancement</code> · <code>consulting</code></td><td>시작 유형 팩</td></tr></tbody></table></div>
 <h3 id="규칙-사용-해제-변경">규칙 사용 · 해제 · 변경<a class="anchor" href="#규칙-사용-해제-변경" aria-label="이 절 주소">#</a></h3>
-<p>킷이 넣는 규칙이 팀에 맞지 않으면 <code>aikit rules</code> 로 끄고(<code>workspace.json</code> 의 <code>rules.off</code>), 우리 방식으로 바꾸려면 <code>packs/project/rules/</code> 에 <code>replaces: &lt;규칙 ID&gt;</code> 를 적은 규칙을 둔다. 근거·안전·보안 규칙은 필수라 끌 수 없다. AGENTS.md 가 커지면 끄지 않고 <code>aikit rules ondemand &lt;ID&gt;</code> 로 필요할 때만 읽게 할 수 있다. 모든 팩과 규칙 목록은 <a href="packs.html">팩 종류</a>, 만드는 방법은 <a href="pack-making.html">팩 제작</a>.</p>
+<p>킷이 넣는 규칙이 팀에 맞지 않으면 <code>aidure rules</code> 로 끄고(<code>workspace.json</code> 의 <code>rules.off</code>), 우리 방식으로 바꾸려면 <code>packs/project/rules/</code> 에 <code>replaces: &lt;규칙 ID&gt;</code> 를 적은 규칙을 둔다. 근거·안전·보안 규칙은 필수라 끌 수 없다. AGENTS.md 가 커지면 끄지 않고 <code>aidure rules ondemand &lt;ID&gt;</code> 로 필요할 때만 읽게 할 수 있다. 모든 팩과 규칙 목록은 <a href="packs.html">팩 종류</a>, 만드는 방법은 <a href="pack-making.html">팩 제작</a>.</p>
 <h2 id="ai-도구-서명-제외">AI 도구 서명 제외<a class="anchor" href="#ai-도구-서명-제외" aria-label="이 절 주소">#</a></h2>
 <p>커밋·PR·MR 에 <code>Co-Authored-By: Claude …</code> · <code>Co-authored-by: Codex …</code> · <code>Generated with …</code> 를 붙이지 않는다. 끌 수 있는 설정이 아니다.</p>
 <div class="table"><table><thead><tr><th>막는 곳</th><th>방법</th></tr></thead><tbody><tr><td>Claude Code</td><td>sync 가 <code>.claude/settings.json</code> 의 <code>attribution</code> 을 빈 값으로 만든다</td></tr><tr><td>Codex</td><td>계정 설정이 켜져 있으면 규칙으로 못 막는다. 커밋 단계의 <code>commit-msg</code> 훅이 서명 줄을 지운다</td></tr><tr><td><code>commit-msg</code> 훅</td><td><div class="ds-fold">워크스페이스는 <code>.githooks/commit-msg</code>, <code>repos/*</code> 는 sync 가 각 repo 의 <code>.git/hooks/commit-msg</code> 에 둔다.<details class="ds-more"><summary>더 보기</summary><div>그 repo 가 자기 훅(<code>core.hooksPath</code>·기존 <code>commit-msg</code>)을 쓰면 건드리지 않고 sync 가 알린다. 그 훅에서 <code>node packs/core/bin/strip-ai-trailers.js &quot;$1&quot;</code> 을 부르면 된다</div></details></div></td></tr><tr><td>PR·MR 본문</td><td><code>pr</code>·<code>mr</code> 스킬이 템플릿 밖 서명 줄을 빼게 한다</td></tr></tbody></table></div>
 <h2 id="첫-실행-신뢰-확인">첫 실행 신뢰 확인<a class="anchor" href="#첫-실행-신뢰-확인" aria-label="이 절 주소">#</a></h2>
 <p>두 도구 모두 <strong>신뢰(trust)한 폴더에서만</strong> 프로젝트 설정·훅을 적용한다.</p>
-<ul><li>Claude Code: 처음 <code>aikit start</code> 때 폴더 신뢰 확인을 수락</li><li>Codex: 프로젝트를 trusted 로 지정하고 <code>/hooks</code> 에서 훅 신뢰 (훅이 바뀌면 다시)</li></ul>
+<ul><li>Claude Code: 처음 <code>aidure start</code> 때 폴더 신뢰 확인을 수락</li><li>Codex: 프로젝트를 trusted 로 지정하고 <code>/hooks</code> 에서 훅 신뢰 (훅이 바뀌면 다시)</li></ul>
 <p><code>path</code> 로 링크한 repo(워크스페이스 밖 폴더)는 Claude Code 가 신뢰 후에만 읽는다. 가능하면 <code>remote</code> 로 등록한다.</p>
 </div>
 </article>
@@ -59,9 +59,9 @@
 </div>
 </div>
 <script type="application/json" id="ds-page">{"page":"docs/rules.html","kind":"doc","title":"규칙","head":"규칙 · aidure 문서","crumb":"설정 · 참고","status":"","h1":"규칙","lead":"","src":{"href":"https://github.com/lsnwan/aidure/blob/main/docs/rules.md","name":"rules.md"},"toc":[{"lvl":2,"sid":"규칙이-붙는-방식","text":"규칙이 붙는 방식"},{"lvl":3,"sid":"규칙-사용-해제-변경","text":"규칙 사용 · 해제 · 변경"},{"lvl":2,"sid":"ai-도구-서명-제외","text":"AI 도구 서명 제외"},{"lvl":2,"sid":"첫-실행-신뢰-확인","text":"첫 실행 신뢰 확인"}],"prev":{"p":"docs/workspace.html","t":"workspace.json · 설정","g":"설정 · 참고"},"next":{"p":"docs/budget.html","t":"예산","g":"설정 · 참고"},"site":{"title":"aidure 문서","logo":"ai","version":"v0.69.2","ink":true}}</script>
-<script src="../assets/search.js?v=5aa55a3f"></script>
-<script src="../assets/nav.js?v=791fe089"></script>
-<script src="../assets/vendor.js?v=fb36e908"></script>
-<script src="../assets/site.js?v=6255e334"></script>
+<script src="../assets/search.js?v=13e75325"></script>
+<script src="../assets/nav.js?v=325a3f21"></script>
+<script src="../assets/vendor.js?v=231ebda3"></script>
+<script src="../assets/site.js?v=fb1589fb"></script>
 </body>
 </html>

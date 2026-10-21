@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="aikit docs">
+<meta name="generator" content="aidure docs">
 <title>팩 제작 · aidure 문서</title>
-<script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<link rel="stylesheet" href="../assets/site.css?v=6c81c041">
+<script>try { var t = localStorage.getItem('aidure-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="../assets/site.css?v=149660a9">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="../">
@@ -24,8 +24,8 @@
 
 <p>워크스페이스에 맞게 규칙을 고르고 고치는 방법과, 팩 파일의 형식(작성 규격)이다. 킷에 새 팩을 더하는 절차는 <a href="kit-dev.html">킷 개발</a>.</p>
 <h2 id="킷-규칙-해제-변경-추가">킷 규칙 해제 · 변경 · 추가<a class="anchor" href="#킷-규칙-해제-변경-추가" aria-label="이 절 주소">#</a></h2>
-<div class="table"><table><thead><tr><th>하고 싶은 것</th><th>방법</th><th>저장</th></tr></thead><tbody><tr><td>킷 규칙 끄기</td><td><code>aikit rules</code> (켤 규칙 고르기) 또는 <code>aikit rules off &lt;ID&gt;</code></td><td><code>workspace.json</code> 의 <code>rules.off</code> (팀 공유)</td></tr><tr><td>상시 규칙을 필요할 때만</td><td><code>aikit rules ondemand &lt;ID&gt;</code> (<code>repo-tasks</code> = repo 별 작업별 표)</td><td><code>workspace.json</code> 의 <code>rules.onDemand</code> (팀 공유)</td></tr><tr><td>킷 규칙을 우리 방식으로 바꾸기</td><td><code>packs/project/rules/&lt;이름&gt;.md</code> 머리말에 <code>replaces: &lt;ID&gt;</code></td><td>그 규칙 대신 들어가고, 원래 규칙이 걸리던 repo 에 똑같이 걸린다</td></tr><tr><td>우리 규칙·스킬 더하기</td><td><code>packs/project/rules/*.md</code> · <code>packs/project/skills/&lt;이름&gt;/SKILL.md</code></td><td>워크스페이스 repo (팀 공유)</td></tr><tr><td>스택 규칙을 repo 에서 빼기</td><td><code>aikit detect</code> 에서 그 repo 스택을 고치거나 건너뛰기</td><td><code>workspace.json</code> 의 <code>repos[].stacks</code></td></tr><tr><td>협업 도구 규칙 빼기</td><td><code>workspace.json</code> 에서 그 repo 의 <code>host</code> 를 <code>none</code></td><td><code>workspace.json</code></td></tr><tr><td>나만 쓰는 지침</td><td><code>.agents/local.md</code></td><td>이 PC 만</td></tr></tbody></table></div>
-<ul><li>규칙 ID 는 <code>팩--파일이름</code> 이다 (예: <code>stack-spring--50-logging</code>). 목록은 <code>aikit rules list</code> 나 <a href="packs.html">팩 종류</a>.</li><li><strong>필수 규칙</strong>(근거·검증 · 보안·안전 · 보안 상세)은 킷의 전제라 끄거나 바꿀 수 없다.</li><li>바꾸기 예:</li></ul>
+<div class="table"><table><thead><tr><th>하고 싶은 것</th><th>방법</th><th>저장</th></tr></thead><tbody><tr><td>킷 규칙 끄기</td><td><code>aidure rules</code> (켤 규칙 고르기) 또는 <code>aidure rules off &lt;ID&gt;</code></td><td><code>workspace.json</code> 의 <code>rules.off</code> (팀 공유)</td></tr><tr><td>상시 규칙을 필요할 때만</td><td><code>aidure rules ondemand &lt;ID&gt;</code> (<code>repo-tasks</code> = repo 별 작업별 표)</td><td><code>workspace.json</code> 의 <code>rules.onDemand</code> (팀 공유)</td></tr><tr><td>킷 규칙을 우리 방식으로 바꾸기</td><td><code>packs/project/rules/&lt;이름&gt;.md</code> 머리말에 <code>replaces: &lt;ID&gt;</code></td><td>그 규칙 대신 들어가고, 원래 규칙이 걸리던 repo 에 똑같이 걸린다</td></tr><tr><td>우리 규칙·스킬 더하기</td><td><code>packs/project/rules/*.md</code> · <code>packs/project/skills/&lt;이름&gt;/SKILL.md</code></td><td>워크스페이스 repo (팀 공유)</td></tr><tr><td>스택 규칙을 repo 에서 빼기</td><td><code>aidure detect</code> 에서 그 repo 스택을 고치거나 건너뛰기</td><td><code>workspace.json</code> 의 <code>repos[].stacks</code></td></tr><tr><td>협업 도구 규칙 빼기</td><td><code>workspace.json</code> 에서 그 repo 의 <code>host</code> 를 <code>none</code></td><td><code>workspace.json</code></td></tr><tr><td>나만 쓰는 지침</td><td><code>.agents/local.md</code></td><td>이 PC 만</td></tr></tbody></table></div>
+<ul><li>규칙 ID 는 <code>팩--파일이름</code> 이다 (예: <code>stack-spring--50-logging</code>). 목록은 <code>aidure rules list</code> 나 <a href="packs.html">팩 종류</a>.</li><li><strong>필수 규칙</strong>(근거·검증 · 보안·안전 · 보안 상세)은 킷의 전제라 끄거나 바꿀 수 없다.</li><li>바꾸기 예:</li></ul>
 <div class="code"><button class="copy" type="button">복사</button><pre><code class="lang-markdown">---
 title: 우리 팀 Spring 로깅
 load: on-demand
@@ -50,8 +50,8 @@ when: 주문·결제 코드를 고치거나 관련 문서를 쓸 때
 
 ## 주문 도메인 용어
 - &quot;확정&quot; 은 결제 완료 뒤 상태다. &quot;접수&quot; 와 섞어 쓰지 않는다.</code></pre></div>
-<ol start="2"><li><code>aikit sync</code> (또는 <code>node bin/kit.js sync</code>). AGENTS.md 에 반영된다.</li><li>commit · push 하면 팀원도 받는다.</li></ol>
-<ul><li><code>load: always</code> 는 AGENTS.md 본문에 늘 들어가 예산(32KB)을 쓴다. 대부분은 <code>on-demand</code> 와 <code>when</code> 으로 둔다.</li><li>워크스페이스 설정 수정이 막혀 있으면(<code>aikit team edit deny</code>) 관리자만 만들 수 있다.</li></ul>
+<ol start="2"><li><code>aidure sync</code> (또는 <code>node bin/kit.js sync</code>). AGENTS.md 에 반영된다.</li><li>commit · push 하면 팀원도 받는다.</li></ol>
+<ul><li><code>load: always</code> 는 AGENTS.md 본문에 늘 들어가 예산(32KB)을 쓴다. 대부분은 <code>on-demand</code> 와 <code>when</code> 으로 둔다.</li><li>워크스페이스 설정 수정이 막혀 있으면(<code>aidure team edit deny</code>) 관리자만 만들 수 있다.</li></ul>
 <h2 id="팩-작성-규격">팩 작성 규격<a class="anchor" href="#팩-작성-규격" aria-label="이 절 주소">#</a></h2>
 <p>팩은 <code>packs/&lt;이름&gt;/</code> 폴더 하나다. <code>kit sync</code> 가 팩을 읽어 Claude Code·Codex 용 파일을 만든다. <strong>팩 안의 파일이 정본이고, 생성물(<code>AGENTS.md</code>·<code>CLAUDE.md</code>·<code>.agents/</code>·<code>.claude/</code>·<code>.codex/</code>)은 손으로 고치지 않는다.</strong></p>
 <div class="code"><button class="copy" type="button">복사</button><pre><code class="lang-tree">packs/&lt;이름&gt;/
@@ -116,11 +116,11 @@ grade: high                  # high | standard | low. 프로필에 이 역할이
 <h3 id="도구-bin">도구 (<code>bin/</code>)<a class="anchor" href="#도구-bin" aria-label="이 절 주소">#</a></h3>
 <ul><li>의존성 없는 Node(권장)·Python3·bash. 프로젝트 경로는 <strong><code>workspace.json</code> 에서 읽는다</strong> (<code>packs/core/lib/workspace.js</code>).</li><li>룰·스킬은 <code>packs/&lt;팩&gt;/bin/x.js</code> 경로로 가리킨다. 존재하지 않는 경로를 가리키면 pre-commit 이 막는다.</li><li>첫 줄 주석에 한 줄 설명과 실행법.</li></ul>
 <h3 id="비밀값-packjson-의-secrets">비밀값 (<code>pack.json</code> 의 <code>secrets</code>)<a class="anchor" href="#비밀값-packjson-의-secrets" aria-label="이 절 주소">#</a></h3>
-<p>팩의 도구가 토큰을 쓰면 이름 · 용도 · 필요 권한을 선언한다. 값은 사람마다 달라 워크스페이스에 두지 않고, 각자 <code>aikit secret set &lt;이름&gt;</code> 으로 OS 저장소에 넣는다.</p>
+<p>팩의 도구가 토큰을 쓰면 이름 · 용도 · 필요 권한을 선언한다. 값은 사람마다 달라 워크스페이스에 두지 않고, 각자 <code>aidure secret set &lt;이름&gt;</code> 으로 OS 저장소에 넣는다.</p>
 <div class="code"><button class="copy" type="button">복사</button><pre><code class="lang-json">&quot;secrets&quot;: [
   { &quot;name&quot;: &quot;GITLAB_TOKEN&quot;, &quot;scope&quot;: &quot;project&quot;, &quot;purpose&quot;: &quot;MR 생성 · 파이프라인 조회&quot;, &quot;needs&quot;: [&quot;api&quot;], &quot;test&quot;: &quot;gitlab&quot; }
 ]</code></pre></div>
-<div class="table"><table><thead><tr><th>필드</th><th>뜻</th></tr></thead><tbody><tr><td><code>name</code></td><td>대문자 · 숫자 · <code>_</code>. 같은 이름의 환경변수가 있으면 그것이 먼저다</td></tr><tr><td><code>scope</code></td><td><code>project</code>(기본, 프로젝트마다 다른 값) · <code>global</code>(이 PC 의 모든 프로젝트 공통)</td></tr><tr><td><code>optional</code></td><td><code>true</code> 면 없어도 <code>aikit doctor</code> 가 경고하지 않는다 (켤 때만 쓰는 기능)</td></tr><tr><td><code>purpose</code> · <code>needs</code></td><td>무엇에 쓰는지 · 필요한 권한 (GitLab 토큰 범위 등). <code>aikit secret list</code> · doctor 가 보인다</td></tr><tr><td><code>test</code></td><td>확인 방법: <code>gitlab</code> (토큰 이름 · 권한 · 만료) · <code>telegram</code> (봇 이름) · <code>npm</code> (계정)</td></tr></tbody></table></div>
+<div class="table"><table><thead><tr><th>필드</th><th>뜻</th></tr></thead><tbody><tr><td><code>name</code></td><td>대문자 · 숫자 · <code>_</code>. 같은 이름의 환경변수가 있으면 그것이 먼저다</td></tr><tr><td><code>scope</code></td><td><code>project</code>(기본, 프로젝트마다 다른 값) · <code>global</code>(이 PC 의 모든 프로젝트 공통)</td></tr><tr><td><code>optional</code></td><td><code>true</code> 면 없어도 <code>aidure doctor</code> 가 경고하지 않는다 (켤 때만 쓰는 기능)</td></tr><tr><td><code>purpose</code> · <code>needs</code></td><td>무엇에 쓰는지 · 필요한 권한 (GitLab 토큰 범위 등). <code>aidure secret list</code> · doctor 가 보인다</td></tr><tr><td><code>test</code></td><td>확인 방법: <code>gitlab</code> (토큰 이름 · 권한 · 만료) · <code>telegram</code> (봇 이름) · <code>npm</code> (계정)</td></tr></tbody></table></div>
 <ul><li>도구는 <code>packs/core/lib/secrets.js</code> 의 <code>get(이름, { root })</code> 하나로 읽는다 (환경변수 &gt; 프로젝트 &gt; 전역 &gt; 옛 파일). 돌려받은 <code>label</code> 로 어디서 읽었는지 알릴 수 있고, 값은 어떤 출력에도 찍지 않는다.</li><li>위임 세션(<code>delegate.js</code>)은 선언한 이름을 모두 뺀 환경으로 돈다.</li></ul>
 <h3 id="체크리스트">체크리스트<a class="anchor" href="#체크리스트" aria-label="이 절 주소">#</a></h3>
 <p>팩을 추가·수정할 때 확인한다.</p>
@@ -132,9 +132,9 @@ grade: high                  # high | standard | low. 프로필에 이 역할이
 </div>
 </div>
 <script type="application/json" id="ds-page">{"page":"docs/pack-making.html","kind":"doc","title":"팩 제작","head":"팩 제작 · aidure 문서","crumb":"팩","status":"","h1":"팩 제작","lead":"","src":{"href":"https://github.com/lsnwan/aidure/blob/main/docs/pack-making.md","name":"pack-making.md"},"toc":[{"lvl":2,"sid":"킷-규칙-해제-변경-추가","text":"킷 규칙 해제 · 변경 · 추가"},{"lvl":2,"sid":"프로젝트-전용-규칙-스킬-제작","text":"프로젝트 전용 규칙 · 스킬 제작"},{"lvl":2,"sid":"팩-작성-규격","text":"팩 작성 규격"},{"lvl":3,"sid":"팩-종류-category","text":"팩 종류 (category)"},{"lvl":3,"sid":"룰-rulesmd","text":"룰 (rules/*.md)"},{"lvl":3,"sid":"변수-ws","text":"변수 ({{ws:…}})"},{"lvl":3,"sid":"스킬-skillmd","text":"스킬 (SKILL.md)"},{"lvl":3,"sid":"훅-hooksjson","text":"훅 (hooks.json)"},{"lvl":3,"sid":"역할-agentsmd","text":"역할 (agents/*.md)"},{"lvl":3,"sid":"도구-bin","text":"도구 (bin/)"},{"lvl":3,"sid":"비밀값-packjson-의-secrets","text":"비밀값 (pack.json 의 secrets)"},{"lvl":3,"sid":"체크리스트","text":"체크리스트"}],"prev":{"p":"docs/packs--산출물-팩.html","t":"산출물 팩","g":"팩"},"next":{"p":"docs/kit-dev.html","t":"킷 개발","g":"킷 개발"},"site":{"title":"aidure 문서","logo":"ai","version":"v0.69.2","ink":true}}</script>
-<script src="../assets/search.js?v=5aa55a3f"></script>
-<script src="../assets/nav.js?v=791fe089"></script>
-<script src="../assets/vendor.js?v=fb36e908"></script>
-<script src="../assets/site.js?v=6255e334"></script>
+<script src="../assets/search.js?v=13e75325"></script>
+<script src="../assets/nav.js?v=325a3f21"></script>
+<script src="../assets/vendor.js?v=231ebda3"></script>
+<script src="../assets/site.js?v=fb1589fb"></script>
 </body>
 </html>

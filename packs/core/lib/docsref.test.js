@@ -6,7 +6,7 @@ const os = require('os');
 const path = require('path');
 const DR = require('./docsref');
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-docsref-'));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-docsref-'));
 const put = (f, c) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), c); };
 put('40-functions.md', '# 기능정의\n\n## 주문\n\n### FN-001 수동 주문\n\n본문 한 줄\n\n#### 처리\n\n세부\n\n### FN-002 취소\n\nFN-001 과 같은 경로\n\n## 대조\n\n| 요구 | 기능 |\n|---|---|\n| REQ-001 | FN-001 · FN-002 |\n');
 put('30-design.md', '# 설계\n\n| 결정 | 내용 |\n|---|---|\n| D-1 | 확인창을 띄운다 |\n| D-2 | 원클릭 |\n\n- **POL-001** 한도는 계좌마다\n  둘째 줄\n\n```\n### FN-001 코드 블록 안은 정의가 아니다\n```\n');
@@ -53,7 +53,7 @@ assert.deepStrictEqual(DR.health(dir, { maxKB: 1000 }).filter((x) => /큰 문서
 
 // 문서 점검: 긴 표 칸 · 문단형 표 · 칸 안 경위 · 그림 없는 큰 문서
 {
-  const t2 = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-health-'));
+  const t2 = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-health-'));
   const w2 = (f, c) => fs.writeFileSync(path.join(t2, f), c);
   const row = (a, b) => `| ${a} | ${b} |`;
   w2('dec.md', ['# 결정', '', '| ID | 결정 |', '|---|---|', row('D-1', '가'.repeat(500)), row('D-2', '2026-01-01 정함 · 2026-02-01 개정 · 2026-03-01 다시 엶'),
@@ -85,7 +85,7 @@ assert.deepStrictEqual(DR.health(dir, { maxKB: 1000 }).filter((x) => /큰 문서
 // 문서 점검: 긴 코드 블록 · 파일:줄 참조 (mermaid · tree · screen 은 뺀다)
 {
   const long = Array.from({ length: 16 }, (_, i) => `int a${i} = ${i};`).join('\n');
-  const md = ['# 주문', '', '```java', long, '```', '', '```mermaid', long, '```', '', '```tree', long, '```', '', '```bash', 'aikit init', '```', '',
+  const md = ['# 주문', '', '```java', long, '```', '', '```mermaid', long, '```', '', '```tree', long, '```', '', '```bash', 'aidure init', '```', '',
     '처리는 OrderService.java:120 과 `src/order.ts:30-42` 에서 한다. [링크](https://x/y#L77). 시각 10:30 · v1.2:3 은 아니다.', ''].join('\n');
   const c = DR.codeMarks(md, 15);
   assert.deepStrictEqual(c.blocks, [{ line: 3, lang: 'java', lines: 16 }]);
@@ -105,7 +105,7 @@ assert.deepStrictEqual(DR.health(dir, { maxKB: 1000 }).filter((x) => /큰 문서
   assert.ok(hw.some((x) => /^본문에 쓴 근거 · 출처 3줄: a\.md:4 외 2줄\. .*인용구로/.test(x)), hw.join('\n'));
 }
 
-// 근거 분리(aikit docs refs-quote): 본문 괄호 속 파일:줄 → 그 문단 · 목록 · 표 아래 「> 근거:」. 코드 블록 · 인용구 · 괄호 속 일반 말은 그대로, 두 번 돌려도 같다
+// 근거 분리(aidure docs refs-quote): 본문 괄호 속 파일:줄 → 그 문단 · 목록 · 표 아래 「> 근거:」. 코드 블록 · 인용구 · 괄호 속 일반 말은 그대로, 두 번 돌려도 같다
 {
   const md = ['# 주문', '', '주문은 즉시 체결한다 (근거: src/OrderService.java:120). 취소는 따로 (주문 화면).', '', '- 첫째 (`a.ts:12-30`)', '- 둘째 (b.py:3, c.go:9)', '', '| 항목 | 내용 |', '|---|---|', '| 주문 | 바로 체결 (OrderDao.java:12) |', '', '> 근거: x.js:1', '', '```', '(code.js:1)', '```', ''].join('\n');
   const r = DR.refsToQuote(md);
@@ -116,8 +116,8 @@ assert.deepStrictEqual(DR.health(dir, { maxKB: 1000 }).filter((x) => /큰 문서
 }
 
 // 코드 대조: 정의(제목 · 표 첫 칸 · 화면설계서 장) ↔ 코드 주석의 ID. 동결 · 「다음 스프린트」 는 누락에서 뺀다
-const plan = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-trace-docs-'));
-const code = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-trace-code-'));
+const plan = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-trace-docs-'));
+const code = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-trace-code-'));
 const putIn = (root, f, c) => { fs.mkdirSync(path.dirname(path.join(root, f)), { recursive: true }); fs.writeFileSync(path.join(root, f), c); };
 putIn(plan, 'fn.md', '# 기능\n\n### FN-001 주문\n\n본문 FN-002 참조\n\n| 기능 | 이름 |\n|---|---|\n| **FN-002** | 취소 |\n| FN-003 | 정정 (다음 스프린트) |\n| FN-004 | 조회 |\n\n```\n### FN-005 코드 블록\n```\n');
 putIn(plan, 'old.md', '# 옛\n\n상태: 동결\n\n### FN-006 옛 기능\n');

@@ -100,8 +100,8 @@
     sheet.querySelectorAll('.mk').forEach((m) => { if (!m.closest('.side') && parseInt(m.textContent, 10) === no) { m.classList.add('sb-hl'); peek.push(m); } });
   };
 
-  /* 근거 링크: ids.json(aikit docs build 의 색인)으로 본문의 ID · 문서 이름을 링크로 바꾼다 (누르면 앱이 오른쪽 패널에 연다).
-   * <body data-root="../"> : 문서 사이트 루트까지의 상대 경로 (색인 = <root>assets/ids.json). aikit docs build 가 채운다
+  /* 근거 링크: ids.json(aidure docs build 의 색인)으로 본문의 ID · 문서 이름을 링크로 바꾼다 (누르면 앱이 오른쪽 패널에 연다).
+   * <body data-root="../"> : 문서 사이트 루트까지의 상대 경로 (색인 = <root>assets/ids.json). aidure docs build 가 채운다
    * <section data-area="폴더"> 또는 <body data-area> : 여러 문서에 같은 번호가 있는 ID(문서마다 매기는 결정 번호)를 고를 기준 폴더
    * 링크하는 것: 색인에 있는 ID · 이 설계서 안 장의 id · 색인의 문서 이름(.md 생략 가능). 색인의 prefixes 머리말인데 정의가 없으면 빨간 물결 */
   const ROOT = SB.ROOT = document.body.getAttribute('data-root');

@@ -6,7 +6,7 @@
   if (!sheets || !sheets.length || !window.preact) return;
   const html = window.htm.bind(window.preact.h), H = window.preactHooks;
   const root = document.documentElement;
-  const DEV_KEY = 'aikit.storyboard.dev', THUMB_KEY = 'aikit.storyboard.thumbs';
+  const DEV_KEY = 'aidure.storyboard.dev', THUMB_KEY = 'aidure.storyboard.thumbs';
   const load = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const keep = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 기억 못 해도 바뀐다 */ } };
   const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;

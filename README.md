@@ -16,7 +16,7 @@
 
 **https://lsnwan.github.io/aidure/**
 
-- 문서 원본은 md(`README.md` · `docs/*.md`)이고, `npm run docs` 가 기획 문서 사이트와 같은 생성기(`aikit docs build`)로 `docs-site/` 를 만든다.
+- 문서 원본은 md(`README.md` · `docs/*.md`)이고, `npm run docs` 가 기획 문서 사이트와 같은 생성기(`aidure docs build`)로 `docs-site/` 를 만든다.
 
 프로젝트마다 git repo 하나로 된 **워크스페이스**를 세우면, 누가 어느 PC 에서 Claude Code 나 Codex 를 켜도 같은 규칙으로 일하고, 한 일이 기록으로 남아 다음 사람이 바로 이어받는다.
 
@@ -43,9 +43,9 @@
 | 사람마다 프롬프트·규칙이 달라 결과 품질이 제각각이다 | 규칙·스킬·훅을 워크스페이스 repo 에 한 벌 두고 모두가 같은 것을 쓴다 |
 | 세션이 끝나면 AI 가 하던 일을 잊는다 | 작업을 마칠 때 **핸드오프**로 한 일·진행 중·남은 일을 남기고, 다음 세션이 **재개**로 이어 간다 |
 | 누가 무엇을 어디까지 했는지 모른다 | **팀 현황**이 모두의 기록을 모아 보여 주고, 빠진 사람의 일은 **인수인계**로 넘겨받는다 |
-| AI 가 처음부터 계획을 크게 세우고 한꺼번에 만든다 | **진행 방식 스프린트**(신규 · 고도화 기본): 기능 단위 스프린트로 끝까지 동작하는 최소 기능부터 만들고, 스프린트마다 데모 · 회고하며 백로그에서 하나씩 붙인다. 전체 설계가 산출물인 차세대 · 분석·설계는 **전체**, 이슈마다 운영에 반영하는 운영 · 유지보수는 **이슈형**(이슈 보드) (`aikit approach`) |
+| AI 가 처음부터 계획을 크게 세우고 한꺼번에 만든다 | **진행 방식 스프린트**(신규 · 고도화 기본): 기능 단위 스프린트로 끝까지 동작하는 최소 기능부터 만들고, 스프린트마다 데모 · 회고하며 백로그에서 하나씩 붙인다. 전체 설계가 산출물인 차세대 · 분석·설계는 **전체**, 이슈마다 운영에 반영하는 운영 · 유지보수는 **이슈형**(이슈 보드) (`aidure approach`) |
 | 긴 작업에서 전체 중 어디까지 왔는지 안 보인다 | **로드맵**(`handoffs/PLAN.md`)이 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음을 그린다. 단계를 끝낼 때마다 보고에 붙는다 |
-| 기획 문서와 화면설계서가 사람마다 양식이 다르고, 근거를 찾아 문서를 뒤진다 | **문서 사이트**(`aikit docs build`)가 기획 repo 의 md 를 HTML 로 만들고 ID 마다 앵커를 단다. **화면설계서**는 같은 양식 · 같은 뷰어로, 근거 ID 를 누르면 옆에 그 정의가 열린다. **데이터 설계**는 md 테이블 정의서에서 ERD 를 만든다 |
+| 기획 문서와 화면설계서가 사람마다 양식이 다르고, 근거를 찾아 문서를 뒤진다 | **문서 사이트**(`aidure docs build`)가 기획 repo 의 md 를 HTML 로 만들고 ID 마다 앵커를 단다. **화면설계서**는 같은 양식 · 같은 뷰어로, 근거 ID 를 누르면 옆에 그 정의가 열린다. **데이터 설계**는 md 테이블 정의서에서 ERD 를 만든다 |
 | Claude 파, GPT 파로 도구가 갈린다 | Claude Code · Codex 를 같은 규칙으로 쓰고, 역할마다 두 회사 모델을 **섞어** 쓴다 |
 | "된다" 고 했는데 안 된다 | AI 가 근거(확인됨 · 추정 · 미확인)와 **실행한 검증 결과(표)** 로 보고한다 |
 | "보통은 이렇게 한다" 가 AI 기억이라 낡거나 틀린다 | 흔한 방식 · 업계 관례는 **웹 검색으로 출처를 확인해 비교표로** 답한다 (`common-practice` 스킬). 검색할 수 없으면 "내 지식 기준" 이라고 밝힌다 |
@@ -70,35 +70,35 @@ GitLab · GitHub 그룹
 각자 PC 의 order/ (워크스페이스를 clone)
 ├─ workspace.json          ← 팀 설정 원본: repo 목록 · 팩 · 유형 · 모델
 ├─ AGENTS.md · CLAUDE.md   ← 두 도구가 읽는 같은 규칙 (자동 생성)
-├─ bin/kit.js · packs/     ← 생성 엔진 · 규칙 · 스킬 · 훅 사본 (aikit upgrade 가 갱신)
+├─ bin/kit.js · packs/     ← 생성 엔진 · 규칙 · 스킬 · 훅 사본 (aidure upgrade 가 갱신)
 ├─ handoffs/<이름>/        ← 내 작업 기록, push 로 팀 공유
 ├─ handoffs/PLAN.md        ← 로드맵 (팀 공용)
 ├─ docs-site/              ← (선택) 워크스페이스 문서 사이트 (아래 표)
-└─ repos/                  ← 각자 aikit install 로 받는다 (git 제외, 이력은 원래 repo 로)
+└─ repos/                  ← 각자 aidure install 로 받는다 (git 제외, 이력은 원래 repo 로)
    ├─ order-api            ← clone
    ├─ order-plans          ← 기획 repo: clone 또는 로컬 폴더 링크
    └─ order-batch          ← 새로 만든 repo (git init, 원격 없음)
 ```
 
-문서 사이트는 채팅으로 말하면 에이전트가 `aikit docs` 명령으로 만든다.
+문서 사이트는 채팅으로 말하면 에이전트가 `aidure docs` 명령으로 만든다.
 
 | 이럴 때 | 이렇게 말한다 | 하는 일 |
 |---|---|---|
-| 기획 문서 · 화면설계서 · ERD 를 볼 때 (모든 유형) | "문서 사이트 만들어줘" | `aikit docs build`: 기획 repo 의 `docs-site/` |
-| 여러 repo 의 산출물을 한 사이트로 (분석·설계 · repo 가 많은 프로젝트) | "워크스페이스 문서 사이트 만들어줘" | `aikit docs build .`: 워크스페이스 `docs-site/`. repo 마다 사본 · 링크 · 뺌은 `docs-site.json` |
-| 내 PC 에서 바로 볼 때 | "문서 사이트 열어줘" | `aikit docs serve --open` |
-| 팀이 주소로 볼 때 | "문서 사이트 Pages 로 올려줘" | `aikit docs pages on`: GitLab · GitHub Pages |
+| 기획 문서 · 화면설계서 · ERD 를 볼 때 (모든 유형) | "문서 사이트 만들어줘" | `aidure docs build`: 기획 repo 의 `docs-site/` |
+| 여러 repo 의 산출물을 한 사이트로 (분석·설계 · repo 가 많은 프로젝트) | "워크스페이스 문서 사이트 만들어줘" | `aidure docs build .`: 워크스페이스 `docs-site/`. repo 마다 사본 · 링크 · 뺌은 `docs-site.json` |
+| 내 PC 에서 바로 볼 때 | "문서 사이트 열어줘" | `aidure docs serve --open` |
+| 팀이 주소로 볼 때 | "문서 사이트 Pages 로 올려줘" | `aidure docs pages on`: GitLab · GitHub Pages |
 
 ### 하루의 협업 모습
 
 | 누가 · 언제 | 하는 것 | 일어나는 일 |
 |---|---|---|
-| 리더 · 처음 한 번 | `aikit init` → push | 유형 · 개발 repo · 스택 · 팀 모델을 고르면 워크스페이스가 만들어진다 |
-| 팀원 · 처음 한 번 | clone → `aikit install` | 개발 repo 가 `repos/` 에 받아지고 팀 합류 기록이 올라간다 |
-| 모두 · 아침 | `aikit start` → "재개" | 로드맵(흐름도 · 지금 단계 표)과 어제 내 핸드오프가 뜨고, 이어서 할 일을 보고받는다 |
+| 리더 · 처음 한 번 | `aidure init` → push | 유형 · 개발 repo · 스택 · 팀 모델을 고르면 워크스페이스가 만들어진다 |
+| 팀원 · 처음 한 번 | clone → `aidure install` | 개발 repo 가 `repos/` 에 받아지고 팀 합류 기록이 올라간다 |
+| 모두 · 아침 | `aidure start` → "재개" | 로드맵(흐름도 · 지금 단계 표)과 어제 내 핸드오프가 뜨고, 이어서 할 일을 보고받는다 |
 | 모두 · 작업 중 | "주문 목록에 페이지네이션 추가해줘" | 큰 일은 분석 · 설계 · 구현 · 테스트 · 리뷰 역할로 나눠 계획을 먼저 보여 주고 진행한다. 리뷰는 다른 회사 모델이 본다 |
 | 모두 · 작업 끝 | "핸드오프" | 한 일 · 진행 중(작업 브랜치) · 남은 일이 기록돼 push 된다 |
-| 리더 · 수시로 | `aikit team` 또는 "팀 현황" | 누가 언제 무엇을 얼마나 했는지, 며칠째 멈춘 사람은 누구인지 본다 |
+| 리더 · 수시로 | `aidure team` 또는 "팀 현황" | 누가 언제 무엇을 얼마나 했는지, 며칠째 멈춘 사람은 누구인지 본다 |
 | 누구나 · 필요할 때 | "인수인계 이개발" | 그 사람의 미완 작업 · TODO 를 골라 내 것으로 옮기고, 작업 브랜치에서 이어 간다 |
 
 ### 주요 특징
@@ -118,22 +118,22 @@ GitLab · GitHub 그룹
 
 ## 설치 (PC 마다 1번)
 
-npm 공개 저장소에서 받는다. macOS 터미널 · Windows PowerShell 모두 같은 명령이다. 패키지 이름은 `aidure`, 설치하면 생기는 명령은 `aikit` 이다.
+npm 공개 저장소에서 받는다. macOS 터미널 · Windows PowerShell 모두 같은 명령이다.
 
 ```bash
 node -v                      # v20.19 이상
 npm i -g aidure
-aikit --version
+aidure --version
 ```
 
-처음 실행할 때 aikit 은 Node 버전과 상관없는 고정 위치에 실행 파일을 두고 PATH 에 넣는다. 그래서 nvm 등으로 기본 Node 를 바꾸거나 설치했던 버전을 지워도 `aikit` 명령은 그대로 동작한다 (다른 Node 버전에 깔린 aikit 중 가장 최근 것을 쓴다). 새 터미널부터 적용된다.
+처음 실행할 때 aidure 은 Node 버전과 상관없는 고정 위치에 실행 파일을 두고 PATH 에 넣는다. 그래서 nvm 등으로 기본 Node 를 바꾸거나 설치했던 버전을 지워도 `aidure` 명령은 그대로 동작한다 (다른 Node 버전에 깔린 aidure 중 가장 최근 것을 쓴다). 새 터미널부터 적용된다.
 
 | PC | 실행 파일 | PATH |
 |---|---|---|
-| macOS · Linux | `~/.local/bin/aikit` | 셸 설정(`~/.zshrc` · `~/.bashrc` 등)에 한 줄 |
-| Windows | `%LOCALAPPDATA%\aikit\bin\aikit.cmd` | 사용자 PATH |
+| macOS · Linux | `~/.local/bin/aidure` | 셸 설정(`~/.zshrc` · `~/.bashrc` 등)에 한 줄 |
+| Windows | `%LOCALAPPDATA%\aidure\bin\aidure.cmd` | 사용자 PATH |
 
-> 참고: 끄려면 환경 변수 `AIKIT_NO_GLOBAL_SHIM=1`. 넣은 줄은 `# aikit:` 표시가 붙어 있어 지울 때 찾기 쉽다.
+> 참고: 끄려면 환경 변수 `AIDURE_NO_GLOBAL_SHIM=1`. 넣은 줄은 `# aidure:` 표시가 붙어 있어 지울 때 찾기 쉽다.
 
 Claude Code(`npm i -g @anthropic-ai/claude-code`) 나 Codex(`npm i -g @openai/codex`) 중 쓸 것도 설치돼 있어야 한다. Codex 앱만 깔아 터미널에 `codex` 명령이 없어도, 앱이 내려받은 CLI(`~/.codex/packages/*/current`)를 찾아 쓴다.
 
@@ -144,8 +144,8 @@ Claude Code(`npm i -g @anthropic-ai/claude-code`) 나 Codex(`npm i -g @openai/co
 repo 마다 토큰이 필요하지 않다.
 
 - clone 은 aidure 가 아니라 **git 이 저장해 둔 인증**을 쓴다 (macOS 키체인·Git Credential Manager·SSH 키). **호스트마다 한 번** 인증해 두면 그 호스트의 repo 는 모두 받아진다.
-- 인증이 없으면 clone 이 멈추지 않고 바로 실패하며 "인증 필요" 를 알린다 → 그 주소로 `git clone` 을 한 번 직접 해서 인증을 저장한 뒤 `aikit install`.
-- MR·PR 을 만드는 스킬 · 파이프라인 조회만 따로 토큰이 필요하다. GitLab 은 `aikit secret set GITLAB_TOKEN`([비밀값](docs/workspace.md#비밀값-토큰)), GitHub 은 `gh auth login`.
+- 인증이 없으면 clone 이 멈추지 않고 바로 실패하며 "인증 필요" 를 알린다 → 그 주소로 `git clone` 을 한 번 직접 해서 인증을 저장한 뒤 `aidure install`.
+- MR·PR 을 만드는 스킬 · 파이프라인 조회만 따로 토큰이 필요하다. GitLab 은 `aidure secret set GITLAB_TOKEN`([비밀값](docs/workspace.md#비밀값-토큰)), GitHub 은 `gh auth login`.
 
 ## 시작 유형 (SI 분류)
 

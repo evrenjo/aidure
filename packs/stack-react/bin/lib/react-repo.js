@@ -44,7 +44,7 @@ function resolve(argv = process.argv.slice(2)) {
       ? `vars.react.repo '${cfg.repo}' 가 workspace.json repos 에 없습니다`
       : 'stack 에 react 가 들어간 repo 가 workspace.json repos 에 없습니다 (vars.react.repo 로 지정)' };
   }
-  // repos/<이름> · repos/<그룹>/<이름>(aikit install)이 있으면 그것, 없으면 repos[].path 를 워크스페이스 기준으로
+  // repos/<이름> · repos/<그룹>/<이름>(aidure install)이 있으면 그것, 없으면 repos[].path 를 워크스페이스 기준으로
   const linked = pick.dir && fs.existsSync(pick.dir) ? pick.dir : null;
   const dir = linked || (pick.path ? path.resolve(ws.root, pick.path) : null);
   if (!dir || !fs.existsSync(dir)) return { ws, cfg, dir: null, name: pick.name, why: `${pick.name} 경로가 없습니다 (${dir || '경로 미지정'})` };

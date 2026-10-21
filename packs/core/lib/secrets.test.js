@@ -7,9 +7,9 @@ const path = require('path');
 const http = require('http');
 const { spawnSync } = require('child_process');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-secrets-'));
-process.env.AIKIT_CONFIG_DIR = path.join(tmp, 'config');
-process.env.AIKIT_SECRETS_BACKEND = 'file';
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-secrets-'));
+process.env.AIDURE_CONFIG_DIR = path.join(tmp, 'config');
+process.env.AIDURE_SECRETS_BACKEND = 'file';
 for (const k of ['GITLAB_TOKEN', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_TEAM_BOT_TOKEN', 'NPM_TOKEN']) delete process.env[k];
 const S = require('./secrets');
 const PACKS = path.resolve(__dirname, '..', '..');
@@ -28,8 +28,8 @@ assert.strictEqual(S.get('GITLAB_TOKEN', { project: 'gamma' }).source, 'global')
 assert.strictEqual(S.get('GITLAB_TOKEN', { project: 'alpha', env: { GITLAB_TOKEN: 'from-env' } }).value, 'from-env', '환경변수가 먼저');
 assert.strictEqual(S.get('GITLAB_TOKEN', { project: 'alpha' }).label, '프로젝트(alpha) 파일');
 S.rm('GITLAB_TOKEN', { scope: S.GLOBAL });
-fs.mkdirSync(process.env.AIKIT_CONFIG_DIR, { recursive: true });
-fs.writeFileSync(path.join(process.env.AIKIT_CONFIG_DIR, 'gitlab-token'), 'glpat-legacy-0004\n');
+fs.mkdirSync(process.env.AIDURE_CONFIG_DIR, { recursive: true });
+fs.writeFileSync(path.join(process.env.AIDURE_CONFIG_DIR, 'gitlab-token'), 'glpat-legacy-0004\n');
 const leg = S.get('GITLAB_TOKEN', { project: 'gamma' });
 assert.deepStrictEqual([leg.value, leg.source], ['glpat-legacy-0004', 'legacy'], '전역도 없으면 옛 파일');
 assert.strictEqual(S.get('GITLAB_TOKEN', { project: 'gamma', legacy: false }), null);
@@ -73,7 +73,7 @@ assert.strictEqual(S.get('GITLAB_TOKEN', { project: 'alpha', legacy: false }), n
 assert.ok(!outs.slice(1).some((o) => o.includes(SECRET)), '출력에 값 없음');
 
 // 옮기기: telegram.env 는 토큰 줄만 빼고(채팅 ID 유지) 사본을 남기고, gitlab-token 은 *.migrated
-const cfg = process.env.AIKIT_CONFIG_DIR;
+const cfg = process.env.AIDURE_CONFIG_DIR;
 fs.writeFileSync(path.join(cfg, 'telegram.env'), 'TELEGRAM_BOT_TOKEN=123:tele-0006\nTELEGRAM_CHAT_ID=42\n');
 const imp = keep(cli(['import', '--global']));
 assert.strictEqual(imp.status, 0, imp.stderr);
@@ -86,7 +86,7 @@ assert.ok(!imp.stdout.includes('tele-0006') && !imp.stdout.includes('legacy-0004
 // 알림이 저장소의 봇 토큰을 읽는다 (telegram.env 에서 옮긴 뒤에도 그대로 동작)
 const notify = require('./notify');
 assert.strictEqual(notify.personal(ws, { project: { name: 'alpha' } }).token, '123:tele-0006');
-// 옮긴 뒤 봇을 바꾸면(aikit notify my setup) 저장소를 고친다 · 지우면 저장소에서도 지운다
+// 옮긴 뒤 봇을 바꾸면(aidure notify my setup) 저장소를 고친다 · 지우면 저장소에서도 지운다
 notify.writeSecrets({ TELEGRAM_BOT_TOKEN: '456:tele-0007' });
 assert.strictEqual(notify.personal(ws, { project: { name: 'alpha' } }).token, '456:tele-0007');
 assert.ok(!fs.readFileSync(path.join(cfg, 'telegram.env'), 'utf8').includes('tele-0007'), '파일에는 쓰지 않는다');
@@ -99,7 +99,7 @@ assert.strictEqual(S.get('TELEGRAM_BOT_TOKEN', { legacy: false }), null);
     if (req.url === '/api/v4/personal_access_tokens/self') {
       if (req.headers['private-token'] !== 'good') { res.writeHead(401); return res.end('{}'); }
       res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ name: 'aikit', scopes: ['api'], expires_at: '2027-01-01', active: true, revoked: false }));
+      return res.end(JSON.stringify({ name: 'aidure', scopes: ['api'], expires_at: '2027-01-01', active: true, revoked: false }));
     }
     if (req.url === '/botT/getMe') { res.writeHead(200); return res.end(JSON.stringify({ ok: true, result: { username: 'my_bot' } })); }
     res.writeHead(404); res.end('{}');
@@ -107,11 +107,11 @@ assert.strictEqual(S.get('TELEGRAM_BOT_TOKEN', { legacy: false }), null);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
   const ok = await S.test('gitlab', 'good', { gitlabApi: `${base}/api/v4` });
-  assert.deepStrictEqual(ok, { ok: true, info: { name: 'aikit', scopes: ['api'], expires: '2027-01-01' } });
-  assert.match(S.testLine(ok, today), /^✔ · 토큰 「aikit」 · 권한 api · 만료 2027-01-01 \(81일\)$/);
+  assert.deepStrictEqual(ok, { ok: true, info: { name: 'aidure', scopes: ['api'], expires: '2027-01-01' } });
+  assert.match(S.testLine(ok, today), /^✔ · 토큰 「aidure」 · 권한 api · 만료 2027-01-01 \(81일\)$/);
   const bad = await S.test('gitlab', 'bad', { gitlabApi: `${base}/api/v4` });
   assert.ok(!bad.ok && /git 계정 비밀번호는 API 에 쓸 수 없다/.test(bad.error));
-  process.env.AIKIT_TELEGRAM_API = base;
+  process.env.AIDURE_TELEGRAM_API = base;
   assert.deepStrictEqual(await S.test('telegram', 'T'), { ok: true, info: { user: '@my_bot' } });
   // 토큰을 보낼 GitLab API: gitlab.host 와 같은 호스트의 https 만 (http 는 이 PC 안만)
   assert.strictEqual(S.gitlabApi('git.co', ''), 'https://git.co/api/v4');

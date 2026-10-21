@@ -4,7 +4,7 @@
   "use strict";
   var DS = window.DS, html = DS.html, H = DS.hooks;
   var NAV = window.DS_NAV || { groups: [] };
-  var KEY = "aikit-docs-nav:" + (NAV.key || "");
+  var KEY = "aidure-docs-nav:" + (NAV.key || "");
 
   /* 이 쪽이 든 묶음 · 폴더 키들 */
   function pathTo(page) {

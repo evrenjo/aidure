@@ -1,4 +1,4 @@
-// 로드맵(handoffs/PLAN.md) 읽기·그리기: 단계 흐름 · 영역 × 하위 작업 표 · 한 줄 요약 · JSON. 사용: aikit plan, 세션 브리핑, handoff check
+// 로드맵(handoffs/PLAN.md) 읽기·그리기: 단계 흐름 · 영역 × 하위 작업 표 · 한 줄 요약 · JSON. 사용: aidure plan, 세션 브리핑, handoff check
 /*
  * PLAN.md 형식 (사람이 고치는 정본. 상태만 사람이 판단하고 숫자는 도구가 센다)
  *   | # | 단계 | 상태 | 시작 | 완료 |     단계 표. 상태: ✔ 완료 · ▶ 진행 · ○ 미착수 · ◇ 미분해
@@ -9,7 +9,7 @@
  *   ## 지난 릴리스 · 지난 스프린트        (반복형) - YYYY-MM-DD · 릴리스(스프린트) · 한 줄
  *   ## 이번 스프린트                      (스프린트) 목표: 한 줄 · 끝: YYYY-MM-DD(선택) · - [ ] 이번 스프린트 기능 = 「구현」 단계의 하위 작업
  *   ## 백로그                             (스프린트) - 나중에 붙일 기능 한 줄씩 (지금 만들지 않는다)
- *   <!-- aikit:preset -->                 기본 단계 그대로 (프로젝트에 맞게 고치면 지운다)
+ *   <!-- aidure:preset -->                 기본 단계 그대로 (프로젝트에 맞게 고치면 지운다)
  * 이슈형(진행 방식 issue, 운영·유지보수): 단계 표 대신 이슈 보드. `## 이슈` 절이 있으면 이슈형으로 읽고 단계 표는 읽지 않는다
  *   ## 이슈                               상태: 접수 · 분석 · 수정 · 검증 · 운영 반영 · 보류   (이 줄로 상태 목록을 바꾼다. 보류 · 대기 = 멈춤, 그 밖의 마지막 = 완료)
  *     | 이슈 | 제목 | 상태 | 브랜치 | 시작 | 갱신 | 운영 반영 |   멈춤 기준: 14일 (선택, 갱신 · 시작 뒤로 이만큼 지나면 ⚠)
@@ -23,7 +23,7 @@ const fs = require('fs');
 const path = require('path');
 
 const FILE = path.join('handoffs', 'PLAN.md');
-const PRESET_MARK = '<!-- aikit:preset';
+const PRESET_MARK = '<!-- aidure:preset';
 
 // 종류별 기본 단계: 공개 출처의 흔한 구성 (SDLC 7단계 · 행정기관 정보시스템 구축·운영 지침 · 레거시 전환 가이드 · NIA ISP·ISMP 공통가이드)
 const PRESETS = {
@@ -37,7 +37,7 @@ const PRESETS = {
   // 이슈형: 이슈마다 따로 운영에 반영되고 여러 이슈가 서로 다른 상태에 있다 → 단계 대신 이슈 보드
   issue: { stages: [], issue: true },
 };
-// 0.63 전 운영·고도화 기본 단계 (반복형). 이 단계 그대로인 로드맵은 진행 방식을 바꿀 때(aikit approach · type)만 새 뼈대로 바꾼다
+// 0.63 전 운영·고도화 기본 단계 (반복형). 이 단계 그대로인 로드맵은 진행 방식을 바꿀 때(aidure approach · type)만 새 뼈대로 바꾼다
 const OLD_ENHANCEMENT = ['접수', '분석', '구현', '테스트', '배포'];
 /** 종류 · 진행 방식 → 기본 단계 묶음 */
 function presetOf(type, approach) {
@@ -75,7 +75,7 @@ function missingStages(plan, layers = {}, type, approach) {
   return [`스택에 ${who}${/화면$/.test(who) ? '이' : ' 가'} 있는데 ${miss.map((x) => `「${x.name}」`).join(' · ')} 단계가 없습니다 (산출물: ${miss.map((x) => `${x.skill} 스킬`).join(' · ')}. 구현 앞에 넣을지 사용자에게 묻는다)`];
 }
 
-/** 기본 단계 그대로(<!-- aikit:preset -->)인 PLAN.md 를 스택에 맞게 다시 쓴다. 단계 상태 · 날짜는 그대로 옮긴다. 바꿀 것이 없으면 null */
+/** 기본 단계 그대로(<!-- aidure:preset -->)인 PLAN.md 를 스택에 맞게 다시 쓴다. 단계 상태 · 날짜는 그대로 옮긴다. 바꿀 것이 없으면 null */
 function upgradePreset(text, type, layers = {}, approach) {
   if (!String(text).includes(PRESET_MARK) || presetOf(type, approach).issue) return null;
   const plan = parse(text);
@@ -456,7 +456,7 @@ function template(type, layers = {}, approach) {
   return [
     '# 로드맵', '',
     `${PRESET_MARK}: 기본 단계입니다. 프로젝트에 맞게 고친 뒤 이 줄을 지우세요 -->`, '',
-    '프로젝트 전체의 큰 단계와 진행 상태의 정본이다. 그림과 숫자는 `aikit plan` 이 그린다 (상태만 사람이 고른다).', '',
+    '프로젝트 전체의 큰 단계와 진행 상태의 정본이다. 그림과 숫자는 `aidure plan` 이 그린다 (상태만 사람이 고른다).', '',
     `- 상태: ${STATE.done} 완료 · ${STATE.doing} 진행 · ${STATE.todo} 미착수 · ${STATE.unsplit} 미분해 (하위 작업을 아직 안 쪼갬)`,
     '- 하위 작업은 그 단계를 시작할 때 `## <단계 이름>` 절에 쪼갠다. 영역이 있으면 표(첫 열 영역, 나머지 열 하위 작업), 없으면 체크 목록(`- [ ]`)',
     '- 단계·영역·하위 작업 수(분모)가 바뀌면 `## 분모 변경` 에 한 줄: `- YYYY-MM-DD · 무엇 n → m · 사유`',
@@ -482,11 +482,11 @@ function issueTemplate() {
   return [
     '# 로드맵', '',
     `${PRESET_MARK}: 기본 상태 목록입니다. 프로젝트 흐름(브랜치 · 반영 절차)에 맞게 \`상태:\` 줄을 고친 뒤 이 줄을 지우세요 -->`, '',
-    '진행 방식 이슈형(운영 · 유지보수): 이슈마다 따로 운영에 반영한다. 단계 흐름 대신 이슈 보드다. 그림과 숫자는 `aikit plan` 이 그린다.', '',
+    '진행 방식 이슈형(운영 · 유지보수): 이슈마다 따로 운영에 반영한다. 단계 흐름 대신 이슈 보드다. 그림과 숫자는 `aidure plan` 이 그린다.', '',
     '- 이슈를 시작하면 표에 한 줄(상태 = 첫 상태, 시작 날짜). 상태가 바뀌면 상태와 갱신 날짜를, 운영에 반영하면 운영 반영 날짜를 고친다',
     '- `상태:` 줄이 상태 목록이다. 보류 · 대기는 멈춤, 그 밖의 마지막 상태가 완료다',
-    `- 갱신(없으면 시작) 뒤로 \`멈춤 기준\` 일(기본 ${STALE_DAYS}) 넘게 안 바뀐 이슈는 \`aikit plan\` 이 ⚠ 로 알린다`,
-    '- 착수 전 개선 아이디어는 `## 개선 후보` 에 한 줄씩, 착수하면 이슈 표로 옮긴다. 주간 보고: `aikit plan --report`', '',
+    `- 갱신(없으면 시작) 뒤로 \`멈춤 기준\` 일(기본 ${STALE_DAYS}) 넘게 안 바뀐 이슈는 \`aidure plan\` 이 ⚠ 로 알린다`,
+    '- 착수 전 개선 아이디어는 `## 개선 후보` 에 한 줄씩, 착수하면 이슈 표로 옮긴다. 주간 보고: `aidure plan --report`', '',
     '## 이슈', '',
     `상태: ${ISSUE_STATES.join(' · ')}`, '',
     '| 이슈 | 제목 | 상태 | 브랜치 | 시작 | 갱신 | 운영 반영 |',

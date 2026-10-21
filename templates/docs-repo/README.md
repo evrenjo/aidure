@@ -16,7 +16,7 @@
 | [06-data/](06-data/) | 데이터 설계: 엔티티 목록 · 컨벤션(`README.md`) + 스키마마다 테이블 정의서(`_template.md` 양식). ERD 는 문서 사이트가 만든다 |
 | [originals/](originals/) | Word·Excel·PPT·PDF 원본 |
 | [md/](md/) | 원본의 md 사본 — 에이전트가 읽는 쪽 |
-| `docs-site/` | 문서 사이트 (`aikit docs build` 가 만든다. 손으로 고치지 않는다) |
+| `docs-site/` | 문서 사이트 (`aidure docs build` 가 만든다. 손으로 고치지 않는다) |
 
 각 폴더의 `_template.md` 를 복사해 새 문서를 시작한다.
 
@@ -62,13 +62,13 @@ originals/화면설계/주문관리.pptx   →   md/화면설계/주문관리.md
 
 ## 문서 사이트
 
-`aikit docs build` 가 이 repo 의 md 와 화면설계서 장을 같은 경로 구조의 HTML(`docs-site/`)로 만든다. 정의된 ID(`### REQ-001 …` 제목, 표 첫 칸)에 앵커가 붙고,
+`aidure docs build` 가 이 repo 의 md 와 화면설계서 장을 같은 경로 구조의 HTML(`docs-site/`)로 만든다. 정의된 ID(`### REQ-001 …` 제목, 표 첫 칸)에 앵커가 붙고,
 본문 · 화면설계서의 ID 를 누르면 그 정의로 간다 (`docs-site/assets/ids.json` 이 색인).
 
-- md 나 장을 고치면 `aikit docs build` 로 다시 만들어 **같은 커밋에** 넣는다. 어긋나면 pre-commit 이 막는다.
+- md 나 장을 고치면 `aidure docs build` 로 다시 만들어 **같은 커밋에** 넣는다. 어긋나면 pre-commit 이 막는다.
 - 구성도 · 흐름도는 ` ```mermaid ` 블록으로 쓰면 사이트에 그림으로 나온다 (확대 · 새 창). 문법이 틀리면 build · pre-commit 이 ✖ 로 알리고, ASCII 그림은 ⚠ 로 알린다. 시스템 구성도(단계별 · 서버 사양)는 워크스페이스 에이전트의 architecture 스킬이 견본대로 만든다.
-- Pages 로 올리기(선택): `aikit docs pages on` 이 원격에 맞는 CI 만 남기고 `docs-site/` 를 커밋 대상으로 한다. GitLab 은 `.gitlab-ci.yml` (서버에 Pages 와 러너가 있어야 한다), GitHub 은 `.github/workflows/pages.yml` (한 번만 Settings > Pages > Source 를 GitHub Actions 로, 비공개 repo 는 유료 요금제). 올리지 않으면 `aikit docs pages off` (`.gitignore` 에 `/docs-site/`).
-- Pages 가 없으면 받아서 연다: `aikit docs serve` (file:// 로도 열리지만 쪽 이동이 새로고침이 된다).
+- Pages 로 올리기(선택): `aidure docs pages on` 이 원격에 맞는 CI 만 남기고 `docs-site/` 를 커밋 대상으로 한다. GitLab 은 `.gitlab-ci.yml` (서버에 Pages 와 러너가 있어야 한다), GitHub 은 `.github/workflows/pages.yml` (한 번만 Settings > Pages > Source 를 GitHub Actions 로, 비공개 repo 는 유료 요금제). 올리지 않으면 `aidure docs pages off` (`.gitignore` 에 `/docs-site/`).
+- Pages 가 없으면 받아서 연다: `aidure docs serve` (file:// 로도 열리지만 쪽 이동이 새로고침이 된다).
 - 메뉴 묶음 · 사이트 이름 · 버전 · 원본 보기 주소 · 포함 범위(`include` · `exclude` glob)는 `docs-site.json` 으로 정한다 (없으면 폴더와 파일 이름 앞 번호로 묶는다).
 
 ## 바이너리 파일

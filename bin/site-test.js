@@ -3,7 +3,7 @@
  * 문서 사이트 앱 브라우저 시험 (킷 개발용, `npm run test:site`). `npm test` 는 화면을 보지 않으므로 화면을 고치면 이것을 돌린다.
  *
  * 임시 폴더에 킷 가이드와 시험 기획 repo(화면설계서 · 데이터 설계 포함) 사이트를 만들고, 이 PC 의 Chrome 을 화면 없이 띄워 본다.
- * 브라우저: 설치된 Google Chrome (channel chrome). 다른 Chromium 은 AIKIT_CHROME=<실행 파일 경로>.
+ * 브라우저: 설치된 Google Chrome (channel chrome). 다른 Chromium 은 AIDURE_CHROME=<실행 파일 경로>.
  * 보는 것: 새로고침 없는 이동 · 뒤로 가기 · 같은 쪽 다시 누름 · 본문 검색 · 그림 · 확대 · 테마 · 목차 · 전체 인쇄 · 좁은 화면 서랍 ·
  *          file:// · 필기(마우스 · 손가락 · 두 손가락 이동 · 펜 · 지우개 끌기 · 쪽마다 저장) · 근거 패널(iframe) ·
  *          ERD 뷰어(영역 개요 · 표 · 상세 · 검색 · 확대 · 스키마 · 내보내기) · 화면설계서 뷰어(썸네일 · 넘기기 · 내부 정보 · 근거 패널 · 발표)
@@ -58,13 +58,13 @@ async function check(name, fn) {
 const ok = (c, msg) => { if (!c) throw new Error(msg); };
 
 (async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-site-test-'));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-site-test-'));
   const guide = path.join(tmp, 'guide');
   write(guide, require('./docs').site().pages);
   const plans = fixture(tmp);
   const G = await serve(guide), F = await serve(plans);
-  const browser = await chromium.launch(process.env.AIKIT_CHROME ? { executablePath: process.env.AIKIT_CHROME } : { channel: 'chrome' }).catch((e) => {
-    console.error(`✖ Chrome 을 띄우지 못했습니다 (${e.message.split('\n')[0]}). Google Chrome 을 설치하거나 AIKIT_CHROME=<Chromium 경로>`);
+  const browser = await chromium.launch(process.env.AIDURE_CHROME ? { executablePath: process.env.AIDURE_CHROME } : { channel: 'chrome' }).catch((e) => {
+    console.error(`✖ Chrome 을 띄우지 못했습니다 (${e.message.split('\n')[0]}). Google Chrome 을 설치하거나 AIDURE_CHROME=<Chromium 경로>`);
     process.exit(1);
   });
   const errors = [];

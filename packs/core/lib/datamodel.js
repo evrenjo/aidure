@@ -1,4 +1,4 @@
-// 데이터 설계 정의서(md 테이블 정의서) 읽기 · 검사: aikit docs build 의 ERD 와 aikit datamodel check 가 같이 쓴다 (외부 모듈 없음)
+// 데이터 설계 정의서(md 테이블 정의서) 읽기 · 검사: aidure docs build 의 ERD 와 aidure datamodel check 가 같이 쓴다 (외부 모듈 없음)
 /*
  * 정의서 형식 (스키마마다 한 파일, 견본 packs/datamodel/assets/erd/template.md)
  *   ### <스키마>.<테이블> <논리명>

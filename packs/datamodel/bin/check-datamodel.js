@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// 데이터 설계 검사: 테이블 정의서(md)의 참조 · 기본키 · 중복 · 표 형식 · 프로젝트 컨벤션 · 기능 ID 대조. 실행: aikit datamodel check [repo|폴더]
+// 데이터 설계 검사: 테이블 정의서(md)의 참조 · 기본키 · 중복 · 표 형식 · 프로젝트 컨벤션 · 기능 ID 대조. 실행: aidure datamodel check [repo|폴더]
 /*
  * ✖ (exit 1): 참조 대상 테이블 · 컬럼 없음 · 기본키 없음 · 같은 이름 테이블 · 컬럼 중복 · 표 형식 깨짐(머리 · 칸 수 · 타입 빈칸)
  * ⚠ (exit 0): 테이블 · 컬럼 논리명 없음 · 컨벤션 위반(vars.datamodel: naming · tablePrefix · pkType · auditColumns · timeType · jsonReason)
  *             · 논리 참조(참조 칸 「논리: …」) 대상 없음 · 고정 스키마(설명 줄 「고정 스키마: <근거>」)의 기본키 없음 (이름 · 공통 컬럼 · 타입 규칙은 건너뜀)
  *             · 기능 ID 없는 테이블 · 색인에 없는 기능 ID · 어느 테이블에도 없는 기능(vars.datamodel.functionIds, 비면 vars.screens.functionIds)
  * 「없음」 으로 적은 것은 세지 않는다: 테이블 설명 줄의 「기능: 없음」 · 「공통 컬럼: 없음」, 데이터 설계 폴더 md 에서 기능 ID 와 「없음」 이 같은 줄(엔티티 목록의 「테이블 없음」), 「다음 스프린트」 이 같은 줄(스프린트 방식에서 미룬 기능)
- * 정의서 읽기는 aikit docs build 와 같다 (packs/core/lib/datamodel.js). docs-site/ 를 만들지 않아도 된다.
+ * 정의서 읽기는 aidure docs build 와 같다 (packs/core/lib/datamodel.js). docs-site/ 를 만들지 않아도 된다.
  */
 'use strict';
 const fs = require('fs');

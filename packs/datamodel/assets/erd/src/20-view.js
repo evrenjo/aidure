@@ -162,7 +162,7 @@
   E.setTheme = () => {
     const v = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = v;
-    E.keep('aikit-docs-theme', v);
+    E.keep('aidure-docs-theme', v);
     st.scene = st.scene && { ...st.scene };   // 스키마 색(CSS 변수)을 다시 읽어 그린다
     E.update();
   };

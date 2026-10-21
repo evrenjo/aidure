@@ -4,7 +4,7 @@
 
 | 파일 | 무엇 |
 |---|---|
-| `handoffs/PLAN.md` | 로드맵: 프로젝트 전체 단계와 상태의 정본 (팀 공용). 그림은 `aikit plan` |
+| `handoffs/PLAN.md` | 로드맵: 프로젝트 전체 단계와 상태의 정본 (팀 공용). 그림은 `aidure plan` |
 | `handoffs/{id}/topics/<작업>.md` | 작업별 기록: 한 작업(티켓 · 요구사항 ID · 기능·화면)의 결정 · 원인 · 상태 · 남은 일. **미완 업무의 정본** (상태: 진행 중 + 완료 조건 `[ ]`) |
 | `handoffs/{id}/YYYY-Www.md` | 주간 기록: 날짜마다 작업별 한두 줄 + 링크 |
 | `handoffs/{id}/LATEST.md` | 마지막 상태 (재개가 먼저 읽는다, 4KB 이내) |
@@ -13,8 +13,8 @@
 | `handoffs/{id}/archive/` | 오래된 주간 기록 (찾기 도구로만 본다) |
 
 - 기록 찾기: `node packs/core/bin/handoff.js find <티켓·기능 이름>`
-- 로드맵: `aikit plan` (완료 보고 블록) · `aikit plan --short` (한 줄) · `aikit plan check` (갱신 누락)
-- 팀 현황: `team-status` 스킬 또는 `aikit team`
+- 로드맵: `aidure plan` (완료 보고 블록) · `aidure plan --short` (한 줄) · `aidure plan check` (갱신 누락)
+- 팀 현황: `team-status` 스킬 또는 `aidure team`
 - 내 작업 재개: `resume` 스킬 ("재개")
-- 다른 사람 작업 이어받기(인수인계): `takeover` 스킬 ("인수인계 <id>") 또는 `aikit team <id>`
+- 다른 사람 작업 이어받기(인수인계): `takeover` 스킬 ("인수인계 <id>") 또는 `aidure team <id>`
 - 기록이 커졌으면: `handoff-organize` 스킬 ("핸드오프 정리")

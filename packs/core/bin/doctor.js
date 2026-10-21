@@ -27,25 +27,25 @@ const ROOT = ws.root;
 
 // 1. Node
 const [major, minor] = process.versions.node.split('.').map(Number);
-const nodeOk = major > 20 || (major === 20 && minor >= 19); // aikit(package.json engines) 기준. 워크스페이스 도구는 18 에서도 돈다
+const nodeOk = major > 20 || (major === 20 && minor >= 19); // aidure(package.json engines) 기준. 워크스페이스 도구는 18 에서도 돈다
 add(nodeOk ? OK : major >= 18 ? WARN : FAIL, 'Node.js', `v${process.versions.node}`, 'Node 20.19 이상 설치 (https://nodejs.org)');
 
 // 2. git
 const gitVer = version('git');
 add(gitVer ? OK : FAIL, 'git', gitVer || '설치 안 됨', 'git 설치');
 
-// 킷 버전 — 전역 aikit 과 워크스페이스(bin/kit.js · 팩)가 다르면 생성물 모양이 달라 검사가 어긋날 수 있다
+// 킷 버전 — 전역 aidure 과 워크스페이스(bin/kit.js · 팩)가 다르면 생성물 모양이 달라 검사가 어긋날 수 있다
 const wsKit = (() => { try { return (JSON.parse(fs.readFileSync(path.join(ROOT, 'workspace.json'), 'utf8')).kit || {}).version || null; } catch { return null; } })();
-const cliKit = process.env.AIKIT_VERSION || (() => {
-  const r = spawnSync('aikit', ['--version'], { encoding: 'utf8', timeout: 10000, shell: process.platform === 'win32' });
+const cliKit = process.env.AIDURE_VERSION || (() => {
+  const r = spawnSync('aidure', ['--version'], { encoding: 'utf8', timeout: 10000, shell: process.platform === 'win32' });
   return r.status === 0 ? (String(r.stdout).trim().match(/\d+\.\d+\.\d+/) || [])[0] || null : null;
 })();
 const semver = (v) => String(v || '').split('.').map((n) => parseInt(n, 10) || 0);
 const cmpVer = (a, b) => { const x = semver(a); const y = semver(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0; };
-if (!cliKit) add(WARN, '킷 버전', `워크스페이스 ${wsKit || '?'} · 전역 aikit 없음`, 'npm i -g aidure (README 설치 절)');
+if (!cliKit) add(WARN, '킷 버전', `워크스페이스 ${wsKit || '?'} · 전역 aidure 없음`, 'npm i -g aidure (README 설치 절)');
 else if (!wsKit || cmpVer(cliKit, wsKit) === 0) add(OK, '킷 버전', `${cliKit}${wsKit ? '' : ' (워크스페이스 기록 없음)'}`);
-else if (cmpVer(cliKit, wsKit) > 0) add(WARN, '킷 버전', `전역 aikit ${cliKit} · 워크스페이스 ${wsKit} (워크스페이스가 낮음)`, `관리자가 aikit upgrade → commit · push (팀원은 git pull)`);
-else add(WARN, '킷 버전', `전역 aikit ${cliKit} · 워크스페이스 ${wsKit} (전역이 낮음)`, 'npm i -g aidure 로 전역 aikit 을 올린다');
+else if (cmpVer(cliKit, wsKit) > 0) add(WARN, '킷 버전', `전역 aidure ${cliKit} · 워크스페이스 ${wsKit} (워크스페이스가 낮음)`, `관리자가 aidure upgrade → commit · push (팀원은 git pull)`);
+else add(WARN, '킷 버전', `전역 aidure ${cliKit} · 워크스페이스 ${wsKit} (전역이 낮음)`, 'npm i -g aidure 로 전역 aidure 을 올린다');
 
 // 3. 워크스페이스 repo
 const isRepo = git(ROOT, ['rev-parse', '--is-inside-work-tree']) === 'true';
@@ -59,10 +59,10 @@ if (team.lock && (team.admins || []).length) {
 }
 if ((team.members || []).length) {
   const inRoster = !!id && team.members.includes(id);
-  add(inRoster ? OK : team.restrict ? FAIL : WARN, '팀 명단', inRoster ? `${id} (명단 ${team.members.length}명${team.restrict ? ' · 제한 켜짐' : ''})` : `${id || '(id 없음)'} 이(가) 명단에 없음${team.restrict ? '. aikit start 가 멈춘다' : ''}`, `리더에게 명단 추가(aikit team add ${id || '<id>'}) 요청`);
+  add(inRoster ? OK : team.restrict ? FAIL : WARN, '팀 명단', inRoster ? `${id} (명단 ${team.members.length}명${team.restrict ? ' · 제한 켜짐' : ''})` : `${id || '(id 없음)'} 이(가) 명단에 없음${team.restrict ? '. aidure start 가 멈춘다' : ''}`, `리더에게 명단 추가(aidure team add ${id || '<id>'}) 요청`);
 }
 
-// AI 연결 방식 (aikit ai) — 쓰는 AI 의 CLI · 게이트웨이 모델 목록 · 역할 모델 경고
+// AI 연결 방식 (aidure ai) — 쓰는 AI 의 CLI · 게이트웨이 모델 목록 · 역할 모델 경고
 try {
   const kitLib = require(path.join(ROOT, 'bin', 'kit.js'));
   if (kitLib.normalizeAccess) {
@@ -80,21 +80,21 @@ try {
       seen = [process.env.ANTHROPIC_BASE_URL, env.ANTHROPIC_BASE_URL].find((u) => u && !/(^|\.)anthropic\.com(:\d+)?(\/|$)/.test(String(u).replace(/^https?:\/\//, ''))) || '';
     }
     add(a.set ? OK : WARN, 'AI 연결 방식', `${desc}${seen ? ` (정하지 않음: 이 PC 의 Claude Code 는 게이트웨이 ${seen} 로 연결)` : ''} · 역할 상한 동시 ${m.limits.parallel} · 모두 ${m.limits.total}`,
-      seen ? 'aikit ai gateway 로 이 주소를 저장한다' : 'aikit ai 로 정한다 (정하지 않으면 두 회사 직접 연결로 본다)');
+      seen ? 'aidure ai gateway 로 이 주소를 저장한다' : 'aidure ai 로 정한다 (정하지 않으면 두 회사 직접 연결로 본다)');
     const tool = kitLib.startToolOf(a);
     const cli = { claude: 'claude', codex: 'codex' }[tool];
     let found = false;
     try { found = !!require('../lib/cli.js').findCli(cli); } catch { /* 옛 워크스페이스 */ }
     add(found ? OK : FAIL, `시작 도구 (${cli})`, found ? '설치됨' : '설치 안 됨', cli === 'claude' ? 'npm i -g @anthropic-ai/claude-code' : 'npm i -g @openai/codex');
-    if (a.connection === 'gateway' && !((a.gateway && a.gateway.models) || []).length) add(WARN, '게이트웨이 모델 목록', '비어 있음 (조회 실패)', 'aikit ai refresh');
-    for (const w of m.runWarnings) add(WARN, '역할 모델', w, 'aikit ai refresh 또는 aikit models');
+    if (a.connection === 'gateway' && !((a.gateway && a.gateway.models) || []).length) add(WARN, '게이트웨이 모델 목록', '비어 있음 (조회 실패)', 'aidure ai refresh');
+    for (const w of m.runWarnings) add(WARN, '역할 모델', w, 'aidure ai refresh 또는 aidure models');
   }
 } catch (e) { add(WARN, 'AI 연결 방식', `확인 실패: ${e.message}`); }
 
 // 4. 훅 경로
 const hooksPath = git(ROOT, ['config', 'core.hooksPath']);
 const hasHooks = fs.existsSync(path.join(ROOT, '.githooks'));
-if (hasHooks) add(hooksPath === '.githooks' ? OK : FAIL, 'git core.hooksPath', hooksPath || '미설정', 'aikit install (또는 git config core.hooksPath .githooks)');
+if (hasHooks) add(hooksPath === '.githooks' ? OK : FAIL, 'git core.hooksPath', hooksPath || '미설정', 'aidure install (또는 git config core.hooksPath .githooks)');
 
 /** 이 repo 가 workspace.json 과 다른 그룹 위치(repos/<이름> · repos/<다른 그룹>/<이름>)에 있으면 그 경로 */
 function otherPlace(r) {
@@ -107,15 +107,15 @@ function otherPlace(r) {
 for (const r of ws.repos) {
   const rel = repoRel(r);
   const dir = path.join(ROOT, rel);
-  // 그룹을 바꿨는데 폴더는 옛 위치에 있으면: 옮기라고 알린다 (aikit repo move 를 안 거친 팀원 PC)
+  // 그룹을 바꿨는데 폴더는 옛 위치에 있으면: 옮기라고 알린다 (aidure repo move 를 안 거친 팀원 PC)
   const other = !fs.existsSync(dir) ? otherPlace(r) : null;
-  if (other) { add(FAIL, `repo: ${r.name}`, `그룹 폴더와 실제 위치가 다름: ${other} 에 있음 (workspace.json 은 ${rel})`, `mkdir -p ${path.posix.dirname(rel)} && mv ${other} ${rel} (또는 옛 폴더를 지우고 aikit install)`); continue; }
-  if (!fs.existsSync(dir) && r.local && !r.remote && !r.path) { add(WARN, `repo: ${r.name}`, '아직 원격 없음 (다른 팀원이 새로 만든 repo)', '만든 사람이 origin 을 달고 push 한 뒤 workspace.json 을 push 하면 git pull → aikit install'); continue; }
-  if (!fs.existsSync(dir)) { add(FAIL, `repo: ${r.name}`, `${rel} 에 없음`, `aikit install${r.remote ? ` (git clone ${r.remote} ${rel})` : ''}`); continue; }
+  if (other) { add(FAIL, `repo: ${r.name}`, `그룹 폴더와 실제 위치가 다름: ${other} 에 있음 (workspace.json 은 ${rel})`, `mkdir -p ${path.posix.dirname(rel)} && mv ${other} ${rel} (또는 옛 폴더를 지우고 aidure install)`); continue; }
+  if (!fs.existsSync(dir) && r.local && !r.remote && !r.path) { add(WARN, `repo: ${r.name}`, '아직 원격 없음 (다른 팀원이 새로 만든 repo)', '만든 사람이 origin 을 달고 push 한 뒤 workspace.json 을 push 하면 git pull → aidure install'); continue; }
+  if (!fs.existsSync(dir)) { add(FAIL, `repo: ${r.name}`, `${rel} 에 없음`, `aidure install${r.remote ? ` (git clone ${r.remote} ${rel})` : ''}`); continue; }
   if (r.kind === 'docs' && r.mdPath && !fs.existsSync(path.join(dir, r.mdPath))) add(WARN, `repo: ${r.name}`, `md 사본 폴더 ${r.mdPath} 없음`, '기획 repo 에 md 사본을 두거나 workspace.json mdPath 를 고친다');
   const inRepo = git(dir, ['rev-parse', '--is-inside-work-tree']) === 'true';
   add(inRepo || r.kind !== 'code' ? OK : FAIL, `repo: ${r.name}`, inRepo ? `${rel} (${r.kind || 'code'})` : `${rel}: git 저장소 아님`, 'git clone 으로 받았는지 확인');
-  if (inRepo && r.local && !r.remote && !git(dir, ['remote', 'get-url', 'origin'])) add(WARN, `repo: ${r.name}`, '원격 없음: 팀원이 받을 수 없다', `원격 저장소를 만들고 git -C ${rel} remote add origin <주소> && git -C ${rel} push -u origin HEAD → aikit sync 가 workspace.json 에 기록`);
+  if (inRepo && r.local && !r.remote && !git(dir, ['remote', 'get-url', 'origin'])) add(WARN, `repo: ${r.name}`, '원격 없음: 팀원이 받을 수 없다', `원격 저장소를 만들고 git -C ${rel} remote add origin <주소> && git -C ${rel} push -u origin HEAD → aidure sync 가 workspace.json 에 기록`);
 }
 
 // 6. kit check (생성물 = 정본)
@@ -171,9 +171,9 @@ try {
   if (nl.channelOn && nl.channelOn(ROOT)) {
     const chk = nl.channelCheck(ROOT, which);
     const access = nl.channelAccess(ROOT);
-    if (!chk.ready) add(WARN, '텔레그램 채널', `켜져 있지만 ${chk.problems.join(' · ')}. aikit start 가 채널 없이 시작한다`, 'aikit notify my channel on 을 다시 실행');
-    else if (nl.channelPluginScope(ROOT) === 'user') add(WARN, '텔레그램 채널', '플러그인이 user 범위라 이 PC 의 모든 Claude Code 세션이 텔레그램 서버를 띄운다', 'aikit notify my channel on 을 다시 실행 (이 워크스페이스 전용 local 로 바꾼다)');
-    else if (nl.channelTokenUsedElsewhere && nl.channelTokenUsedElsewhere(ROOT, nl.channelToken(ROOT))) add(WARN, '텔레그램 채널', `같은 봇을 다른 곳에서도 받는다 (${nl.channelTokenUsedElsewhere(ROOT, nl.channelToken(ROOT)).dir}). 세션끼리 서로 끊는다`, 'aikit notify my channel on 을 다시 실행 (플러그인 기본 폴더의 같은 토큰은 끈다)');
+    if (!chk.ready) add(WARN, '텔레그램 채널', `켜져 있지만 ${chk.problems.join(' · ')}. aidure start 가 채널 없이 시작한다`, 'aidure notify my channel on 을 다시 실행');
+    else if (nl.channelPluginScope(ROOT) === 'user') add(WARN, '텔레그램 채널', '플러그인이 user 범위라 이 PC 의 모든 Claude Code 세션이 텔레그램 서버를 띄운다', 'aidure notify my channel on 을 다시 실행 (이 워크스페이스 전용 local 로 바꾼다)');
+    else if (nl.channelTokenUsedElsewhere && nl.channelTokenUsedElsewhere(ROOT, nl.channelToken(ROOT))) add(WARN, '텔레그램 채널', `같은 봇을 다른 곳에서도 받는다 (${nl.channelTokenUsedElsewhere(ROOT, nl.channelToken(ROOT)).dir}). 세션끼리 서로 끊는다`, 'aidure notify my channel on 을 다시 실행 (플러그인 기본 폴더의 같은 토큰은 끈다)');
     else add(OK, '텔레그램 채널', `켜짐 (${nl.channelDir(ROOT)}) · 허용 ${access ? `${access.dmPolicy} ${(access.allowFrom || []).length}명` : '페어링'}`);
   }
 } catch { /* 옛 워크스페이스 */ }
@@ -183,7 +183,7 @@ try {
   const S = require('../lib/secrets');
   for (const d of S.declared(ROOT, ws.packs || [])) {
     const g = S.get(d.name, { root: ROOT });
-    const setCmd = `터미널에서 aikit secret set ${d.name}${d.scope === 'global' ? ' --global' : ''} (숨김 입력)`;
+    const setCmd = `터미널에서 aidure secret set ${d.name}${d.scope === 'global' ? ' --global' : ''} (숨김 입력)`;
     if (!g) { if (!d.optional) add(WARN, `비밀값 ${d.name}`, `없음 (${d.purpose || d.pack})`, setCmd); continue; }
     if (!d.test) { add(OK, `비밀값 ${d.name}`, g.label); continue; }
     const r = spawnSync(process.execPath, [path.join(__dirname, 'secret.js'), 'test', d.name], { cwd: ROOT, encoding: 'utf8', timeout: 20000 });
@@ -191,10 +191,10 @@ try {
     const detail = (lines[0] || '확인 못 함').replace(/^[✔⚠✖-]\s*/, '').replace(`${d.name} ← `, '');
     const extra = lines.slice(1).map((l) => l.replace(/^\s*⚠\s*/, '')).join(' · ');
     add(r.status === 0 ? (g.source === 'legacy' ? WARN : OK) : WARN, `비밀값 ${d.name}`, extra ? `${detail} · ${extra}` : detail,
-      r.status === 0 ? (g.source === 'legacy' ? 'aikit secret import (옛 파일 → OS 저장소)' : '')
-        : /주소를 모릅니다/.test(detail) ? `workspace.json repos 에 "gitlab": { "host" } 를 두거나 GITLAB_URL 환경변수 후 aikit secret test ${d.name}`
-          : /401|만료|취소|권한 부족/.test(`${detail} ${extra}`) ? `${setCmd} (새 토큰${d.needs && d.needs.length ? `, 권한 ${d.needs.join(', ')}` : ''}) 후 aikit secret test ${d.name}`
-            : `aikit secret test ${d.name} 로 다시 확인 (네트워크 · 주소)`);
+      r.status === 0 ? (g.source === 'legacy' ? 'aidure secret import (옛 파일 → OS 저장소)' : '')
+        : /주소를 모릅니다/.test(detail) ? `workspace.json repos 에 "gitlab": { "host" } 를 두거나 GITLAB_URL 환경변수 후 aidure secret test ${d.name}`
+          : /401|만료|취소|권한 부족/.test(`${detail} ${extra}`) ? `${setCmd} (새 토큰${d.needs && d.needs.length ? `, 권한 ${d.needs.join(', ')}` : ''}) 후 aidure secret test ${d.name}`
+            : `aidure secret test ${d.name} 로 다시 확인 (네트워크 · 주소)`);
   }
 } catch { /* 옛 워크스페이스 */ }
 

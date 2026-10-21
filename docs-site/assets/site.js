@@ -1,4 +1,4 @@
-/* 생성물: aikit docs build. 원본은 킷의 packs/core/assets/docs-site/src/ (+ 공통 부품 packs/core/assets/docs-site/shared/) (손으로 고치지 않는다) */
+/* 생성물: aidure docs build. 원본은 킷의 packs/core/assets/docs-site/src/ (+ 공통 부품 packs/core/assets/docs-site/shared/) (손으로 고치지 않는다) */
 /* ── 10-sidehead.js ── */
 /* 사이드바 머리 줄 (문서 사이트 · ERD 뷰어 공통 부품): 왼쪽 = 제목(문서는 「홈」 링크, ERD 는 「테이블 n」), 오른쪽 = 모두 접기 ↔ 모두 펴기 토글 하나.
    펼친 묶음이 하나라도 있으면 「모두 접기」, 모두 접혀 있으면 「모두 펴기」 (아이콘 · 툴팁이 다음 동작). 생성기가 site.js · erd.js 앞에 같이 넣는다.
@@ -22,7 +22,7 @@
   };
 })();
 /* ── 00-core.js ── */
-/* 문서 사이트 앱 (aikit docs build · aikit board · 킷 가이드 공통). 생성기가 src/*.js 를 이름 순으로 이어 assets/site.js 하나로 만든다.
+/* 문서 사이트 앱 (aidure docs build · aidure board · 킷 가이드 공통). 생성기가 src/*.js 를 이름 순으로 이어 assets/site.js 하나로 만든다.
    화면은 Preact + htm (assets/vendor.js, 빌드 없음). 쪽마다 본문 HTML(.ds-body)과 쪽 정보(script#ds-page)가 있고,
    앱이 그 둘로 화면 전체를 그린다. 다른 쪽으로 갈 때는 그 쪽 파일을 읽어 둘만 꺼내 바꾼다 (새로고침 없음, file:// 에서는 새로 연다).
    여기: 이름공간 DS · 공통 도구 (주소 · 저장 · 이스케이프 · 알림) */
@@ -73,7 +73,7 @@
       var v = ((window.DS_NAV || {}).v || {})[p];
       s.src = DS.url(p) + (v ? "?v=" + v : "");   /* 다시 만든 파일은 주소가 바뀐다 (옛 캐시를 쓰지 않게) */
       s.onload = function () { ok(); };
-      s.onerror = function () { delete scripts[p]; no(new Error(p + " 가 없습니다 (aikit docs build 로 다시 만든다)")); };
+      s.onerror = function () { delete scripts[p]; no(new Error(p + " 가 없습니다 (aidure docs build 로 다시 만든다)")); };
       document.head.appendChild(s);
     });
     return scripts[p];
@@ -189,7 +189,7 @@
   "use strict";
   var DS = window.DS, html = DS.html, H = DS.hooks;
   var NAV = window.DS_NAV || { groups: [] };
-  var KEY = "aikit-docs-nav:" + (NAV.key || "");
+  var KEY = "aidure-docs-nav:" + (NAV.key || "");
 
   /* 이 쪽이 든 묶음 · 폴더 키들 */
   function pathTo(page) {
@@ -520,7 +520,7 @@
     var s = H.useState({ docs: [], done: 0, total: 0, msg: "문서를 불러오는 중…", ready: false }), st = s[0], set = s[1];
     var box = H.useRef(null);
     H.useEffect(function () {
-      if (DS.file) { set({ docs: [], msg: "전체 인쇄는 웹 주소(Pages 등)로 열었을 때만 됩니다. 이 PC 파일로 보고 있으면 aikit docs serve 로 여세요. 이 문서 인쇄는 그대로 됩니다." }); return; }
+      if (DS.file) { set({ docs: [], msg: "전체 인쇄는 웹 주소(Pages 등)로 열었을 때만 됩니다. 이 PC 파일로 보고 있으면 aidure docs serve 로 여세요. 이 문서 인쇄는 그대로 됩니다." }); return; }
       var list = ((window.DS_SEARCH || {}).pages || []).map(function (p) { return p.u; }).filter(function (u, i, a) { return a.indexOf(u) === i && u !== "print-all.html"; });
       var out = [], next = 0, done = 0, alive = true;
       function one() {
@@ -560,7 +560,7 @@
   "use strict";
   var DS = window.DS, html = DS.html, H = DS.hooks;
   var NS = "http://www.w3.org/2000/svg", root = document.documentElement;
-  var PREF = "aikit-docs-ink-prefs";
+  var PREF = "aidure-docs-ink-prefs";
   var TOOLS = {
     pen: { colors: ["var(--fg)", "#cf222e", "#0969da", "#1a7f37", "#bf5af2"], sizes: [2, 3.2, 5, 8] },
     hl: { colors: ["#ffd60a", "#7ee08a", "#7cc4ff", "#ff9ec7", "#ffb35c"], sizes: [10, 16, 22, 30] },
@@ -629,7 +629,7 @@
     }, [props.el]);
     /* 쪽이 바뀌면 그 쪽 획을 읽는다 (새 본문과 같은 화면에: 앞 쪽 획이 잠깐 보이지 않게) */
     H.useLayoutEffect(function () {
-      S.key = "aikit-docs-ink:" + new URL(DS.url(props.page)).pathname;
+      S.key = "aidure-docs-ink:" + new URL(DS.url(props.page)).pathname;
       var v = DS.load(S.key, []);
       S.strokes = Array.isArray(v) ? v : [];
       S.hist = [];
@@ -982,7 +982,7 @@
     H.useEffect(function () {
       if (document.documentElement.dataset.theme === theme) return;
       document.documentElement.dataset.theme = theme;
-      try { localStorage.setItem("aikit-docs-theme", theme); } catch (e) { /* 저장 못 함 */ }
+      try { localStorage.setItem("aidure-docs-theme", theme); } catch (e) { /* 저장 못 함 */ }
       ready.current = DS.drawDiagrams(bodyEl.current);
       DS.emit("theme", theme);
     }, [theme]);

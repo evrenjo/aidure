@@ -1,4 +1,4 @@
-/* aikit 문서 화면 틀: 킷 가이드(bin/docs.js 가 이 파일을 넣는다)와 기획 repo 문서 사이트(aikit docs build 가 복사한다)가 같이 쓴다. 한쪽만 고치지 않는다 */
+/* aidure 문서 화면 틀: 킷 가이드(bin/docs.js 가 이 파일을 넣는다)와 기획 repo 문서 사이트(aidure docs build 가 복사한다)가 같이 쓴다. 한쪽만 고치지 않는다 */
 :root{--bg:#fff;--bg2:#f6f7f9;--fg:#1f2328;--muted:#656d76;--line:#d8dee4;--accent:#0969da;--accent-bg:#ddf4ff;--code:#f3f4f6;--codefg:#1f2328;--bar:#fff;--barfg:#1f2328;--quote:#c9ced4}
 [data-theme=dark]{--bg:#0d1117;--bg2:#151b23;--fg:#e6edf3;--muted:#9198a1;--line:#30363d;--accent:#4493f8;--accent-bg:#1b2a3d;--code:#1f2630;--codefg:#e6edf3;--bar:#0d1117;--barfg:#e6edf3;--quote:#3d444d}
 *{box-sizing:border-box}html{overflow-y:scroll} /* 짧은 페이지에서도 스크롤바를 보여 페이지를 옮길 때 화면이 옆으로 흔들리지 않게 */

@@ -23,7 +23,7 @@ function load(start) {
   const r = root(start);
   const ws = JSON.parse(fs.readFileSync(path.join(r, 'workspace.json'), 'utf8'));
   ws.root = r;
-  // repo 는 워크스페이스 안 repos/<이름> · repos/<그룹>/<이름> (aikit install 이 clone·링크). install 전이면 path 로 떨어진다
+  // repo 는 워크스페이스 안 repos/<이름> · repos/<그룹>/<이름> (aidure install 이 clone·링크). install 전이면 path 로 떨어진다
   ws.repos = (ws.repos || []).map((x) => {
     const inWs = path.join(r, repoRel(x));
     return { ...x, kind: x.kind || 'code', dir: fs.existsSync(inWs) || !x.path ? inWs : path.resolve(r, x.path) };

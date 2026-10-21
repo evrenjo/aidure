@@ -3,7 +3,7 @@
 /*
  * 세션 시작뿐 아니라 이어서 시작 · 대화 요약(compact) · 비우기 뒤에도 돈다 (요약되면 이 줄이 사라져 이름 없이 띄우게 된다).
  * 판정은 lib/teammode.js. 판정만 하고 설정은 바꾸지 않는다. team 스킬이 이 줄을 보고 실행 방식을 정하고 사용자에게 알린다. 상한·역할 모델은 두 방식 같다.
- * 팀 모드에서 역할 에이전트를 이름 없이 띄우는 것은 hooks/agent-budget.js 가 막는다 (aikit team-mode enforce name).
+ * 팀 모드에서 역할 에이전트를 이름 없이 띄우는 것은 hooks/agent-budget.js 가 막는다 (aidure team-mode enforce name).
  */
 'use strict';
 const { run, context, root } = require('../lib/hook');

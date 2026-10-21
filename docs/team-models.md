@@ -2,7 +2,7 @@
 
 에이전트 도구의 서브에이전트 기능으로 **역할 에이전트**를 만든다 (core 일반 역할 7개 + 팩·프로젝트가 더한 역할). 리드(메인 세션)는 합의된 작업 안에서 일을 나눌 때는 **묻지 않고** 역할 에이전트를 불러 나누고, 끝나면 정리한다 (규칙 `core--29-agents` · `team` 스킬). 단계 전환(분석 → 기획 → 설계 → 구축)과 그 단계의 진행 방식은 사용자와 정한 뒤 시작한다 (규칙 `core--10-communication`). 조사처럼 많이 읽는 일을 맡기고 결론만 받아 메인 대화 context 를 아끼므로 더 오래 일할 수 있다.
 
-실행 방식은 세션 시작 때 훅(`team-mode.js`)이 환경으로 정한다 (이어서 시작 · 대화 요약 뒤에도 그 줄을 다시 넣는다). 팀 모드인데 역할 에이전트를 이름 없이 띄우면 서브에이전트로 돌기 때문에 훅이 막는다 (`aikit team-mode enforce name`, `agents.enforce.teammateName`). 한 요청의 첫 역할 에이전트 때는 실행 방식과 구성표를 알렸는지 훅이 한 줄로 짚는다 (`enforce roster`, `agents.enforce.rosterAnnounce`). 일을 마친 팀원이 대기로 10분 넘게 남으면 리더가 멈출 때 훅(`team-idle.js`)이 한 번 막고 알린다 (`enforce idle`, `agents.enforce.idleTeammates`). 팀원이나 백그라운드 작업이 남은 채 멈출 때 답변에 상태 줄(`지금 도는 것:`)이 없어도 한 번 막는다 (`enforce status`, `agents.enforce.waitStatus`). Claude Code 의 agent teams(팀원 세션)가 가능하면 **팀 모드**, 아니면 **서브에이전트**. `teammateMode` 가 `tmux` 면 tmux 가 설치돼 있어야 하고(세션 밖이면 Claude Code 가 tmux 세션을 만들어 입력창 오른쪽에 이름을 보여 준다. 다른 터미널에서 `tmux attach -t <이름>`), 없으면 사유와 함께 서브에이전트로 간다. 어느 쪽이든 상한·역할 모델은 같고, 리더는 작업 시작 때 어느 방식인지 한 줄로 알린다.
+실행 방식은 세션 시작 때 훅(`team-mode.js`)이 환경으로 정한다 (이어서 시작 · 대화 요약 뒤에도 그 줄을 다시 넣는다). 팀 모드인데 역할 에이전트를 이름 없이 띄우면 서브에이전트로 돌기 때문에 훅이 막는다 (`aidure team-mode enforce name`, `agents.enforce.teammateName`). 한 요청의 첫 역할 에이전트 때는 실행 방식과 구성표를 알렸는지 훅이 한 줄로 짚는다 (`enforce roster`, `agents.enforce.rosterAnnounce`). 일을 마친 팀원이 대기로 10분 넘게 남으면 리더가 멈출 때 훅(`team-idle.js`)이 한 번 막고 알린다 (`enforce idle`, `agents.enforce.idleTeammates`). 팀원이나 백그라운드 작업이 남은 채 멈출 때 답변에 상태 줄(`지금 도는 것:`)이 없어도 한 번 막는다 (`enforce status`, `agents.enforce.waitStatus`). Claude Code 의 agent teams(팀원 세션)가 가능하면 **팀 모드**, 아니면 **서브에이전트**. `teammateMode` 가 `tmux` 면 tmux 가 설치돼 있어야 하고(세션 밖이면 Claude Code 가 tmux 세션을 만들어 입력창 오른쪽에 이름을 보여 준다. 다른 터미널에서 `tmux attach -t <이름>`), 없으면 사유와 함께 서브에이전트로 간다. 어느 쪽이든 상한·역할 모델은 같고, 리더는 작업 시작 때 어느 방식인지 한 줄로 알린다.
 
 | 역할 | 하는 일 | 권한 | 등급 |
 |---|---|---|---|
@@ -26,8 +26,8 @@
 | **자동** (새 워크스페이스 기본) | 리더가 작업마다 필요한 역할 · 등급 · 모델을 골라 구성표를 알리고 바로 시작한다. 웹 검색으로 고른 모델이 있거나 high 가 4개 이상이면 승인을 받는다 |
 | **고정** (옛 워크스페이스 기본) | 역할마다 프로필 모델 그대로 |
 
-- **옵션**: 성향(최고 · 표준 · 절약 = 프로필) · 역할별 선호 모델(`aikit team-mode`). 대화로 "품질 우선" 처럼 말하면 그 세션 동안 따른다.
-- **요금제 여유도**: 직접 연결이면 `aikit ai` 에서 고른 회사마다 요금제를 묻는다 (이 PC 로그인 정보의 값을 미리 골라 둠, 팀 기본값은 `--team`). 리더는 **빠듯**한 회사 모델을 선호 역할과 대신할 수 없는 high 작업에만 쓰고, **넉넉**한 회사에 high 작업을 먼저 주고, **종량**(API 키 · Enterprise · 게이트웨이)은 같은 품질이면 싼 모델을 쓴다. 요금제는 사람마다 이 PC 에 저장되어 다른 사람 구성에 영향을 주지 않는다.
+- **옵션**: 성향(최고 · 표준 · 절약 = 프로필) · 역할별 선호 모델(`aidure team-mode`). 대화로 "품질 우선" 처럼 말하면 그 세션 동안 따른다.
+- **요금제 여유도**: 직접 연결이면 `aidure ai` 에서 고른 회사마다 요금제를 묻는다 (이 PC 로그인 정보의 값을 미리 골라 둠, 팀 기본값은 `--team`). 리더는 **빠듯**한 회사 모델을 선호 역할과 대신할 수 없는 high 작업에만 쓰고, **넉넉**한 회사에 high 작업을 먼저 주고, **종량**(API 키 · Enterprise · 게이트웨이)은 같은 품질이면 싼 모델을 쓴다. 요금제는 사람마다 이 PC 에 저장되어 다른 사람 구성에 영향을 주지 않는다.
 
 | 여유도 | Claude | ChatGPT |
 |---|---|---|
@@ -93,7 +93,7 @@
 
 ## AI 연결 방식
 
-개인은 Claude 나 GPT 하나만 구독하고, 회사는 게이트웨이로 두 회사 모델을 함께 쓴다. 그래서 init · install 에서 먼저 연결 방식을 묻고 거기에 맞춰 역할 모델을 정한다 (`aikit ai` 로 언제든 바꾼다).
+개인은 Claude 나 GPT 하나만 구독하고, 회사는 게이트웨이로 두 회사 모델을 함께 쓴다. 그래서 init · install 에서 먼저 연결 방식을 묻고 거기에 맞춰 역할 모델을 정한다 (`aidure ai` 로 언제든 바꾼다).
 
 | 연결 | 쓰는 AI | 시작 도구 | 상대 회사 모델 |
 |---|---|---|---|
@@ -109,7 +109,7 @@
 | 단일 모델 | 모든 역할이 메인 모델. 역할 에이전트는 그대로 불러 context 를 아낀다 |
 
 **게이트웨이**: 킷이 이 PC 의 설정(셸 환경변수 · `~/.claude/settings.json` 의 env · `~/.codex/config.toml` 의 `model_provider`)에서 찾고 `GET /v1/models` 로 모델 목록을 받아 보여 준다. 킷 모델 ID 를 게이트웨이 이름(`gpt-6.1-sol` → `codex/gpt-6.1-sol`)으로 바꿔 쓴다.
-저장하는 것은 주소 · 키가 든 **환경변수 이름** · 모델 목록뿐이고 키 값은 어디에도 쓰지 않는다. Claude Code 에 게이트웨이 설정이 없으면 `aikit start` 가 저장한 주소와 키 환경변수로 잇는다. 게이트웨이에 새 모델이 올라오면 `aikit ai refresh`.
+저장하는 것은 주소 · 키가 든 **환경변수 이름** · 모델 목록뿐이고 키 값은 어디에도 쓰지 않는다. Claude Code 에 게이트웨이 설정이 없으면 `aidure start` 가 저장한 주소와 키 환경변수로 잇는다. 게이트웨이에 새 모델이 올라오면 `aidure ai refresh`.
 
 확인한 동작 (2026-09-30, Claude Code 2.1.284 · Codex 0.158, 게이트웨이 1곳): Claude Code 는 게이트웨이로 GPT 를 메인 · 하위 에이전트(읽기 · 수정 · 명령 실행)로 정상 실행하고 추론 강도도 넘긴다. Codex 안에서 Claude 모델은 도구 호출이 끊기거나 오류가 나서 쓰지 않는다 (Codex 의 Claude 역할은 계속 위임).
 
@@ -117,15 +117,15 @@
 
 | 언제 | 누가 | 무엇을 | 저장 위치 |
 |---|---|---|---|
-| `aikit init` | 리더 | 팀 기본 프로필 · 메인(리드) 모델 | `workspace.json` 의 `agents.profile` · `agents.main` (팀 공유) |
-| `aikit install` · `aikit agent` | 팀원 | 묻지 않는다. 팀 프로필을 따른다 | |
-| 요금제가 팀보다 빠듯할 때 | 팀원 | `aikit models profile` (화면에서 고른다. 인자 `rich\|standard\|lean\|team`, `team` = 되돌리기) → 내 프로필. **팀과 같거나 낮은 것만** | `.agents/local.json` (이 PC 만) |
-| 팀원이 더 높은 프로필을 써도 될 때 | 리더 | `aikit models allow-higher on` | `workspace.json` 의 `agents.allowHigherProfile` |
-| Codex 웹 검색을 끌 때 | 리더 | `aikit start` 는 Codex 에 `--search` 를 기본으로 붙인다 (흔한 방식 확인 · 근거 검색용). 끄려면 `"webSearch": false` | `workspace.json` 의 `agents.webSearch` |
-| 언제든 | 누구나 | `aikit models` → 프로필 바꾸기 · 역할별로 한 번에 고르기 | 범위를 팀 또는 이 PC 로 고른다 |
+| `aidure init` | 리더 | 팀 기본 프로필 · 메인(리드) 모델 | `workspace.json` 의 `agents.profile` · `agents.main` (팀 공유) |
+| `aidure install` · `aidure agent` | 팀원 | 묻지 않는다. 팀 프로필을 따른다 | |
+| 요금제가 팀보다 빠듯할 때 | 팀원 | `aidure models profile` (화면에서 고른다. 인자 `rich\|standard\|lean\|team`, `team` = 되돌리기) → 내 프로필. **팀과 같거나 낮은 것만** | `.agents/local.json` (이 PC 만) |
+| 팀원이 더 높은 프로필을 써도 될 때 | 리더 | `aidure models allow-higher on` | `workspace.json` 의 `agents.allowHigherProfile` |
+| Codex 웹 검색을 끌 때 | 리더 | `aidure start` 는 Codex 에 `--search` 를 기본으로 붙인다 (흔한 방식 확인 · 근거 검색용). 끄려면 `"webSearch": false` | `workspace.json` 의 `agents.webSearch` |
+| 언제든 | 누구나 | `aidure models` → 프로필 바꾸기 · 역할별로 한 번에 고르기 | 범위를 팀 또는 이 PC 로 고른다 |
 
 개인 값은 팀 값을 넘지 않는다. 팀보다 높은 이 PC 프로필은 적용하지 않고(sync 가 경고), 역할 에이전트 상한(동시 · 모두)도 팀 값 이내다.
-팀과 다른 값이 적용 중이면 세션 시작 줄과 `aikit start` 에 보인다: `모델 프로필: 이 PC 절약 (팀 표준 대신) · 되돌리기 aikit models profile team · 상한 동시 1 · 모두 3 (팀 2 · 5)`.
+팀과 다른 값이 적용 중이면 세션 시작 줄과 `aidure start` 에 보인다: `모델 프로필: 이 PC 절약 (팀 표준 대신) · 되돌리기 aidure models profile team · 상한 동시 1 · 모두 3 (팀 2 · 5)`.
 
 **역할별로 직접 고르기**: 기준 프로필을 고른 뒤 메인 → 역할 전부 → 교차 검토 순으로 하나씩 고른다.
 
@@ -144,22 +144,22 @@
 | 항목 | 내용 |
 |---|---|
 | 추론 강도 덮기 | 같은 자리에 `effort`. 두 도구 공통 `"effort": "max"`, 도구별 `{ "claude": "max", "codex": "xhigh" }` |
-| 메인 모델 전달 | `aikit start` 가 `--model`·`--effort`(Claude), `-m`·`-c model_reasoning_effort`(Codex)로 넘긴다. 전역 설정보다 우선 |
+| 메인 모델 전달 | `aidure start` 가 `--model`·`--effort`(Claude), `-m`·`-c model_reasoning_effort`(Codex)로 넘긴다. 전역 설정보다 우선 |
 | 역할 에이전트 파일 | 사람마다 모델이 다를 수 있어 git 에 올리지 않고 각자 sync 가 만든다 |
 | Fable 과금 | Claude Pro·표준 좌석은 첫 요청부터 사용량 크레딧, Max·프리미엄 좌석은 주간 한도 50% 까지 포함 |
 | AI 게이트웨이 | 위 "AI 연결 방식". Claude 별칭(`opus` 등)이 게이트웨이 모델로 이어져 있으면(`ANTHROPIC_DEFAULT_*_MODEL`) 별칭을 그대로, 아니면 게이트웨이 모델 ID 로 바꿔 쓴다 |
 | 팀원 승인 질문 | 팀 모드 팀원 창에 권한 승인이 뜨면 팀원은 멈추고 리더 화면에는 보이지 않는다. 훅이 승인 대기를 적어 리더의 다음 요청 · 턴 끝에 알리고(텔레그램을 켰으면 바로 「🔐 팀원 … 승인 대기」), 사용자가 그 창에서 승인하면 풀린다 |
-| 미리 허용한 조회 명령 | 승인 없이 쓰는 읽기 전용 명령: `git log · show · diff · status · blame · grep · ls-files · rev-parse`, `ls · cat · head · tail · wc · grep · rg · tree · pwd`, `aikit docs show · refs · trace` (`.claude/settings.json` 의 `permissions.allow`, sync 가 만든다). 더 넣을 것은 팀이면 `workspace.json` 의 `claude.settings.permissions.allow`, 나만이면 `.claude/settings.local.json` |
+| 미리 허용한 조회 명령 | 승인 없이 쓰는 읽기 전용 명령: `git log · show · diff · status · blame · grep · ls-files · rev-parse`, `ls · cat · head · tail · wc · grep · rg · tree · pwd`, `aidure docs show · refs · trace` (`.claude/settings.json` 의 `permissions.allow`, sync 가 만든다). 더 넣을 것은 팀이면 `workspace.json` 의 `claude.settings.permissions.allow`, 나만이면 `.claude/settings.local.json` |
 | Codex 역할 모델 | Codex(0.158)는 역할 파일(`.codex/agents`)을 하위 에이전트에 적용하지 않는다. 개인 지침(`AGENTS.override.md`)의 역할 모델 표대로 리더가 `spawn_agent` 에 모델 · 추론 강도를 넣는다 |
 
 ## 모델 버전 관리
 
 | 무엇 | 어떻게 |
 |---|---|
-| 모델 목록·추천 | 킷의 `packs/core/models.json` 한 곳 (목록 버전 · 퇴역 목록 · 모델별 확인일·출처·벤치마크). 킷에서 고쳐 push → 워크스페이스는 `aikit upgrade` |
-| 새 모델 | 킷이 새 모델을 조사해 추천을 바꾸면 킷 새 버전으로 나온다. `aikit upgrade` 로 받는다 |
-| 퇴역 모델 | sync 가 팀·개인 설정의 퇴역·퇴역 예정·목록에 없는 모델을 경고, `aikit models --migrate` 가 일괄 교체 |
-| 킷 새 버전 | `aikit start` 가 두 가지를 알린다: npm 레지스트리에 이 PC 설치본보다 새 버전이 나왔으면 `npm i -g aidure` (하루 한 번 확인, 2초 · 실패하면 조용히, 끄기 `AIKIT_NO_UPDATE_CHECK=1`), 설치본이 워크스페이스보다 새로우면 `aikit upgrade` |
+| 모델 목록·추천 | 킷의 `packs/core/models.json` 한 곳 (목록 버전 · 퇴역 목록 · 모델별 확인일·출처·벤치마크). 킷에서 고쳐 push → 워크스페이스는 `aidure upgrade` |
+| 새 모델 | 킷이 새 모델을 조사해 추천을 바꾸면 킷 새 버전으로 나온다. `aidure upgrade` 로 받는다 |
+| 퇴역 모델 | sync 가 팀·개인 설정의 퇴역·퇴역 예정·목록에 없는 모델을 경고, `aidure models --migrate` 가 일괄 교체 |
+| 킷 새 버전 | `aidure start` 가 두 가지를 알린다: npm 레지스트리에 이 PC 설치본보다 새 버전이 나왔으면 `npm i -g aidure` (하루 한 번 확인, 2초 · 실패하면 조용히, 끄기 `AIDURE_NO_UPDATE_CHECK=1`), 설치본이 워크스페이스보다 새로우면 `aidure upgrade` |
 
 ## Claude · GPT 혼용
 
@@ -190,4 +190,4 @@ flowchart LR
 | 필요한 것 | 두 도구 모두 설치·로그인, 비용은 각 구독. 상대 도구가 없는 PC 는 같은 회사 대체 모델로 바뀌고 sync 가 알린다 |
 | 사용량 한도(429) | 결과 머리에 「상대 도구로 다시: …」 명령 한 줄이 나온다. 같은 지시서(`task.md`)로 다른 도구에 맡긴다 |
 
-**교차 검토** (`cross-review` 스킬): 변경을 상대 회사 모델에게 읽기 전용으로 검토받아 두 의견을 대조한다. 모델은 `aikit models` 의 "교차 검토 모델".
+**교차 검토** (`cross-review` 스킬): 변경을 상대 회사 모델에게 읽기 전용으로 검토받아 두 의견을 대조한다. 모델은 `aidure models` 의 "교차 검토 모델".

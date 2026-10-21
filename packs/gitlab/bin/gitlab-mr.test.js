@@ -8,7 +8,7 @@ const http = require('http');
 const { spawn } = require('child_process');
 
 const TOKEN = 'glpat-test-pipeline-0001';
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-gitlab-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-gitlab-'));
 const seen = [];
 const pipe = (id, status, ref, sha) => ({ id, status, ref, sha, source: 'push', created_at: '2026-01-02T03:04:05.000Z', web_url: `http://git.test/p/${id}`, duration: 75, user: { username: 'dev' } });
 const routes = {
@@ -35,7 +35,7 @@ const server = http.createServer((req, res) => {
 
 function run(args, cwd) {
   return new Promise((resolve) => {
-    const env = { ...process.env, GITLAB_TOKEN: TOKEN, AIKIT_CONFIG_DIR: path.join(tmp, 'config'), AIKIT_SECRETS_BACKEND: 'file' };
+    const env = { ...process.env, GITLAB_TOKEN: TOKEN, AIDURE_CONFIG_DIR: path.join(tmp, 'config'), AIDURE_SECRETS_BACKEND: 'file' };
     delete env.CLAUDE_PROJECT_DIR;
     const c = spawn(process.execPath, [path.join(__dirname, 'gitlab-mr.js'), ...args], { cwd, env });
     let out = '';

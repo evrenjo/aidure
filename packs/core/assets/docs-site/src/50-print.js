@@ -39,7 +39,7 @@
     var s = H.useState({ docs: [], done: 0, total: 0, msg: "문서를 불러오는 중…", ready: false }), st = s[0], set = s[1];
     var box = H.useRef(null);
     H.useEffect(function () {
-      if (DS.file) { set({ docs: [], msg: "전체 인쇄는 웹 주소(Pages 등)로 열었을 때만 됩니다. 이 PC 파일로 보고 있으면 aikit docs serve 로 여세요. 이 문서 인쇄는 그대로 됩니다." }); return; }
+      if (DS.file) { set({ docs: [], msg: "전체 인쇄는 웹 주소(Pages 등)로 열었을 때만 됩니다. 이 PC 파일로 보고 있으면 aidure docs serve 로 여세요. 이 문서 인쇄는 그대로 됩니다." }); return; }
       var list = ((window.DS_SEARCH || {}).pages || []).map(function (p) { return p.u; }).filter(function (u, i, a) { return a.indexOf(u) === i && u !== "print-all.html"; });
       var out = [], next = 0, done = 0, alive = true;
       function one() {

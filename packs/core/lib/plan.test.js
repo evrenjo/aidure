@@ -173,7 +173,7 @@ assert.strictEqual(P.latest([]), null);
 assert.strictEqual(P.parse('# 로드맵\n\n아직 없음\n'), null);
 
 // 팀 알림: PLAN.md 가 바뀐 push 는 로드맵 한 줄 + 흐름도
-process.env.AIKIT_CONFIG_DIR = require('path').join(require('os').tmpdir(), `aikit-plan-${process.pid}`);
+process.env.AIDURE_CONFIG_DIR = require('path').join(require('os').tmpdir(), `aidure-plan-${process.pid}`);
 const n = require('./notify');
 const msgs = n.teamMessages({ chat: '1', token: 't', events: ['handoff'] }, { project: 'p', handoffs: [], settings: [], plan: { author: 'kim', text } });
 assert.strictEqual(msgs.length, 1);

@@ -59,7 +59,7 @@ def resolve_repo(argv):
         return linked, cfg, None
     if pick.get('path') and os.path.isdir(os.path.join(ws_root, pick['path'])):
         return os.path.normpath(os.path.join(ws_root, pick['path'])), cfg, None
-    return None, cfg, f"{pick['name']} 경로가 없다 (aikit install 또는 repos[].path 확인)"
+    return None, cfg, f"{pick['name']} 경로가 없다 (aidure install 또는 repos[].path 확인)"
 
 
 ROOT, CFG, WHY = resolve_repo(sys.argv[1:])

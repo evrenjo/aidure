@@ -6,7 +6,7 @@ const path = require('path');
 const assert = require('assert');
 const { codexAppCli } = require('./cli');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-cli-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-cli-'));
 const exe = process.platform === 'win32' ? '.exe' : '';
 // Codex 앱 배치: packages/<이름>/current → releases/<버전>, 그 안 codex-package.json 의 entrypoint
 const release = (home, ver, manifest = true) => {

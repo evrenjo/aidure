@@ -2,7 +2,7 @@
   "name": "core",
   "title": "공통 코어",
   "summary": "소통·검증 규칙 · 핸드오프 · 로드맵 · 문서 사이트 · 진단",
-  "description": "협업 워크스페이스 기본: 팀 구성(자동: 리더가 작업마다 역할·모델 선택, 고정: 프로필대로), 커뮤니케이션·근거/검증 원칙·변경 영향 점검, 핸드오프/재개/작업 시작, 진행 방식(스프린트: 최소 기능부터 기능 단위 스프린트 · 데모 · 회고 · 백로그, 전체: 전체 설계 뒤 구축, 이슈형: 운영 · 유지보수의 이슈 보드 · 주간 보고), 유형 바꾸기(aikit type), 로드맵(handoffs/PLAN.md: 종류 · 진행 방식별 기본 단계 · 단계 흐름도 · 영역 × 하위 작업 표 · 완료 보고 블록), 문서 사이트(aikit docs build: 기획 repo 의 md → 같은 경로 구조의 HTML, 가이드와 같은 화면 틀 · 정의 ID 앵커 · 근거 색인 ids.json · docs-site.json 묶음), 워크스페이스 현황판(aikit board), 컨텍스트 관리, 답변 첫 줄 시각 표시(요청 받은 시각, aikit timestamp), 시간 예산(budget.js: 예산 1.5배를 넘으면 계속할지 묻게 함), 리뷰 위임 차수(같은 범위 차수 · 앞 차수 블로커 · 3차부터 경고), 리뷰 전 검사(지시서의 검사: 줄), 착수 전 확인(코드 첫 수정 전 머리말), 오래 일하는 팀원 · 위임 알림(기본 60분), 레포 업데이트·죽은 참조 검사·핸드오프 알림 훅 · 텔레그램 알림(개인: 알림 수준 · 양방향 대화 · 자리 비움, 팀: 핸드오프·설정 변경·공지)",
+  "description": "협업 워크스페이스 기본: 팀 구성(자동: 리더가 작업마다 역할·모델 선택, 고정: 프로필대로), 커뮤니케이션·근거/검증 원칙·변경 영향 점검, 핸드오프/재개/작업 시작, 진행 방식(스프린트: 최소 기능부터 기능 단위 스프린트 · 데모 · 회고 · 백로그, 전체: 전체 설계 뒤 구축, 이슈형: 운영 · 유지보수의 이슈 보드 · 주간 보고), 유형 바꾸기(aidure type), 로드맵(handoffs/PLAN.md: 종류 · 진행 방식별 기본 단계 · 단계 흐름도 · 영역 × 하위 작업 표 · 완료 보고 블록), 문서 사이트(aidure docs build: 기획 repo 의 md → 같은 경로 구조의 HTML, 가이드와 같은 화면 틀 · 정의 ID 앵커 · 근거 색인 ids.json · docs-site.json 묶음), 워크스페이스 현황판(aidure board), 컨텍스트 관리, 답변 첫 줄 시각 표시(요청 받은 시각, aidure timestamp), 시간 예산(budget.js: 예산 1.5배를 넘으면 계속할지 묻게 함), 리뷰 위임 차수(같은 범위 차수 · 앞 차수 블로커 · 3차부터 경고), 리뷰 전 검사(지시서의 검사: 줄), 착수 전 확인(코드 첫 수정 전 머리말), 오래 일하는 팀원 · 위임 알림(기본 60분), 레포 업데이트·죽은 참조 검사·핸드오프 알림 훅 · 텔레그램 알림(개인: 알림 수준 · 양방향 대화 · 자리 비움, 팀: 핸드오프·설정 변경·공지)",
   "requires": [],
   "vars": {
     "language.docs": {
@@ -15,7 +15,7 @@
     },
     "notify.level": {
       "default": "",
-      "desc": "개인 알림 수준 팀 기본값: all = 전체, decisions = 결과와 결정, progress = 진행 현황, off = 끄기 (비우면 notify.events 를 본다). 각자 aikit notify setup 으로 덮는다"
+      "desc": "개인 알림 수준 팀 기본값: all = 전체, decisions = 결과와 결정, progress = 진행 현황, off = 끄기 (비우면 notify.events 를 본다). 각자 aidure notify setup 으로 덮는다"
     },
     "notify.events": {
       "default": "",
@@ -27,7 +27,7 @@
     },
     "notify.teamChat": {
       "default": "",
-      "desc": "팀 공지용 텔레그램 그룹방 ID (비우면 팀 알림 꺼짐). aikit notify team chat <id>"
+      "desc": "팀 공지용 텔레그램 그룹방 ID (비우면 팀 알림 꺼짐). aidure notify team chat <id>"
     },
     "notify.team": {
       "default": "handoff,settings,announce",
@@ -47,11 +47,11 @@
     },
     "docs.traceIds": {
       "default": "",
-      "desc": "코드에 구현 표시(주석의 ID)가 있어야 하는 기획 ID 머리말 (쉼표로, 예: FN). aikit docs trace 가 코드에 없는 ID 와 기획에 정의 없는 ID 를 알린다. 비우면 screens.functionIds 를 쓴다"
+      "desc": "코드에 구현 표시(주석의 ID)가 있어야 하는 기획 ID 머리말 (쉼표로, 예: FN). aidure docs trace 가 코드에 없는 ID 와 기획에 정의 없는 ID 를 알린다. 비우면 screens.functionIds 를 쓴다"
     },
     "docs.maxKB": {
       "default": "60",
-      "desc": "기획 문서 한 개의 크기 상한(KB). aikit docs build · check 가 넘는 문서를 「문서 점검」 경고로 알린다 (「상태: 동결」 문서는 뺀다)"
+      "desc": "기획 문서 한 개의 크기 상한(KB). aidure docs build · check 가 넘는 문서를 「문서 점검」 경고로 알린다 (「상태: 동결」 문서는 뺀다)"
     },
     "docs.cellMax": {
       "default": "400",
@@ -79,7 +79,7 @@
       "name": "TELEGRAM_BOT_TOKEN",
       "scope": "global",
       "optional": true,
-      "purpose": "개인 알림 봇 (aikit notify)",
+      "purpose": "개인 알림 봇 (aidure notify)",
       "test": "telegram"
     },
     {

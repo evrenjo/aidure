@@ -528,7 +528,7 @@ function build(input, opts = {}) {
   // v = 나중에 읽는 파일의 버전 (맨 끝에서 채운다)
   pages['assets/nav.js'] = `window.DS_NAV = ${JSON.stringify({ key: cfg.title || opts.title || '문서', groups: navData(groups), pages: [...env0.spa].sort(), v: {} }).replace(/</g, '\\u003c')};\n`;
   // 본문 검색 색인: 절(## · ###)마다 글자. 처음 검색할 때만 읽는다
-  pages['assets/search-text.js'] = `/* 생성물: aikit docs build. 본문 검색 색인 */\nwindow.DS_TEXT = ${JSON.stringify(env0.texts).replace(/</g, '\\u003c')};\n`;
+  pages['assets/search-text.js'] = `/* 생성물: aidure docs build. 본문 검색 색인 */\nwindow.DS_TEXT = ${JSON.stringify(env0.texts).replace(/</g, '\\u003c')};\n`;
   pages['assets/search.js'] = searchJs({
     pages: flat.map((d) => ({ u: d.page, t: d.navTitle === '개요' ? d.title : d.title, g: d.groupName, h: (d.toc || []).map((x) => [x.sid, x.text]) })),
     ids: Object.keys(index.ids).map((k) => [k, index.ids[k][0], (flat.find((d) => d.page === index.ids[k][0].split('#')[0]) || {}).title || '']),
@@ -576,7 +576,7 @@ function collisionsOf(pages, mdPages) {
   return out.sort();
 }
 
-// ───────────────────────── 화면 틀 (aikit 가이드와 같은 틀: 상단 바 · 왼쪽 구분 메뉴 · 본문 머리 · 오른쪽 목차 · 이전/다음) ─────────────────────────
+// ───────────────────────── 화면 틀 (aidure 가이드와 같은 틀: 상단 바 · 왼쪽 구분 메뉴 · 본문 머리 · 오른쪽 목차 · 이전/다음) ─────────────────────────
 
 const ICONS = ['◆', '☰', '⬡', '▦', '▣', '◇', '▤', '●', '◈', '▧'];
 // 끝의 「폴더/**」 는 그 폴더 아래 전부 (README.md · 하위 폴더 포함)
@@ -749,9 +749,9 @@ function layout(a, env) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="aikit docs">
+<meta name="generator" content="aidure docs">
 <title>${esc(title)}</title>
-<script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<script>try { var t = localStorage.getItem('aidure-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <link rel="stylesheet" href="${r}assets/site.css">
 <link rel="icon" href="data:,">
 </head>
@@ -837,7 +837,7 @@ function splitDoc(k, text) {
 
 /** 검색 색인: 쪽 제목 · 소제목 · 정의 ID (file:// 로도 열리게 JS 로) */
 function searchJs(entries) {
-  return `/* 생성물: aikit docs build. 검색 색인 */\nwindow.DS_SEARCH = ${JSON.stringify(entries).replace(/</g, '\\u003c')};\n`;
+  return `/* 생성물: aidure docs build. 검색 색인 */\nwindow.DS_SEARCH = ${JSON.stringify(entries).replace(/</g, '\\u003c')};\n`;
 }
 
 /**

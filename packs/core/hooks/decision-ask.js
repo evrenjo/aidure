@@ -24,9 +24,9 @@ run(() => {
   let ws = {};
   try { ws = load(ROOT); } catch { /* workspace.json 없음 */ }
   const cfg = notify.personal(ROOT, ws);
-  if (process.env.AIKIT_CHANNEL === '1' && cfg.away && !(cfg.remote !== 'send' && notify.remoteControl(input.session_id))) return; // 리모트 컨트롤이면 앱에서 질문 창으로 답한다
+  if (process.env.AIDURE_CHANNEL === '1' && cfg.away && !(cfg.remote !== 'send' && notify.remoteControl(input.session_id))) return; // 리모트 컨트롤이면 앱에서 질문 창으로 답한다
   let level = 'block';
   try { const kit = require(path.join(ROOT, 'bin', 'kit.js')); level = (kit.resolveModels(ROOT, kit.loadWorkspace(ROOT)).enforce || {}).decisionAsk || level; } catch { /* 옛 워크스페이스 */ }
   if (level !== 'block') return;
-  block('결정 질문을 글로 끝냈습니다. 사용자가 고를 것이 있으면 같은 내용을 질문 창(AskUserQuestion)으로 다시 묻습니다: 선택지 2~4개, 권장안을 첫째에 (권장) 과 이유 한 줄, 여러 개면 하나씩. 결정 질문이 아니었거나(단순 목록 · 보고) 사용자가 이미 정한 것이면 그대로 멈춥니다. 수준 바꾸기: aikit team-mode enforce ask off|block');
+  block('결정 질문을 글로 끝냈습니다. 사용자가 고를 것이 있으면 같은 내용을 질문 창(AskUserQuestion)으로 다시 묻습니다: 선택지 2~4개, 권장안을 첫째에 (권장) 과 이유 한 줄, 여러 개면 하나씩. 결정 질문이 아니었거나(단순 목록 · 보고) 사용자가 이미 정한 것이면 그대로 멈춥니다. 수준 바꾸기: aidure team-mode enforce ask off|block');
 });

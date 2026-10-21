@@ -10,9 +10,9 @@
  *        → 작업 id 를 출력하고 바로 끝난다
  *   wait <id> [--timeout 초(기본 480)]   끝날 때까지(또는 timeout 까지) 기다린다. 끝났으면 결과(보고 · 바뀐 파일 · 종료 코드), 아니면 경과 시간 · 마지막 로그 한 줄
  *        결과 머리에: 실패 원인(사용량 한도 · 로그인 · 시간 초과 · 네트워크)과 대안 (사용량 한도면 상대 도구로 다시 시작하는 명령 한 줄) · 실행 중 대상이 바뀌었으면 「결과가 낡았을 수 있음」
- *        끝나면 개인 알림(aikit notify my on)도 간다 (작업 끝 알림 기준 시간을 넘겼을 때)
+ *        끝나면 개인 알림(aidure notify my on)도 간다 (작업 끝 알림 기준 시간을 넘겼을 때)
  *   status [<id>]                         지금 진행 현황 한 번: 경과 · 읽은 파일 · 실행한 명령 · 고친 파일 수 · 최근 동작 · 최근 말 (id 를 빼면 마지막 실행 중 작업)
- *   watch [<id>]                          상대 에이전트가 읽고 실행하는 것을 생기는 대로 한 줄씩 (사용자가 다른 터미널에서 aikit delegate watch). 끝나면 요약
+ *   watch [<id>]                          상대 에이전트가 읽고 실행하는 것을 생기는 대로 한 줄씩 (사용자가 다른 터미널에서 aidure delegate watch). 끝나면 요약
  *        진행은 두 도구의 진행 이벤트(codex exec --json · claude -p --output-format stream-json)를 events.jsonl 에 받아 lib/delegate-progress.js 가 읽는다
  *   list                                  이 워크스페이스의 위임 작업
  *   run …                                 (내부) 앞에서 실행 — start 가 부른다
@@ -219,7 +219,7 @@ function start() {
     console.log(`✖ ${bin} 가 이 PC 에 없어 위임하지 못했습니다. 리더에게 알린다 (같은 도구 모델로 대신하려면 리더가 역할을 직접 맡긴다)`);
     process.exit(3);
   }
-  // 동시 상한 — 역할 에이전트 상한(aikit ai show 의 limits.parallel)을 위임에도 적용한다
+  // 동시 상한 — 역할 에이전트 상한(aidure ai show 의 limits.parallel)을 위임에도 적용한다
   const busy = runningJobs().filter((x) => x !== id);
   let parallel = 2;
   try { const kit = require(path.join(ROOT, 'bin', 'kit.js')); parallel = kit.resolveModels(ROOT, kit.loadWorkspace(ROOT)).limits.parallel || parallel; } catch { /* 옛 워크스페이스 */ }
@@ -238,7 +238,7 @@ function start() {
   console.log(`작업 id: ${id}`);
   if (prior && prior.round >= 3) console.log(`⚠ 같은 범위 「${prior.scope}」 ${prior.round}차 리뷰입니다. 지적을 차수마다 땜질하지 말고, 원인 구조를 정리했는지 · 남은 지적을 한계로 문서화할지 사용자에게 묻습니다 (앞 차수 블로커 ${prior.blockers.length}개를 지시서에 붙였습니다)`);
   console.log(`다음: node packs/core/bin/delegate.js wait ${id}`);
-  console.log(`진행 보기 (사용자에게 알린다): aikit delegate watch ${id} (다른 터미널에서 상대 에이전트가 읽고 실행하는 것이 줄마다 보인다) · 한 번만 보기: aikit delegate status ${id}`);
+  console.log(`진행 보기 (사용자에게 알린다): aidure delegate watch ${id} (다른 터미널에서 상대 에이전트가 읽고 실행하는 것이 줄마다 보인다) · 한 번만 보기: aidure delegate status ${id}`);
 }
 
 /** 리뷰 확인을 켠 워크스페이스에서 reviewer 역할을 위임하면: 시작 때 상태 (끝나면 리뷰 기록이 된다. lib/review.js) */
@@ -285,16 +285,16 @@ async function run() {
 }
 
 /**
- * 위임 세션 환경. AIKIT_DELEGATED: 워크스페이스 훅이 아무것도 하지 않는다 (lib/hook.js).
+ * 위임 세션 환경. AIDURE_DELEGATED: 워크스페이스 훅이 아무것도 하지 않는다 (lib/hook.js).
  * 텔레그램 채널을 쓰는 세션에서 위임하면 그 상태 폴더를 물려받은 플러그인 서버가 리더 세션의 수신을 끊는다. 토큰을 비워 서버가 뜨지 않게 한다
- * 비밀값(팩이 선언한 이름 · aikit secret 목록 · 옛 위치 · 알려진 토큰 이름)도 넘기지 않는다. 위임받은 에이전트에게 필요하면 그 도구가 저장소에서 읽는다
+ * 비밀값(팩이 선언한 이름 · aidure secret 목록 · 옛 위치 · 알려진 토큰 이름)도 넘기지 않는다. 위임받은 에이전트에게 필요하면 그 도구가 저장소에서 읽는다
  */
 function delegateEnv() {
-  const env = { ...process.env, AIKIT_DELEGATED: '1', TELEGRAM_BOT_TOKEN: '' };
+  const env = { ...process.env, AIDURE_DELEGATED: '1', TELEGRAM_BOT_TOKEN: '' };
   require('../lib/secrets').scrubEnv(env, ROOT, ws.packs || [], [ws.vars && ws.vars.gitlab && ws.vars.gitlab.tokenEnv]);
   env.TELEGRAM_BOT_TOKEN = '';
   delete env.TELEGRAM_STATE_DIR;
-  delete env.AIKIT_CHANNEL;
+  delete env.AIDURE_CHANNEL;
   return env;
 }
 
@@ -350,7 +350,7 @@ function readEvents(id) {
   try { return P.parse(fs.readFileSync(path.join(JOBS, id, 'events.jsonl'), 'utf8')); } catch { return []; }
 }
 const metaOf = (id) => {
-  if (!id || !fs.existsSync(path.join(JOBS, id, 'meta.json'))) throw new Error(`작업 id 가 없습니다: ${id} (목록: aikit delegate list)`);
+  if (!id || !fs.existsSync(path.join(JOBS, id, 'meta.json'))) throw new Error(`작업 id 가 없습니다: ${id} (목록: aidure delegate list)`);
   return { ...JSON.parse(fs.readFileSync(path.join(JOBS, id, 'meta.json'), 'utf8')), root: ROOT };
 };
 const resultOf = (id) => { try { return JSON.parse(fs.readFileSync(path.join(JOBS, id, 'result.json'), 'utf8')); } catch { return null; } };
@@ -388,7 +388,7 @@ async function wait() {
   while (!fs.existsSync(path.join(JOBS, id, 'result.json'))) {
     if (Date.now() - t0 > limit) {
       const meta = metaOf(id);
-      console.log(`${P.render(P.summarize(readEvents(id), meta), meta)}\n다시: node packs/core/bin/delegate.js wait ${id} · 사용자 화면에서 보기: aikit delegate watch ${id}`);
+      console.log(`${P.render(P.summarize(readEvents(id), meta), meta)}\n다시: node packs/core/bin/delegate.js wait ${id} · 사용자 화면에서 보기: aidure delegate watch ${id}`);
       process.exit(2);
     }
     await new Promise((r) => setTimeout(r, 3000));

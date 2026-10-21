@@ -6,7 +6,7 @@ const path = require('path');
 const assert = require('assert');
 const { referenceStatus, describe } = require('./refs');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-refs-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-refs-'));
 const mk = (rel, body = 'x') => { const f = path.join(tmp, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, body); };
 mk('repos/plans/README.md', '# 템플릿');            // 기획: md/ 폴더 없음
 mk('repos/plans2/README.md'); mk('repos/plans2/md/.gitkeep'); // 기획: md/ 는 있는데 비어 있음

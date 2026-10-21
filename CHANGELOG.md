@@ -1,12 +1,12 @@
 # 변경 기록
 
-`aikit upgrade` 가 올린 버전 사이의 항목을 표로 보여 준다. 배포할 때 이번 버전 항목을 맨 위에 더한다 (`## 버전` 아래 `| 구분 | 내용 |` 표, 한 줄씩 짧게).
+`aidure upgrade` 가 올린 버전 사이의 항목을 표로 보여 준다. 배포할 때 이번 버전 항목을 맨 위에 더한다 (`## 버전` 아래 `| 구분 | 내용 |` 표, 한 줄씩 짧게).
 
 ## 0.69.2
 
 | 구분 | 내용 |
 |---|---|
-| 개선 | aikit 스킬: "워크스페이스 문서 사이트 만들어줘" 로 `aikit docs build .` (여러 repo 산출물을 한 사이트로) |
+| 개선 | aidure 스킬: "워크스페이스 문서 사이트 만들어줘" 로 `aidure docs build .` (여러 repo 산출물을 한 사이트로) |
 | 문서 | README 구조 그림을 실제 폴더대로 (workspace.json · packs · docs-site · repos 의 clone · 링크 · 새 repo), 문서 사이트를 만드는 말 표 |
 
 ## 0.69.1
@@ -14,7 +14,7 @@
 | 구분 | 내용 |
 |---|---|
 | 수정 | init 에서 고른 AI 연결 방식(게이트웨이)이 프로필 단계에서 지워지던 것 |
-| 개선 | `aikit ai gateway --url` 만 주면 이 PC 설정에서 같은 주소의 키 환경변수를 찾아 씀 |
+| 개선 | `aidure ai gateway --url` 만 주면 이 PC 설정에서 같은 주소의 키 환경변수를 찾아 씀 |
 | 개선 | 연결 방식을 안 정했는데 이 PC 가 게이트웨이로 이어져 있으면 `ai show` · `doctor` 가 알림 |
 | 개선 | init 이어 만들기: 가져온 repo 를 「가져옴 n개」 로 나눠 보이고 「확정 (가져온 그대로)」 기본, 목록 사이 중복 막기 |
 | 개선 | init: clone 하지 못한 repo 를 생성 직후 보이고 인증을 물을 수 있는 git clone 으로 다시 받기, 끝 화면에 repo 상태 표 |
@@ -24,9 +24,9 @@
 
 | 구분 | 내용 |
 |---|---|
-| 위임 진행 보기 | 새 명령 `aikit delegate watch · status · list`: Claude Code ↔ Codex 에 맡긴 리뷰 · 작업이 읽은 파일 · 실행한 명령 · 중간에 한 말을 줄마다. 기다리는 동안에도 진행 현황 표시 |
+| 위임 진행 보기 | 새 명령 `aidure delegate watch · status · list`: Claude Code ↔ Codex 에 맡긴 리뷰 · 작업이 읽은 파일 · 실행한 명령 · 중간에 한 말을 줄마다. 기다리는 동안에도 진행 현황 표시 |
 | 팀 모드 | 팀원 창에 승인 질문이 떠 멈추면 리더(다음 요청 · 턴 끝)와 텔레그램에 알림. 시작 줄에 「팀원 창에서 승인해야 시작」 안내 |
-| 권한 | 읽기 · 조회 명령(git log · diff · grep · `aikit docs show` 등)을 프로젝트 설정에 미리 허용 (팀원이 승인 대기로 멈추지 않게) |
+| 권한 | 읽기 · 조회 명령(git log · diff · grep · `aidure docs show` 등)을 프로젝트 설정에 미리 허용 (팀원이 승인 대기로 멈추지 않게) |
 | 문서 사이트 | 사이드바 머리 줄(🏠 홈 + 모두 접기 ↔ 펴기 토글)을 문서 · ERD 공통으로 |
 | 문서 사이트 | 짧은 쪽으로 옮기거나 본문이 줄면 아래가 비고 사이드바가 끊기던 문제 · 검색칸에 칠 때 화면이 올라가던 문제 고침 |
 | ERD | 두 손가락 확대 · 표 위에서 끌기 (iPad), 좁은 화면 조작 막대 「보기 ▾」, 머리 줄 배치, 미니맵 보이는 곳 표시 |
@@ -41,7 +41,7 @@
 | 펜 필기 | 필압 · 속도에 따라 굵기가 바뀌는 선, 켠 채 다른 쪽으로 옮겨도 켜져 있음 |
 | ERD · 화면설계서 | 뷰어를 같은 앱 틀로 다시 만듦. 화면설계서 ☰(미리보기 목록 접기) 동작 |
 | 문서 사이트 | 다시 만들면 옛 메뉴 파일을 쓰지 않음(파일 버전). 옮긴 문서의 옛 주소는 새 주소로 넘김 |
-| 문서 사이트 | 메뉴 접기 화살표를 크게 · 새 명령 `aikit docs serve` (이 PC 에서 웹 주소로 보기) |
+| 문서 사이트 | 메뉴 접기 화살표를 크게 · 새 명령 `aidure docs serve` (이 PC 에서 웹 주소로 보기) |
 | 기획 repo | 다른 워크스페이스에서 링크로 빌린 repo 는 커밋 훅을 덮지 않음 (빌려 쓰는 쪽 sync 로 원래 쪽 커밋이 막히던 문제) |
 | 화면 | init 체크박스 · 질문 번호 · 위임 검사 줄 · 개인 봇 안내 문구 다듬음 |
 
@@ -52,7 +52,7 @@
 | 보안: 문서 사이트 | 파일 이름이 `javascript:` 처럼 보여도 상대 주소로 링크. 「원본」 버튼은 http(s) 만. 스크립트가 든 SVG 는 넣지 않고 알림 |
 | 문서 사이트 | 줄 앞의 `<!-- … -->` 주석은 보이지 않음 (GitHub 와 같게) |
 | 라이선스 | MIT `LICENSE` · 외부 라이브러리 고지 `THIRD_PARTY_NOTICES.md` |
-| 킷 개발 | 공개판 내보내기 `npm run export:public`, 금지 낱말 목록은 repo 밖(`AIKIT_BANNED` · `~/.config/aikit/banned.txt`) |
+| 킷 개발 | 공개판 내보내기 `npm run export:public`, 금지 낱말 목록은 repo 밖(`AIDURE_BANNED` · `~/.config/aidure/banned.txt`) |
 
 ## 0.66.0
 
@@ -60,7 +60,7 @@
 |---|---|
 | 보안: 게이트웨이 키 | 팀 설정(workspace.json)에서 온 게이트웨이는 https(또는 이 PC 안 주소)만, 그리고 이 PC 에서 처음 한 번 승인한 뒤에만 키를 보냄 |
 | 보안: GitLab 토큰 | `gitlab.apiBase` 가 `gitlab.host` 와 같은 호스트의 https 일 때만 토큰을 보냄 (MR · 파이프라인 · secret test · doctor) |
-| 보안: npm 토큰 확인 | `aikit secret test` 가 워크스페이스의 `.npmrc` 가 아닌 내 PC 레지스트리, https 로만 확인 |
+| 보안: npm 토큰 확인 | `aidure secret test` 가 워크스페이스의 `.npmrc` 가 아닌 내 PC 레지스트리, https 로만 확인 |
 | 보안: Windows secret exec | .cmd 명령에 넘기는 인자를 따옴표로 묶고 `"` `%` `!` 가 든 인자는 거절 (명령 주입 막기) |
 | 보안: 문서 사이트 검색 | 검색 결과 링크의 따옴표를 바꿔 넣음 (파일 이름으로 스크립트가 끼어들지 않게) |
 | 보안: 상태 폴더 | 임시 상태 폴더를 사용자마다 따로 두고 권한 700 |
@@ -112,7 +112,7 @@
 
 | 구분 | 내용 |
 |---|---|
-| 전역 aikit 명령 | nvm 등으로 기본 Node 를 바꿔도 `aikit` 이 그대로 실행. `~/.local/bin/aikit` (Windows `%LOCALAPPDATA%\aikit\bin\aikit.cmd`) 를 두고 PATH 에 한 번 넣는다. 끄기 `AIKIT_NO_GLOBAL_SHIM=1` |
+| 전역 aidure 명령 | nvm 등으로 기본 Node 를 바꿔도 `aidure` 이 그대로 실행. `~/.local/bin/aidure` (Windows `%LOCALAPPDATA%\aidure\bin\aidure.cmd`) 를 두고 PATH 에 한 번 넣는다. 끄기 `AIDURE_NO_GLOBAL_SHIM=1` |
 | 문서 사이트 펜 필기 | 펜 · 형광펜 · 지우개, 색 5 · 크기 4단계, 되돌리기, 쪽마다 이 기기에 저장, PNG 받기, 인쇄 포함. 끄기 `docs-site.json` `"ink": false` |
 | 머리 줄 아이콘 | 펜 필기 · 인쇄 · 테마를 같은 크기 선 아이콘으로 |
 | 메뉴 접기 | 모든 묶음을 접고 펴고, 「모두 펴기 · 접기」 가 전체에 듣는다 |
@@ -120,7 +120,7 @@
 | 전체 인쇄 | `"printAll": { "autoPrint": false }` 면 인쇄 창 없이 안내만 |
 | 로고 | 사이트 이름 첫 낱말이 2~3자 영문 약어면 그대로 대문자 (「XD 분석」 → XD) |
 | 이 repo 덧붙임 | 기획 repo 의 `docs-site.extra.css` · `.js` 를 사이트에 붙이고, check · pre-commit 도 붙인 결과로 비교 |
-| 근거 분리 | `aikit docs refs-quote <파일…>`: 본문 괄호 속 파일:줄을 아래 「> 근거:」 인용구로 |
+| 근거 분리 | `aidure docs refs-quote <파일…>`: 본문 괄호 속 파일:줄을 아래 「> 근거:」 인용구로 |
 
 ## 0.64.0
 
@@ -138,14 +138,14 @@
 
 | 구분 | 내용 |
 |---|---|
-| 이슈형 진행 방식 | 운영·고도화용 `aikit approach issue`: 단계 대신 이슈 보드 (접수 · 분석 · 수정 · 검증 · 운영 반영 · 보류, `상태:` 줄로 변경) |
+| 이슈형 진행 방식 | 운영·고도화용 `aidure approach issue`: 단계 대신 이슈 보드 (접수 · 분석 · 수정 · 검증 · 운영 반영 · 보류, `상태:` 줄로 변경) |
 | 멈춘 이슈 | 갱신 뒤 14일 지나면 ⚠ (`멈춤 기준: N일`), 핸드오프 때 이슈 줄 갱신을 물음 |
-| 주간 보고 | `aikit plan --report [시작 [끝]]`: 운영 반영 · 진행 중 · 새 접수 · 보류 · 멈춘 이슈 |
+| 주간 보고 | `aidure plan --report [시작 [끝]]`: 운영 반영 · 진행 중 · 새 접수 · 보류 · 멈춘 이슈 |
 | init 진행 방식 | 운영·고도화를 고르면 진행 방식(이슈형 · 스프린트 · 전체)을 물음 |
 | init 이어 만들기 | 분석·설계 워크스페이스를 고르면 기획 · 이슈 repo 를 채움 |
-| `aikit type` | 유형 바꾸기: 현행 → 개발 repo 전환, 팩 교체, 새 로드맵 (지난 로드맵은 아래 절에 보관) |
+| `aidure type` | 유형 바꾸기: 현행 → 개발 repo 전환, 팩 교체, 새 로드맵 (지난 로드맵은 아래 절에 보관) |
 | 고도화 단계 | 전체 = 요구사항 → 설계 → 구현 → 테스트 → 오픈. 옛 기본 단계(접수 → … → 배포)는 그대로 둠 |
-| 기존 운영·고도화 | upgrade 때 `aikit approach issue` 안내 한 줄 |
+| 기존 운영·고도화 | upgrade 때 `aidure approach issue` 안내 한 줄 |
 
 ## 0.62.3
 
@@ -159,7 +159,7 @@
 
 | 구분 | 내용 |
 |---|---|
-| repo 입력 | init 의 repo 질문 · `aikit repo add` 화면에서 방식부터 고름: clone · 기존 로컬 폴더 · 새로 만들기 · 없음 |
+| repo 입력 | init 의 repo 질문 · `aidure repo add` 화면에서 방식부터 고름: clone · 기존 로컬 폴더 · 새로 만들기 · 없음 |
 | 로컬 repo | 원격 없이 로컬에서만 커밋하는 repo 는 기존 로컬 폴더로 (`repos/<이름>` 링크, `~` · 공백 경로 가능) |
 | init 기획 · 이슈 | 새로 만들기 (git init) 가능 |
 
@@ -188,7 +188,7 @@
 | 구분 | 내용 |
 |---|---|
 | repo 그룹 폴더 | `repos[].group` 이 있으면 `repos/<그룹>/<이름>` 에 받음 (한 단계, 이름은 그룹이 달라도 하나만). 없으면 그대로 |
-| 명령 | `aikit repo add … --group <그룹>` (이미 그룹을 쓰면 화면에서 고름) · `aikit repo move <이름> --group <그룹>` · `--no-group` |
+| 명령 | `aidure repo add … --group <그룹>` (이미 그룹을 쓰면 화면에서 고름) · `aidure repo move <이름> --group <그룹>` · `--no-group` |
 | AGENTS.md | 그룹이 있으면 repo 표에 그룹 칸 · 그룹 순서로 묶음 |
 | 점검 | doctor 가 「그룹 폴더와 실제 위치가 다름」 을 알림 · 문서 사이트(루트) · check-refs 가 그룹 repo 를 앎 |
 
@@ -216,8 +216,8 @@
 
 | 구분 | 내용 |
 |---|---|
-| 출력 폴더 | 문서 사이트를 `html/` 대신 `docs-site/` 에 만든다. 옛 `html/` 은 처음 `aikit docs build` 때 옮긴다 (git mv · 킷이 만든 CI 경로 · .gitignore 도) |
-| Pages 선택 | `aikit docs pages on \| off [repo]` 로 repo 마다 켜고 끈다 (인자 없이 = 상태). on = 원격에 맞는 CI 파일만 두고 `docs-site/` 커밋, off = `.gitignore` 에 `/docs-site/` |
+| 출력 폴더 | 문서 사이트를 `html/` 대신 `docs-site/` 에 만든다. 옛 `html/` 은 처음 `aidure docs build` 때 옮긴다 (git mv · 킷이 만든 CI 경로 · .gitignore 도) |
+| Pages 선택 | `aidure docs pages on \| off [repo]` 로 repo 마다 켜고 끈다 (인자 없이 = 상태). on = 원격에 맞는 CI 파일만 두고 `docs-site/` 커밋, off = `.gitignore` 에 `/docs-site/` |
 | init | 기획 repo 를 넣으면 「기획 문서 사이트를 Pages 로 올릴까요?」 를 묻는다 (기본 아니오) |
 | 모바일 서랍 | 메뉴를 연 동안 본문 스크롤을 잠그고 머리 띠를 맨 위에 고정한다 |
 
@@ -226,14 +226,14 @@
 | 구분 | 내용 |
 |---|---|
 | 모바일 메뉴 | 문서 사이트 · 현황판 · 킷 가이드가 좁은 화면(760px 이하)에서 메뉴를 ☰ 서랍으로 숨기고 본문을 바로 보인다. 링크 · 바깥 · Esc 로 닫힘 |
-| 모바일 검색 | 검색창이 서랍 맨 위에 고정된다 (넓은 화면은 머리 띠 그대로). 프로젝트 사이트는 `aikit docs build` 로 다시 만들면 적용 |
+| 모바일 검색 | 검색창이 서랍 맨 위에 고정된다 (넓은 화면은 머리 띠 그대로). 프로젝트 사이트는 `aidure docs build` 로 다시 만들면 적용 |
 
 ## 0.58.1
 
 | 구분 | 내용 |
 |---|---|
 | Description | 화면설계서 설명은 마커마다 결론 한 줄(60자 안). 날짜 · 결정 번호 · 바뀐 경위 · 세부 조건은 근거 문서에 두고 근거 ID 로 잇는다 (screens 스킬 「Description 쓰는 법」 · 「이미 쓴 설계서 다듬기」) |
-| 검사 | `aikit screens check` 가 60자 넘음 · 날짜 · 결정 경위가 든 설명 줄을 장 · 줄 번호와 함께 ⚠ 로 알린다 |
+| 검사 | `aidure screens check` 가 60자 넘음 · 날짜 · 결정 경위가 든 설명 줄을 장 · 줄 번호와 함께 ⚠ 로 알린다 |
 
 ## 0.58.0
 
@@ -248,7 +248,7 @@
 
 | 구분 | 내용 |
 |---|---|
-| 팀원 막기 | 채널 세션의 PATH 앞에 `bun` 대리 실행을 두어 `--channels` 로 시작한 세션만 텔레그램 서버를 띄운다. 팀원 · 위임 · 채널 아닌 세션이 리더 수신을 끊지 않는다 (`aikit start -c` 로 다시 시작해야 켜짐) |
+| 팀원 막기 | 채널 세션의 PATH 앞에 `bun` 대리 실행을 두어 `--channels` 로 시작한 세션만 텔레그램 서버를 띄운다. 팀원 · 위임 · 채널 아닌 세션이 리더 수신을 끊지 않는다 (`aidure start -c` 로 다시 시작해야 켜짐) |
 | 끊김 알림 | 마지막 띄움 · 막음 기록과 수신을 가져간 쪽(팀원 이름 · pid), 바로 할 일 한 줄을 붙인다 |
 
 ## 0.57.1
@@ -263,19 +263,19 @@
 | 구분 | 내용 |
 |---|---|
 | 리모트 컨트롤 | Claude 앱 연결 중에도 작업 끝은 텔레그램으로 「모든 작업 끝」 한 줄 (기본). 결정 · 입력 대기는 앱이 알린다 |
-| 명령 | `aikit notify my remote done\|quiet\|send`: 작업 끝만(기본) · 쉼 · 모두 |
+| 명령 | `aidure notify my remote done\|quiet\|send`: 작업 끝만(기본) · 쉼 · 모두 |
 
 ## 0.56.1
 
 | 구분 | 내용 |
 |---|---|
-| 테스트 | 채널 세션(`aikit start`) · 리모트 컨트롤 세션 안에서 돌려도 알림 테스트가 같게 (`AIKIT_CHANNEL` 등 환경 변수를 지우고 시작) |
+| 테스트 | 채널 세션(`aidure start`) · 리모트 컨트롤 세션 안에서 돌려도 알림 테스트가 같게 (`AIDURE_CHANNEL` 등 환경 변수를 지우고 시작) |
 
 ## 0.56.0
 
 | 구분 | 내용 |
 |---|---|
-| 리모트 컨트롤 | 세션이 리모트 컨트롤로 Claude 앱에 이어져 있으면 텔레그램을 보내지 않고 결정은 질문 창으로. `aikit notify my remote quiet\|send` (기본 쉼) |
+| 리모트 컨트롤 | 세션이 리모트 컨트롤로 Claude 앱에 이어져 있으면 텔레그램을 보내지 않고 결정은 질문 창으로. `aidure notify my remote quiet\|send` (기본 쉼) |
 | 자리에 있을 때 | 결정 대기는 「선택할 것이 있습니다」 한 줄, 작업 끝은 「모든 작업 끝」 한 줄 (일하는 팀원 · 백그라운드 작업이 남았으면 쉼) |
 | 자리 비움 | 지금처럼 설명 · 보기 · 답 앞부분까지. 에이전트 진행 · 진행 현황도 자리 비움(또는 전체 수준)일 때만 |
 
@@ -285,7 +285,7 @@
 |---|---|
 | 원본 링크 | 워크스페이스 사이트의 하위 repo 문서는 그 repo 원격 + 기본 브랜치 + repo 안 경로로. 원격이 없으면 버튼 숨김 |
 | 포함 범위 | `docs-site.json` 의 `include` · `exclude`, 워크스페이스 루트는 repo 마다 `copy` · `link` · `off` (legacy 는 기본 제외) |
-| 크기 | `aikit docs build` 가 `html/` 파일 수 · 크기 · 묶음별 내역을 한 줄로, 20MB 넘으면 ⚠ |
+| 크기 | `aidure docs build` 가 `html/` 파일 수 · 크기 · 묶음별 내역을 한 줄로, 20MB 넘으면 ⚠ |
 | upgrade | 아직 커밋한 적 없는 `html/` 은 `git add` 안내에서 빼고 따로 알림 |
 
 ## 0.54.0
@@ -302,7 +302,7 @@
 | 구분 | 내용 |
 |---|---|
 | mermaid 그림 | 문서 사이트가 ```mermaid 블록을 그림으로: 라이트/다크 다시 그리기 · 확대 · 새 창 · 오류면 원문과 오류 문구. 11.17.2 를 넣어 오프라인 · file:// 에서도 |
-| 검사 | `aikit docs build` · `check` 가 mermaid 문법 오류 ✖ (check · pre-commit 실패), ASCII 그림 ⚠ |
+| 검사 | `aidure docs build` · `check` 가 mermaid 문법 오류 ✖ (check · pre-commit 실패), ASCII 그림 ⚠ |
 | 구성도 | architecture 스킬: 서비스 · DB 스키마 · 미들웨어 · 외부 · 서버 사양을 단계별 mermaid 그림과 표로 (견본 `packs/core/assets/architecture/template.md`) |
 | 읽기 | 날짜 항목이 쌓인 긴 표 칸 접기(나머지 n건 보기) · ID 링크 배지 · 표 칸 너비 · 줄 간격 |
 
@@ -310,7 +310,7 @@
 
 | 구분 | 내용 |
 |---|---|
-| 화면 | `aikit start --pixel-agents`: 설치된 Pixel Agents(`npm i -g pixel-agents`)로 에이전트 · 팀원을 캐릭터 화면으로 띄움. 세션이 끝나면 함께 끔 · 없으면 안내만 |
+| 화면 | `aidure start --pixel-agents`: 설치된 Pixel Agents(`npm i -g pixel-agents`)로 에이전트 · 팀원을 캐릭터 화면으로 띄움. 세션이 끝나면 함께 끔 · 없으면 안내만 |
 
 ## 0.52.0
 
@@ -320,7 +320,7 @@
 | ERD 주제 영역 | 설명 줄 「영역: 주문」 → 상단 「영역」 선택, 영역 밖 관계는 「→ 영역 밖: …」, 사이드바 스키마 → 영역 → 표 |
 | 검사 | 영역 꼬리표가 일부 테이블에만 있으면 ⚠ |
 | Export | PDF · 영역마다 한 쪽 (A4 가로) |
-| 적용 | 정의서에 꼬리표를 달고 `aikit docs build` |
+| 적용 | 정의서에 꼬리표를 달고 `aidure docs build` |
 
 ## 0.51.2
 
@@ -328,7 +328,7 @@
 |---|---|
 | ERD 넓게 배치 | 많이 참조되는 테이블이 있어도 세로로 길어지지 않게 층마다 테이블 수에 상한 (124표 견본: 가로:세로 0.43 → 1.45) |
 | 스키마 묶기 | 스키마마다 따로 배치한 상자를 나란히 놓는다. 스키마 사이 관계선은 옅게, 선택하면 강조 |
-| 적용 | 기획 repo 에서 `aikit docs build` 로 html 을 다시 만든다 |
+| 적용 | 기획 repo 에서 `aidure docs build` 로 html 을 다시 만든다 |
 
 ## 0.51.1
 
@@ -336,29 +336,29 @@
 |---|---|
 | ERD 미니맵 | 오른쪽 아래에 전체 배치(스키마 색)와 지금 보이는 영역. 누르거나 끌면 이동, 접고 펴기 기억, 인쇄 · SVG 에는 없음 |
 | ERD 스키마 접기 | 사이드바 스키마 제목 줄로 표 목록 접기 · 펴기, 모두 접기 · 펴기, 검색에 맞으면 펼침, 브라우저에 기억. ⌖ 는 스키마 묶기를 켜고 그 스키마에 맞춤 |
-| 적용 | 기획 repo 에서 `aikit docs build` 로 html 을 다시 만든다 |
+| 적용 | 기획 repo 에서 `aidure docs build` 로 html 을 다시 만든다 |
 
 ## 0.51.0
 
 | 구분 | 내용 |
 |---|---|
-| PC 앞이면 생략 | 2분 안에 키보드 · 마우스를 만졌으면 요청 결과 · 위임 끝 · 에이전트 진행 · 음성 알림을 보내지 않는다 (질문 · 권한 대기는 보냄, macOS). `aikit notify my desk <초>\|off` |
-| 음성 | 기본 범위를 결정 질문만으로. 끝남 보고도 읽게 하려면 `aikit notify my voice scope both` |
+| PC 앞이면 생략 | 2분 안에 키보드 · 마우스를 만졌으면 요청 결과 · 위임 끝 · 에이전트 진행 · 음성 알림을 보내지 않는다 (질문 · 권한 대기는 보냄, macOS). `aidure notify my desk <초>\|off` |
+| 음성 | 기본 범위를 결정 질문만으로. 끝남 보고도 읽게 하려면 `aidure notify my voice scope both` |
 | 위임 끝 알림 | 진행 현황 · 전체 수준에서만 보낸다 |
 
 ## 0.50.0
 
 | 구분 | 내용 |
 |---|---|
-| 착수 전 확인 | 요청마다 코드 repo 첫 수정 전에 답변에 `착수 전 확인:` 머리말이 없으면 알린다 (기본: 요청마다 한 번). 막기면 보일 때까지 수정을 막는다. 문서 · 스타일 두 줄 이하와 repo 밖은 제외. `aikit team-mode enforce plan off\|warn\|block [--team]` |
+| 착수 전 확인 | 요청마다 코드 repo 첫 수정 전에 답변에 `착수 전 확인:` 머리말이 없으면 알린다 (기본: 요청마다 한 번). 막기면 보일 때까지 수정을 막는다. 문서 · 스타일 두 줄 이하와 repo 밖은 제외. `aidure team-mode enforce plan off\|warn\|block [--team]` |
 | 리뷰 위임 | 결과의 `[반복]` 은 2차부터, 블로커 줄에 붙은 것만 센다 (인용한 문구는 세지 않음) |
 
 ## 0.49.0
 
 | 구분 | 내용 |
 |---|---|
-| 오래 일하는 팀원 · 위임 | 일하는 팀원이나 위임 작업이 상한(기본 60분)을 넘으면 요청 때 한 줄, 멈출 때 한 번 막고 계속할지 묻게 한다. 같은 대상은 상한만큼 지나 다시. `aikit team-mode enforce run off\|warn\|block [--after 분] [--team]` |
-| 리뷰 전 검사 | 리뷰 지시서에 `검사: <명령> 통과` 줄이 없으면 위임(`delegate.js`)과 리뷰 에이전트를 막는다. 검사가 없으면 `검사: 없음 (사유)`. `aikit team-mode enforce check off\|warn\|block [--team]` |
+| 오래 일하는 팀원 · 위임 | 일하는 팀원이나 위임 작업이 상한(기본 60분)을 넘으면 요청 때 한 줄, 멈출 때 한 번 막고 계속할지 묻게 한다. 같은 대상은 상한만큼 지나 다시. `aidure team-mode enforce run off\|warn\|block [--after 분] [--team]` |
+| 리뷰 전 검사 | 리뷰 지시서에 `검사: <명령> 통과` 줄이 없으면 위임(`delegate.js`)과 리뷰 에이전트를 막는다. 검사가 없으면 `검사: 없음 (사유)`. `aidure team-mode enforce check off\|warn\|block [--team]` |
 | 리뷰어 | 회귀는 머리로 판정하지 않는다. 검사가 덮지 않는 갈래는 "검사로 확인 필요" |
 | team 스킬 | 순서: 구현 → 해당 검사 → 리뷰 → 수정 → 해당 검사 |
 
@@ -366,14 +366,14 @@
 
 | 구분 | 내용 |
 |---|---|
-| 답변 시각 | Claude Code 답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss). 기본 켜짐, `aikit timestamp on\|off\|team [--team]` |
+| 답변 시각 | Claude Code 답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss). 기본 켜짐, `aidure timestamp on\|off\|team [--team]` |
 | 리뷰 위임 | 블로커 기준을 지시서에 늘 붙인다 (재현 경로 없는 경쟁 조건 · 범위 밖 구조 개선은 권장 이하). `delegate.js start --scope <라벨>` 로 같은 범위 차수를 세고, 앞 차수 블로커를 붙이며 같은 영역은 `[반복]`, 3차부터 경고 |
 | 위임 결과 | 머리에 실패 원인(사용량 한도 429 · 로그인 · 시간 초과 · 네트워크)과 대안, 실행 중 대상이 바뀌면 "결과가 낡았을 수 있음" |
 | 위임 중 멈추기 | 위임이 도는 채 멈춰도 답변에 "지금 도는 것:" 상태 줄이 있으면 막지 않는다 (`wait` 는 백그라운드로) |
 | 시간 예산 | `node packs/core/bin/budget.js start "<작업>" 30m` · `extend` · `done`. 요청마다 경과 한 줄, 1.5배를 넘으면 멈출 때 한 번 막고 계속할지 묻게 한다 |
 | 착수 전 확인 | 상시 룰: 세션 중간의 새 기능 · 공유 상태 변경도 `go` 스킬 3단계 먼저. 계획표에 공유 상태 · 구조 결정, 시간 예산 칸 |
 | 결정 질문 | 미리보기는 모든 보기에, 모양 비교가 아니면 쓰지 않는다 |
-| repo 빼기 | `aikit repo remove <이름> [--delete]`: workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서 알림. 폴더는 `--delete` 때만 |
+| repo 빼기 | `aidure repo remove <이름> [--delete]`: workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서 알림. 폴더는 `--delete` 때만 |
 | 프로토타입 | screens 팩 룰: 프로토타입은 화면 · 흐름까지, 서버 몫은 예시와 "서버 책임" 표시 |
 | 그 밖 | 팀원의 늦은 알림은 "앞 지시 기준 보고" 한 줄로. 이슈 repo 가 없으면 documenter 가 둘 곳을 묻는다 |
 
@@ -381,9 +381,9 @@
 
 | 구분 | 내용 |
 |---|---|
-| 결정 질문 점검 | Claude Code 에서 번호 선택지 2개 이상인 결정 질문을 질문 창 없이 글로 끝내면 훅이 한 번 막고 질문 창으로 다시 묻게 한다. `aikit team-mode enforce ask off\|block [--team]` (기본 막기). 자리 비움 세션은 제외 |
+| 결정 질문 점검 | Claude Code 에서 번호 선택지 2개 이상인 결정 질문을 질문 창 없이 글로 끝내면 훅이 한 번 막고 질문 창으로 다시 묻게 한다. `aidure team-mode enforce ask off\|block [--team]` (기본 막기). 자리 비움 세션은 제외 |
 | "진행해" 범위 | 상시 룰: 답하지 않은 질문이 남은 채 온 "진행해" 는 그 항목을 뺀 승인이다. 남은 항목은 다시 묻는다 |
-| aikit import | `aikit import <폴더> [--json]`: 기존 AI 작업 폴더 훑기 (읽기만). 지침 · 룰 · 스킬 · 메모 · 핸드오프 · 스크립트 분류, 큰 폴더, 문서 속 절대경로, 비밀값 의심 줄(값은 찍지 않는다) |
+| aidure import | `aidure import <폴더> [--json]`: 기존 AI 작업 폴더 훑기 (읽기만). 지침 · 룰 · 스킬 · 메모 · 핸드오프 · 스크립트 분류, 큰 폴더, 문서 속 절대경로, 비밀값 의심 줄(값은 찍지 않는다) |
 | import 스킬 | "기존 폴더 가져와": 훑기 → 옮길 계획 표 → 승인 → 반영 → 점검. 킷과 겹치는 룰은 버리고 프로젝트 사실만 `packs/project/` 로 |
 | 스크립트 위치 | 필요할 때 읽는 룰: 프로젝트 공용 도구는 `packs/project/bin/`, 다시 만들 수 있는 큰 산출물은 gitignore 하고 각자 만든다 |
 | 프로젝트 룰 템플릿 | 새 워크스페이스의 `packs/project/rules/00-project.md` 에 채울 항목 안내 (기존 워크스페이스는 그대로) |
@@ -394,7 +394,7 @@
 | 구분 | 내용 |
 |---|---|
 | 상태 줄 점검 | Claude Code 에서 팀원(일하는 중 · 대기)이나 리더의 백그라운드 작업이 남은 채 멈추는데 답변에 `지금 도는 것: … · 예상 종료: … · 사용자가 할 일: …` 줄이 없으면 훅이 한 번 막는다. 팀 모드가 아니어도 백그라운드 명령이 있으면 본다 |
-| 설정 | `aikit team-mode enforce status off\|block [--team]` (기본 막기). `workspace.json` 의 `agents.enforce.waitStatus` |
+| 설정 | `aidure team-mode enforce status off\|block [--team]` (기본 막기). `workspace.json` 의 `agents.enforce.waitStatus` |
 | 끝남 알림 | 남은 것이 있으면 텔레그램 끝남 알림에 일하는 팀원 · 대기 팀원 · 리더의 백그라운드 작업 수를 한 줄 덧붙인다 |
 | 종료 규칙 | 상시 룰 · team 스킬: 다시 맡길 일이 정해져 있지 않은 팀원은 종료한다. 대기 중인 팀원은 상태 줄에 일하는 것으로 적지 않는다 |
 
@@ -404,18 +404,18 @@
 |---|---|
 | 대기 팀원 점검 | 팀 모드(Claude Code agent teams)에서 일을 마친 팀원이 대기로 10분 넘게 남으면, 리더가 멈출 때 훅이 한 번 막고 이름 · 대기 시간을 알린다. 요청 시작 때도 한 줄. 같은 팀원은 30분 뒤 다시 |
 | 리더가 할 일 | 종료하거나, 남겨 둘 것이면 보고에 "대기 중: <역할> · 사유" 를 적는다. 훅은 팀원을 종료하지 않는다 |
-| 설정 | `aikit team-mode enforce idle off\|warn\|block [--after <분>] [--remind <분>] [--team]` (기본 막기. 시간은 팀 값). `workspace.json` 의 `agents.enforce` (`idleTeammates` · `idleMinutes` · `idleRemindMinutes`) |
+| 설정 | `aidure team-mode enforce idle off\|warn\|block [--after <분>] [--remind <분>] [--team]` (기본 막기. 시간은 팀 값). `workspace.json` 의 `agents.enforce` (`idleTeammates` · `idleMinutes` · `idleRemindMinutes`) |
 | 종료 절차 | 정식 종료 요청 뒤 몇 분 지나도 팀원 목록에 남아 있으면 `TaskStop`(`task_id` 에 팀원 이름)으로 멈춘다 (등록까지 빠진다). team 스킬 · 창 강제 종료를 막는 훅의 안내 문구 |
 
 ## 0.44.0
 
 | 구분 | 내용 |
 |---|---|
-| 팀원 이름 검사 | 팀 모드(Claude Code agent teams)인데 역할 에이전트를 이름(`name`) 없이 띄우면 훅이 막는다 (이름이 없으면 서브에이전트로 돈다). `aikit team-mode enforce name off\|warn\|block` (기본 막기) |
+| 팀원 이름 검사 | 팀 모드(Claude Code agent teams)인데 역할 에이전트를 이름(`name`) 없이 띄우면 훅이 막는다 (이름이 없으면 서브에이전트로 돈다). `aidure team-mode enforce name off\|warn\|block` (기본 막기) |
 | 요약 뒤 재주입 | 「역할 에이전트 실행 방식」 줄을 세션 시작뿐 아니라 이어서 시작 · 비우기 · 대화 요약 뒤에도 다시 넣는다 |
-| 구성표 알림 | 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄 (막지 않는다). `aikit team-mode enforce roster off\|warn` (기본 알림) |
-| 리뷰 확인 | 기본 꺼짐. 켜면 에이전트의 `git commit` · `git push` 때 리뷰 안 된 줄 수가 기준을 넘으면 알리거나 막는다. `aikit team-mode enforce review warn\|block [--repos a,b\|*] [--min-lines N] [--paths p1,p2] --team` |
-| aikit review | `status`(대상 repo 마다 리뷰 안 된 줄 수 · 마지막 리뷰) · `mark`(지금 상태를 리뷰했다고 기록) · `skip --reason "<사유>"`(사용자 승인 뒤 한 번 생략) |
+| 구성표 알림 | 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄 (막지 않는다). `aidure team-mode enforce roster off\|warn` (기본 알림) |
+| 리뷰 확인 | 기본 꺼짐. 켜면 에이전트의 `git commit` · `git push` 때 리뷰 안 된 줄 수가 기준을 넘으면 알리거나 막는다. `aidure team-mode enforce review warn\|block [--repos a,b\|*] [--min-lines N] [--paths p1,p2] --team` |
+| aidure review | `status`(대상 repo 마다 리뷰 안 된 줄 수 · 마지막 리뷰) · `mark`(지금 상태를 리뷰했다고 기록) · `skip --reason "<사유>"`(사용자 승인 뒤 한 번 생략) |
 | 리뷰 기록 | reviewer 역할 에이전트 · reviewer 위임 · 교차 검토 때 자동으로 남는다. 리뷰 뒤 고치면 더한 줄만 다시 센다. 핸드오프 기록 · 워크스페이스 repo 는 세지 않는다 |
 | 설정 | `workspace.json` 의 `agents.enforce` (`teammateName` · `rosterAnnounce` · `reviewBeforePush` · `reviewRepos` · `reviewMinLines` · `reviewPaths`). 이 PC 값은 팀 값보다 세게만 |
 
@@ -423,18 +423,18 @@
 
 | 구분 | 내용 |
 |---|---|
-| aikit gitlab pipeline | GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 맨 위(또는 `--id`) 파이프라인의 단계별 작업 상태. `--ref <브랜치>` · `--mr <번호>` · `--limit` · `--json` |
+| aidure gitlab pipeline | GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 맨 위(또는 `--id`) 파이프라인의 단계별 작업 상태. `--ref <브랜치>` · `--mr <번호>` · `--limit` · `--json` |
 | MR 파이프라인 | `--mr` 은 MR 파이프라인이 없으면 머지 커밋(머지 전이면 source 커밋)의 파이프라인을 찾는다 |
 | 실패 로그 | `--log [줄 수]` 는 실패한 작업의 로그 끝부분 (기본 40줄) |
-| 봇 토큰 숨김 입력 | `aikit notify my setup` · `team setup` · `my channel on` 이 토큰을 숨김 입력(또는 표준 입력)으로 받는다. 봇 바꾸기는 `--new`. 인자로 주는 옛 방식은 동작하되 ⚠ 를 낸다 |
+| 봇 토큰 숨김 입력 | `aidure notify my setup` · `team setup` · `my channel on` 이 토큰을 숨김 입력(또는 표준 입력)으로 받는다. 봇 바꾸기는 `--new`. 인자로 주는 옛 방식은 동작하되 ⚠ 를 낸다 |
 | 알림 설정 화면 | 토큰 입력을 가리고 표준 입력으로 넘긴다 (프로세스 목록에 남지 않는다) |
-| aikit 스킬 | 봇 토큰 연결은 AI 가 하지 않고 사용자에게 터미널 명령을 알린다 |
+| aidure 스킬 | 봇 토큰 연결은 AI 가 하지 않고 사용자에게 터미널 명령을 알린다 |
 
 ## 0.42.0
 
 | 구분 | 내용 |
 |---|---|
-| aikit docs trace | 기획 ID 와 코드 주석의 구현 표시 대조: ⚠ 코드에 표시 없는 ID · ✖ 기획에 정의 없는 ID(오타 · 지운 기능), 각각 파일:줄. `--strict` 면 ✖ 에 exit 1 |
+| aidure docs trace | 기획 ID 와 코드 주석의 구현 표시 대조: ⚠ 코드에 표시 없는 ID · ✖ 기획에 정의 없는 ID(오타 · 지운 기능), 각각 파일:줄. `--strict` 면 ✖ 에 exit 1 |
 | 변수 | `vars.docs.traceIds` (예: FN). 비우면 `screens.functionIds`. 「다음 스프린트」 · 동결 문서 ID 는 누락에서 뺀다 |
 | 룰 | 구현한 기획 ID 는 진입 함수·클래스 머리 주석에 한 번 적는다 (`// FN-001 수동 주문`) |
 
@@ -442,10 +442,10 @@
 
 | 구분 | 내용 |
 |---|---|
-| aikit secret | 비밀값(토큰)을 OS 저장소에: macOS 키체인 · Windows 자격 증명 관리자 · Linux libsecret (못 쓰면 본인만 읽는 파일). `set`(숨김 입력) · `list` · `test` · `rm` · `import` · `exec` |
+| aidure secret | 비밀값(토큰)을 OS 저장소에: macOS 키체인 · Windows 자격 증명 관리자 · Linux libsecret (못 쓰면 본인만 읽는 파일). `set`(숨김 입력) · `list` · `test` · `rm` · `import` · `exec` |
 | 범위 | 프로젝트(workspace.json 프로젝트 이름) · 전역. 찾는 순서: 환경변수 > 프로젝트 > 전역 > 옛 파일. 값은 어떤 출력에도 나오지 않는다 |
-| GitLab 토큰 | gitlab-mr 이 저장소에서 읽음 (`aikit secret set GITLAB_TOKEN`). 401 이면 git 비밀번호는 API 에 못 쓴다고 안내 |
-| 텔레그램 토큰 | 저장소를 먼저 읽고 기존 telegram.env 도 그대로 동작. `aikit secret import` 로 옮기기 |
+| GitLab 토큰 | gitlab-mr 이 저장소에서 읽음 (`aidure secret set GITLAB_TOKEN`). 401 이면 git 비밀번호는 API 에 못 쓴다고 안내 |
+| 텔레그램 토큰 | 저장소를 먼저 읽고 기존 telegram.env 도 그대로 동작. `aidure secret import` 로 옮기기 |
 | 팩 선언 · doctor | `pack.json` 의 `secrets`(이름 · 범위 · 용도 · 권한 · 확인 방법). doctor 가 없음 · 옛 파일 · 권한 부족 · 만료 30일 이내를 알림 |
 | 위임 | 다른 AI 에게 맡길 때 비밀값 이름을 모두 뺀 환경으로 |
 | 텔레그램 답 버튼 | 보기마다 한 줄에 보기 이름(`1-1 ✅ 보기 이름`). 한 번 누르면 접힘(⌨ 로 다시). 답을 받고 작업이 끝나면 끝남 알림이 버튼을 걷음 |
@@ -454,14 +454,14 @@
 
 | 구분 | 내용 |
 |---|---|
-| aikit docs show | 기획 문서에서 ID 하나의 정의 부분만 출력 (제목 절 · 표 행 · 문단 · 화면설계서 장). 큰 문서를 통째로 읽지 않는다 |
-| aikit docs refs | 그 ID 가 나오는 곳 (기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결]) |
+| aidure docs show | 기획 문서에서 ID 하나의 정의 부분만 출력 (제목 절 · 표 행 · 문단 · 화면설계서 장). 큰 문서를 통째로 읽지 않는다 |
+| aidure docs refs | 그 ID 가 나오는 곳 (기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결]) |
 | 근거 룰 | 기획 문서는 ID 단위로 읽기 (show · refs), 동결 문서는 고치지 않기 |
 | 기획 문서 쓰기 룰 | 사실 하나 = 문서 하나 · 다른 층은 ID 링크만 · 변경 이력은 결정 문서 · 60KB 넘으면 나누기 · 구현 끝나면 동결 (필요할 때만 읽는 룰) |
-| 문서 점검 경고 | `aikit docs build` · `check` 가 큰 문서(`vars.docs.maxKB`, 기본 60KB) · 머리말에 쌓인 변경 이력 · 여러 문서에 같은 문장을 알림 (막지 않음) |
+| 문서 점검 경고 | `aidure docs build` · `check` 가 큰 문서(`vars.docs.maxKB`, 기본 60KB) · 머리말에 쌓인 변경 이력 · 여러 문서에 같은 문장을 알림 (막지 않음) |
 | 동결 | 문서 머리말 `상태: 동결 (날짜, 정본: <repo/경로>)`. 점검에서 빠지고 show · refs 에 [동결] |
-| upgrade | 그 유형의 기본 팩인데 꺼진 팩을 알림 (예: 옛 신규 워크스페이스의 screens · datamodel, 켜기 `aikit upgrade --add`) |
-| 채팅에서 말로 | aikit 스킬에 빠졌던 명령 추가 (진행 방식 · 로드맵 · docs show/refs · datamodel check · models --migrate · 팩 켜기 등) |
+| upgrade | 그 유형의 기본 팩인데 꺼진 팩을 알림 (예: 옛 신규 워크스페이스의 screens · datamodel, 켜기 `aidure upgrade --add`) |
+| 채팅에서 말로 | aidure 스킬에 빠졌던 명령 추가 (진행 방식 · 로드맵 · docs show/refs · datamodel check · models --migrate · 팩 켜기 등) |
 
 ## 0.39.0
 
@@ -470,9 +470,9 @@
 | 진행 방식 | `workspace.json` 의 `project.approach`: 스프린트 `sprint` · 전체 `full`. 새 워크스페이스는 신규 · 운영·고도화 = 스프린트, 차세대 · 분석·설계 = 전체 |
 | 스프린트 | 기능 단위(기간 아님). 첫 스프린트는 끝까지 동작하는 최소 기능 하나, 나머지는 백로그. 설계 · 화면설계 · 데이터 설계도 이번 스프린트만. 끝은 데모 · 회고 |
 | 로드맵 | 스프린트면 스프린트 계획 → 구현 → 데모 → 회고 반복, `## 이번 스프린트`(목표 · 끝 날짜(선택) · 기능) · `## 백로그` · `## 지난 스프린트`. 끝 날짜가 지났는데 데모 전이면 ⚠ |
-| aikit approach | 진행 방식 보기 · 바꾸기 (관리자). 기본 단계 그대로인 로드맵은 새 뼈대로 |
+| aidure approach | 진행 방식 보기 · 바꾸기 (관리자). 기본 단계 그대로인 로드맵은 새 뼈대로 |
 | 화면 · 데이터 검사 | 「다음 스프린트」 로 적은 기능은 누락으로 세지 않음 |
-| 기존 워크스페이스 | 진행 방식이 없으면 지금처럼(전체) 동작. 바꾸려면 `aikit approach sprint` |
+| 기존 워크스페이스 | 진행 방식이 없으면 지금처럼(전체) 동작. 바꾸려면 `aidure approach sprint` |
 
 ## 0.38.0
 
@@ -480,8 +480,8 @@
 |---|---|
 | 화면설계서 넘침 표시 | A4 한 쪽을 넘는 장은 뷰어에서 장 위에 「⚠ 한 쪽 넘침」, 썸네일에 ⚠ (인쇄 · 발표에는 안 나옴) |
 | screens 스킬 | 한 장 = A4 가로 한 쪽. 넘치면 설명 축약 → 결정 경위는 정책 · 결정 문서로 → 그래도 길면 「(계속)」 장으로 나눔 |
-| 이어지는 장 | `data-continues="<화면 ID>"` 를 단 장은 `aikit screens check` 가 화면 목록 대조에서 뺌. 원래 화면 장이 없으면 ✖ |
-| 반영 | `aikit upgrade` 뒤 `aikit docs build` 로 기획 repo 의 html/ 을 다시 만든다 |
+| 이어지는 장 | `data-continues="<화면 ID>"` 를 단 장은 `aidure screens check` 가 화면 목록 대조에서 뺌. 원래 화면 장이 없으면 ✖ |
+| 반영 | `aidure upgrade` 뒤 `aidure docs build` 로 기획 repo 의 html/ 을 다시 만든다 |
 
 ## 0.37.3
 
@@ -493,7 +493,7 @@
 
 | 구분 | 내용 |
 |---|---|
-| 퇴역 모델 | `gpt-5.2` 계열 · `gpt-5.3-codex` 를 퇴역 목록에 추가 (Codex 에서 이미 지원 중단). 쓰고 있으면 sync 가 알리고 `aikit models --migrate` 가 gpt-6.1-sol 로 바꿈 |
+| 퇴역 모델 | `gpt-5.2` 계열 · `gpt-5.3-codex` 를 퇴역 목록에 추가 (Codex 에서 이미 지원 중단). 쓰고 있으면 sync 가 알리고 `aidure models --migrate` 가 gpt-6.1-sol 로 바꿈 |
 
 ## 0.37.1
 
@@ -509,28 +509,28 @@
 | 새 역할 dba · infra | DB 스택 repo 면 `dba`(스키마 · 마이그레이션 · SQL 파일, 실행은 승인 뒤), 인프라 스택 repo 면 `infra`(plan · diff 근거, 반영은 승인 뒤). 둘 다 grade high |
 | 역할 grade 수정 | repo 스택으로 붙은 팩의 역할이 grade 를 무시하고 메인 모델로 돌던 것, project 팩의 같은 이름 역할이 덮이던 것 |
 | 스택 선택 화면 | 「인프라만」 종류와 「배포·인프라 도구」 질문 |
-| 기존 워크스페이스 | 스택이 이미 정해진 repo 는 다시 감지하지 않는다. 인프라 스택을 받으려면 `aikit detect` |
+| 기존 워크스페이스 | 스택이 이미 정해진 repo 는 다시 감지하지 않는다. 인프라 스택을 받으려면 `aidure detect` |
 | 자리 비움 | 끝 응답이 결정 질문인데 텔레그램 버튼 질문(ask)을 안 보냈으면 한 번 막고 보내게 함. `away on` 때 알림이 꺼져 있으면 「결과와 결정」 으로 켬 |
 | 핸드오프 | `handoff check` 끝에 「로드맵을 볼까요?」 를 물으라는 줄 (보고 끝 질문을 놓치던 것) |
 | 모델 주간 점검 | CI 로그에 알림을 보냈는지(보냄 · 건너뜀 · 실패) 남김. 실패 · CI 변수 없음이면 작업 실패 |
 | 킷 테스트 알림 격리 | `npm test` 가 이 PC 의 실제 텔레그램 봇으로 「채널 끊김」 알림을 보내던 것 (빈 설정 · 닫힌 로컬 주소로 격리, 격리 검사 추가) |
-| 개인 봇 겹침 경고 | 개인 알림 봇이 다른 프로젝트의 양방향 채널 봇과 같으면 `aikit notify` 가 ⚠ (그 프로젝트 대화방으로 섞여 들어가는 것) |
+| 개인 봇 겹침 경고 | 개인 알림 봇이 다른 프로젝트의 양방향 채널 봇과 같으면 `aidure notify` 가 ⚠ (그 프로젝트 대화방으로 섞여 들어가는 것) |
 | ChatGPT Pro 요금제 | 금액별 배수 안내: $100 = Plus 5배 · $200 = 20배 (공식) · $500 = 약 25배 |
 
 ## 0.36.1
 
 | 구분 | 내용 |
 |---|---|
-| aikit plan 분모 변경 (최근) | 목록에 적은 순서(위가 최신 · 아래가 최신)와 상관없이 날짜가 가장 늦은 줄을 보임 (최신을 위에 적는 PLAN.md 에서 가장 오래된 줄이 나오던 것) |
+| aidure plan 분모 변경 (최근) | 목록에 적은 순서(위가 최신 · 아래가 최신)와 상관없이 날짜가 가장 늦은 줄을 보임 (최신을 위에 적는 PLAN.md 에서 가장 오래된 줄이 나오던 것) |
 
 ## 0.36.0
 
 | 구분 | 내용 |
 |---|---|
-| 새 팩 datamodel (데이터 설계) | md 테이블 정의서(「### 스키마.테이블 논리명」 + 컬럼 표) → `aikit docs build` 가 폴더마다 ERD 뷰어 `erd.html`. 신규 · 차세대 기본, 다른 유형은 `aikit upgrade --add datamodel` |
+| 새 팩 datamodel (데이터 설계) | md 테이블 정의서(「### 스키마.테이블 논리명」 + 컬럼 표) → `aidure docs build` 가 폴더마다 ERD 뷰어 `erd.html`. 신규 · 차세대 기본, 다른 유형은 `aidure upgrade --add datamodel` |
 | ERD 뷰어 | 관계 중심 배치(elkjs, 킷에 포함) · 스키마 묶기 · 이름 보기 3종 · 표시 수준 자동 전환 · 돋보기 · 상세 드로어 · 기능 · 결정 ID 근거 패널 · Export SQL DDL(DB 종류별) · SVG · PDF |
 | 문서 사이트 | 데이터 설계 개요 쪽 맨 위에 ERD 블록, 메뉴 묶음 제목 옆 ▶ ERD 보기, 뷰어 「← 문서」 는 개요로 |
-| aikit datamodel check | 참조 · 기본키 · 중복 · 표 형식(✖), 논리명 · 컨벤션 · 기능 ID 대조(⚠). 「없음」 으로 적은 것은 세지 않음 |
+| aidure datamodel check | 참조 · 기본키 · 중복 · 표 형식(✖), 논리명 · 컨벤션 · 기능 ID 대조(⚠). 「없음」 으로 적은 것은 세지 않음 |
 | datamodel 스킬 | 진행 방식 합의 → DB 컨벤션(하나씩 질문, `vars.datamodel` 에 저장) → 엔티티 목록 → 정의서 → ERD · 검사 |
 | 로드맵 | 스택에 DB 가 있으면 「데이터 설계」, 화면이 있으면 「화면설계」 를 구현 앞에. 단계별 스킬 안내. 기본 단계 그대로인 PLAN.md 는 upgrade 가 단계를 더하고, 고친 PLAN.md 는 ⚠ 한 줄만 |
 | 기획 repo 뼈대 | `06-data/` (엔티티 목록 · 컨벤션 · 정의서 양식) |
@@ -542,7 +542,7 @@
 |---|---|
 | 새 스킬 common-practice | 흔한 방식 · 업계 관례 · 표준을 웹 검색으로 확인해 출처 링크가 있는 비교표로 답함. 검색할 수 없으면 「검색 불가: 내 지식 기준」 을 밝힘 |
 | 근거와 검증 (상시 룰) | 「보통은 ~」 을 말하려면 common-practice 로 확인한다는 한 줄 |
-| Codex 웹 검색 | `aikit start` 가 Codex 에 `--search` 를 기본으로 붙임. 끄기 `workspace.json` 의 `agents.webSearch: false` |
+| Codex 웹 검색 | `aidure start` 가 Codex 에 `--search` 를 기본으로 붙임. 끄기 `workspace.json` 의 `agents.webSearch: false` |
 | 스킬 이름 겹침 | project 팩 사본이 킷 기본 스킬과 같으면 지우라고 sync 경고에 안내 (예: `packs/project/skills/common-practice/` 삭제) |
 
 ## 0.34.2
@@ -551,7 +551,7 @@
 |---|---|
 | 화면설계 개요 | 설계서 블록(장 수 · 묶음별 화면 · 설계서 보기)을 README 쪽 맨 위에 (긴 화면 목록 README 아래에 묻혀 안 보이던 것) |
 | 뷰어 「← 문서」 | 개요 블록 위치(`#sheet-docs`)로 바로 |
-| 새 버전 알림 | `aikit start` 가 npm 레지스트리의 최신 버전을 하루 한 번 확인해, 이 PC 설치본보다 새로우면 `npm i -g` → `aikit upgrade` 를 알림 (2초 · 실패하면 조용히, 끄기 `AIKIT_NO_UPDATE_CHECK=1`) |
+| 새 버전 알림 | `aidure start` 가 npm 레지스트리의 최신 버전을 하루 한 번 확인해, 이 PC 설치본보다 새로우면 `npm i -g` → `aidure upgrade` 를 알림 (2초 · 실패하면 조용히, 끄기 `AIDURE_NO_UPDATE_CHECK=1`) |
 
 ## 0.34.1
 
@@ -567,11 +567,11 @@
 
 | 구분 | 내용 |
 |---|---|
-| 문서 사이트 화면 틀 | `aikit docs build` 결과가 가이드와 같은 틀: 상단 바(검색 ⌘K · 버전 · 라이트/다크) · 왼쪽 구분 메뉴 · 본문 머리(구분 · 상태 · 원본 버튼) · 오른쪽 목차 · 이전/다음. 쪽 주소 · ID 앵커 · ids.json 은 그대로 |
+| 문서 사이트 화면 틀 | `aidure docs build` 결과가 가이드와 같은 틀: 상단 바(검색 ⌘K · 버전 · 라이트/다크) · 왼쪽 구분 메뉴 · 본문 머리(구분 · 상태 · 원본 버튼) · 오른쪽 목차 · 이전/다음. 쪽 주소 · ID 앵커 · ids.json 은 그대로 |
 | 메뉴 묶음 | 기본은 폴더 · 파일 이름 앞 번호 띠로 묶고 이름은 문서 제목의 공통 낱말. 루트 README 는 `##` 마다 한 쪽. 바꾸기는 기획 repo 의 `docs-site.json` (groups · title · version · source) |
 | 검색 | 문서 제목 · 소제목 · 정의 ID (file:// 로도) |
 | 원본 버튼 | `docs-site.json` 의 source. 없으면 첫 build 가 origin 으로 채워 둠 |
-| 워크스페이스 현황판 | `aikit board`: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽을 `.agents/board/` 에 만들어 연다 (보기 전용) |
+| 워크스페이스 현황판 | `aidure board`: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽을 `.agents/board/` 에 만들어 연다 (보기 전용) |
 | Pages | 기획 repo 뼈대에 GitHub 워크플로(`.github/workflows/pages.yml`) 추가, build 가 원격에 맞는 Pages 방법을 알려 줌 |
 | 가이드 | 문서 사이트와 같은 스타일 파일을 씀, 화면 폭 상한을 없애고 메뉴 · 목차 칸이 넓어짐, 가로줄 `---` 표시 |
 
@@ -579,8 +579,8 @@
 
 | 구분 | 내용 |
 |---|---|
-| 문서 사이트 | `aikit docs build [repo]`: 기획 repo 의 md 를 같은 경로 구조의 `html/` 로. 정의 ID 에 앵커, 본문 ID 는 정의로 링크, 근거 색인 `html/assets/ids.json`. `aikit docs check` · 기획 repo pre-commit 이 md 와 어긋남을 막음 |
-| 화면설계서 (새 팩 `screens`) | 장 양식(표지 · 이력 · 메뉴 구조 · 정책 · 화면) · 뷰어(썸네일 · 발표 · A4 인쇄 · 근거 패널) · `screens` 스킬 · `aikit screens check`. 신규 · 차세대는 기본, 다른 유형은 `aikit upgrade --add screens` |
+| 문서 사이트 | `aidure docs build [repo]`: 기획 repo 의 md 를 같은 경로 구조의 `html/` 로. 정의 ID 에 앵커, 본문 ID 는 정의로 링크, 근거 색인 `html/assets/ids.json`. `aidure docs check` · 기획 repo pre-commit 이 md 와 어긋남을 막음 |
+| 화면설계서 (새 팩 `screens`) | 장 양식(표지 · 이력 · 메뉴 구조 · 정책 · 화면) · 뷰어(썸네일 · 발표 · A4 인쇄 · 근거 패널) · `screens` 스킬 · `aidure screens check`. 신규 · 차세대는 기본, 다른 유형은 `aidure upgrade --add screens` |
 | 기획 repo 뼈대 | `02-screens/` 가 화면 목록 + 장 양식 `_template.html` 로 바뀜, GitLab Pages CI(`.gitlab-ci.yml`) 추가 |
 | 변수 | `vars.docs.ids`(정의 없는 ID 경고 머리말) · `vars.screens.functionIds`(기능 ID 누락 검사) |
 | 음성 알림 | 보고하듯 문장만 읽음: 표 · 코드 · 기호 · 해시 · ID · 파일 이름은 빼고, 날짜 · 시각 · `n / N` · 단축키는 말로 |
@@ -592,21 +592,21 @@
 | 자리 비움 결정 질문 | 텔레그램으로 머리 메시지 + 결정마다 메시지(굵은 제목 · 배경 인용 · ✅ 권장안) + 답 버튼(`1-1 ✅` · `1 ✏️` · `모두 권장안`). 버튼 · `1-1, 2-1` · `2: 내용` 으로 답함 |
 | 직접 입력 | `✏️` 버튼을 누르면 그 결정에 답장하는 입력창이 열림. 답을 다 받으면 버튼을 걷음 |
 | 텔레그램 서식 | 제목 앞 빈 줄 · 인용 블록 · 긴 보고는 앞부분만 보이고 나머지는 접힘 (`notify.js say`) |
-| 음성 | `aikit notify my voice on` 이면 결정 질문 · 끝남 보고를 짧게 읽어 음성 메시지로 (기본 꺼짐 · Yuna · macOS 기본 도구). 범위 · 목소리는 `voice scope` · `voice name` 또는 대화로 |
+| 음성 | `aidure notify my voice on` 이면 결정 질문 · 끝남 보고를 짧게 읽어 음성 메시지로 (기본 꺼짐 · Yuna · macOS 기본 도구). 범위 · 목소리는 `voice scope` · `voice name` 또는 대화로 |
 
 ## 0.31.0
 
 | 구분 | 내용 |
 |---|---|
-| 팀 구성 자동 | 새 워크스페이스 기본. 리더가 작업마다 역할 · 등급 · 모델을 골라 구성표를 알리고 시작 (웹 검색 모델 · high 4개 이상이면 승인). 옛 워크스페이스는 고정 유지, `aikit team-mode auto` 로 켬 |
-| 요금제 | `aikit ai` 에서 회사마다 요금제를 묻고(이 PC 로그인 값을 미리 골라 둠) 여유도(빠듯 · 넉넉 · 종량)로 모델을 나눔. `aikit ai plan claude\|gpt <요금제>` |
+| 팀 구성 자동 | 새 워크스페이스 기본. 리더가 작업마다 역할 · 등급 · 모델을 골라 구성표를 알리고 시작 (웹 검색 모델 · high 4개 이상이면 승인). 옛 워크스페이스는 고정 유지, `aidure team-mode auto` 로 켬 |
+| 요금제 | `aidure ai` 에서 회사마다 요금제를 묻고(이 PC 로그인 값을 미리 골라 둠) 여유도(빠듯 · 넉넉 · 종량)로 모델을 나눔. `aidure ai plan claude\|gpt <요금제>` |
 | 모델 메뉴 | 개인 지침 「팀 구성」 에 역할 목록 · 쓸 수 있는 모델(등급 · LiveBench 분야별 점수 · 부르는 법) · 고르는 규칙 |
 | 역할 등급 | 역할 머리말 `grade: high\|standard\|low` 로 팩 · 프로젝트가 더한 역할도 성향에 맞는 모델. 새 역할 `spec-writer`(설계 문서) |
-| 선호 모델 | `aikit team-mode prefer <역할> <도구:모델>` |
+| 선호 모델 | `aidure team-mode prefer <역할> <도구:모델>` |
 | 문서 검사 | `check-docs.js` 에 `--cover`(원본 ID 전수) · `§` 참조 · `--link A:B` · 금지 표시(`vars.docs.forbid`) |
 | models 표시 | 팀 구성 · 요금제 · 역할별 등급과 출처. 화면 없이 실행해도 표 (`--json` 은 JSON) |
 | 카탈로그 | 요금제(`plans`) · 분야별 점수. 워크스페이스 임시 목록 `workspace.json` 의 `catalog`. 모델 조사는 팀 공용 `handoffs/MODELS.md` |
-| 로드맵 | `aikit start` 브리핑에 흐름도 · 지금 단계 표. 핸드오프가 끝나면 "로드맵을 볼까요?" |
+| 로드맵 | `aidure start` 브리핑에 흐름도 · 지금 단계 표. 핸드오프가 끝나면 "로드맵을 볼까요?" |
 | Codex 한도 | 개인 지침 몫을 12KB 로 잡아 넘으면 한도를 자동으로 올림 (팀 구성 절이 잘리지 않게) |
 
 ## 0.30.1
@@ -616,7 +616,7 @@
 | TODO | 사용자가 등록한 것만: "TODO 에 넣어줘" 할 때만 넣고, 지우는 것도 사용자가 정함. 에이전트가 미완 업무를 알아서 옮기지 않음 |
 | TODO 정리 | "TODO 정리해줘": 목록을 보이고 항목마다 끝남 · 진행 중(작업 기록으로 옮길지) · 그대로를 고르게 함 |
 | 미완 작업 | 남은 일의 정본은 작업별 기록(진행 중 + 완료 조건 `[ ]`). 브리핑 · 재개 · 팀 현황에 미완 작업 · 내 TODO 를 나눠 보여 줌 |
-| 검사 | `aikit handoff check` 가 진행 중인데 완료 조건이 없거나 비었거나 `상태:` 줄이 없는 작업 기록을 ✖ 로 막음 |
+| 검사 | `aidure handoff check` 가 진행 중인데 완료 조건이 없거나 비었거나 `상태:` 줄이 없는 작업 기록을 ✖ 로 막음 |
 | 인수인계 | 미완 작업은 내 작업 기록으로, TODO 는 고른 항목만 내 TODO 로 |
 
 ## 0.30.0
@@ -624,9 +624,9 @@
 | 구분 | 내용 |
 |---|---|
 | 로드맵 | `handoffs/PLAN.md` (팀 공용): 프로젝트 전체 단계와 상태의 정본. init 이 유형별 기본 단계로 만들고, upgrade 는 없을 때만 만든다 |
-| aikit plan | 단계 흐름도 · 지금 단계 표(영역 × 하위 작업) · 이번에 생긴 것(커밋 · 새 파일 · ID) · 다음. `--short` · `--json` · `init` · `check` |
+| aidure plan | 단계 흐름도 · 지금 단계 표(영역 × 하위 작업) · 이번에 생긴 것(커밋 · 새 파일 · ID) · 다음. `--short` · `--json` · `init` · `check` |
 | 보고 | 세션 브리핑 · 재개 · 팀 현황에 로드맵 한 줄, 단계를 끝낸 보고에 전체 블록. 진행은 `완료 n / 전체 N` |
-| 갱신 누락 | `aikit handoff check` 가 기본 단계 그대로 · 진행 단계 없음 · 다 끝났는데 단계가 그대로 같은 것을 알림. 핸드오프 때 상태를 묻고 고침 |
+| 갱신 누락 | `aidure handoff check` 가 기본 단계 그대로 · 진행 단계 없음 · 다 끝났는데 단계가 그대로 같은 것을 알림. 핸드오프 때 상태를 묻고 고침 |
 | 질문 제목 | 결정 질문이 여러 개면 제목 끝에 `주제 n/N`, 하위 질문은 `(m/k)` |
 | 팀 | 설정 잠금이어도 팀원이 `handoffs/PLAN.md` 는 커밋할 수 있음. PLAN.md 가 바뀐 push 는 팀 방에 알림 |
 
@@ -635,7 +635,7 @@
 | 구분 | 내용 |
 |---|---|
 | 알림 수준 | 개인 알림을 수준 하나로: 전체 · 결과와 결정(기본) · 진행 현황 · 끄기. 결과와 결정은 오래 걸린 요청의 답 앞부분과 질문 · 권한 확인만. 응답 뒤 "입력 대기" 알림은 없앰. 옛 설정은 가까운 수준으로 읽음 |
-| 자리 비움 | `aikit notify my away on\|off` (옛 `channel ask text\|dialog`): 질문을 번호 목록으로, 결과는 시간과 상관없이 |
+| 자리 비움 | `aidure notify my away on\|off` (옛 `channel ask text\|dialog`): 질문을 번호 목록으로, 결과는 시간과 상관없이 |
 | 설정 화면 | 알림 수준 · 양방향 대화 · 자리 비움 · 개인 봇 · 팀 방 · 고급(결과 기준 · 진행 현황 간격) 순서로 정리 |
 
 ## 0.28.7
@@ -648,9 +648,9 @@
 
 | 구분 | 내용 |
 |---|---|
-| 알림 설정 화면 | `aikit notify setup` 하나로 개인 봇 · 자동 알림 · 양방향 대화 · 질문 방식 · 진행 현황 · 팀 방 · 시험 발송. 이미 한 것은 바꾸기 · 제거, 모두 지우기 |
-| 초기화 | `aikit reset`: 이 PC 의 개인 설정(이 PC 설정 · 텔레그램 채널 · 임시 기록 · 개인 지침 · 토큰)을 골라 처음 상태로. 팀 설정 · repos 는 그대로 |
-| 진행 현황 | 채널 세션에서 사용자 입력 없이 5분 넘게 작업하면 5분마다 지금 하는 일(경과 · 도구 수 · 최근 작업)을 텔레그램으로. `aikit notify my channel progress <분\|off>` |
+| 알림 설정 화면 | `aidure notify setup` 하나로 개인 봇 · 자동 알림 · 양방향 대화 · 질문 방식 · 진행 현황 · 팀 방 · 시험 발송. 이미 한 것은 바꾸기 · 제거, 모두 지우기 |
+| 초기화 | `aidure reset`: 이 PC 의 개인 설정(이 PC 설정 · 텔레그램 채널 · 임시 기록 · 개인 지침 · 토큰)을 골라 처음 상태로. 팀 설정 · repos 는 그대로 |
+| 진행 현황 | 채널 세션에서 사용자 입력 없이 5분 넘게 작업하면 5분마다 지금 하는 일(경과 · 도구 수 · 최근 작업)을 텔레그램으로. `aidure notify my channel progress <분\|off>` |
 
 ## 0.28.5
 
@@ -663,7 +663,7 @@
 
 | 구분 | 내용 |
 |---|---|
-| 질문 방식 | 채널 세션도 기본은 터미널 선택지 창(방향키 · 직접 입력), 텔레그램에는 질문과 선택지를 알림으로. 자리를 비울 때 `aikit notify my channel ask text` 로 번호 목록 |
+| 질문 방식 | 채널 세션도 기본은 터미널 선택지 창(방향키 · 직접 입력), 텔레그램에는 질문과 선택지를 알림으로. 자리를 비울 때 `aidure notify my channel ask text` 로 번호 목록 |
 | 팀원 정리 | 팀원 종료는 정식 종료 요청 → 팀원 승인으로만 (team 스킬). tmux 창 · 프로세스 강제 종료는 훅이 막음 (등록만 남아 대기 팀원이 쌓이던 원인) |
 
 ## 0.28.3
@@ -679,7 +679,7 @@
 
 | 구분 | 내용 |
 |---|---|
-| 이어서 시작 | `aikit start -c` 마지막 대화 · `-r <세션 ID>` 그 세션(`/exit` 때 나온 ID) · `-r` 목록에서 고르기. 모델 · 텔레그램 채널 그대로, 브리핑 없이 (Codex 는 resume 으로) |
+| 이어서 시작 | `aidure start -c` 마지막 대화 · `-r <세션 ID>` 그 세션(`/exit` 때 나온 ID) · `-r` 목록에서 고르기. 모델 · 텔레그램 채널 그대로, 브리핑 없이 (Codex 는 resume 으로) |
 
 ## 0.28.1
 
@@ -695,8 +695,8 @@
 
 | 구분 | 내용 |
 |---|---|
-| 새 명령 | `aikit notify my\|team …` · `aikit handoff find\|check\|…` · `aikit rules ondemand\|always` · `aikit start --no-channel` |
-| 텔레그램 | setup 이 자동 알림까지 켬 · 질문 · 권한 확인 · 입력 대기 문구 구분 · 위임 끝 알림 · 양방향 채널 `aikit notify my channel on` (기본 꺼짐) |
+| 새 명령 | `aidure notify my\|team …` · `aidure handoff find\|check\|…` · `aidure rules ondemand\|always` · `aidure start --no-channel` |
+| 텔레그램 | setup 이 자동 알림까지 켬 · 질문 · 권한 확인 · 입력 대기 문구 구분 · 위임 끝 알림 · 양방향 채널 `aidure notify my channel on` (기본 꺼짐) |
 | 생성 · 검사 | JSON 생성물은 키 순서 무관 비교 · `rules.onDemand` 로 AGENTS.md 줄이기 |
 | doctor | 전역 · 워크스페이스 킷 버전 차이 · 플러그인 실행 파일(bun 등) · 채널 상태 |
 | 훅 | 완료 조건은 이번 세션에 손댄 작업만, `[~]` 제외 · 같은 작업 안내는 한 줄로 · 위임 세션에서는 훅이 돌지 않음 |

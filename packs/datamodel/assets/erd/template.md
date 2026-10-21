@@ -1,7 +1,7 @@
 # <스키마> 스키마
 
 > 테이블 정의서 견본 (datamodel 팩). 스키마마다 한 파일. 이 파일을 `<스키마>.md` 로 복사해 쓴다.
-> 제목 「### <스키마>.<테이블> <논리명>」 아래 설명 줄과 컬럼 표 하나. `aikit docs build` 가 ERD 를, `aikit datamodel check` 가 검사를 한다.
+> 제목 「### <스키마>.<테이블> <논리명>」 아래 설명 줄과 컬럼 표 하나. `aidure docs build` 가 ERD 를, `aidure datamodel check` 가 검사를 한다.
 
 ### shop.member 회원
 회원 계정. 기능: FN-MEM-001 · FN-MEM-002 · 영역: 회원

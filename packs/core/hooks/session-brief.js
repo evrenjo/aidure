@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // SessionStart 훅 (Claude Code · Codex) — 세션 브리핑(bin/brief.js: 프로젝트 · 참고 자료 · 공지 · 마지막 핸드오프 · 미완 작업 · TODO)을 컨텍스트로 넘긴다. 항상 exit 0
-// 브리핑 본문을 첫 사용자 메시지로 넣으면 화면에 전문이 찍히므로, 본문은 여기서 넘기고 aikit start 는 "세션 브리핑" 한 줄만 보낸다.
+// 브리핑 본문을 첫 사용자 메시지로 넣으면 화면에 전문이 찍히므로, 본문은 여기서 넘기고 aidure start 는 "세션 브리핑" 한 줄만 보낸다.
 // 여러 줄 출력은 이 훅만의 예외다 (다른 SessionStart 훅은 1줄). .agents/local.json 의 brief:false 면 아무것도 넘기지 않는다.
 'use strict';
 const fs = require('fs');

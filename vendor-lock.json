@@ -1,10 +1,10 @@
 {
- "name": "aikit-vendor",
+ "name": "aidure-vendor",
  "lockfileVersion": 3,
  "requires": true,
  "packages": {
   "": {
-   "name": "aikit-vendor",
+   "name": "aidure-vendor",
    "dependencies": {
     "markdown-it": "15.0.2",
     "markdown-it-cjk-friendly": "3.0.0"

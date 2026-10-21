@@ -18,7 +18,7 @@ jobs:
       - run: npm ci
       - run: npm test
         env:
-          AIKIT_NO_UPDATE_CHECK: '1'
+          AIDURE_NO_UPDATE_CHECK: '1'
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test

@@ -335,7 +335,7 @@ function main(argv) {
         if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) { console.log(`${process.env.CI ? '✖' : '⚠'} 알림 건너뜀: TELEGRAM_BOT_TOKEN · TELEGRAM_CHAT_ID 가 없습니다`); if (process.env.CI) process.exitCode = 1; }
         else {
           const { send } = require(path.join(KIT, 'packs', 'core', 'lib', 'notify.js'));
-          await send(`🔎 [aikit] 모델·요금제 주간 점검\n${findings.map((l) => `- ${l}`).join('\n')}`, { token: process.env.TELEGRAM_BOT_TOKEN, chat: process.env.TELEGRAM_CHAT_ID }, 15000)
+          await send(`🔎 [aidure] 모델·요금제 주간 점검\n${findings.map((l) => `- ${l}`).join('\n')}`, { token: process.env.TELEGRAM_BOT_TOKEN, chat: process.env.TELEGRAM_CHAT_ID }, 15000)
             .then((r) => { if (r && r.ok) console.log(`✔ 텔레그램 알림 보냄 (${findings.length}건)`); else { console.error(`✖ 알림 실패: ${(r && r.description) || '응답 없음'}`); process.exitCode = 1; } })
             .catch((e) => { console.error(`✖ 알림 실패: ${e.message}`); process.exitCode = 1; });
         }

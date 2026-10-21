@@ -9,7 +9,7 @@
     "url": "git+https://github.com/lsnwan/aidure.git"
   },
   "bin": {
-    "aikit": "bin/aikit.js"
+    "aidure": "bin/aidure.js"
   },
   "engines": {
     "node": ">=20.19"

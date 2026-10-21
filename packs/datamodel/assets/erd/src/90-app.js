@@ -85,7 +85,7 @@
       window.addEventListener('hashchange', fromHash);
       window.addEventListener('resize', E.fitK);
       document.addEventListener('fullscreenchange', fs);
-      if (typeof window.ELK === 'undefined') { st.err = '배치 엔진(assets/erd/elk.bundled.js)을 불러오지 못했습니다. aikit docs build 로 다시 만든다'; bump((n) => n + 1); }
+      if (typeof window.ELK === 'undefined') { st.err = '배치 엔진(assets/erd/elk.bundled.js)을 불러오지 못했습니다. aidure docs build 로 다시 만든다'; bump((n) => n + 1); }
       else {
         // 영역 꼬리표가 있으면 영역 배치 + 영역 개요로 연다
         if (E.AREAS.length) { st.arrange = 'area'; st.overview = true; }

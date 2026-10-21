@@ -106,7 +106,7 @@ assert.match(ddl(two, two.schemas, { dialect: 'mysql' }), /email varchar\(254\) 
 assert.match(ddl(two, two.schemas, { dialect: 'oracle' }), /COMMENT ON TABLE shop\.member IS '회원: 회원 계정';/);
 
 // 임시 기획 repo: build → ERD 쪽 · 개요 블록 · 메뉴 ▶ · 뷰어 파일, 검사 exit 코드
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-datamodel-'));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-datamodel-'));
 const put = (f, c) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), c); };
 put('README.md', '# 기획\n');
 put('40-functions.md', '# 기능정의\n\n| ID | 기능 |\n|---|---|\n| FN-MEM-001 | 가입 |\n| FN-MEM-002 | 로그인 |\n| FN-ORD-001 | 주문 |\n');

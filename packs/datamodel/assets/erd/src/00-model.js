@@ -1,4 +1,4 @@
-/* ERD 뷰어 (datamodel 팩): aikit docs build 가 정의서(md)에서 만든 모델(window.ERD_MODEL)을 elkjs 로 배치하고 Preact 로 그린다.
+/* ERD 뷰어 (datamodel 팩): aidure docs build 가 정의서(md)에서 만든 모델(window.ERD_MODEL)을 elkjs 로 배치하고 Preact 로 그린다.
  * 생성기가 src/*.js 를 이름 순으로 이어 assets/erd/erd.js 하나로 만든다. 화면 라이브러리는 문서 사이트와 같은 assets/vendor.js (Preact + htm).
  * 모델 = { title, schemas, tables, conv: { dialect, fkInDb, hideEdgesTo, hubMin }, refs: { ID: [근거 문서 주소] } }. 테이블의 src = 정의서 쪽 주소
  * 여기: 이름공간 E · 상태(st) · 관계 · 영역 · 크기 계산 */

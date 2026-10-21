@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// 화면설계서 검사: 장의 Related ID · 근거 ID 가 색인에 있는지, 화면 ID 중복, 기능 ID 누락, 화면 목록과 장의 대조. 실행: aikit screens check [repo|폴더]
+// 화면설계서 검사: 장의 Related ID · 근거 ID 가 색인에 있는지, 화면 ID 중복, 기능 ID 누락, 화면 목록과 장의 대조. 실행: aidure screens check [repo|폴더]
 /*
  * ✖ (exit 1): 화면 ID(장 id) 중복 · 화면 장의 Related ID 나 근거 줄의 ID 가 색인(md 정의 · 장 id)에 없음 · 이어지는 장(data-continues)의 원래 화면 장이 없음
  * ⚠ (exit 0): 화면 장 Description 줄이 결론 한 줄이 아님(DESC_MAX 자 넘음 · 날짜 · 결정 경위. 근거 ID 목록은 세지 않는다) · 기능 ID(vars.screens.functionIds 머리말)가 어느 화면의 Related ID 에도 없음(화면 목록 표에 「화면 없음」 · 「다음 스프린트」 로 적은 행의 기능은 뺀다) · 화면 목록(md 표)에 있는데 장이 없음 · 장은 있는데 목록에 없음
- * 색인은 aikit docs build 와 같은 규칙으로 메모리에서 만든다 (docs-site/ 를 만들지 않아도 된다).
+ * 색인은 aidure docs build 와 같은 규칙으로 메모리에서 만든다 (docs-site/ 를 만들지 않아도 된다).
  */
 'use strict';
 const fs = require('fs');

@@ -35,7 +35,7 @@ function resolve(argv = process.argv) {
     return { error: spring.repo ? `workspace.json repos 에 '${spring.repo}' 가 없습니다 (vars.spring.repo)` : 'workspace.json repos 에 stack 이 spring 인 레포가 없습니다. vars.spring.repo 로 지정하세요' };
   }
   const javaRoot = path.join(repo.dir, 'src', 'main', 'java');
-  if (!fs.existsSync(javaRoot)) return { error: `${repo.name}: ${javaRoot} 가 없습니다 (없으면 aikit install)`, missing: true };
+  if (!fs.existsSync(javaRoot)) return { error: `${repo.name}: ${javaRoot} 가 없습니다 (없으면 aidure install)`, missing: true };
   return { javaRoot, base: withBase(javaRoot, spring.basePackage), repo: repo.name, via: 'workspace.json', ws };
 }
 

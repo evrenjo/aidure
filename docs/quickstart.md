@@ -1,6 +1,6 @@
 # 빠른 시작
 
-aikit 은 팀이 같은 규칙으로 AI 에이전트(Claude Code · Codex)와 일하게 해 주는 **작업 공간(워크스페이스)** 을 만든다.
+aidure 은 팀이 같은 규칙으로 AI 에이전트(Claude Code · Codex)와 일하게 해 주는 **작업 공간(워크스페이스)** 을 만든다.
 워크스페이스는 git repo 하나이고, 개발 repo 들은 그 안 `repos/` 에 따로 clone 된다.
 
 ## 1. 준비 (PC 마다 1번)
@@ -9,7 +9,7 @@ aikit 은 팀이 같은 규칙으로 AI 에이전트(Claude Code · Codex)와 �
 |---|---|
 | Node.js 20.19 이상 · git | `node -v` · `git --version` |
 | 에이전트 CLI | 쓰는 AI 에 맞게: Claude 구독·게이트웨이 = Claude Code `npm i -g @anthropic-ai/claude-code`, GPT 구독 = Codex `npm i -g @openai/codex` |
-| aikit | [설치](../README.md#설치-pc-마다-1번) 절을 따른다 (확인 → registry → 로그인 → 설치) |
+| aidure | [설치](../README.md#설치-pc-마다-1번) 절을 따른다 (확인 → registry → 로그인 → 설치) |
 | git 인증 | 회사 GitLab·GitHub 주소로 `git clone` 을 한 번 해 두면 된다 (호스트마다 한 번) |
 
 Claude·GPT 를 모두 구독하거나 AI 게이트웨이를 쓰면 역할마다 두 회사 모델을 섞어 쓸 수 있다 ([AI 연결 방식](team-models.md#ai-연결-방식)).
@@ -34,13 +34,13 @@ Claude·GPT 를 모두 구독하거나 AI 게이트웨이를 쓰면 역할마다
 |---|---|
 | 워크스페이스 repo (예: `order`) | GitLab·GitHub 에 빈 repo 를 만든다 |
 | 코드 repo (예: `order-api` · `order-web`) | 만들지 않아도 된다. init 에서 이름만 입력하면 새로 만든다 |
-| 기획 repo | `aikit init-docs plan` 으로 뼈대(요구사항 · 화면 · 정책 · 용어집 · 결정 기록)를 만들어 push 한다. 나중에 해도 된다 |
+| 기획 repo | `aidure init-docs plan` 으로 뼈대(요구사항 · 화면 · 정책 · 용어집 · 결정 기록)를 만들어 push 한다. 나중에 해도 된다 |
 
 **② 워크스페이스 만들기**
 
 ```bash
 git clone <워크스페이스 repo 주소> && cd order
-aikit init
+aidure init
 ```
 
 | 질문 | 답 |
@@ -59,7 +59,7 @@ aikit init
 git add -A && git commit -m "chore: init workspace" && git push
 # 이름만 입력해 새로 만든 코드 repo 는 원격을 만든 뒤
 git -C repos/order-api remote add origin <order-api 주소> && git -C repos/order-api push -u origin HEAD
-aikit sync      # workspace.json 에 원격 주소를 기록한다 → commit · push
+aidure sync      # workspace.json 에 원격 주소를 기록한다 → commit · push
 ```
 
 팀원은 아래 "4. 팀원: 합류" 대로 한다.
@@ -67,7 +67,7 @@ aikit sync      # workspace.json 에 원격 주소를 기록한다 → commit ·
 **④ 첫 작업**
 
 ```bash
-aikit start
+aidure start
 ```
 
 1. 기획자가 기획 repo 에 요구사항을 쓴다 (`01-requirements`, Word·Excel 원본은 `originals`, md 사본은 `md`).
@@ -87,13 +87,13 @@ aikit start
 | 워크스페이스 repo | GitLab·GitHub 에 빈 repo |
 | 레거시(AS-IS) 소스 | **필수.** git 주소나 이 PC 의 폴더. 에이전트는 읽기만 한다 |
 | TO-BE 코드 repo | init 에서 이름만 입력하면 새로 만든다 |
-| 기획 repo | `aikit init-docs plan` (나중에 해도 된다) |
+| 기획 repo | `aidure init-docs plan` (나중에 해도 된다) |
 
 **② 워크스페이스 만들기**
 
 ```bash
 git clone <워크스페이스 repo 주소> && cd next-order
-aikit init
+aidure init
 ```
 
 | 질문 | 답 |
@@ -163,7 +163,7 @@ aikit init
 | repo | 없으면 |
 |---|---|
 | 워크스페이스 repo | GitLab·GitHub 에 빈 repo |
-| 산출물(문서) repo | `aikit init-docs deliverables` 로 뼈대를 만들어 push (나중에 해도 된다) |
+| 산출물(문서) repo | `aidure init-docs deliverables` 로 뼈대를 만들어 push (나중에 해도 된다) |
 | 현행 시스템 소스 | 있으면 주소나 폴더 (읽기 전용 분석용, 선택) |
 
 코드 repo 는 묻지 않는다. 이 유형은 코드를 고치지 않는다.
@@ -195,7 +195,7 @@ aikit init
 ```bash
 git clone <워크스페이스 repo 주소>
 cd order
-aikit init
+aidure init
 ```
 
 3. 화면에서 차례로 고른다: 프로젝트명 → 시작 유형 → 개발 repo 주소(아직 없으면 이름만 입력하면 새로 만든다) → 기획·이슈 repo → 스택 확인 → 쓰는 AI → 팀 모델 프로필 → 실행 인자 → 워크스페이스 repo 원격 · 커밋·push.
@@ -206,16 +206,16 @@ git add -A && git commit -m "chore: init workspace" && git push
 ```
 
 - 기존 README·LICENSE 는 그대로 두고, `.gitignore` 는 필요한 줄만 덧붙인다.
-- 폴더 없이 상위 폴더에서 `aikit init` 해도 된다 (입력한 이름으로 폴더를 만들고, 원격은 나중에 붙인다).
+- 폴더 없이 상위 폴더에서 `aidure init` 해도 된다 (입력한 이름으로 폴더를 만들고, 원격은 나중에 붙인다).
 
-5. (선택) 팀 명단: `aikit team add 이개발 박개발` → commit · push.
+5. (선택) 팀 명단: `aidure team add 이개발 박개발` → commit · push.
 
 ## 4. 팀원: 합류
 
 ```bash
 git clone <워크스페이스 repo 주소>
 cd order
-aikit install
+aidure install
 ```
 
 - `repos/` 에 개발 repo 들이 자동으로 clone 된다. 권한 없는 repo 는 "인증 필요" 로 알려 준다.
@@ -224,7 +224,7 @@ aikit install
 ## 5. 일상 사용
 
 ```bash
-aikit start            # 정한 에이전트로 시작 (이번만 바꾸려면 --claude · --codex)
+aidure start            # 정한 에이전트로 시작 (이번만 바꾸려면 --claude · --codex)
 ```
 
 | 할 일 | 에이전트에게 말하기 | 터미널 |
@@ -232,17 +232,17 @@ aikit start            # 정한 에이전트로 시작 (이번만 바꾸려면 -
 | 어제 하던 일 이어서 | "재개" | |
 | 일 시키기 | "주문 목록에 페이지네이션 추가해줘" (큰 일은 역할을 나눈 계획을 먼저 보여 준다) | |
 | 하루 마무리 | "핸드오프" (한 일 · 미완 작업을 팀에 공유. 개인 할 일은 "TODO 에 넣어줘") | |
-| 팀이 어디까지 했나 | "팀 현황" | `aikit team` |
-| 다른 사람 일 이어받기 | "인수인계 이개발" | `aikit team 이개발` |
-| 모델 바꾸기 | "리뷰는 GPT 로 바꿔줘" | `aikit models` |
-| 구독·게이트웨이 바꾸기 | "이제 GPT 만 써" | `aikit ai` |
-| 무언가 이상할 때 | "진단" | `aikit doctor` |
+| 팀이 어디까지 했나 | "팀 현황" | `aidure team` |
+| 다른 사람 일 이어받기 | "인수인계 이개발" | `aidure team 이개발` |
+| 모델 바꾸기 | "리뷰는 GPT 로 바꿔줘" | `aidure models` |
+| 구독·게이트웨이 바꾸기 | "이제 GPT 만 써" | `aidure ai` |
+| 무언가 이상할 때 | "진단" | `aidure doctor` |
 
 ## 6. 처음 한 번 확인
 
 - **Claude Code**: 처음 실행할 때 이 폴더를 신뢰하겠냐고 물으면 수락한다 (그래야 규칙·훅이 적용된다).
 - **Codex**: 처음 실행할 때 이 프로젝트를 trusted 로 지정하고, `/hooks` 에서 훅을 신뢰한다.
-- 킷이 새 버전이면 `aikit start` 가 알려 준다. 리더가 `aikit upgrade` → commit · push 하면 팀원은 `git pull` 로 받는다.
+- 킷이 새 버전이면 `aidure start` 가 알려 준다. 리더가 `aidure upgrade` → commit · push 하면 팀원은 `git pull` 로 받는다.
 
 ## 관련 문서
 

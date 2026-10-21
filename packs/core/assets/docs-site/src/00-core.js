@@ -1,4 +1,4 @@
-/* 문서 사이트 앱 (aikit docs build · aikit board · 킷 가이드 공통). 생성기가 src/*.js 를 이름 순으로 이어 assets/site.js 하나로 만든다.
+/* 문서 사이트 앱 (aidure docs build · aidure board · 킷 가이드 공통). 생성기가 src/*.js 를 이름 순으로 이어 assets/site.js 하나로 만든다.
    화면은 Preact + htm (assets/vendor.js, 빌드 없음). 쪽마다 본문 HTML(.ds-body)과 쪽 정보(script#ds-page)가 있고,
    앱이 그 둘로 화면 전체를 그린다. 다른 쪽으로 갈 때는 그 쪽 파일을 읽어 둘만 꺼내 바꾼다 (새로고침 없음, file:// 에서는 새로 연다).
    여기: 이름공간 DS · 공통 도구 (주소 · 저장 · 이스케이프 · 알림) */
@@ -49,7 +49,7 @@
       var v = ((window.DS_NAV || {}).v || {})[p];
       s.src = DS.url(p) + (v ? "?v=" + v : "");   /* 다시 만든 파일은 주소가 바뀐다 (옛 캐시를 쓰지 않게) */
       s.onload = function () { ok(); };
-      s.onerror = function () { delete scripts[p]; no(new Error(p + " 가 없습니다 (aikit docs build 로 다시 만든다)")); };
+      s.onerror = function () { delete scripts[p]; no(new Error(p + " 가 없습니다 (aidure docs build 로 다시 만든다)")); };
       document.head.appendChild(s);
     });
     return scripts[p];

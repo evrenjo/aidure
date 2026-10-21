@@ -8,7 +8,7 @@
  *   codex : codex exec --sandbox read-only [-m <m>] [-c model_reasoning_effort=<e>] -o <tmp> -      (프롬프트는 stdin)
  *   claude: claude -p --permission-mode plan --tools Read,Grep,Glob --allowedTools Read,Grep,Glob [--model <m>] [--effort <e>]  (프롬프트는 stdin)
  * --to auto(기본): 호출한 쪽과 다른 벤더. Claude Code 세션은 CLAUDECODE=1, Codex 는 CODEX_* 환경변수로 추정한다.
- * 모델 기본값: 프로필·팀·개인 설정을 합친 교차 검토 모델·추론 강도 (bin/kit.js resolveModels — aikit models 에 보이는 값). 없으면 CLI 기본값.
+ * 모델 기본값: 프로필·팀·개인 설정을 합친 교차 검토 모델·추론 강도 (bin/kit.js resolveModels — aidure models 에 보이는 값). 없으면 CLI 기본값.
  * 비용: 상대 CLI 가 사용자 본인의 구독·API 로 돈다.
  */
 'use strict';
@@ -159,7 +159,7 @@ function run(cmd, args, input, cwd) {
   });
 }
 
-/** aikit models 와 같은 계산 — 워크스페이스의 bin/kit.js 가 없으면(옛 워크스페이스) workspace.json 값만. 반환 { model, effort } */
+/** aidure models 와 같은 계산 — 워크스페이스의 bin/kit.js 가 없으면(옛 워크스페이스) workspace.json 값만. 반환 { model, effort } */
 function crossReviewModel(ws, vendor) {
   if (!ws) return {};
   let cr;
@@ -168,7 +168,7 @@ function crossReviewModel(ws, vendor) {
     const { resolveModels } = require(path.join(ws.root, 'bin', 'kit.js'));
     const m = resolveModels(ws.root, ws);
     cr = (m.run || m.effective).crossReview || {};
-    // 이 PC 설정(aikit ai)이 그 회사 모델을 쓰지 않거나 섞지 않으면 막는다
+    // 이 PC 설정(aidure ai)이 그 회사 모델을 쓰지 않거나 섞지 않으면 막는다
     if (m.access && (!m.access.vendors.includes(vendor) || m.access.compose !== 'mix')) blocked = true;
   } catch { cr = ws?.agents?.crossReview || {}; }
   const e = cr.effort; // 문자열 = 두 도구 공통, 객체 = 도구별
@@ -184,7 +184,7 @@ async function main() {
   const { vendor, why } = pickVendor(o.to);
   if (!vendor) { console.error(`교차 리뷰를 맡길 CLI 가 없습니다 (${why}). codex 또는 claude 를 설치하세요.`); process.exit(1); }
   const conf = crossReviewModel(ws, vendor);
-  if (conf.blocked && o.to === 'auto') { console.error(`이 PC 설정(aikit ai)은 ${vendor === 'codex' ? 'GPT' : 'Claude'} 모델을 쓰지 않습니다. 교차 리뷰 대신 같은 회사 모델의 reviewer 로 검토하세요 (쓰려면 aikit ai 로 바꾸거나 --to ${vendor})`); process.exit(3); }
+  if (conf.blocked && o.to === 'auto') { console.error(`이 PC 설정(aidure ai)은 ${vendor === 'codex' ? 'GPT' : 'Claude'} 모델을 쓰지 않습니다. 교차 리뷰 대신 같은 회사 모델의 reviewer 로 검토하세요 (쓰려면 aidure ai 로 바꾸거나 --to ${vendor})`); process.exit(3); }
   const model = o.model || conf.model || null;
   const effort = o.effort || conf.effort || null;
 
