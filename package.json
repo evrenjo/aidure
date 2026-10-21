@@ -1,12 +1,12 @@
 {
   "name": "aidure",
-  "version": "0.70.0",
+  "version": "0.70.1",
   "private": false,
   "description": "Claude Code · Codex 겸용 AI 협업 워크스페이스 킷",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lsnwan/aidure.git"
+    "url": "git+https://github.com/evrenjo/aidure.git"
   },
   "bin": {
     "aidure": "bin/aidure.js"
@@ -49,8 +49,8 @@
     "esbuild": "^0.28.2",
     "playwright-core": "^1.63.0"
   },
-  "homepage": "https://lsnwan.github.io/aidure/",
+  "homepage": "https://evrenjo.github.io/aidure/",
   "bugs": {
-    "url": "https://github.com/lsnwan/aidure/issues"
+    "url": "https://github.com/evrenjo/aidure/issues"
   }
 }

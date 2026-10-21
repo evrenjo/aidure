@@ -29,6 +29,6 @@ Claude Code(`npm i -g @anthropic-ai/claude-code`) 나 Codex(`npm i -g @openai/co
 
 ## 더 보기
 
-- 문서 · 화면: https://github.com/lsnwan/aidure
+- 문서 · 화면: https://github.com/evrenjo/aidure
 - 변경 기록: 패키지 안 `CHANGELOG.md`
 - 라이선스: MIT
