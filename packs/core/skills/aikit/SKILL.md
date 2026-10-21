@@ -67,6 +67,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 팀 방 알림 · 공지 | `aikit notify team setup` (팀 봇 토큰은 사용자가 터미널에서 숨김 입력) · `aikit notify team chat <그룹방 ID\|off>` · `aikit notify team announce "<내용>"` | 이 PC · `chat` 은 팀 |
 | 지난 작업 기록 찾기 | `aikit handoff find <티켓·기능 이름>` | 보기 |
 | 문서 사이트 만들기 · 어긋남 검사 | `aikit docs build [기획 repo]` · `aikit docs check [기획 repo]` (md · 화면설계서 장 → `docs-site/` · 근거 색인). Pages 를 켠 repo 는 `docs-site/` 를 커밋한다 | 기획 repo |
+| 워크스페이스 전체 문서 사이트 (여러 repo 산출물을 한 사이트로) | 워크스페이스 루트에서 `aikit docs build .` (`repos/` 의 repo 마다 사본 · 링크 · 뺌은 루트 `docs-site.json` 의 `repos`) | 팀 (`docs-site/` 를 커밋할지는 팀이 정한다) |
 | 문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태 | `aikit docs pages on [repo]` · `aikit docs pages off [repo]` · `aikit docs pages` (on = 원격에 맞는 CI 파일 · `docs-site/` 커밋, off = `.gitignore` 에 `/docs-site/`) | 기획 repo |
 | Codex 웹 검색 끄기 · 켜기 | `workspace.json` 의 `agents.webSearch` 를 `false` 로 (지우면 켬. `aikit start` 가 Codex 에 `--search` 를 붙인다) | 팀 |
 | 워크스페이스 현황판 | `aikit board` (로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽을 `.agents/board/` 에 만들어 브라우저로 연다. 보기 전용) | 이 PC |

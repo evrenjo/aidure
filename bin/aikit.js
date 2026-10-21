@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * aikit — 협업 AI 워크스페이스 명령 (전역 설치: npm i -g aidure)
+ * aikit — AI 협업 워크스페이스 명령 (전역 설치: npm i -g aidure)
  *
  *   aikit init [프로젝트명]    선택 화면으로 새 워크스페이스를 만든다 (clone 한 repo 안이면 그 자리에, 아니면 ./<이름> 에)
  *   aikit init-docs [폴더]     기획자 repo 뼈대를 만든다

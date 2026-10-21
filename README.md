@@ -1,4 +1,4 @@
-# aidure 협업 AI 워크스페이스 킷
+# aidure AI 협업 워크스페이스 킷
 
 **AI 에이전트로 팀 개발할 때, 모두가 같은 규칙으로 일하고 누구든 이어받게 해 주는 협업 워크스페이스 킷**
 
@@ -68,11 +68,26 @@ GitLab · GitHub 그룹
 └─ order-web   ← 개발 repo
 
 각자 PC 의 order/ (워크스페이스를 clone)
+├─ workspace.json          ← 팀 설정 원본: repo 목록 · 팩 · 유형 · 모델
 ├─ AGENTS.md · CLAUDE.md   ← 두 도구가 읽는 같은 규칙 (자동 생성)
+├─ bin/kit.js · packs/     ← 생성 엔진 · 규칙 · 스킬 · 훅 사본 (aikit upgrade 가 갱신)
 ├─ handoffs/<이름>/        ← 내 작업 기록, push 로 팀 공유
 ├─ handoffs/PLAN.md        ← 로드맵 (팀 공용)
-└─ repos/                  ← 개발 repo 들 (aikit install 이 clone, 이력은 원래 repo 로)
+├─ docs-site/              ← (선택) 워크스페이스 문서 사이트 (아래 표)
+└─ repos/                  ← 각자 aikit install 로 받는다 (git 제외, 이력은 원래 repo 로)
+   ├─ order-api            ← clone
+   ├─ order-plans          ← 기획 repo: clone 또는 로컬 폴더 링크
+   └─ order-batch          ← 새로 만든 repo (git init, 원격 없음)
 ```
+
+문서 사이트는 채팅으로 말하면 에이전트가 `aikit docs` 명령으로 만든다.
+
+| 이럴 때 | 이렇게 말한다 | 하는 일 |
+|---|---|---|
+| 기획 문서 · 화면설계서 · ERD 를 볼 때 (모든 유형) | "문서 사이트 만들어줘" | `aikit docs build`: 기획 repo 의 `docs-site/` |
+| 여러 repo 의 산출물을 한 사이트로 (분석·설계 · repo 가 많은 프로젝트) | "워크스페이스 문서 사이트 만들어줘" | `aikit docs build .`: 워크스페이스 `docs-site/`. repo 마다 사본 · 링크 · 뺌은 `docs-site.json` |
+| 내 PC 에서 바로 볼 때 | "문서 사이트 열어줘" | `aikit docs serve --open` |
+| 팀이 주소로 볼 때 | "문서 사이트 Pages 로 올려줘" | `aikit docs pages on`: GitLab · GitHub Pages |
 
 ### 하루의 협업 모습
 

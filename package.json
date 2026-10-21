@@ -1,6 +1,6 @@
 {
   "name": "aidure",
-  "version": "0.69.1",
+  "version": "0.69.2",
   "private": false,
   "description": "Claude Code · Codex 겸용 협업 워크스페이스 프레임워크",
   "license": "MIT",
