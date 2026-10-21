@@ -1,11 +1,11 @@
-# 공개판 CI: push · PR 마다 test. v* 태그면 npm 발행 (신뢰 게시: 토큰 없이 OIDC, npmjs.com 패키지 설정에 이 저장소 · ci.yml 등록). main push 면 문서 사이트(GitHub Pages)
-# 공급망: 액션은 태그가 아니라 커밋 SHA 로 고정한다 (태그 바꿔치기 대비, 뒤 주석이 그 버전). 의존 설치는 --ignore-scripts (설치 스크립트가 토큰을 훔치는 웜 대비)
-# 올릴 때: gh api repos/actions/<이름>/git/ref/tags/<태그> 로 SHA 를 확인해 SHA 와 주석을 같이 바꾼다
+# 공개판 CI
+#   main push · PR: test
+#   deploy push (main 을 deploy 에 머지 = 배포): test + 검사(비밀값 · 금지 낱말 · 패키지 파일 · 의존 취약점)
+#     → 통과하면 npm 발행(신뢰 게시: 토큰 없이 OIDC, 이미 있는 버전이면 건너뜀) · v<버전> 태그 · 문서 사이트(GitHub Pages, 저장소 변수 PAGES=on)
 name: ci
 on:
   push:
-    branches: [main]
-    tags: ['v*']
+    branches: [main, deploy]
   pull_request:
 permissions:
   contents: read
@@ -23,13 +23,59 @@ jobs:
       - run: npm test
         env:
           AIDURE_NO_UPDATE_CHECK: '1'
+  guard:
+    # 배포 전 검사: 하나라도 걸리면 발행 · 사이트를 하지 않는다
+    if: github.ref == 'refs/heads/deploy' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: 비밀값 (gitleaks 8.30.1, 체크섬 대조)
+        run: |
+          curl -sSfL -o gl.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gl.tgz" | sha256sum -c -
+          tar -xzf gl.tgz gitleaks && rm gl.tgz
+          ./gitleaks dir . --no-banner --redact --exit-code 1
+          rm gitleaks
+      - name: 금지 낱말 · 개인정보 (목록은 저장소 비밀값 PRIVATE_WORDS, 한 줄에 하나)
+        env:
+          PRIVATE_WORDS: ${{ secrets.PRIVATE_WORDS }}
+        run: |
+          node -e '
+            const fs = require("fs"), cp = require("child_process");
+            const words = (process.env.PRIVATE_WORDS || "").split(/\r?\n/).map((w) => w.trim().toLowerCase()).filter(Boolean);
+            if (!words.length) { console.error("✖ 저장소 비밀값 PRIVATE_WORDS 가 없습니다"); process.exit(1); }
+            const files = cp.execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(Boolean);
+            const hits = files.filter((f) => { try { const t = fs.readFileSync(f, "utf8").toLowerCase(); return words.some((w) => t.includes(w)); } catch { return false; } });
+            if (hits.length) { console.error("✖ 금지 낱말이 든 파일 (낱말은 찍지 않음):\n  " + hits.join("\n  ")); process.exit(1); }
+            console.log("✔ 금지 낱말 0건 (" + words.length + "개 낱말 · " + files.length + "개 파일)");
+          '
+      - run: npm ci --ignore-scripts
+      - name: 의존 취약점 (배포되는 의존만, 높음 이상)
+        run: npm audit --omit=dev --audit-level=high
+      - name: 패키지에 들어갈 파일 (비밀값 · 설정 파일이 끼지 않게)
+        run: |
+          npm pack --dry-run --json --ignore-scripts > pack.json
+          node -e '
+            const files = JSON.parse(require("fs").readFileSync("pack.json", "utf8"))[0].files.map((f) => f.path);
+            const bad = files.filter((f) => /(^|\/)(\.env[^/]*|\.npmrc|\.netrc|id_[a-z0-9]+|[^/]*\.(pem|key|p12|pfx|crt|keystore|jks)|credentials[^/]*|secrets?\.json)$/i.test(f));
+            if (bad.length) { console.error("✖ 패키지에 들어가면 안 되는 파일:\n  " + bad.join("\n  ")); process.exit(1); }
+            console.log("✔ 패키지 파일 " + files.length + "개, 걸린 것 없음");
+          '
   publish:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: test
+    if: github.ref == 'refs/heads/deploy' && github.event_name == 'push'
+    needs: [test, guard]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      published: ${{ steps.ver.outputs.published }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -38,14 +84,36 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      - run: npm install -g --ignore-scripts npm@11.21.0   # 신뢰 게시(OIDC)는 npm 11.5.1 이상. 범위가 아닌 정확한 버전으로
+      - name: 이미 있는 버전인가
+        id: ver
+        run: |
+          V=$(node -p 'require("./package.json").version')
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if npm view "aidure@$V" version >/dev/null 2>&1; then echo "published=yes" >> "$GITHUB_OUTPUT"; echo "aidure@$V 은 이미 있어 발행을 건너뜁니다"; else echo "published=no" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.ver.outputs.published == 'no'
+        run: npm install -g --ignore-scripts npm@11.21.0   # 신뢰 게시(OIDC)는 npm 11.5.1 이상. 범위가 아닌 정확한 버전으로
       # 발행에는 의존 설치가 필요 없다 (빌드 단계 없음). OIDC 토큰을 받을 수 있는 이 작업에서는 남의 설치 스크립트를 돌리지 않는다
-      - run: cp npm-readme.md README.md   # npm 쪽 소개는 짧은 판 (설치 · 빠른 시작 · 링크). GitHub README 는 그대로
-      - run: npm publish --access public   # 신뢰 게시면 출처 증명(provenance)도 자동
+      - if: steps.ver.outputs.published == 'no'
+        run: cp npm-readme.md README.md   # npm 쪽 소개는 짧은 판 (설치 · 빠른 시작 · 링크). GitHub README 는 그대로
+      - if: steps.ver.outputs.published == 'no'
+        run: npm publish --access public   # 신뢰 게시면 출처 증명(provenance)도 자동
+  tag:
+    # 발행한 버전에 v<버전> 태그 (태그 쓰기 권한은 이 작업에만)
+    needs: publish
+    if: needs.publish.outputs.published == 'no'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - run: |
+          V="v${{ needs.publish.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$V" >/dev/null; then echo "$V 태그가 이미 있습니다"; exit 0; fi
+          git tag "$V" && git push origin "$V"
   pages:
-    # 문서 사이트는 main push 때 (github-pages 환경이 main 만 허용). Pages 를 켠 저장소에서만 (Settings > Pages = GitHub Actions 뒤 저장소 변수 PAGES=on)
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.PAGES == 'on'
-    needs: test
+    # 문서 사이트. Pages 를 켠 저장소에서만 (Settings > Pages = GitHub Actions 뒤 저장소 변수 PAGES=on)
+    if: github.ref == 'refs/heads/deploy' && github.event_name == 'push' && vars.PAGES == 'on'
+    needs: [test, guard]
     runs-on: ubuntu-latest
     permissions:
       contents: read

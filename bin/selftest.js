@@ -25,6 +25,8 @@ const KIT = path.resolve(__dirname, '..');
 }
 // 알림 격리: 테스트가 띄우는 훅 · 도구가 이 PC 의 실제 텔레그램 봇(~/.config/aidure/telegram.env)으로 보내지 않게 한다.
 // 빈 설정 폴더 · 봇 변수 지우기 · 텔레그램 주소를 닫힌 로컬 포트로 (실수로 보내도 밖으로 나가지 않는다)
+// 금지 낱말 목록은 이 PC 의 실제 설정 폴더에서 읽는다 (아래에서 설정 폴더를 임시 폴더로 바꾸기 전에 기억)
+const REAL_CONFIG_DIR = process.env.AIDURE_CONFIG_DIR || path.join(require('os').homedir(), '.config', 'aidure');
 const notifyHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'aidure-selftest-config-'));
 process.env.AIDURE_CONFIG_DIR = notifyHome;
 delete process.env.CLAUDE_CODE_BRIDGE_SESSION_ID; delete process.env.AIDURE_CHANNEL; delete process.env.AIDURE_DELEGATED; process.env.AIDURE_REMOTE_CONTROL = '0'; // 리모트 컨트롤 세션에서 돌려도 같게 (세션 파일을 읽지 않는다)
@@ -242,15 +244,18 @@ for (const c of cases) {
 
 // 3. 금지 문자열
 // 목록은 repo 에 두지 않는다 (목록 자체가 숨길 이름을 드러낸다): 환경변수 AIDURE_BANNED(a|b) 또는 이 PC 의 ~/.config/aidure/banned.txt (한 줄에 하나)
-const bannedSrc = process.env.AIDURE_BANNED || (() => { try { return fs.readFileSync(path.join(process.env.AIDURE_CONFIG_DIR || path.join(os.homedir(), '.config', 'aidure'), 'banned.txt'), 'utf8'); } catch { return ''; } })();
-const banned = bannedSrc.split(/[|\r\n]+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+const bannedSrc = process.env.AIDURE_BANNED || (() => { try { return fs.readFileSync(path.join(REAL_CONFIG_DIR, 'banned.txt'), 'utf8'); } catch { return ''; } })();
+// + repo 안의 banned.local.txt (git 제외, 직접 적는 목록). # 으로 시작하는 줄은 주석
+const localBanned = (() => { try { return fs.readFileSync(path.join(KIT, 'banned.local.txt'), 'utf8'); } catch { return ''; } })();
+const banned = [...new Set(`${bannedSrc}\n${localBanned}`.split(/[|\r\n]+/).map((x) => x.trim().toLowerCase()).filter((x) => x && !x.startsWith('#')))];
 const textFiles = walk(KIT, (p) => /\.(md|js|py|json|sh|toml)$/.test(p) && !p.includes(`${path.sep}bin${path.sep}selftest.js`) && !p.endsWith('package-lock.json'));
 const hits = [];
 for (const f of textFiles) {
   const lines = fs.readFileSync(f, 'utf8').split('\n');
   lines.forEach((l, i) => {
     const low = l.toLowerCase();
-    for (const b of banned) if (new RegExp(`\\b${b}\\b`).test(low)) hits.push(`${path.relative(KIT, f)}:${i + 1} (${b})`);
+    // 영문 낱말은 단어 경계로, 한글 낱말은 조사가 붙으므로 들어 있기만 하면 (\\b 는 한글을 단어 글자로 보지 않는다)
+    for (const b of banned) if (/^[\x00-\x7f]+$/.test(b) ? new RegExp(`\\b${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(low) : low.includes(b)) hits.push(`${path.relative(KIT, f)}:${i + 1} (${b})`);
   });
 }
 record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ? hits.slice(0, 5).join(', ') : banned.length ? `${banned.length}개 낱말` : '목록 없음 (AIDURE_BANNED · ~/.config/aidure/banned.txt)');
@@ -712,7 +717,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   // aidure ai — 화면 없이. 조회가 실패해도 저장하고, 키 값은 어디에도 없다
   const dir = path.join(tmp, 'ai-ws');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new'], tmp);
-  const secret = 'aidure-selftest-secret-7f3a';
+  const secret = 'aidure-selftest-secret-7f3a'; // gitleaks:allow (시험용 가짜 값)
   const aidure = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { cwd: dir, encoding: 'utf8', input: '', env: { ...process.env, AIDURE_HOME: path.join(tmp, 'ai-home'), SELFTEST_GW_KEY: secret } });
   const d1 = aidure('ai', 'direct', 'claude').status === 0;
   const local1 = JSON.parse(fs.readFileSync(path.join(dir, '.agents', 'local.json'), 'utf8'));

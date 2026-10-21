@@ -11,3 +11,5 @@ __pycache__/
 .env.*
 *.pem
 *.key
+# 내가 따로 검사할 낱말 (한 줄에 하나, # 은 주석). git 에 올라가지 않는다. npm test · 공개판 내보내기가 ~/.config/aidure/banned.txt 와 함께 읽는다
+banned.local.txt
