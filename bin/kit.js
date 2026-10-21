@@ -723,6 +723,15 @@ function hookGroups(hooks, agent) {
   return out;
 }
 
+/** 승인 없이 쓰는 읽기 전용 명령 (Claude Code 권한 규칙). 파이프 · && 로 이어도 명령마다 따로 본다 */
+const READONLY_ALLOW = [
+  'Bash(git log:*)', 'Bash(git show:*)', 'Bash(git diff:*)', 'Bash(git status:*)', 'Bash(git blame:*)', 'Bash(git grep:*)', 'Bash(git ls-files:*)', 'Bash(git rev-parse:*)',
+  'Bash(ls:*)', 'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(tree:*)', 'Bash(pwd)',
+  'Bash(aikit docs show:*)', 'Bash(aikit docs refs:*)', 'Bash(aikit docs trace:*)',
+  'Bash(node packs/core/bin/docs-site.js show:*)', 'Bash(node packs/core/bin/docs-site.js refs:*)', 'Bash(node packs/core/bin/docs-site.js trace:*)',
+  'Bash(node packs/core/bin/handoff.js find:*)',
+];
+
 function deepMerge(a, b) {
   if (Array.isArray(a) && Array.isArray(b)) return [...a, ...b];
   if (a && b && typeof a === 'object' && typeof b === 'object') {
@@ -830,7 +839,9 @@ function generate(root) {
   // repo 는 워크스페이스 밖 폴더를 심볼릭으로 건 것이라 Claude Code 는 허용 경로에 넣어야 읽는다
   const base = { hooks: hookGroups(hooks, 'claude') };
   const linked = ws.repos.filter((r) => !r.remote && r.path);
-  if (linked.length) base.permissions = { additionalDirectories: linked.map((r) => r.path) };
+  // 읽기 · 조회만 하는 명령은 미리 허용한다: 팀원(분석 · 설계 등) 창에 승인 질문이 떠 리더 모르게 멈추지 않게. 쓰기 · 지우기를 할 수 있는 명령(find -delete · sed -i · git branch 등)은 넣지 않는다.
+  // 더 넣을 것은 workspace.json claude.settings.permissions.allow (팀) · .claude/settings.local.json (개인)
+  base.permissions = { allow: READONLY_ALLOW, ...(linked.length ? { additionalDirectories: linked.map((r) => r.path) } : {}) };
   const { team, teamLimits } = resolveModels(root, ws);
   team.limits = teamLimits;
   if (team.main && team.main.claude) base.model = team.main.claude; // 팀 기본 메인 모델 — 개인은 aikit agent (start 때 --model)
@@ -1578,7 +1589,10 @@ function cmdSync(root, { quiet, soft } = {}) {
 
   const hookSkipped = installCommitMsgHooks(root, ws);
   if (hookSkipped.length) warnings.push(`AI 서명 제거 훅을 넣지 못한 repo: ${hookSkipped.join(', ')}. 그 훅에서 node packs/core/bin/strip-ai-trailers.js "$1" 을 부르게 하세요`);
-  const docsSkipped = installDocsHooks(root, ws);
+  const docsAll = installDocsHooks(root, ws);
+  const docsLinked = docsAll.filter((x) => x.startsWith('링크:')).map((x) => x.slice(3));
+  const docsSkipped = docsAll.filter((x) => !x.startsWith('링크:'));
+  if (docsLinked.length) warnings.push(`다른 워크스페이스에서 링크로 빌려 온 기획 repo: ${docsLinked.join(', ')}. 커밋 훅은 그 워크스페이스 것을 두고, 문서 사이트(aikit docs build)도 그 워크스페이스에서 만든다 (킷 버전이 다르면 결과가 달라 커밋이 막힌다)`);
   if (docsSkipped.length) warnings.push(`문서 사이트 검사 훅을 넣지 못한 기획 repo: ${docsSkipped.join(', ')}. 그 repo 의 pre-commit 에서 node packs/core/bin/docs-site.js hook <repo 폴더> 를 부르게 하세요`);
   // 위임 역할은 상대 CLI 가 이 PC 에 있을 때만 — 없으면 fallback 모델로 대신하고 알린다
   let cliFor = () => true;
@@ -1785,6 +1799,10 @@ function installDocsHooks(root, ws) {
   for (const r of ws.repos.filter((x) => x.kind === 'docs')) {
     const dir = path.join(root, r.dir);
     if (!isDir(dir)) continue;
+    // 다른 워크스페이스의 repo 를 링크로 빌려 쓰면(이어 만들기 등) 훅은 그 주인 워크스페이스 것을 둔다. 덮으면 마지막에 sync 한 쪽 킷으로 바뀌어 주인 쪽 커밋이 막힌다
+    let linked = false;
+    try { linked = fs.lstatSync(dir).isSymbolicLink() || !fs.realpathSync(dir).startsWith(fs.realpathSync(root) + path.sep); } catch { /* 그대로 */ }
+    if (linked) { if (['docs-site', 'html'].some((o) => exists(path.join(dir, o, 'assets', 'site.json')))) skipped.push(`링크:${r.name}`); continue; }
     const git = (...a) => { try { return execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } };
     if (git('rev-parse', '--show-toplevel') === null) continue;
     const uses = ['docs-site', 'html'].some((o) => exists(path.join(dir, o, 'assets', 'site.json')));
@@ -1897,7 +1915,8 @@ function cmdInstall(root, opts = {}) {
   const icon = { ok: '✓', cloned: '⬇', linked: '↪', created: '✚', pending: '…', fail: '✖' };
   // 한 repo 씩 끝나는 대로 찍는다 (clone 이 길어도 어디까지 왔는지 보이게). opts.out 이 있으면 그쪽으로 (aikit init 은 다른 출력을 모아 두므로)
   const out = opts.out || ((l) => console.log(l));
-  installRepos(root, ws, { createLocal: opts.createLocal, onResult: (x, i, n) => out(`  ${icon[x.state]} ${n > 1 ? `(${i}/${n}) ` : ''}${x.name.padEnd(14)} ${x.note}`) });
+  const got = installRepos(root, ws, { createLocal: opts.createLocal, onResult: (x, i, n) => out(`  ${icon[x.state]} ${n > 1 ? `(${i}/${n}) ` : ''}${x.name.padEnd(14)} ${x.note}`) });
+  if (opts.results) opts.results.push(...got); // aikit init 이 끝 화면에 repo 별 상태를 다시 보인다
   if (opts.detect !== false) {
     const catalog = loadCatalog(root);
     for (const d of detectRepos(root)) console.log(`  ◎ ${d.name.padEnd(14)} 스택 감지: ${detectLine(catalog, d)}`);
@@ -2028,8 +2047,9 @@ function initWorkspace(opts) {
   if (!isDir(path.join(dst, '.git'))) {
     try { execFileSync('git', ['init', '-q', dst]); } catch { console.warn('⚠ git init 실패: 직접 해주세요'); }
   }
-  const ok = cmdInstall(dst, { soft: true, createLocal: true, out: opts.out });
-  return { dir: dst, ok, type, approach: ws.project.approach, packs: ws.packs };
+  const repoResults = [];
+  const ok = cmdInstall(dst, { soft: true, createLocal: true, out: opts.out, results: repoResults });
+  return { dir: dst, ok, type, approach: ws.project.approach, packs: ws.packs, repos: repoResults };
 }
 
 function cmdInit(args) {

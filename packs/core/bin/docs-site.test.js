@@ -147,4 +147,23 @@ assert.match(fs.readFileSync(path.join(g, 'refs.md'), 'utf8'), /\(a\.js:3\)/);
 assert.match(rq('refs.md').stdout, /✔ refs\.md: 근거 1곳을 인용구로 옮김/);
 assert.strictEqual(fs.readFileSync(path.join(g, 'refs.md'), 'utf8'), '# 근거\n\n바로 저장한다.\n\n> 근거: a.js:3\n');
 fs.rmSync(g, { recursive: true, force: true });
+// 옮겨진 문서: 옛 주소에 새 주소로 넘기는 쪽, 다음 build · check 도 같다
+{
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'aikit-moved-'));
+  fs.mkdirSync(path.join(d, 'AS-IS'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'README.md'), '# 기획\n');
+  fs.writeFileSync(path.join(d, 'AS-IS', '30-sidecar.md'), '# 사이드카\n');
+  const run = (...a) => spawnSync(process.execPath, [path.join(__dirname, 'docs-site.js'), ...a], { encoding: 'utf8' });
+  assert.strictEqual(run('build', d, '--no-source').status, 0);
+  fs.mkdirSync(path.join(d, '2-구조'));
+  fs.renameSync(path.join(d, 'AS-IS', '30-sidecar.md'), path.join(d, '2-구조', '30-sidecar.md'));
+  fs.rmdirSync(path.join(d, 'AS-IS'));
+  const r = run('build', d, '--no-source');
+  assert.match(r.stdout, /옮겨진 문서 안내 1/);
+  const stub = fs.readFileSync(path.join(d, 'docs-site', 'AS-IS', '30-sidecar.html'), 'utf8');
+  assert.match(stub, /location\.replace\("\.\.\/2-구조\/30-sidecar\.html" \+ location\.hash\)/, '옛 주소 → 새 주소');
+  assert.strictEqual(run('check', d).status, 0, '다음 check 도 같은 안내 쪽');
+  assert.strictEqual(run('build', d, '--no-source').status, 0);
+  assert.ok(fs.existsSync(path.join(d, 'docs-site', 'AS-IS', '30-sidecar.html')), '다음 build 에도 남는다');
+}
 console.log('docs-site.test.js ✔');

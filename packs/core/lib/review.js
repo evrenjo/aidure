@@ -148,7 +148,7 @@ function markWarned(ROOT, repoName, tree) { const d = read(ROOT); d.warned[repoN
 
 /** 리뷰 전 검사: 지시서에 「검사: <명령> 통과」(검사가 없는 변경은 「검사: 없음 (사유)」) 줄이 있나 */
 const hasCheckLine = (text) => /^[\s>*-]*\**검사\**\s*[:：]\s*\S/m.test(String(text || ''));
-const CHECK_MESSAGE = '리뷰를 맡기기 전에 이 변경에 해당하는 검사(빌드 · 테스트 · 회귀 검사)를 돌려 통과시키고, 지시서에 「검사: <명령> 통과」 줄을 넣습니다. 리뷰어가 회귀를 머리로 판정하지 않게 하려는 것입니다. 순서: 구현 → 해당 검사 → 리뷰 → 수정 → 해당 검사. 검사가 없는 변경(문서 등)이면 「검사: 없음 (사유)」. 수준 바꾸기: aikit team-mode enforce check off|warn|block';
+const CHECK_MESSAGE = '지시서에 검사 줄이 없습니다. 둘 중 하나를 넣습니다: 「검사: <명령> 통과」(빌드 · 테스트 · 회귀 검사를 돌려 통과시킨 뒤) 또는 「검사: 없음 (사유)」(문서만 바꾼 변경 등 검사할 것이 없을 때). 리뷰어가 회귀를 머리로 판정하지 않게 하려는 것입니다. 순서: 구현 → 해당 검사 → 리뷰 → 수정 → 해당 검사. 수준 바꾸기: aikit team-mode enforce check off|warn|block';
 /** 수준 (off | warn | block, 기본 block) */
 function checkLevel(ROOT) {
   try { const kit = require(path.join(ROOT, 'bin', 'kit.js')); return (kit.resolveModels(ROOT, kit.loadWorkspace(ROOT)).enforce || {}).checkBeforeReview || 'block'; } catch { return 'block'; }

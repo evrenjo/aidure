@@ -72,7 +72,15 @@ try {
     const desc = a.connection === 'gateway'
       ? `AI 게이트웨이 ${(a.gateway && a.gateway.url) || '(주소 없음)'} · 모델 ${((a.gateway && a.gateway.models) || []).length}개${a.gateway && a.gateway.checked ? ` (${a.gateway.checked} 조회)` : ''}`
       : `AI 서비스 직접 (${a.vendors.map((v) => name[v]).join(' · ')})`;
-    add(a.set ? OK : WARN, 'AI 연결 방식', `${desc} · 역할 상한 동시 ${m.limits.parallel} · 모두 ${m.limits.total}`, 'aikit ai 로 정한다 (정하지 않으면 두 회사 직접 연결로 본다)');
+    // 정하지 않았는데 Claude Code 가 게이트웨이로 이어져 있으면 (셸 환경변수 · ~/.claude/settings.json) 그 주소로 맞추라고 알린다
+    let seen = '';
+    if (!a.set) {
+      let env = {};
+      try { env = JSON.parse(fs.readFileSync(path.join(require('os').homedir(), '.claude', 'settings.json'), 'utf8')).env || {}; } catch { /* 없음 */ }
+      seen = [process.env.ANTHROPIC_BASE_URL, env.ANTHROPIC_BASE_URL].find((u) => u && !/(^|\.)anthropic\.com(:\d+)?(\/|$)/.test(String(u).replace(/^https?:\/\//, ''))) || '';
+    }
+    add(a.set ? OK : WARN, 'AI 연결 방식', `${desc}${seen ? ` (정하지 않음: 이 PC 의 Claude Code 는 게이트웨이 ${seen} 로 연결)` : ''} · 역할 상한 동시 ${m.limits.parallel} · 모두 ${m.limits.total}`,
+      seen ? 'aikit ai gateway 로 이 주소를 저장한다' : 'aikit ai 로 정한다 (정하지 않으면 두 회사 직접 연결로 본다)');
     const tool = kitLib.startToolOf(a);
     const cli = { claude: 'claude', codex: 'codex' }[tool];
     let found = false;

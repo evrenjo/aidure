@@ -173,7 +173,8 @@ html { background: var(--desk); }
 .sb-md { scrollbar-color: #c4c4c4 transparent; }
 .sb-md::-webkit-scrollbar-thumb { background-color: #c4c4c4; }
 
-/* 뷰어(storyboard.js): 상단 고정 바 + 좌측 썸네일 */
+/* 뷰어(storyboard.js): 상단 고정 바 + 좌측 썸네일. 앱 틀(#sb-app)은 상자를 만들지 않는다 (상단 바가 body 기준으로 붙어 있게) */
+#sb-app { display: contents; }
 body.sb-on { padding: 0; }
 .sb-top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 14px;
   background: #262626; border-bottom: 1px solid #111; color: #eee; }

@@ -6,7 +6,14 @@ This package bundles the following third-party software. Each keeps its own lice
 |---|---|---|---|---|
 | mermaid | 11.17.2 | MIT | `packs/core/assets/mermaid/mermaid.min.js` | `packs/core/assets/mermaid/mermaid-LICENSE.txt` |
 | elkjs | 0.12.0 | EPL-2.0 (chosen from EPL-2.0 OR GPL-3.0-or-later), unmodified | `packs/datamodel/assets/erd/elk.bundled.js` | `packs/datamodel/assets/erd/elkjs-LICENSE.txt` (source: https://github.com/kieler/elkjs) |
-| Lucide icons (3 SVG paths: pen, printer, theme) | - | ISC | `packs/core/lib/mdsite.js` (`ICON_PATHS`) | below |
+| Preact | 10.29.8 | MIT | `packs/core/assets/docs-site/vendor/preact.js` · `preact-hooks.js` | `packs/core/assets/docs-site/vendor/preact-LICENSE.txt` |
+| htm | 3.1.1 | Apache-2.0 | `packs/core/assets/docs-site/vendor/htm.js` | `packs/core/assets/docs-site/vendor/htm-LICENSE.txt` |
+| MiniSearch | 7.2.0 | MIT | `packs/core/assets/docs-site/vendor/minisearch.js` | `packs/core/assets/docs-site/vendor/minisearch-LICENSE.txt` |
+| perfect-freehand | 1.2.3 | MIT | `packs/core/assets/docs-site/vendor/perfect-freehand.js` (wrapped as a browser global, otherwise unmodified) | `packs/core/assets/docs-site/vendor/perfect-freehand-LICENSE.txt` |
+| markdown-it (+ entities, linkify-it, mdurl, punycode.js, uc.micro) and markdown-it-cjk-friendly (+ get-east-asian-width) | 15.0.2 / 3.0.0 | MIT (entities: BSD-2-Clause) | `packs/core/lib/vendor/markdown-it.js` (bundled with esbuild, unmodified) | `packs/core/lib/vendor/markdown-it-LICENSES.txt` |
+| Lucide icons (SVG paths: pen, printer, theme, ink toolbar) | - | ISC | `packs/core/lib/mdsite.js` (`ICON_PATHS`), `packs/core/assets/docs-site/src/00-core.js` (`DS.ICON`), `packs/core/assets/docs-site/src/60-ink.js` (`ICO`), `packs/core/assets/docs-site/shared/10-sidehead.js` | below |
+
+Generated documentation sites carry these libraries in `assets/vendor.js` with all license texts in `assets/vendor-LICENSES.txt`.
 
 The mermaid bundle also contains notices of its own dependencies (for example DOMPurify, lodash) inside the minified file.
 

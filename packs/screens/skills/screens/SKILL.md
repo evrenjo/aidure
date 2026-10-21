@@ -10,7 +10,7 @@ description: 화면설계서(스토리보드)를 킷 양식으로 만든다. 진
 | 파일 | 내용 |
 |---|---|
 | `packs/screens/assets/storyboard/template.html` | 장 양식 견본 5장: 표지 · 변경 이력 · 메뉴 구조 · 정책 · 화면 |
-| `packs/screens/assets/storyboard/storyboard.css` · `storyboard.js` | 양식 스타일 · 뷰어 (문서 사이트를 만들 때 복사된다. 기획 repo 에 따로 두지 않는다) |
+| `packs/screens/assets/storyboard/storyboard.css` · `src/` | 양식 스타일 · 뷰어 (문서 사이트를 만들 때 `assets/storyboard/` 로 들어간다. 기획 repo 에 따로 두지 않는다) |
 | `packs/core/bin/docs-site.js` | `aikit docs build` : 기획 repo 의 md 와 장 HTML 로 문서 사이트(`<기획 repo>/docs-site/`)와 근거 색인(`<기획 repo>/docs-site/assets/ids.json`)을 만든다 |
 | `packs/screens/bin/check-screens.js` | `aikit screens check` : 장의 근거 ID · 화면 ID 중복 · 기능 ID 누락 |
 
@@ -84,6 +84,6 @@ aikit screens check <기획 repo>   # ✖ 가 없어야 한다
 
 - Pages 를 켠 repo(`aikit docs pages`)는 `docs-site/` 를 커밋한다. 기획 repo 의 pre-commit 이 md 와 `docs-site/` 가 어긋나면 막는다.
 - 문서 사이트 메뉴에는 장 파일이 따로 나오지 않는다. 화면설계 묶음의 첫 항목(화면 폴더 README 쪽, 없으면 폴더 쪽)이 개요가 되어 맨 위에 장 수 · 묶음별 화면 목록 · 「설계서 보기」 를 보이고, 묶음 제목 옆 ▶ 버튼도 설계서로 간다. 뷰어의 「← 문서」 는 그 개요로 돌아간다.
-- 확인은 `docs-site/` 를 브라우저로 연다 (`file://` 로도 열리지만 근거 패널은 http 서버에서 확실하다: `python3 -m http.server -d docs-site`).
+- 확인은 `docs-site/` 를 브라우저로 연다 (`file://` 로도 열리지만 근거 패널은 http 서버에서 확실하다: `aikit docs serve`).
 - 뷰어에서 「⚠ 한 쪽 넘침」 장이 없는지 본다 (썸네일의 ⚠). 있으면 4단계의 순서로 줄이고 다시 만든다. 이 검사는 브라우저에서만 된다 (`aikit screens check` 는 높이를 재지 못한다).
 - 결과를 사용자에게 알릴 때 장 수 · 화면 수 · 검사 결과(✖ · ⚠ 줄) · 한 쪽 넘침 장를 그대로 옮긴다.

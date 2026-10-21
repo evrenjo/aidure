@@ -6,19 +6,21 @@
 <meta name="generator" content="aikit docs">
 <title>docs · aikit 문서</title>
 <script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site.css?v=6c81c041">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="../">
+<div id="ds-app">
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
-  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
-  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.69.1</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="docs/index.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
   <main id="main"><article class="page">
 <div class="page-head"><div><div class="crumb">폴더</div><h1>docs</h1></div></div>
+<div class="ds-body">
 <h2 id="docs-list">문서</h2>
 <h3 id="docs-시작"><span class="ico">◆</span> 시작</h3>
 <div class="table"><table><thead><tr><th>문서</th><th>파일</th><th>상태</th></tr></thead><tbody><tr><td><a href="quickstart.html">빠른 시작</a></td><td>quickstart.md</td><td></td></tr></tbody></table></div>
@@ -30,12 +32,16 @@
 <div class="table"><table><thead><tr><th>문서</th><th>파일</th><th>상태</th></tr></thead><tbody><tr><td><a href="packs.html">팩 종류</a></td><td>packs.md</td><td></td></tr><tr><td><a href="pack-making.html">팩 제작</a></td><td>pack-making.md</td><td></td></tr></tbody></table></div>
 <h3 id="docs-킷-개발"><span class="ico">⚒</span> 킷 개발</h3>
 <div class="table"><table><thead><tr><th>문서</th><th>파일</th><th>상태</th></tr></thead><tbody><tr><td><a href="kit-dev.html">킷 개발</a></td><td>kit-dev.md</td><td></td></tr></tbody></table></div>
+</div>
 </article>
   </main>
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><div class="empty">docs</div></div></aside>
 </div>
-<script src="../assets/search.js"></script>
-<script src="../assets/nav.js"></script>
-<script src="../assets/site.js"></script>
+</div>
+<script type="application/json" id="ds-page">{"page":"docs/index.html","kind":"doc","title":"docs","head":"docs · aikit 문서","crumb":"폴더","status":"","h1":"docs","lead":"","src":null,"toc":[],"prev":null,"next":null,"site":{"title":"aikit 문서","logo":"ai","version":"v0.69.1","ink":true}}</script>
+<script src="../assets/search.js?v=455f50b1"></script>
+<script src="../assets/nav.js?v=ba3b68eb"></script>
+<script src="../assets/vendor.js?v=fb36e908"></script>
+<script src="../assets/site.js?v=6255e334"></script>
 </body>
 </html>

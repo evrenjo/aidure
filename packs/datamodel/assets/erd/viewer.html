@@ -11,60 +11,9 @@
 </head>
 <!-- 생성물: aikit docs build 가 정의서(md)에서 만든다. 손으로 고치지 않는다 -->
 <body data-root="%ROOT%" data-back="%BACK%">
-<header class="bar">
-  <div class="left"><a class="back" id="back" href="%ROOT%index.html" title="데이터 설계 개요로">← 문서</a><b class="title" id="title"></b></div>
-  <div class="center"><input id="q" type="search" placeholder="테이블 · 컬럼 검색 (논리명 · 물리명, /)" autocomplete="off"></div>
-  <div class="right">
-    <span class="menu"><button id="schemaBtn" aria-haspopup="true" aria-expanded="false" title="보일 스키마 고르기">스키마 <b id="schemaCount"></b> ▾</button>
-      <span id="schemaMenu" class="pop" role="menu" hidden>
-        <input id="schemaQ" type="search" placeholder="스키마 찾기" autocomplete="off">
-        <span class="row"><button data-all="1">전체 선택</button><button data-all="0">전체 해제</button></span>
-        <span id="schemaList" class="checks"></span>
-      </span></span>
-    <span class="menu" id="areaWrap" hidden><button id="areaBtn" aria-haspopup="true" aria-expanded="false" title="보일 주제 영역 고르기 (정의서 설명 줄의 「영역: …」)">영역 <b id="areaCount"></b> ▾</button>
-      <span id="areaMenu" class="pop" role="menu" hidden>
-        <span class="row"><button data-aall="1">전체 선택</button><button data-aall="0">하나만</button></span>
-        <span id="areaList" class="checks"></span>
-      </span></span>
-    <span class="menu"><button id="export" aria-haspopup="true" aria-expanded="false">Export ▾</button>
-      <span id="exportMenu" class="pop" role="menu" hidden>
-        <button data-x="sql-all" role="menuitem">SQL · <span class="dia"></span> DDL (전체 스키마)</button>
-        <button data-x="sql-vis" role="menuitem">SQL · <span class="dia"></span> DDL (보이는 스키마만)</button>
-        <button data-x="svg" role="menuitem">그림 · SVG (지금 보이는 그대로)</button>
-        <button data-x="print" role="menuitem">PDF · A4 가로 인쇄 (지금 보이는 그대로)</button>
-        <button data-x="print-areas" role="menuitem" class="areas-only">PDF · 영역마다 한 쪽 (A4 가로)</button>
-      </span></span>
-    <button id="theme" title="테마">◐</button>
-  </div>
-</header>
-<main>
-  <nav id="list" aria-label="테이블 목록"><div class="lt"><button data-fold="1" title="스키마 목록을 모두 접는다">모두 접기</button><button data-fold="0" title="스키마 목록을 모두 편다">모두 펴기</button></div></nav>
-  <section id="stage"><svg id="svg" xmlns="http://www.w3.org/2000/svg"><defs>
-    <marker id="many" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M11 6 L1 1 M11 6 L1 11 M11 6 L1 6" fill="none" stroke="context-stroke" stroke-width="1.2"/></marker>
-    <marker id="one" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M7 1 L7 11 M10 1 L10 11" fill="none" stroke="context-stroke" stroke-width="1.2"/></marker>
-  </defs><g id="vp"></g></svg>
-  <div id="msg">배치 계산 중…</div>
-  <aside id="detail" aria-label="테이블 상세" aria-hidden="true"><button id="dclose" title="닫기 (Esc)" aria-label="닫기">×</button><div id="dbody"></div></aside>
-  <aside id="ref" aria-label="근거 문서" hidden><div class="rbar"><span id="rtitle"></span><a id="ropen" target="_blank" rel="noopener">새 탭</a><button id="rclose" title="닫기 (Esc)" aria-label="근거 패널 닫기">×</button></div><div id="rlist"></div><iframe id="rframe" title="근거 문서"></iframe></aside>
-  <div id="tools" role="toolbar" aria-label="화면 조작">
-    <span class="grp-l">배치</span><span id="arrange" class="seg" role="group" aria-label="배치"><button data-a="area" title="영역(정의서의 「영역: …」)마다 덩어리로 묶어 바둑판으로 놓는다. 덩어리 안은 부모 → 자식 위에서 아래로, 덩어리 사이 선은 숨긴다">영역</button><button data-a="schema" title="스키마마다 상자로 묶는다">스키마</button><button data-a="rel" title="묶지 않고 관계있는 테이블끼리 가깝게">관계</button></span>
-    <button id="overview" aria-pressed="false" title="영역마다 카드 하나(영역 이름 · 테이블 수 · 대표 테이블). 카드를 누르면 그 영역으로 확대">영역 개요</button>
-    <label class="tg" id="xareaWrap" title="영역 배치에서 덩어리 사이 외래키를 덩어리 → 덩어리 요약선 하나에 개수로 보인다"><input type="checkbox" id="xarea"> 영역 사이 선</label>
-    <label class="tg" id="lrefsWrap"><input type="checkbox" id="lrefs"> 논리 참조</label>
-    <label class="tg"><input type="checkbox" id="hubs"> 참조 많은 표 선 숨김</label>
-    <i class="sep"></i>
-    <span id="names" class="seg" role="group" aria-label="이름 보기"><button data-n="both" title="논리명과 물리명">논·물리명</button><button data-n="logical" title="논리명 (Logical)">논리명</button><button data-n="physical" title="물리명 (Physical)">물리명</button></span>
-    <span class="grp-l">표시 수준</span><span id="levels" class="seg" role="group" aria-label="표시 수준(Display Level)" title="표시 수준(Display Level): 자동이면 확대할수록 테이블 → 키 → 컬럼으로 자세해진다(시맨틱 줌)"><button data-v="auto" title="자동 (Semantic Zoom): 확대 비율에 따라 바뀜">자동</button><button data-v="concept" title="Entity / Table: 테이블 이름 · 컬럼 수 · 관계 수">테이블</button><button data-v="compact" title="Keys: 기본키 · 외래키 · 유일키">키</button><button data-v="full" title="Attribute / Column: 모든 컬럼">컬럼</button></span>
-    <i class="sep"></i>
-    <button id="zout" title="축소 (−)">－</button><b id="zoom" title="확대 비율">100%</b><button id="zin" title="확대 (+)">＋</button>
-    <button id="fit" title="화면에 맞추기 (0)">맞춤</button>
-    <button id="full" title="전체 화면 (F)">⛶</button>
-  </div>
-  <div id="mini" aria-label="미니맵"><button id="miniBtn" title="미니맵 접기 · 펴기" aria-expanded="true">미니맵 ▾</button><svg id="minisvg" xmlns="http://www.w3.org/2000/svg"><g id="minig"></g><rect id="miniView"></rect></svg></div>
-  <div id="legend"><b id="lv"></b><span><i class="k pk">PK</i> 기본키</span><span><i class="k fk">FK</i> 참조</span><span><i class="k uk">UK</i> 유일</span><span>선: 참조 받는 쪽 ┼ · 참조하는 쪽 ⋔ (1:N), 점선 = 널 허용</span><span id="lgLegend" hidden><i class="lgk"></i> 논리 참조 (DB 외래키 없음)</span></div>
-  </section>
-</main>
+<div id="erd-app"><div id="msg">ERD 를 여는 중…</div><noscript>ERD 는 스크립트가 켜져 있어야 보인다</noscript></div>
 <script>window.ERD_MODEL = /*%MODEL%*/null;</script>
+<script src="%ROOT%assets/vendor.js"></script>
 <script src="%ROOT%assets/erd/elk.bundled.js"></script>
 <script src="%ROOT%assets/erd/ddl.js"></script>
 <script src="%ROOT%assets/erd/erd.js"></script>

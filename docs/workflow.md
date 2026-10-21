@@ -39,6 +39,7 @@ flowchart TD
 - 명령과 확인 순서는 [설치](../README.md#설치-pc-마다-1번) 한 곳에 있다. 새 버전은 같은 설치 명령을 다시 실행한다.
 - AI 게이트웨이(여러 회사 모델을 한 주소로 주는 서버)를 쓰면 init·install 의 "AI 연결 방식" 에서 고른다. 킷이 이 PC 설정에서 찾아 모델 목록을 조회한다 (5절). 키 값은 저장하지 않는다.
   팀 설정(workspace.json)에서 온 게이트웨이는 https(또는 이 PC 안 주소)여야 하고, `aikit start` 가 처음 한 번 "팀 설정(workspace.json)의 게이트웨이로 키를 보낼까요?" 를 묻는다 (처음 보는 주소면 아니오). 승인은 이 PC(`.agents/local.json`)에 남는다. 공유 파일 한 줄 수정으로 키가 다른 서버로 가지 않게 하려는 것이다.
+  연결 방식을 정하지 않은 워크스페이스는 서비스 직접으로 본다. 이 PC 의 Claude Code 가 게이트웨이로 이어져 있으면 `aikit ai show` · `aikit doctor` 가 그 주소를 알리고 `aikit ai gateway` 로 맞추라고 한다.
 
 ## 3. 팀 리더 (`aikit init`)
 
@@ -73,7 +74,10 @@ flowchart TD
     H1 --> OK{"이대로 만들까요?"}
     OK -->|"아니오"| X(["만들지 않고 끝"])
     OK -->|"예"| MK["워크스페이스 생성 · repo clone<br/>스택 자동 감지"]
-    MK --> ST["스택 확인 (4절)"]
+    MK --> RF{"clone 하지 못한 repo 가 있는가"}
+    RF -->|"있음"| RA{"받지 못한 repo n개를 지금 다시 받을까요?<br/>(git clone 그대로, 인증을 물으면 입력 · 아니오면 나중에 aikit install)"}
+    RA --> ST
+    RF -->|"없음"| ST["스택 확인 (4절)"]
     ST --> RQ{"킷이 넣은 규칙을 지금 확인할까요?<br/>(기본 아니오)"}
     RQ -->|"예"| RC["켤 규칙 (Space 로 켜고 끄기)<br/>필수 규칙(근거·안전·보안)은 목록에 없음<br/>→ workspace.json rules.off"]
     RQ -->|"아니오"| AG
@@ -83,12 +87,17 @@ flowchart TD
     WU --> PS
     WR -->|"있음"| PS{"지금 커밋·push 할까요?"}
     PS -->|"예"| PD["commit · push → 팀원은 clone 뒤 aikit install"]
-    PS -->|"아니오 · 원격 없음"| END(["공유하기 안내 → 다음: aikit start"])
-    PD --> END
+    PS -->|"아니오 · 원격 없음"| RS["repo 상태 표<br/>받지 못한 repo 와 이유 (다시 받기: aikit install)"]
+    PD --> RS
+    RS --> END(["공유하기 안내 → 다음: aikit start"])
 ```
 
 - repo 마다 방식을 먼저 고르고 값을 넣는다: **clone**(git 주소) · **기존 로컬 폴더**(경로, `repos/<이름>` 에 링크. 원격 없이 로컬에서만 커밋하는 repo 도 됨, `~` 가능) · **새로 만들기**(이름, `repos/<이름>` 에 git init. 레거시 제외) · 없음(선택 항목). 여러 개는 추가·확정으로, Esc 는 방식 선택으로.
+- 이어 만들기로 가져온 repo 는 목록 안내에 「가져옴 n개」 로 따로 보이고, 가져온 것만 있으면 「확정 (가져온 그대로)」 이 기본이다. 같은 주소 · 이름은 어느 목록에서든 다시 넣지 못한다.
+- 킷의 clone 은 인증을 묻지 않게 막고 돈다 (진행 표시 뒤에서 멈추지 않게). 그래서 직접 `git clone` 하면 인증을 물어 받아지는 repo 가 빠질 수 있다. 생성 직후 받지 못한 repo 를 보이고 인증을 물을 수 있는 `git clone` 으로 다시 받을지 묻는다.
+- 그래도 빠진 repo 는 끝 화면의 repo 상태 표에 이유와 함께 남는다. 다시 받기는 `aikit install` (있는 repo 는 건너뛴다. `aikit sync` 는 받지 않는다).
 - 분석·설계 워크스페이스의 산출물 repo 를 개발 워크스페이스에서 참고하려면 「기획 repository 주소」에 그 repo 를 넣는다 (로컬에만 있으면 기존 로컬 폴더).
+- 원격 없는 repo 를 로컬 폴더로 넣으면(이어 만들기 포함) 두 워크스페이스가 링크로 같은 파일을 쓴다. 기획 repo 의 커밋 훅과 문서 사이트(`aikit docs build`)는 원래 워크스페이스 것을 쓰고, 빌려 쓰는 쪽 sync 는 훅을 덮지 않는다. 따로 쓰려면 원격을 만들어 clone 으로 넣는다.
 - 유형마다 붙는 규칙과 근거가 다르다: 신규·차세대는 기획 문서, 차세대는 레거시 소스도, 운영·고도화는 운영 중인 코드, 컨설팅은 코드를 고치지 않는다. 이슈·티켓 처리는 모든 유형 공통이다.
 
 ## 4. 스택 확인 (init · `aikit detect`)
@@ -147,8 +156,10 @@ flowchart TD
     P -->|"역할별로 직접 고르기"| B["기준 프로필 → 역할마다 모델<br/>(목록 · 프로필대로 · 직접 입력, Esc 는 앞 역할로)"]
     B --> SV
     SV["저장: 연결 방식 = .agents/local.json agents.access<br/>프로필 · 메인 모델 = workspace.json(init)"] --> ARG{"&lt;명령&gt; 에 항상 붙일 인자<br/>(이 PC 전용)"}
-    ARG -->|"자주 쓰는 조합: 없음 · 계획 먼저 · 파일 수정은 자동<br/>확인 없이 실행 · 계획 먼저, 승인 뒤엔 확인 없이"| SYNC
-    ARG -->|"직접 입력"| ARGI["&lt;명령&gt; 에 붙일 인자 직접 입력"]
+    ARG -->|"자주 쓰는 조합: 없음 · 계획 먼저 · 파일 수정은 자동"| SYNC
+    ARG -->|"확인 없이 실행 · 계획 먼저, 승인 뒤엔 확인 없이"| RISK{"권한 확인 없이 실행할까요?<br/>(기본 아니오 · 아니오면 인자 고르기로)"}
+    RISK -->|"예"| SYNC
+    ARG -->|"직접 입력"| ARGI["&lt;명령&gt; 에 붙일 인자 직접 입력<br/>(확인을 끄는 인자면 위 질문)"]
     ARGI --> SYNC
     SYNC["sync: 역할 에이전트 파일 · 개인 지침(역할 상한 · 팀 구성(역할 · 모델 메뉴) · 위임 표)을 이 PC 값으로"]
 ```
@@ -349,6 +360,8 @@ flowchart TD
 | `aikit plan` | 로드맵(`handoffs/PLAN.md`): 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음. 이슈형은 이슈 보드(상태별 건수 · 진행 중 이슈 · 멈춘 이슈 ⚠) (`--short` · `--json` · `--report` 기간 보고 · `init` · `check` 도) |
 | `aikit docs build [repo]` | 기획 repo 의 md · 화면설계서 장 → 같은 경로 구조의 `docs-site/` (정의 ID 앵커 · 근거 색인 · 정의서 폴더마다 ERD). 묶음 · 포함 범위는 `docs-site.json`, 옛 `html/` 은 처음 build 때 옮긴다. `check` 는 md 와 어긋났는지. 둘 다 문서 점검 경고와 mermaid 문법 오류를 낸다. 자세히는 [문서 사이트](docs-site.md) |
 | `aikit docs show <ID>` · `refs <ID>` | 기획 문서를 ID 단위로: 정의 부분만 출력 · 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결]) |
+| `aikit delegate watch [id]` · `status [id]` · `list` | 다른 도구에 맡긴 작업(위임)의 진행: 상대 에이전트가 읽고 실행하는 것을 줄마다 · 지금 현황 한 번 · 목록 |
+| `aikit docs serve [repo]` | `docs-site/` 를 이 PC 에서 웹 주소(`http://127.0.0.1:8000/`)로 보기. 전체 인쇄와 새로고침 없는 이동까지 된다 |
 | `aikit docs pages [on\|off] [repo]` | 문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일(`.gitlab-ci.yml` · `.github/workflows/pages.yml`)을 두고 `docs-site/` 를 커밋 대상으로(원격이 없으면 둘 다), off = `.gitignore` 에 `/docs-site/` (CI 는 두어도 돌지 않는다) |
 | `aikit docs refs-quote <파일…>` | 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다 (`--dry` = 수만) |
 | `aikit docs trace` | 기획 ID(`vars.docs.traceIds`)와 코드 주석의 구현 표시 대조: 코드에 표시 없는 ID(⚠) · 기획에 정의 없는 ID(✖) |

@@ -114,8 +114,7 @@ function main() {
       ...ids.map((id) => ({ group: id === me ? `${id} (나)` : id, icon: '●', files: [`handoffs/${id}/LATEST.md`, `handoffs/${id}/TODO.md`, `handoffs/${id}/topics/*.md`, `handoffs/${id}/*.md`] })),
     ],
   };
-  const css = path.join(__dirname, '..', 'assets', 'docs-site');
-  const res = build(files, { config, prefixes: [], assets: { 'assets/site.css': fs.readFileSync(path.join(css, 'site.css')), 'assets/site.js': fs.readFileSync(path.join(css, 'site.js')) } });
+  const res = build(files, { config, prefixes: [], assets: require('./docs-site').siteAssets() });
   fs.rmSync(OUT, { recursive: true, force: true });
   for (const [p, c] of Object.entries(res.pages)) {
     if (p === 'assets/ids.json') continue;

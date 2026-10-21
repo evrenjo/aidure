@@ -10,7 +10,7 @@ description: 데이터 설계(테이블 정의서 · ERD)를 킷 양식으로 �
 | 파일 | 내용 |
 |---|---|
 | `packs/datamodel/assets/erd/template.md` | 정의서 견본 (스키마 한 파일: 「### 스키마.테이블 논리명」 + 설명 줄 + 컬럼 표) |
-| `packs/datamodel/assets/erd/` 의 `erd.js` · `erd.css` · `ddl.js` · `elk.bundled.js` | ERD 뷰어 (문서 사이트를 만들 때 복사된다. 기획 repo 에 따로 두지 않는다) |
+| `packs/datamodel/assets/erd/` 의 `src/` · `erd.css` · `ddl.js` · `elk.bundled.js` | ERD 뷰어 (문서 사이트를 만들 때 `assets/erd/` 로 들어간다. 기획 repo 에 따로 두지 않는다) |
 | `packs/core/bin/docs-site.js` | `aikit docs build` : 정의서가 든 폴더마다 `<폴더>/erd.html` 을 만든다 |
 | `packs/datamodel/bin/check-datamodel.js` | `aikit datamodel check` : 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 |
 

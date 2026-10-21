@@ -43,6 +43,7 @@
 1. 고친다 — 정본은 `packs/` · `templates/` · `bin/`. 워크스페이스의 생성물을 흉내 내 여기서 손으로 만들지 않는다.
 2. **`npm test`** — 팩 테스트 전부 + 임시 폴더에 워크스페이스 2종(신규 전체 팩 / 차세대) 생성 → `check` → 죽은 참조 → 금지 문자열. 통과해야 커밋한다.
 3. 선택 화면(`aikit init`)을 고쳤으면 실제 터미널에서 한 번 끝까지 돌린다. 화면 흐름은 `npm test` 가 보지 않는다.
+   문서 사이트 · ERD · 화면설계서 화면(`packs/core/assets/docs-site/` · `packs/datamodel/assets/erd/` · `packs/screens/assets/storyboard/`)을 고쳤으면 `npm run test:site` (Chrome 으로 이동 · 검색 · 필기 · 뷰어를 본다).
 4. 에이전트 동작(룰이 먹는지, 스킬이 보이는지)을 바꿨으면 생성된 워크스페이스에서 `aikit start` 로 실제 세션을 한 번 확인한다.
    Claude 는 `aikit start --claude -- -p "…"` 로 비대화형 확인이 된다.
 5. **문서 = md 원본 + 문서 사이트 HTML.** 사용법·화면·명령이 바뀌면 같은 커밋에서 아래를 모두 고친다. "가이드 문서" 는 사이트(`docs-site/`, GitLab Pages)까지 뜻한다.

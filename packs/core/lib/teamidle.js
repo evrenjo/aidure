@@ -142,4 +142,68 @@ function summary(w) {
   return `⏳ 일하는 팀원 ${w.working.length} · 대기 팀원 ${w.idle.length} · 리더 백그라운드 작업 ${w.bg.length}개${w.bg.length ? ' 대기 중' : ''}`;
 }
 
-module.exports = { settings, markIdle, members, overdue, message, teamOf, waiting, hasStatus, statusMessage, summary };
+/**
+ * 승인 대기 팀원: 팀원 창에 권한 승인(예 · 아니오) · 입력 대기가 떠 있으면 팀원은 멈춘 채 리더에게 아무것도 오지 않는다.
+ * 팀원 세션의 Notification 훅이 { at, msg, transcript } 를 <팀>.idle.json 의 wait 에 적고, 그 뒤 팀원 대화 기록이 바뀌면(승인하고 일을 이어 감) 풀린 것으로 본다
+ */
+/** 팀원 세션 입력 → { team, name } (입력 필드, 없으면 대화 기록 머리의 teamName · agentName) */
+function who(input) {
+  let team = input && input.team_name, name = input && input.teammate_name;
+  if ((!team || !name) && input && input.transcript_path) {
+    try {
+      const fd = fs.openSync(input.transcript_path, 'r');
+      const buf = Buffer.alloc(32768);
+      const n = fs.readSync(fd, buf, 0, buf.length, 0);
+      fs.closeSync(fd);
+      const head = buf.toString('utf8', 0, n);
+      team = team || ((/"teamName":"([^"]+)"/.exec(head) || [])[1]);
+      name = name || ((/"agentName":"([^"]+)"/.exec(head) || [])[1]);
+    } catch { /* 기록 없음 */ }
+  }
+  return team && name ? { team, name } : null;
+}
+/** 팀원 세션 Notification: 승인 · 입력 대기를 적는다 */
+function markWait(ROOT, input, now = Date.now()) {
+  const w = who(input);
+  if (!w) return null;
+  const st = load(ROOT, w.team);
+  st.wait = st.wait || {};
+  st.wait[w.name] = { at: now, msg: String(input.message || input.notification_type || '').slice(0, 160), transcript: input.transcript_path || '' };
+  save(ROOT, w.team, st);
+  return w;
+}
+/** 리더 쪽: 아직 승인 · 입력을 기다리는 팀원 [{ name, minutes, msg }] (그 뒤 팀원 기록이 바뀌었으면 풀린 것) */
+function waitingApproval(ROOT, input, { now = Date.now() } = {}) {
+  const list = members(input);
+  if (!list) return [];
+  const team = teamOf(input);
+  const st = load(ROOT, team);
+  const names = new Set(list.map((m) => m.name));
+  const out = [];
+  let changed = false;
+  for (const [name, w] of Object.entries(st.wait || {})) {
+    let moved = false;
+    try { moved = !!w.transcript && fs.statSync(w.transcript).mtimeMs > w.at + 3000; } catch { /* 기록 없음 */ }
+    if (!names.has(name) || moved) { delete st.wait[name]; changed = true; continue; }
+    out.push({ name, minutes: Math.floor((now - w.at) / 60000), msg: w.msg });
+  }
+  if (changed) save(ROOT, team, st);
+  return out;
+}
+/** 이 대기를 리더에게 이미 알렸는가 (알렸다고 적는다). 같은 대기는 Stop 에서 한 번만 막는다 */
+function waitWarned(ROOT, input, name) {
+  const team = teamOf(input);
+  const st = load(ROOT, team);
+  const w = (st.wait || {})[name];
+  if (!w || w.warned) return true;
+  w.warned = Date.now();
+  save(ROOT, team, st);
+  return false;
+}
+/** 리더에게 줄 문구 */
+function waitMessage(list) {
+  return `팀원이 자기 창에서 승인 · 입력을 기다리며 멈춰 있습니다: ${list.map((x) => `${x.name}(${x.minutes}분${x.msg ? ` · ${x.msg}` : ''})`).join(', ')}. `
+    + '팀원 창의 승인 질문은 리더 화면에 보이지 않습니다. 사용자에게 그 팀원 창(tmux 창 · in-process 면 팀원 전환)에서 승인하라고 바로 알립니다. 읽기 · 조회만 하는 명령이 매번 묻는다면 프로젝트 허용 목록(workspace.json claude.settings.permissions.allow)에 넣자고 제안합니다';
+}
+
+module.exports = { settings, markIdle, members, overdue, message, teamOf, waiting, hasStatus, statusMessage, summary, who, markWait, waitingApproval, waitWarned, waitMessage };

@@ -6,19 +6,21 @@
 <meta name="generator" content="aikit docs">
 <title>workspace.json · 설정 · aikit 문서</title>
 <script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site.css?v=6c81c041">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="../">
+<div id="ds-app">
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
-  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
-  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.69.1</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="docs/workspace.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
   <main id="main"><article class="page">
 <div class="page-head"><div><div class="crumb">설정 · 참고</div><h1>workspace.json · 설정</h1></div><a class="src" href="https://github.com/lsnwan/aidure/blob/main/docs/workspace.md" title="원본 md">원본 workspace.md</a></div>
+<div class="ds-body">
 
 <h2 id="워크스페이스-구조">워크스페이스 구조<a class="anchor" href="#워크스페이스-구조" aria-label="이 절 주소">#</a></h2>
 <div class="code"><button class="copy" type="button">복사</button><pre><code class="lang-tree">~/project/새프로젝트/          ← 워크스페이스 = aikit start 하는 곳
@@ -76,12 +78,16 @@ aikit secret rm GITLAB_TOKEN</code></pre></div>
 <ul><li>팀원 구분은 워크스페이스의 <code>git user.name</code> 이다. 본인이 바꾸거나 <code>git commit --no-verify</code> 로 훅을 건너뛰면 우회된다. 킷은 <strong>실수와 AI 의 임의 변경</strong>을 막는다.</li><li><strong>서버에서 확실히 막으려면</strong> (GitLab Premium 이상): 워크스페이스 repo 에 <code>CODEOWNERS</code> 를 두고(<code>/workspace.json @팀장</code>, <code>/packs/ @팀장</code>, <code>/bin/ @팀장</code> …) 기본 브랜치 보호 설정에서 &quot;Code owner approval&quot; 을 켠다. 그러면 그 파일을 바꾸는 직접 push 가 거부되고 MR 과 팀장 승인이 필요하다. 팀원의 <code>handoffs/</code> push 는 그대로 된다 (GitLab 문서: Protected branches).</li></ul>
 <h2 id="일상-작업">일상 작업<a class="anchor" href="#일상-작업" aria-label="이 절 주소">#</a></h2>
 <div class="table"><table><thead><tr><th>할 일</th><th>방법</th></tr></thead><tbody><tr><td>이 프로젝트 전용 룰·스킬</td><td><code>packs/project/rules/*.md</code> · <code>packs/project/skills/&lt;이름&gt;/SKILL.md</code> → <code>aikit sync</code></td></tr><tr><td>repo 추가</td><td><code>aikit repo add &lt;주소 · 폴더 · 새로 만들 이름&gt; [--kind code|docs|issues|legacy]</code> (clone · 링크 · 새로 만들기 → 스택 확인 → sync)</td></tr><tr><td>repo 빼기</td><td><code>aikit repo remove &lt;이름&gt; [--delete]</code> (목록에서 빼고 sync, 이름이 남은 문서를 알림)</td></tr><tr><td>나만 쓰는 지침</td><td><code>.agents/local.md</code> → <code>aikit sync</code></td></tr><tr><td>파일 이동</td><td><code>node packs/core/bin/rename-ref.js &lt;old&gt; &lt;new&gt; --apply</code> (참조 함께 갱신)</td></tr><tr><td>repo 스택이 바뀜</td><td><code>aikit detect</code> (감지 → 확인·수정 → repo 별 규칙 갱신)</td></tr><tr><td>repo 의 협업 도구가 틀림</td><td><code>workspace.json</code> 의 그 repo <code>host</code> 를 <code>github</code>·<code>gitlab</code>·<code>none</code> 으로 → <code>aikit sync</code></td></tr></tbody></table></div>
+</div>
 </article>
   <div class="pager"><a class="prev" href="team-models.html"><small>이전 · 쓰는 법</small>팀 에이전트와 모델</a><a class="next" href="rules.html"><small>다음 · 설정 · 참고</small>규칙</a></div></main>
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><a class="l2" href="#워크스페이스-구조" data-id="워크스페이스-구조">워크스페이스 구조</a><a class="l2" href="#workspacejson" data-id="workspacejson">workspace.json</a><a class="l3" href="#repo-그룹-폴더" data-id="repo-그룹-폴더">repo 그룹 폴더</a><a class="l3" href="#저장소-없는-시작" data-id="저장소-없는-시작">저장소 없는 시작</a><a class="l2" href="#비밀값-토큰" data-id="비밀값-토큰">비밀값 (토큰)</a><a class="l2" href="#팀원-설정-수정-허용-불가" data-id="팀원-설정-수정-허용-불가">팀원 설정 수정 허용 · 불가</a><a class="l2" href="#일상-작업" data-id="일상-작업">일상 작업</a></div></aside>
 </div>
-<script src="../assets/search.js"></script>
-<script src="../assets/nav.js"></script>
-<script src="../assets/site.js"></script>
+</div>
+<script type="application/json" id="ds-page">{"page":"docs/workspace.html","kind":"doc","title":"workspace.json · 설정","head":"workspace.json · 설정 · aikit 문서","crumb":"설정 · 참고","status":"","h1":"workspace.json · 설정","lead":"","src":{"href":"https://github.com/lsnwan/aidure/blob/main/docs/workspace.md","name":"workspace.md"},"toc":[{"lvl":2,"sid":"워크스페이스-구조","text":"워크스페이스 구조"},{"lvl":2,"sid":"workspacejson","text":"workspace.json"},{"lvl":3,"sid":"repo-그룹-폴더","text":"repo 그룹 폴더"},{"lvl":3,"sid":"저장소-없는-시작","text":"저장소 없는 시작"},{"lvl":2,"sid":"비밀값-토큰","text":"비밀값 (토큰)"},{"lvl":2,"sid":"팀원-설정-수정-허용-불가","text":"팀원 설정 수정 허용 · 불가"},{"lvl":2,"sid":"일상-작업","text":"일상 작업"}],"prev":{"p":"docs/team-models.html","t":"팀 에이전트와 모델","g":"쓰는 법"},"next":{"p":"docs/rules.html","t":"규칙","g":"설정 · 참고"},"site":{"title":"aikit 문서","logo":"ai","version":"v0.69.1","ink":true}}</script>
+<script src="../assets/search.js?v=455f50b1"></script>
+<script src="../assets/nav.js?v=ba3b68eb"></script>
+<script src="../assets/vendor.js?v=fb36e908"></script>
+<script src="../assets/site.js?v=6255e334"></script>
 </body>
 </html>

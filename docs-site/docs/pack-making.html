@@ -6,19 +6,21 @@
 <meta name="generator" content="aikit docs">
 <title>팩 제작 · aikit 문서</title>
 <script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site.css?v=6c81c041">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="../">
+<div id="ds-app">
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
-  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
-  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.69.1</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="docs/pack-making.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
   <main id="main"><article class="page">
 <div class="page-head"><div><div class="crumb">팩</div><h1>팩 제작</h1></div><a class="src" href="https://github.com/lsnwan/aidure/blob/main/docs/pack-making.md" title="원본 md">원본 pack-making.md</a></div>
+<div class="ds-body">
 
 <p>워크스페이스에 맞게 규칙을 고르고 고치는 방법과, 팩 파일의 형식(작성 규격)이다. 킷에 새 팩을 더하는 절차는 <a href="kit-dev.html">킷 개발</a>.</p>
 <h2 id="킷-규칙-해제-변경-추가">킷 규칙 해제 · 변경 · 추가<a class="anchor" href="#킷-규칙-해제-변경-추가" aria-label="이 절 주소">#</a></h2>
@@ -48,7 +50,7 @@ when: 주문·결제 코드를 고치거나 관련 문서를 쓸 때
 
 ## 주문 도메인 용어
 - &quot;확정&quot; 은 결제 완료 뒤 상태다. &quot;접수&quot; 와 섞어 쓰지 않는다.</code></pre></div>
-<ol><li><code>aikit sync</code> (또는 <code>node bin/kit.js sync</code>). AGENTS.md 에 반영된다.</li><li>commit · push 하면 팀원도 받는다.</li></ol>
+<ol start="2"><li><code>aikit sync</code> (또는 <code>node bin/kit.js sync</code>). AGENTS.md 에 반영된다.</li><li>commit · push 하면 팀원도 받는다.</li></ol>
 <ul><li><code>load: always</code> 는 AGENTS.md 본문에 늘 들어가 예산(32KB)을 쓴다. 대부분은 <code>on-demand</code> 와 <code>when</code> 으로 둔다.</li><li>워크스페이스 설정 수정이 막혀 있으면(<code>aikit team edit deny</code>) 관리자만 만들 수 있다.</li></ul>
 <h2 id="팩-작성-규격">팩 작성 규격<a class="anchor" href="#팩-작성-규격" aria-label="이 절 주소">#</a></h2>
 <p>팩은 <code>packs/&lt;이름&gt;/</code> 폴더 하나다. <code>kit sync</code> 가 팩을 읽어 Claude Code·Codex 용 파일을 만든다. <strong>팩 안의 파일이 정본이고, 생성물(<code>AGENTS.md</code>·<code>CLAUDE.md</code>·<code>.agents/</code>·<code>.claude/</code>·<code>.codex/</code>)은 손으로 고치지 않는다.</strong></p>
@@ -92,9 +94,8 @@ replaces: &lt;규칙 ID&gt;      # (선택, project 팩) 킷 규칙 대신 이 �
 name: handoff                 # 폴더명과 같아야 한다 (Codex 필수)
 description: 오늘 작업을 마무리하고 인계 기록을 남긴다. &quot;핸드오프&quot;, &quot;마무리&quot; 요청에 쓴다.
 ---</code></pre></div>
-<ul><li><code>name</code>·<code>description</code> 만 두 도구 공통이다. <code>argument-hint</code> 등 Claude 전용 필드는 넣어도 Codex 가 무시한다.</li><li>생성 위치: <code>.agents/skills/</code>(Codex) 와 <code>.claude/skills/</code>(Claude) 양쪽. 호출은 Claude <code>/이름</code>, Codex <code>$이름</code>.</li><li><strong>도구 중립으로 쓴다.</strong> 스킬은 두 에이전트가 읽는다.</li></ul>
-<div class="table"><table><thead><tr><th>쓰지 않는다</th><th>대신</th></tr></thead><tbody><tr><td><code>AskUserQuestion</code> 도구로 묻는다</td><td><strong>선택지 질문</strong>으로 묻는다 (권장안을 첫째에, 2~4개)</td></tr><tr><td><code>Agent</code> 도구 / <code>subagent_type</code></td><td>병렬 에이전트를 쓸 수 있으면 나눠 맡긴다. 없으면 순서대로</td></tr><tr><td><code>TodoWrite</code> · <code>Skill</code> 도구 이름</td><td>할 일 목록을 유지한다 · <code>&lt;스킬&gt;</code> 스킬을 따른다</td></tr><tr><td><code>$CLAUDE_PROJECT_DIR</code></td><td>워크스페이스 루트 (<code>git rev-parse --show-toplevel</code>)</td></tr><tr><td><code>CLAUDE.md</code> / <code>.claude/rules</code></td><td><code>AGENTS.md</code> / 해당 룰 문서</td></tr></tbody></table></div>
-<p>도구별로 꼭 달라야 하는 절차만 <code>&gt; Claude Code:</code> / <code>&gt; Codex:</code> 인용 줄로 나눠 적는다.</p>
+<ul><li><code>name</code>·<code>description</code> 만 두 도구 공통이다. <code>argument-hint</code> 등 Claude 전용 필드는 넣어도 Codex 가 무시한다.</li><li>생성 위치: <code>.agents/skills/</code>(Codex) 와 <code>.claude/skills/</code>(Claude) 양쪽. 호출은 Claude <code>/이름</code>, Codex <code>$이름</code>.</li><li><strong>도구 중립으로 쓴다.</strong> 스킬은 두 에이전트가 읽는다.<div class="table"><table><thead><tr><th>쓰지 않는다</th><th>대신</th></tr></thead><tbody><tr><td><code>AskUserQuestion</code> 도구로 묻는다</td><td><strong>선택지 질문</strong>으로 묻는다 (권장안을 첫째에, 2~4개)</td></tr><tr><td><code>Agent</code> 도구 / <code>subagent_type</code></td><td>병렬 에이전트를 쓸 수 있으면 나눠 맡긴다. 없으면 순서대로</td></tr><tr><td><code>TodoWrite</code> · <code>Skill</code> 도구 이름</td><td>할 일 목록을 유지한다 · <code>&lt;스킬&gt;</code> 스킬을 따른다</td></tr><tr><td><code>$CLAUDE_PROJECT_DIR</code></td><td>워크스페이스 루트 (<code>git rev-parse --show-toplevel</code>)</td></tr><tr><td><code>CLAUDE.md</code> / <code>.claude/rules</code></td><td><code>AGENTS.md</code> / 해당 룰 문서</td></tr></tbody></table></div>
+<p>도구별로 꼭 달라야 하는 절차만 <code>&gt; Claude Code:</code> / <code>&gt; Codex:</code> 인용 줄로 나눠 적는다.</p></li></ul>
 <h3 id="훅-hooksjson">훅 (<code>hooks.json</code>)<a class="anchor" href="#훅-hooksjson" aria-label="이 절 주소">#</a></h3>
 <div class="code"><button class="copy" type="button">복사</button><pre><code class="lang-json">{
   &quot;SessionStart&quot;: [{ &quot;matcher&quot;: &quot;startup&quot;, &quot;script&quot;: &quot;hooks/check-repo-updates.js&quot;, &quot;timeout&quot;: 30 }],
@@ -124,12 +125,16 @@ grade: high                  # high | standard | low. 프로필에 이 역할이
 <h3 id="체크리스트">체크리스트<a class="anchor" href="#체크리스트" aria-label="이 절 주소">#</a></h3>
 <p>팩을 추가·수정할 때 확인한다.</p>
 <ul><li class="ds-task"><input type="checkbox" disabled> <code>node bin/kit.js sync</code> 오류 0, <code>check</code> 통과</li><li class="ds-task"><input type="checkbox" disabled> always 룰 합계가 팩 예산(6KB) 이내</li><li class="ds-task"><input type="checkbox" disabled> 특정 프로젝트 이름·경로·계정이 본문에 남지 않았다 (<code>grep -ri '&lt;옛 프로젝트명&gt;' packs/&lt;팩&gt;</code>)</li><li class="ds-task"><input type="checkbox" disabled> 스킬 본문에 Claude 전용 도구 이름이 없다 (<code>grep -rE 'AskUserQuestion|subagent_type|CLAUDE_PROJECT_DIR' packs/&lt;팩&gt;/skills</code>)</li></ul>
+</div>
 </article>
   <div class="pager"><a class="prev" href="packs--산출물-팩.html"><small>이전 · 팩</small>산출물 팩</a><a class="next" href="kit-dev.html"><small>다음 · 킷 개발</small>킷 개발</a></div></main>
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><a class="l2" href="#킷-규칙-해제-변경-추가" data-id="킷-규칙-해제-변경-추가">킷 규칙 해제 · 변경 · 추가</a><a class="l2" href="#프로젝트-전용-규칙-스킬-제작" data-id="프로젝트-전용-규칙-스킬-제작">프로젝트 전용 규칙 · 스킬 제작</a><a class="l2" href="#팩-작성-규격" data-id="팩-작성-규격">팩 작성 규격</a><a class="l3" href="#팩-종류-category" data-id="팩-종류-category">팩 종류 (category)</a><a class="l3" href="#룰-rulesmd" data-id="룰-rulesmd">룰 (rules/*.md)</a><a class="l3" href="#변수-ws" data-id="변수-ws">변수 ({{ws:…}})</a><a class="l3" href="#스킬-skillmd" data-id="스킬-skillmd">스킬 (SKILL.md)</a><a class="l3" href="#훅-hooksjson" data-id="훅-hooksjson">훅 (hooks.json)</a><a class="l3" href="#역할-agentsmd" data-id="역할-agentsmd">역할 (agents/*.md)</a><a class="l3" href="#도구-bin" data-id="도구-bin">도구 (bin/)</a><a class="l3" href="#비밀값-packjson-의-secrets" data-id="비밀값-packjson-의-secrets">비밀값 (pack.json 의 secrets)</a><a class="l3" href="#체크리스트" data-id="체크리스트">체크리스트</a></div></aside>
 </div>
-<script src="../assets/search.js"></script>
-<script src="../assets/nav.js"></script>
-<script src="../assets/site.js"></script>
+</div>
+<script type="application/json" id="ds-page">{"page":"docs/pack-making.html","kind":"doc","title":"팩 제작","head":"팩 제작 · aikit 문서","crumb":"팩","status":"","h1":"팩 제작","lead":"","src":{"href":"https://github.com/lsnwan/aidure/blob/main/docs/pack-making.md","name":"pack-making.md"},"toc":[{"lvl":2,"sid":"킷-규칙-해제-변경-추가","text":"킷 규칙 해제 · 변경 · 추가"},{"lvl":2,"sid":"프로젝트-전용-규칙-스킬-제작","text":"프로젝트 전용 규칙 · 스킬 제작"},{"lvl":2,"sid":"팩-작성-규격","text":"팩 작성 규격"},{"lvl":3,"sid":"팩-종류-category","text":"팩 종류 (category)"},{"lvl":3,"sid":"룰-rulesmd","text":"룰 (rules/*.md)"},{"lvl":3,"sid":"변수-ws","text":"변수 ({{ws:…}})"},{"lvl":3,"sid":"스킬-skillmd","text":"스킬 (SKILL.md)"},{"lvl":3,"sid":"훅-hooksjson","text":"훅 (hooks.json)"},{"lvl":3,"sid":"역할-agentsmd","text":"역할 (agents/*.md)"},{"lvl":3,"sid":"도구-bin","text":"도구 (bin/)"},{"lvl":3,"sid":"비밀값-packjson-의-secrets","text":"비밀값 (pack.json 의 secrets)"},{"lvl":3,"sid":"체크리스트","text":"체크리스트"}],"prev":{"p":"docs/packs--산출물-팩.html","t":"산출물 팩","g":"팩"},"next":{"p":"docs/kit-dev.html","t":"킷 개발","g":"킷 개발"},"site":{"title":"aikit 문서","logo":"ai","version":"v0.69.1","ink":true}}</script>
+<script src="../assets/search.js?v=455f50b1"></script>
+<script src="../assets/nav.js?v=ba3b68eb"></script>
+<script src="../assets/vendor.js?v=fb36e908"></script>
+<script src="../assets/site.js?v=6255e334"></script>
 </body>
 </html>

@@ -56,7 +56,11 @@ assert.match(r.stdout, /만든 적 없음/);
 r = node([site, 'build', dir]);
 assert.strictEqual(r.status, 0, r.stderr);
 for (const f of ['index.html', '40-functions.html', '02-screens/web.html', '02-screens/index.html', 'assets/ids.json', 'assets/site.json', 'assets/site.css', 'assets/storyboard/storyboard.js']) assert.ok(fs.existsSync(path.join(dir, 'docs-site', f)), f);
-assert.match(fs.readFileSync(path.join(dir, 'docs-site', '02-screens', 'web.html'), 'utf8'), /href="..\/assets\/storyboard\/storyboard.css"/);
+assert.match(fs.readFileSync(path.join(dir, 'docs-site', '02-screens', 'web.html'), 'utf8'), /href="..\/assets\/storyboard\/storyboard.css\?v=[0-9a-f]{8}"/);
+// 뷰어: 화면 라이브러리(assets/vendor.js) 다음에 storyboard.js (src/*.js 를 이은 Preact 앱)
+assert.match(fs.readFileSync(path.join(dir, 'docs-site', '02-screens', 'web.html'), 'utf8'), /<script src="..\/assets\/vendor.js\?v=[0-9a-f]{8}"><\/script>\n<script src="..\/assets\/storyboard\/storyboard.js\?v=[0-9a-f]{8}">/);
+assert.ok(fs.existsSync(path.join(dir, 'docs-site', 'assets', 'vendor.js')), 'assets/vendor.js');
+assert.ok(/function Thumb\(/.test(fs.readFileSync(path.join(dir, 'docs-site', 'assets', 'storyboard', 'storyboard.js'), 'utf8')), '뷰어 앱');
 assert.strictEqual(node([site, 'hook', dir]).status, 0, '만든 직후는 같다');
 fs.appendFileSync(path.join(dir, '40-functions.md'), '\n추가\n');
 r = node([site, 'hook', dir]);

@@ -1,7 +1,9 @@
 /* aikit 문서 화면 틀: 킷 가이드(bin/docs.js 가 이 파일을 넣는다)와 기획 repo 문서 사이트(aikit docs build 가 복사한다)가 같이 쓴다. 한쪽만 고치지 않는다 */
 :root{--bg:#fff;--bg2:#f6f7f9;--fg:#1f2328;--muted:#656d76;--line:#d8dee4;--accent:#0969da;--accent-bg:#ddf4ff;--code:#f3f4f6;--codefg:#1f2328;--bar:#fff;--barfg:#1f2328;--quote:#c9ced4}
 [data-theme=dark]{--bg:#0d1117;--bg2:#151b23;--fg:#e6edf3;--muted:#9198a1;--line:#30363d;--accent:#4493f8;--accent-bg:#1b2a3d;--code:#1f2630;--codefg:#e6edf3;--bar:#0d1117;--barfg:#e6edf3;--quote:#3d444d}
-*{box-sizing:border-box}html{scroll-padding-top:80px;overflow-y:scroll} /* 짧은 페이지에서도 스크롤바를 보여 페이지를 옮길 때 화면이 옆으로 흔들리지 않게 */
+*{box-sizing:border-box}html{overflow-y:scroll} /* 짧은 페이지에서도 스크롤바를 보여 페이지를 옮길 때 화면이 옆으로 흔들리지 않게 */
+/* #앵커로 갈 때 머리 줄에 가리지 않게: 본문 안 대상에만 여백 (html 의 scroll-padding 은 머리 줄 검색칸까지 「가려졌다」 고 보고 글자를 칠 때마다 화면을 올린다) */
+.page [id]{scroll-margin-top:80px}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif}
 a{color:var(--accent)}
 header{position:sticky;top:0;z-index:10;height:60px;display:grid;grid-template-columns:1fr minmax(0,420px) 1fr;align-items:center;gap:20px;padding:0 24px;background:var(--bar);color:var(--barfg);border-bottom:1px solid var(--line)}
@@ -167,7 +169,7 @@ html,nav.side,aside.toc,.results,.table,.code pre{scrollbar-width:thin;scrollbar
 .ds-muted{color:var(--muted);font-size:13px}
 .ds-btn{display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:3px 12px;font-size:13px;text-decoration:none;white-space:nowrap}
 .ds-btn:hover{background:var(--accent-bg)}
-html.embedded header,html.embedded nav.side,html.embedded aside.toc,html.embedded .pager{display:none}html.embedded .layout{display:block}html.embedded main{padding:16px 20px 60px}html.embedded{scroll-padding-top:12px}
+html.embedded header,html.embedded nav.side,html.embedded aside.toc,html.embedded .pager{display:none}html.embedded .layout{display:block}html.embedded main{padding:16px 20px 60px}html.embedded .page [id]{scroll-margin-top:12px}
 .tools{position:relative}.print-menu{position:absolute;top:calc(100% + 6px);right:0;z-index:30;display:flex;flex-direction:column;min-width:150px;padding:4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.15)}.print-menu[hidden]{display:none}.tools .print-menu button{border:0;text-align:left;padding:7px 10px;border-radius:5px;white-space:nowrap}.tools .print-menu button:hover{background:var(--bg2)}
 .print-status{color:var(--muted)}.print-doc{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
 @media print{header,nav.side,aside.toc,.pager,.copy,.diagram-tools,.print-menu,.print-status,.nav-backdrop,.ink-bar,.ink-eraser,article.page:has(#print-all)>.page-head{display:none!important}.layout{display:block}main{padding:0}.print-doc{break-before:page;border-top:0;margin-top:0;padding-top:0}}
@@ -189,3 +191,23 @@ article.page{position:relative}
 .ink-bar .ink-c{width:26px;height:26px}.ink-bar .ink-c i{display:block;width:16px;height:16px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}.ink-bar .ink-c.on{border-color:var(--fg);background:none}
 .ink-bar .ink-s i{display:block;border-radius:50%;background:currentColor}
 @media (max-width:760px){.ink-bar{bottom:10px;gap:2px;padding:4px}.ink-sep{display:none}.ink-bar button{width:30px;height:30px}}
+/* 앱: 본문 검색 조각 · 쪽을 읽는 동안 */
+.results .snip{display:block;margin-top:2px;color:var(--muted);font-size:12.5px;line-height:1.5}.results mark{background:var(--accent-bg);color:var(--accent);border-radius:3px;padding:0 1px}
+html.ds-loading main{opacity:.55;transition:opacity .15s .1s}
+/* 메뉴 접기 표시: 작은 ▸ 글자 대신 선 화살표 (펼치면 아래로). 누르기 쉬운 크기 */
+details.nav-group>summary.nav-title::after,details.nav-group[open]>summary.nav-title::after,.nav-dir>summary::after,.nav-dir[open]>summary::after{content:none}
+nav.side summary .chev{flex:none;color:var(--muted);transition:transform .15s ease;border-radius:4px}
+nav.side details[open]>summary .chev{transform:rotate(90deg)}
+nav.side summary:hover .chev{color:var(--accent);background:var(--bg2)}
+details.nav-group>summary.nav-title{gap:6px}
+nav.side .nav-dir>summary{display:flex;align-items:center;gap:4px}
+@media (prefers-reduced-motion:reduce){nav.side summary .chev{transition:none}}
+
+/* 사이드바 머리 줄 (문서 · ERD 공통 부품 SideHead): 왼쪽 제목(홈 · 테이블 n), 오른쪽 모두 접기 ↔ 펴기 토글 하나 */
+.side-head{display:flex;align-items:center;gap:6px;height:32px;margin:0 0 10px;padding:0 2px 0 6px}
+.side-head-title{display:flex;align-items:center;gap:6px;flex:1;min-width:0;height:30px;padding:0 8px;border-radius:6px;color:inherit;text-decoration:none;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+a.side-head-title:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+a.side-head-title.on{color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.side-head-title svg{flex:none}
+.side-head-btn{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;line-height:0}
+.side-head-btn:hover{color:var(--accent);border-color:var(--accent)}

@@ -3,7 +3,7 @@
  * 수준: all 전체 · decisions 결과와 결정(기본) · progress 진행 현황 · off 끄기 (lib/notify.js LEVELS)
  *   UserPromptSubmit  요청 시작 시각 · 터미널 요청 문장을 적어 둔다
  *   Stop              요청 결과 (all: 질문 · 답 전문 / decisions: 답 앞부분 / progress: 끝남 한 줄). 팀원 · 리더의 백그라운드 작업이 남았으면 한 줄 덧붙인다 (lib/teamidle.js). 텔레그램에서 온 요청은 Claude 가 reply 로 답해 보내지 않는다
- *   Notification      결정 대기 (질문 · 권한 확인). 질문은 PreToolUse 에서 적어 둔 질문 · 선택지로
+ *   Notification      결정 대기 (질문 · 권한 확인). 질문은 PreToolUse 에서 적어 둔 질문 · 선택지로. 팀원 세션의 승인 · 입력 대기도 (리더 화면에 안 보여서)
  *   PreToolUse(Agent) · SubagentStop · TeammateIdle   에이전트 시작 · 끝 · 대기 (all · progress)
  *   PC 앞에 있으면(키보드 · 마우스를 deskSeconds 안에 만짐, macOS) 끝남 · 에이전트 진행 · 음성은 보내지 않는다. 결정 대기 · 전체 수준 · 자리 비움은 그대로
  * 채널 세션(aikit start 가 AIKIT_CHANNEL=1)만:
@@ -14,7 +14,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { agent, readInput, run, safeId, root, deny, block, sessionStartedAt } = require('../lib/hook');
+const { agent, readInput, run, safeId, root, deny, block, sessionStartedAt, isTeammate } = require('../lib/hook');
 const { load, stateDir } = require('../lib/workspace');
 const notify = require('../lib/notify');
 
@@ -143,8 +143,15 @@ run(async () => {
     return;
   }
 
+  // 팀원 창의 승인 · 입력 대기: 리더 화면에 안 보이므로 알림 수준과 상관없이 바로 알린다 (결정 대기와 같은 급)
+  if (event === 'Notification' && isTeammate(input)) {
+    if (cfg.source === 'off') return;   // 알림을 끈 사람은 보내지 않는다 (리더 쪽 훅의 알림은 그대로)
+    const w = require('../lib/teamidle').who(input);
+    await send(`🔐 [${project}] 팀원 ${w ? w.name : ''} 이(가) 자기 창에서 승인 · 입력을 기다리며 멈춰 있습니다${input.message ? `: ${String(input.message).slice(0, 160)}` : ''}\n그 팀원 창(tmux)에서 승인해야 일을 시작합니다`);
+    return;
+  }
   if (event === 'Notification') {
     if (notify.brief(cfg) && fs.existsSync(file('wait-sent') || '') && notify.waitKind(input, readFile(file('ask'))) === 'question') return; // 선택 대기를 이미 알렸다
     await send(notify.personalMessage(cfg, input, { project, agent: agent(), question: readFile(file('ask')) }));
   }
-}, { teammateEvents: ['TeammateIdle'] });
+}, { teammateEvents: ['TeammateIdle', 'Notification'] });

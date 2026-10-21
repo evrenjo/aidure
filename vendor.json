@@ -1,0 +1,55 @@
+{
+  "note": "문서 사이트 · 생성기에 넣는 외부 라이브러리 (킷 개발용). 고친 뒤 npm run vendor. 버전은 나온 지 2주 넘은 것으로 고정한다. packages = 브라우저용 파일을 그대로, bundles = 생성기(Node)용으로 esbuild 가 파일 하나로 묶는다 (함께 묶이는 의존 버전은 vendor-lock.json)",
+  "registry": "https://registry.npmjs.org/",
+  "out": "packs/core/assets/docs-site/vendor",
+  "packages": [
+    {
+      "name": "preact",
+      "version": "10.29.8",
+      "license": "MIT",
+      "home": "https://preactjs.com",
+      "files": {
+        "dist/preact.umd.js": "preact.js",
+        "hooks/dist/hooks.umd.js": "preact-hooks.js"
+      }
+    },
+    {
+      "name": "htm",
+      "version": "3.1.1",
+      "license": "Apache-2.0",
+      "home": "https://github.com/developit/htm",
+      "files": {
+        "dist/htm.umd.js": "htm.js"
+      }
+    },
+    {
+      "name": "minisearch",
+      "version": "7.2.0",
+      "license": "MIT",
+      "home": "https://github.com/lucaong/minisearch",
+      "files": {
+        "dist/umd/index.js": "minisearch.js"
+      }
+    },
+    {
+      "name": "perfect-freehand",
+      "version": "1.2.3",
+      "license": "MIT",
+      "home": "https://github.com/steveruizok/perfect-freehand",
+      "files": {
+        "dist/cjs/index.js": "perfect-freehand.js"
+      },
+      "global": "PerfectFreehand"
+    }
+  ],
+  "bundles": [
+    {
+      "out": "packs/core/lib/vendor/markdown-it.js",
+      "entry": "export { default as MarkdownIt } from 'markdown-it';\nexport { default as cjkFriendly } from 'markdown-it-cjk-friendly';\n",
+      "packages": {
+        "markdown-it": "15.0.2",
+        "markdown-it-cjk-friendly": "3.0.0"
+      }
+    }
+  ]
+}

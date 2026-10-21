@@ -4,6 +4,7 @@
  * 명령
  *   build [repo|폴더] [--out docs-site] [--force]   만들기. repo 를 안 주면 workspace.json 의 기획 repo(kind: docs) 전부. 옛 출력 폴더 html/ 은 docs-site/ 로 한 번 옮긴다 (git mv)
  *   check [repo|폴더]                          md 와 docs-site/ 가 어긋났는지 (어긋나면 exit 1). 정의 없는 ID 는 ⚠ 만
+ *   serve [repo|폴더] [--port 8000] [--open]     docs-site/ 를 이 PC 에서 웹 주소로 보기 (Ctrl+C 로 끝). file:// 로도 열리지만 쪽 이동이 새로고침이 되고 전체 인쇄가 안 된다
  *   pages [on|off] [repo|폴더]                 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일을 두고 docs-site/ 를 커밋 대상으로, off = .gitignore 에 /docs-site/
  *   refs-quote <md 파일…> [--dry]              본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다
  *   hook <repo 폴더>                           기획 repo 의 pre-commit 이 부른다 (aikit docs build 로 만든 적이 없으면 아무것도 안 한다)
@@ -88,20 +89,45 @@ function readTree(dir, out, keep = () => true) {
   return files;
 }
 
-/** 프로젝트별 덧붙임: 기획 repo 맨 위의 docs-site.extra.css · docs-site.extra.js 가 있으면 assets/site.css · site.js 끝에 붙인다 (check · pre-commit 도 붙인 결과로 비교) */
+/** 화면 틀 파일: site.css · site.js(앱: assets/docs-site/src/*.js 를 이름 순으로 이음) · vendor.js(외부 라이브러리: vendor/index.json 순서) · 라이선스.
+ *  프로젝트별 덧붙임: 기획 repo 맨 위의 docs-site.extra.css · docs-site.extra.js 가 있으면 assets/site.css · site.js 끝에 붙인다 (check · pre-commit 도 붙인 결과로 비교) */
 const EXTRA = { 'assets/site.css': 'docs-site.extra.css', 'assets/site.js': 'docs-site.extra.js' };
-function assets(dir) {
+const SITE_DIR = path.join(PACKS, 'core', 'assets', 'docs-site');
+const SHARED_DIR = path.join(SITE_DIR, 'shared');   // 문서 사이트 · ERD 가 같이 쓰는 화면 부품 (사이드바 머리 줄)
+/** 원본 폴더의 *.js 를 이름 순으로 이은 파일 하나 (문서 사이트 앱 · ERD · 화면설계서 뷰어) */
+function concatSrc(src, where, shared) {
+  const part = (dir) => fs.readdirSync(dir).filter((f) => /\.js$/.test(f)).sort().map((f) => `/* ── ${f} ── */\n${fs.readFileSync(path.join(dir, f), 'utf8').replace(/\s*$/, '')}`);
+  return Buffer.from([`/* 생성물: aikit docs build. 원본은 킷의 ${where}${shared ? ' (+ 공통 부품 packs/core/assets/docs-site/shared/)' : ''} (손으로 고치지 않는다) */`,
+    ...(shared ? part(SHARED_DIR) : []), ...part(src)].join('\n') + '\n');
+}
+function siteAssets(dir) {
   const a = {};
-  const add = (from, to) => { if (fs.existsSync(from)) a[to] = fs.readFileSync(from); };
-  add(path.join(PACKS, 'core', 'assets', 'docs-site', 'site.css'), 'assets/site.css');
-  add(path.join(PACKS, 'core', 'assets', 'docs-site', 'site.js'), 'assets/site.js');
+  a['assets/site.css'] = fs.readFileSync(path.join(SITE_DIR, 'site.css'));
+  a['assets/site.js'] = concatSrc(path.join(SITE_DIR, 'src'), 'packs/core/assets/docs-site/src/', true);
+  const vd = path.join(SITE_DIR, 'vendor');
+  const ix = JSON.parse(fs.readFileSync(path.join(vd, 'index.json'), 'utf8'));
+  a['assets/vendor.js'] = Buffer.from(`/* 생성물: aikit docs build. 외부 라이브러리 (라이선스: vendor-LICENSES.txt) ${ix.packages.map((p) => `${p.name}@${p.version}`).join(' · ')} */\n${ix.files.map((f) => fs.readFileSync(path.join(vd, f), 'utf8')).join('')}`);
+  a['assets/vendor-LICENSES.txt'] = Buffer.from(ix.packages.map((p) => `== ${p.name} ${p.version} (${p.license}) ${p.home}\n\n${fs.readFileSync(path.join(vd, `${p.name}-LICENSE.txt`), 'utf8').trim()}\n`).join('\n'));
   for (const [to, name] of Object.entries(EXTRA)) {
     const f = dir && path.join(dir, name);
     if (!f || !a[to] || !fs.existsSync(f)) continue;
     a[to] = Buffer.concat([a[to], Buffer.from(`\n/* ${name} (이 repo 덧붙임) */\n`), fs.readFileSync(f)]);
   }
-  add(path.join(PACKS, 'screens', 'assets', 'storyboard', 'storyboard.css'), 'assets/storyboard/storyboard.css');
-  add(path.join(PACKS, 'screens', 'assets', 'storyboard', 'storyboard.js'), 'assets/storyboard/storyboard.js');
+  return a;
+}
+/** 뷰어(ERD · 화면설계서)가 같이 쓰는 화면 라이브러리: assets/vendor.js · 라이선스 */
+function siteVendor() {
+  const a = siteAssets(null);
+  return { 'assets/vendor.js': a['assets/vendor.js'], 'assets/vendor-LICENSES.txt': a['assets/vendor-LICENSES.txt'] };
+}
+/** 화면 틀 + 화면설계서 뷰어 */
+function assets(dir) {
+  const a = siteAssets(dir);
+  const add = (from, to) => { if (fs.existsSync(from)) a[to] = fs.readFileSync(from); };
+  const sb = path.join(PACKS, 'screens', 'assets', 'storyboard');
+  add(path.join(sb, 'storyboard.css'), 'assets/storyboard/storyboard.css');
+  // storyboard.js = src/*.js 를 이름 순으로 이은 뷰어 (화면 라이브러리는 assets/vendor.js, 장 쪽에 생성기가 함께 넣는다)
+  if (fs.existsSync(path.join(sb, 'src'))) a['assets/storyboard/storyboard.js'] = concatSrc(path.join(sb, 'src'), 'packs/screens/assets/storyboard/src/');
   return a;
 }
 
@@ -136,7 +162,9 @@ function erdOpts(ws) {
   conv.hideEdgesTo = list(v.erdHideEdgesTo);
   const hub = Number(v.erdHubMin);
   if (Number.isInteger(hub) && hub > 0) conv.hubMin = hub;
-  return { shell: fs.readFileSync(path.join(dir, 'viewer.html'), 'utf8'), conv, assets: Object.fromEntries(ERD_FILES.map((f) => [`assets/erd/${f}`, fs.readFileSync(path.join(dir, f))])) };
+  // erd.js = src/*.js 를 이름 순으로 이은 앱 (화면 라이브러리는 문서 사이트와 같은 assets/vendor.js)
+  const app = concatSrc(path.join(dir, 'src'), 'packs/datamodel/assets/erd/src/', true);
+  return { shell: fs.readFileSync(path.join(dir, 'viewer.html'), 'utf8'), conv, assets: { ...Object.fromEntries(ERD_FILES.filter((f) => f !== 'erd.js').map((f) => [`assets/erd/${f}`, fs.readFileSync(path.join(dir, f))])), 'assets/erd/erd.js': app, ...siteVendor() } };
 }
 
 function titleOf(dir, ws, name) {
@@ -202,7 +230,7 @@ const HOST_NAME = { gitlab: 'GitLab', github: 'GitHub' };
 /** build 끝의 Pages 한 줄 */
 function pagesHint(dir, out) {
   const st = pagesState(dir);
-  if (!st.host) return `Pages: 원격이 없습니다. 로컬로 보기: python3 -m http.server -d ${out} (file:// 로도 열린다)`;
+  if (!st.host) return `Pages: 원격이 없습니다. 이 PC 에서 보기: aikit docs serve`;
   if (st.on) return `Pages 켜짐 (${HOST_NAME[st.host]}): ${out}/ 를 커밋 · push 하면 ${CI[st.host]} 가 올린다. 끄기: aikit docs pages off`;
   return `Pages 꺼짐 (${HOST_NAME[st.host]}): ${out}/ 는 이 PC 에서만 본다. 올리려면: aikit docs pages on`;
 }
@@ -365,10 +393,38 @@ function generate(t, ws, out) {
   const cellFold = Number(((ws && ws.vars && ws.vars.docs) || {}).cellFold) || undefined;
   const res = build(files, { cellFold, title: titleOf(t.dir, ws, t.name), prefixes: prefixesOf(ws), assets: assets(t.dir), mermaid: mermaidAssets(), config, erd: erdOpts(ws), sheetTheme: sheetTheme(ws), ...(sc.srcOf ? { srcOf: sc.srcOf } : {}) });
   res.plan = sc.plan;
+  const moved = movedPages(path.join(t.dir, out), res.pages);
+  res.moved = moved;
   const list = Object.keys(res.pages).sort();
   res.files = files;
-  res.pages[MANIFEST] = `${JSON.stringify({ generator: 'aikit docs', note: '이 폴더는 aikit docs build 가 만든다. 손으로 고치지 않는다 (다시 만들면 사라진다)', files: list }, null, 1)}\n`;
+  res.pages[MANIFEST] = `${JSON.stringify({ generator: 'aikit docs', note: '이 폴더는 aikit docs build 가 만든다. 손으로 고치지 않는다 (다시 만들면 사라진다)', files: list, ...(Object.keys(moved).length ? { moved } : {}) }, null, 1)}\n`;
   return res;
+}
+
+/**
+ * 옮겨진 문서: 지난번에 만든 쪽이 이번에 없고, 파일 이름이 같은 새 쪽이 하나뿐이면 옛 주소에 「옮겨졌습니다」 쪽을 둔다 (새 주소로 바로 넘긴다).
+ * 공유한 링크 · 즐겨찾기가 404 가 되지 않게. 짝은 사이트 표시(assets/site.json)의 moved 에 남겨 다음 build · check 도 같은 쪽을 만든다.
+ * 그 주소에 다시 문서가 생기거나 새 쪽이 없어지면 뺀다. index.html 처럼 흔한 이름은 짝을 짓지 않는다
+ */
+function movedPages(outDir, pages) {
+  let prev = {};
+  try { prev = JSON.parse(fs.readFileSync(path.join(outDir, MANIFEST), 'utf8')); } catch { /* 처음 */ }
+  const moved = { ...(prev.moved || {}) };
+  const html = Object.keys(pages).filter((p) => /\.html$/.test(p));
+  for (const p of prev.files || []) {
+    if (!/\.html$/.test(p) || p in pages || moved[p] || /(^|\/)(index|print-all|erd|erd-view)\.html$/.test(p)) continue;
+    const hits = html.filter((x) => path.posix.basename(x) === path.posix.basename(p));
+    if (hits.length === 1) moved[p] = hits[0];
+  }
+  const out = {};
+  for (const [o, n] of Object.entries(moved).sort()) {
+    if (o in pages || !(n in pages)) continue;
+    const rel = path.posix.relative(path.posix.dirname(o), n);
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    pages[o] = `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="robots" content="noindex">\n<meta http-equiv="refresh" content="0; url=${esc(rel)}">\n<title>옮겨진 문서</title>\n<script>location.replace(${JSON.stringify(rel).replace(/</g, '\\u003c')} + location.hash)</script>\n</head>\n<body><p>이 문서는 옮겨졌습니다: <a href="${esc(rel)}">${esc(n)}</a></p></body>\n</html>\n`;
+    out[o] = n;
+  }
+  return out;
 }
 
 const same = (a, b) => (Buffer.isBuffer(a) || Buffer.isBuffer(b) ? Buffer.compare(Buffer.from(a), Buffer.from(b)) === 0 : a === b);
@@ -570,7 +626,8 @@ async function cmdBuild(ws) {
     }
     const sheets = res.docs.filter((d) => d.kind === 'sheets').length;
     const erd = (res.erds || []).map((e) => `ERD ${e.page} (테이블 ${e.model.tables.length})`).join(' · ');
-    console.log(`✔ ${t.name}/${out}/ 문서 ${res.docs.length - sheets}${sheets ? ` · 화면설계서 ${sheets}` : ''}${erd ? ` · ${erd}` : ''} · ID ${Object.keys(res.index.ids).length} · 바뀐 파일 ${wrote}${stale.length ? ` · 지운 파일 ${stale.length}` : ''}`);
+    const mv = Object.keys(res.moved || {}).length;
+    console.log(`✔ ${t.name}/${out}/ 문서 ${res.docs.length - sheets}${sheets ? ` · 화면설계서 ${sheets}` : ''}${erd ? ` · ${erd}` : ''} · ID ${Object.keys(res.index.ids).length} · 바뀐 파일 ${wrote}${stale.length ? ` · 지운 파일 ${stale.length}` : ''}${mv ? ` · 옮겨진 문서 안내 ${mv}` : ''}`);
     for (const l of await mermaidLines(res)) console.log(`  ${l}`);
     for (const l of artLines(res)) console.log(`  ${l}`);
     for (const l of unlistedLines(res)) console.log(`  ${l}`);
@@ -604,6 +661,43 @@ async function cmdCheck(ws, dirArg, quietIfNone) {
   if (bad) process.exitCode = 1;
 }
 
+/** serve: docs-site/ 를 http://127.0.0.1:<port>/ 로 (이 PC 에서만). 포트가 쓰이고 있으면 다음 번호 */
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.txt': 'text/plain; charset=utf-8' };
+function cmdServe(ws) {
+  const arg = argv[1] && !argv[1].startsWith('--') ? argv[1] : null;
+  const [t] = targets(ws, arg);
+  const dir = path.join(t.dir, outOf(t.dir));
+  if (!ours(dir)) throw new Error(`${t.name}: 문서 사이트를 만든 적 없음 (aikit docs build ${t.name})`);
+  const http = require('http');
+  const server = http.createServer((req, res) => {
+    let rel;
+    try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { res.writeHead(400); res.end(); return; }
+    let f = path.join(dir, path.normalize(rel).replace(/^([/\\])+/, ''));
+    if (f !== dir && !f.startsWith(dir + path.sep)) { res.writeHead(403); res.end(); return; }
+    if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+    fs.readFile(f, (e, data) => {
+      if (e) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); res.end(`없음: ${rel}`); return; }
+      res.writeHead(200, { 'content-type': TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-cache' });
+      res.end(data);
+    });
+  });
+  let port = Number(opt('port')) || 8000;
+  server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE' && !opt('port') && port < 8100) { port++; server.listen(port, '127.0.0.1'); return; }
+    console.error(`✖ ${e.message}`);
+    process.exitCode = 1;
+  });
+  server.on('listening', () => {
+    const url = `http://127.0.0.1:${port}/`;
+    console.log(`● ${t.name}: ${url} (${path.relative(process.cwd(), dir).startsWith('..') ? dir : path.relative(process.cwd(), dir) || dir}, 이 PC 에서만. 끝내기: Ctrl+C). 고친 뒤에는 aikit docs build 하고 새로고침`);
+    if (has('open')) {
+      const opener = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]];
+      require('child_process').spawn(opener[0], opener[1], { stdio: 'ignore', detached: true }).unref();
+    }
+  });
+  server.listen(port, '127.0.0.1');
+}
+
 async function main() {
   const cmd = argv[0];
   const ws = loadWs();
@@ -616,7 +710,8 @@ async function main() {
     if (cmd === 'refs-quote') return cmdRefsQuote(argv.slice(1));
     if (cmd === 'trace') return cmdTrace(ws);
     if (cmd === 'pages') return cmdPages(ws);
-    console.log('사용법: aikit docs build [repo|폴더] [--out docs-site] [--force] · pages [on|off] [repo|폴더] · check [repo|폴더] · show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs] · refs-quote <md 파일…> [--dry] · trace [--ids FN] [--all] [--strict]');
+    if (cmd === 'serve') return cmdServe(ws);
+    console.log('사용법: aikit docs build [repo|폴더] [--out docs-site] [--force] · pages [on|off] [repo|폴더] · check [repo|폴더] · serve [repo|폴더] [--port 8000] [--open] · show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs] · refs-quote <md 파일…> [--dry] · trace [--ids FN] [--all] [--strict]');
     process.exitCode = cmd ? 1 : 0;
   } catch (e) {
     console.error(`✖ ${e.message}`);
@@ -625,4 +720,4 @@ async function main() {
 }
 
 if (require.main === module) main();
-module.exports = { generate, diff, assets, mermaidAssets, EXTRA, MANIFEST, OUT, OLD_OUT, pagesState, ciLine, oldRefs };
+module.exports = { generate, diff, assets, siteAssets, mermaidAssets, EXTRA, MANIFEST, OUT, OLD_OUT, pagesState, ciLine, oldRefs };

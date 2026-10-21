@@ -51,4 +51,15 @@ repo 를 보고 스택을 감지하는 조건이다. **새 기술은 여기에 �
 - 규칙·스킬은 도구 중립이라 `AGENTS.md` 를 읽는 도구면 1~3 만으로도 규칙은 먹는다. 훅·역할 에이전트·위임은 4~6 이 있어야 한다.
 - 다른 회사 **모델**만 필요하면 도구를 더하지 않는다. AI 게이트웨이로 연결하면 Claude Code 안에서 그 모델을 고를 수 있다.
 
+## 문서 사이트 앱
+
+문서 사이트(킷 가이드 · 기획 repo · 현황판)의 화면은 한 앱이다. 빌드 도구 없이 클래식 스크립트로 넣는다 (`file://` 로 연 현황판도 돌게, 브라우저는 `file://` 에서 ES 모듈을 막는다).
+
+| 할 일 | 방법 |
+|---|---|
+| 화면 고치기 | 문서 사이트 `packs/core/assets/docs-site/src/*.js` · ERD 뷰어 `packs/datamodel/assets/erd/src/*.js` · 화면설계서 뷰어 `packs/screens/assets/storyboard/src/*.js` (기능별 파일, 이름 순으로 이어져 `site.js` · `erd.js` · `storyboard.js` 하나씩이 된다). 문서 사이트와 ERD 가 같이 쓰는 부품(사이드바 머리 줄)은 `packs/core/assets/docs-site/shared/` 에 두면 두 파일 앞에 들어간다. 스타일은 각 폴더의 css. 문서 사이트는 `npm run docs` 로 이 가이드에서, 뷰어는 `npm run test:site` 의 시험 사이트에서 확인 |
+| 외부 라이브러리 | `vendor.json` 에 이름 · 버전(나온 지 2주 넘은 것) · 넣을 파일을 적고 `npm run vendor`. 공개 npm 에서 받아 `packs/core/assets/docs-site/vendor/` 에 라이선스와 함께 둔다. 생성기(Node)가 쓰는 것(markdown-it)은 `bundles` 로 적으면 esbuild 가 `packs/core/lib/vendor/` 에 파일 하나로 묶는다 (딸린 의존 버전은 `vendor-lock.json`). 받은 파일이 맞는지만 볼 때는 `npm run vendor:check`. 새 라이브러리는 `THIRD_PARTY_NOTICES.md` 에도 적는다 |
+| 쪽 파일 | 생성기(`packs/core/lib/mdsite.js`)가 쪽마다 본문 HTML(`.ds-body`) 과 쪽 정보(`script#ds-page`)를 쓴다. 앱은 그 둘로 그리고, 쪽을 옮길 때도 다음 쪽 파일에서 둘만 꺼낸다 |
+| 시험 | 화면은 `npm test` 가 보지 않는다. `npm run test:site` 가 이 PC 의 Chrome 을 화면 없이 띄워 이동 · 검색 · 그림 · 인쇄 · 좁은 화면 · `file://` · 필기(마우스 · 손가락 · 펜) · 근거 패널 · ERD 뷰어 · 화면설계서 뷰어를 본다. 실기기(아이패드 · 갤럭시) 펜 감도는 직접 본다 |
+
 

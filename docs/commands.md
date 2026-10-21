@@ -13,7 +13,7 @@
 | `aikit start -c` · `-r <세션 ID>` · `-r` | `/exit` 뒤 이어서 할 때 | 지난 대화 이어서: `-c` 마지막 대화 · `-r <ID>` 그 세션(`/exit` 때 나온 ID) · `-r` 목록에서 고르기. 브리핑 없이, 모델 · 텔레그램 채널은 그대로. Claude `--continue` · `--resume`, Codex `resume --last` · `resume <ID>` 로 바꿔 넘긴다 |
 | `aikit agent` | 필요할 때 | AI 연결 방식·항상 붙일 인자를 다시 고른다 (시작 도구는 연결 방식으로 정해진다) |
 | `aikit ai` · `ai show` | 구독·게이트웨이가 바뀌었을 때 | 쓰는 AI(Claude · GPT · 둘 다 · AI 게이트웨이)만 다시 고른다 / 지금 값 보기 |
-| `aikit ai direct claude,gpt` · `gateway [--url <주소> --key-env <변수>]` · `refresh` · `compose mix\|vendor\|single` · `main claude\|gpt` | AI 에게 시킬 때 | 화면 없이 같은 일. `refresh` 는 게이트웨이 모델 목록을 다시 받는다. `--team` 이면 팀 기본값 |
+| `aikit ai direct claude,gpt` · `gateway [--url <주소> --key-env <변수>]` · `refresh` · `compose mix\|vendor\|single` · `main claude\|gpt` | AI 에게 시킬 때 | 화면 없이 같은 일. `refresh` 는 게이트웨이 모델 목록을 다시 받는다. `--key-env` 를 빼면 이 PC 설정에서 같은 주소의 키 이름(`ANTHROPIC_AUTH_TOKEN` 등)을 찾아 쓴다. `--team` 이면 팀 기본값 |
 | `aikit models` | 필요할 때 | 모델 프로필, 또는 역할별(한 번에 차례로·하나씩)·교차 검토 모델을 **팀 기본값** 또는 **이 PC 만** 바꾼다. 화면 없이 실행하면 표(팀 구성 · 역할별 등급과 출처), `--json` 은 JSON |
 | `aikit approach [sprint\|full\|issue]` | 진행 방식을 바꿀 때 | 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 단계 대신 이슈 보드). 인자 없이 = 지금 값. 기본 단계 그대로인 로드맵은 새 뼈대로 바꾸고, 이슈형으로 바꾸면 고친 로드맵에도 맨 앞에 이슈 보드를 끼운다 (전 단계 표는 아래에 남김) (관리자) |
 | `aikit type [유형] [--approach a] [--code 이름,…]` | 분석·설계를 끝내고 구축 · 고도화로 넘어갈 때 | 같은 워크스페이스에서 유형을 바꾼다: 고칠 repo (현행 → 개발 repo, 화면에서 고름) · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대(지난 로드맵은 아래 「지난 로드맵」 절에 남김) → sync. 기획 · 이슈 repo 와 작업 기록은 그대로 이어진다. 인자 없이 = 지금 값 (관리자) |
@@ -39,6 +39,8 @@
 | `aikit handoff find <티켓·기능>` · `check` · `index` · `archive` · `organize` | 지난 기록을 찾을 때 · 기록이 커졌을 때 | 모든 사람의 핸드오프 기록에서 파일:줄로 찾기 · 크기 검사 · 색인 · 보관 · 정리 후보 |
 | `aikit plan` · `--short` · `--json` · `--report [시작 [끝]]` · `init` · `check` | 진행 정도를 볼 때 · 단계를 끝냈을 때 · 주간 보고 | 로드맵(`handoffs/PLAN.md`): 단계 흐름 · 지금 단계 표 · 이번에 생긴 것(커밋 · 새 파일 · ID) · 다음. 이슈형은 이슈 보드: 상태별 건수 · 진행 중 이슈 표 · 멈춘 이슈 ⚠ · 개선 후보. `--report` 는 이슈형 기간 보고(기본 오늘까지 7일: 운영 반영 · 진행 중 · 새 접수 · 보류 · 멈춘 이슈). `--json` 은 다른 도구(전광판 등)용, `check` 는 갱신 누락 경고 |
 | `aikit docs build [repo]` · `check` | 기획 문서 · 화면설계서 · 테이블 정의서를 고쳤을 때 | 기획 repo 의 md · 화면설계서 장 → `docs-site/` (정의 ID 앵커 · 근거 색인 `ids.json` · 뷰어 파일 · 정의서 폴더마다 ERD `erd.html`). `check` 는 md 와 `docs-site/` 가 어긋났는지 (기획 repo 의 pre-commit 도 막는다). 둘 다 문서 점검 경고(큰 문서 · 머리말 이력 · 같은 문장 · 긴 표 칸 · 문단형 표 · 칸 안 경위 · 그림 없는 큰 문서 · 메뉴 「기타」)를 낸다 |
+| `aikit delegate watch [id]` · `status [id]` · `list` | 다른 도구에 맡긴 리뷰 · 작업(Claude Code ↔ Codex)이 지금 무엇을 하는지 볼 때 | `watch` = 상대 에이전트가 읽은 파일 · 찾기 · 실행한 명령 · 고친 파일 · 중간에 한 말을 생기는 대로 한 줄씩(다른 터미널에서), 끝나면 요약. `status` = 경과 · 개수 · 최근 동작을 한 번. id 를 빼면 마지막 실행 중 작업 |
+| `aikit docs serve [repo]` | Pages 없이 이 PC 에서 문서 사이트를 볼 때 | `docs-site/` 를 `http://127.0.0.1:8000/` 로 연다 (`--port` · `--open`). `file://` 로 열면 쪽 이동이 새로고침이 되고 전체 인쇄가 안 된다 |
 | `aikit docs pages [on\|off] [repo]` | 문서 사이트를 Pages 로 올릴지 정할 때 | on = 원격에 맞는 CI 파일 · `docs-site/` 커밋 대상, off = `.gitignore` 에 `/docs-site/`. 인자 없이 = repo 마다 상태 |
 | `aikit docs show <ID>` · `refs <ID>` | 근거를 볼 때 · 결정이 바뀌어 고칠 곳을 찾을 때 | `show` = 그 ID 의 정의 부분만(제목 절 · 표 행 · 문단 · 화면설계서 장). `refs` = 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결]). 에이전트도 큰 문서를 통째로 열지 않고 이것을 쓴다 |
 | `aikit docs refs-quote <파일…>` | 문서 점검의 「파일:줄 참조」 경고가 많을 때 | 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다. `--dry` 는 옮길 곳 수만 |

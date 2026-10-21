@@ -1,0 +1,36 @@
+{
+ "note": "npm run vendor 가 만든다",
+ "files": [
+  "preact.js",
+  "preact-hooks.js",
+  "htm.js",
+  "minisearch.js",
+  "perfect-freehand.js"
+ ],
+ "packages": [
+  {
+   "name": "preact",
+   "version": "10.29.8",
+   "license": "MIT",
+   "home": "https://preactjs.com"
+  },
+  {
+   "name": "htm",
+   "version": "3.1.1",
+   "license": "Apache-2.0",
+   "home": "https://github.com/developit/htm"
+  },
+  {
+   "name": "minisearch",
+   "version": "7.2.0",
+   "license": "MIT",
+   "home": "https://github.com/lucaong/minisearch"
+  },
+  {
+   "name": "perfect-freehand",
+   "version": "1.2.3",
+   "license": "MIT",
+   "home": "https://github.com/steveruizok/perfect-freehand"
+  }
+ ]
+}

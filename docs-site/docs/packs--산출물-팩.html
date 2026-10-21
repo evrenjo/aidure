@@ -6,19 +6,21 @@
 <meta name="generator" content="aikit docs">
 <title>산출물 팩 · aikit 문서</title>
 <script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site.css?v=6c81c041">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="../">
+<div id="ds-app">
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
-  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
-  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.69.1</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="docs/packs--산출물-팩.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
   <main id="main"><article class="page">
 <div class="page-head"><div><div class="crumb">팩</div><h1>산출물 팩</h1></div><a class="src" href="https://github.com/lsnwan/aidure/blob/main/docs/packs.md" title="원본 md">원본 packs.md</a></div>
+<div class="ds-body">
 
 <p>&lt;details&gt; &lt;summary&gt;&lt;b&gt;datamodel&lt;/b&gt; · 데이터 설계: 테이블 정의서 양식 · ERD 뷰어 · datamodel 스킬 · 검사&lt;/summary&gt;</p>
 <p>데이터 설계를 같은 양식 · 같은 뷰어로: md 테이블 정의서(스키마마다 한 파일, 「### 스키마.테이블 논리명」 + 컬럼 표), ERD 뷰어(aikit docs build 가 정의서에서 생성. 영역 덩어리 배치 · 영역 개요 카드 · 관계 중심 배치 · 논리 참조 점선 · 이름 보기 · 표시 수준 자동 전환 · 돋보기 · 미니맵 · 사이드바 스키마 접기 · 주제 영역 보기 · 참조 많은 표 선 숨김 · 상세 드로어 · 기능 ID 근거 패널 · Export SQL DDL · SVG · PDF · 영역마다 PDF), 데이터 설계 절차(datamodel 스킬: 진행 방식 합의 → DB 컨벤션 → 엔티티 목록 → 테이블 정의서 → ERD → 검사), 검사(aikit datamodel check: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 · 논리 참조 · 고정 스키마 예외 · JSON 사유). DB 컨벤션은 프로젝트가 정한다(vars.datamodel). 신규 · 차세대 유형은 기본으로 켜진다</p>
@@ -36,12 +38,16 @@
 <div class="table"><table><thead><tr><th>이름</th><th>설명</th></tr></thead><tbody><tr><td><code>screens</code></td><td>화면설계서(스토리보드)를 킷 양식으로 만든다. 진행 방식 합의 → 화면 정책 → 화면 목록(화면 ID ↔ 기능 ID 대조) → 화면별 장 작성 → 문서 사이트 반영과 검사. &quot;화면설계&quot;, &quot;화면설계서&quot;, &quot;스토리보드&quot;, &quot;와이어프레임&quot; 요청에 쓴다.</td></tr></tbody></table></div>
 <p><strong>도구</strong>: <code>bin/check-screens.js</code></p>
 <p>&lt;/details&gt;</p>
+</div>
 </article>
   <div class="pager"><a class="prev" href="packs--스택-팩.html"><small>이전 · 팩</small>스택 팩</a><a class="next" href="pack-making.html"><small>다음 · 팩</small>팩 제작</a></div></main>
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><div class="empty">산출물 팩</div></div></aside>
 </div>
-<script src="../assets/search.js"></script>
-<script src="../assets/nav.js"></script>
-<script src="../assets/site.js"></script>
+</div>
+<script type="application/json" id="ds-page">{"page":"docs/packs--산출물-팩.html","kind":"doc","title":"산출물 팩","head":"산출물 팩 · aikit 문서","crumb":"팩","status":"","h1":"산출물 팩","lead":"","src":{"href":"https://github.com/lsnwan/aidure/blob/main/docs/packs.md","name":"packs.md"},"toc":[],"prev":{"p":"docs/packs--스택-팩.html","t":"스택 팩","g":"팩"},"next":{"p":"docs/pack-making.html","t":"팩 제작","g":"팩"},"site":{"title":"aikit 문서","logo":"ai","version":"v0.69.1","ink":true}}</script>
+<script src="../assets/search.js?v=455f50b1"></script>
+<script src="../assets/nav.js?v=ba3b68eb"></script>
+<script src="../assets/vendor.js?v=fb36e908"></script>
+<script src="../assets/site.js?v=6255e334"></script>
 </body>
 </html>

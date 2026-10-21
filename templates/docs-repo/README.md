@@ -68,7 +68,7 @@ originals/화면설계/주문관리.pptx   →   md/화면설계/주문관리.md
 - md 나 장을 고치면 `aikit docs build` 로 다시 만들어 **같은 커밋에** 넣는다. 어긋나면 pre-commit 이 막는다.
 - 구성도 · 흐름도는 ` ```mermaid ` 블록으로 쓰면 사이트에 그림으로 나온다 (확대 · 새 창). 문법이 틀리면 build · pre-commit 이 ✖ 로 알리고, ASCII 그림은 ⚠ 로 알린다. 시스템 구성도(단계별 · 서버 사양)는 워크스페이스 에이전트의 architecture 스킬이 견본대로 만든다.
 - Pages 로 올리기(선택): `aikit docs pages on` 이 원격에 맞는 CI 만 남기고 `docs-site/` 를 커밋 대상으로 한다. GitLab 은 `.gitlab-ci.yml` (서버에 Pages 와 러너가 있어야 한다), GitHub 은 `.github/workflows/pages.yml` (한 번만 Settings > Pages > Source 를 GitHub Actions 로, 비공개 repo 는 유료 요금제). 올리지 않으면 `aikit docs pages off` (`.gitignore` 에 `/docs-site/`).
-- Pages 가 없으면 받아서 연다: `python3 -m http.server -d docs-site` (file:// 로도 열린다).
+- Pages 가 없으면 받아서 연다: `aikit docs serve` (file:// 로도 열리지만 쪽 이동이 새로고침이 된다).
 - 메뉴 묶음 · 사이트 이름 · 버전 · 원본 보기 주소 · 포함 범위(`include` · `exclude` glob)는 `docs-site.json` 으로 정한다 (없으면 폴더와 파일 이름 앞 번호로 묶는다).
 
 ## 바이너리 파일

@@ -148,6 +148,8 @@
 | 역할 에이전트 파일 | 사람마다 모델이 다를 수 있어 git 에 올리지 않고 각자 sync 가 만든다 |
 | Fable 과금 | Claude Pro·표준 좌석은 첫 요청부터 사용량 크레딧, Max·프리미엄 좌석은 주간 한도 50% 까지 포함 |
 | AI 게이트웨이 | 위 "AI 연결 방식". Claude 별칭(`opus` 등)이 게이트웨이 모델로 이어져 있으면(`ANTHROPIC_DEFAULT_*_MODEL`) 별칭을 그대로, 아니면 게이트웨이 모델 ID 로 바꿔 쓴다 |
+| 팀원 승인 질문 | 팀 모드 팀원 창에 권한 승인이 뜨면 팀원은 멈추고 리더 화면에는 보이지 않는다. 훅이 승인 대기를 적어 리더의 다음 요청 · 턴 끝에 알리고(텔레그램을 켰으면 바로 「🔐 팀원 … 승인 대기」), 사용자가 그 창에서 승인하면 풀린다 |
+| 미리 허용한 조회 명령 | 승인 없이 쓰는 읽기 전용 명령: `git log · show · diff · status · blame · grep · ls-files · rev-parse`, `ls · cat · head · tail · wc · grep · rg · tree · pwd`, `aikit docs show · refs · trace` (`.claude/settings.json` 의 `permissions.allow`, sync 가 만든다). 더 넣을 것은 팀이면 `workspace.json` 의 `claude.settings.permissions.allow`, 나만이면 `.claude/settings.local.json` |
 | Codex 역할 모델 | Codex(0.158)는 역할 파일(`.codex/agents`)을 하위 에이전트에 적용하지 않는다. 개인 지침(`AGENTS.override.md`)의 역할 모델 표대로 리더가 `spawn_agent` 에 모델 · 추론 강도를 넣는다 |
 
 ## 모델 버전 관리

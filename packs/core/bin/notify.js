@@ -129,7 +129,7 @@ function status() {
   console.log(`           PC 앞이면 끝남 알림 생략: ${p.deskSeconds ? `${p.deskSeconds}초 안에 키보드 · 마우스를 만졌을 때${notify.idleSeconds() == null ? ' (이 PC 는 잴 수 없어 늘 보냄)' : ''}` : '끔'} (aikit notify my desk <초>|off)`);
   const v = notify.voiceOf(ROOT);
   console.log(`음성       ${v.on ? `켜짐 · ${notify.VOICE_SCOPE_LABEL[v.scope]} · 목소리 ${v.name}` : '꺼짐'} (aikit notify my voice on|off)`);
-  console.log(`개인 봇    ${p.token ? '있음' : '없음 → aikit notify setup'} · 채팅 ${p.chat || '없음'}`);
+  console.log(`개인 봇    ${p.token ? '있음 (이 PC 의 모든 워크스페이스 공통. 알림 첫머리의 [프로젝트 이름]으로 구분)' : '없음 → aikit notify setup'} · 채팅 ${p.chat || '없음'}`);
   // 개인 봇이 다른 프로젝트의 양방향 채널 봇과 같으면, 이 워크스페이스 알림이 그 프로젝트 대화방으로 섞여 들어간다
   const secretToken = notify.readSecrets().TELEGRAM_BOT_TOKEN;
   const clash = secretToken && !notify.channelOn(ROOT) && notify.channelTokenUsedElsewhere(ROOT, secretToken);

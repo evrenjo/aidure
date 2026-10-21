@@ -70,6 +70,8 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태 | `aikit docs pages on [repo]` · `aikit docs pages off [repo]` · `aikit docs pages` (on = 원격에 맞는 CI 파일 · `docs-site/` 커밋, off = `.gitignore` 에 `/docs-site/`) | 기획 repo |
 | Codex 웹 검색 끄기 · 켜기 | `workspace.json` 의 `agents.webSearch` 를 `false` 로 (지우면 켬. `aikit start` 가 Codex 에 `--search` 를 붙인다) | 팀 |
 | 워크스페이스 현황판 | `aikit board` (로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽을 `.agents/board/` 에 만들어 브라우저로 연다. 보기 전용) | 이 PC |
+| 다른 도구에 맡긴 작업(위임) 진행 보기 | `aikit delegate watch [작업 id]` (상대 에이전트가 읽고 실행하는 것이 줄마다) · `aikit delegate status [작업 id]` (지금 현황 한 번) · `aikit delegate list` | 워크스페이스 |
+| 문서 사이트를 이 PC 에서 웹 주소로 보기 | `aikit docs serve [repo]` (`http://127.0.0.1:8000/`, `--open` 이면 브라우저도 연다. 끝내기 Ctrl+C) | 기획 repo |
 | 문서 사이트 메뉴 묶음 · 이름 · 버전 바꾸기 | 기획 repo 의 `docs-site.json` 을 고치고 `aikit docs build` (README 의 「문서 사이트」 절 형식) | 기획 repo |
 | 기획 문서 ID 하나 보기 · 쓰는 곳 찾기 | `aikit docs show <ID> [--in <파일 조각>] [--all]` (정의 부분만) · `aikit docs refs <ID> [--docs]` (기획 · 코드 · 이슈 repo 의 파일:줄). "FN-001 내용" · "이 결정 어디서 써?" 같은 말에 쓴다 | 보기 |
 | 본문 근거를 인용구로 옮기기 | `aikit docs refs-quote <md 파일…> [--dry]` (본문 괄호 속 파일:줄을 그 문단 · 목록 · 표 아래 「> 근거:」 로). 「파일:줄 참조」 경고가 많을 때 · "근거 인용구로 빼 줘" 같은 말에 쓴다 | 기획 repo |

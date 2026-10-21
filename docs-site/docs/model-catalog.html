@@ -6,19 +6,21 @@
 <meta name="generator" content="aikit docs">
 <title>모델 카탈로그 관리 · aikit 문서</title>
 <script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site.css?v=6c81c041">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="../">
+<div id="ds-app">
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>aikit 문서</a></div>
-  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
-  <div class="tools"><span>v0.67.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="tools"><span>v0.69.1</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="docs/model-catalog.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
   <main id="main"><article class="page">
 <div class="page-head"><div><div class="crumb">설정 · 참고</div><h1>모델 카탈로그 관리</h1></div><a class="src" href="https://github.com/lsnwan/aidure/blob/main/docs/model-catalog.md" title="원본 md">원본 model-catalog.md</a></div>
+<div class="ds-body">
 
 <p>역할별 추천 모델은 <code>packs/core/models.json</code> 한 곳에 있다. 선택 화면, 에이전트 파일, 팀 에이전트와 모델 · 흐름도의 추천 표가 모두 이 파일에서 나온다. 새 모델이나 퇴역 공지가 나오면 아래 순서로 조사하고, 추천을 바꿀지 판단해서 이 파일만 고친다.</p>
 <h2 id="언제-하나">언제 하나<a class="anchor" href="#언제-하나" aria-label="이 절 주소">#</a></h2>
@@ -45,12 +47,16 @@
 <div class="table"><table><thead><tr><th>판단</th><th>근거</th></tr></thead><tbody><tr><td>Claude 설계(최고)를 Fable 5.1 → Opus 5.5 max</td><td>LiveBench 전체 83.2 ≈ Fable 83.4, 에이전틱 코딩 71.7 &gt; 66.1, 비용 2/3. 벤더 수치도 같은 방향(Terminal-Bench 4.0 66.4% 대 55.8%)</td></tr><tr><td>Claude 구현을 표준에서도 Opus 5.5 로</td><td>LiveBench 에이전틱 코딩 Opus xhigh 65.4 · Sonnet xhigh 39.3, 비용은 약 2배. 벤더 수치(Terminal-Bench 4.0 Sonnet 70.6% · Opus 66.4%)와 반대라 독립 측정을 따른다. 절약은 Sonnet 유지</td></tr><tr><td>Codex 코딩 역할은 <a class="ds-id" href="#GPT-6">GPT-6</a>.1 Sol high</td><td>벤더 DeepSWE v1.1 high 75.2% &gt; xhigh·max 71.9%, LiveBench 에이전틱 코딩 xhigh 56.8 &gt; max 54.5 (high 는 LiveBench 측정 없음)</td></tr><tr><td>Codex 설계(최고)만 Astra xhigh</td><td>LiveBench 전체 82.2 로 6.1 Sol(81.6)보다 조금 높지만 비용 5배. 추론 비중이 큰 설계에만</td></tr><tr><td>분석은 Opus 5.5 · <a class="ds-id" href="#GPT-6">GPT-6</a>.1 Sol (Sonnet·Luna 아님)</td><td><div class="ds-fold">LiveBench 추론·데이터 분석: 6.1 Sol xhigh 91.6·82.2($0.08), Opus xhigh 90.7·79.8($0.20), Sonnet 5.5 xhigh 86.8·78.6($0.11), Luna max 81.8·73.4.<details class="ds-more"><summary>더 보기</summary><div>벤더의 &quot;탐색은 저렴한 모델&quot; 권고는 가벼운 파일 탐색 이야기라 이 킷의 분석 역할(근거와 함께 넓게 조사)에는 맞지 않는다</div></details></div></td></tr><tr><td>Luna 는 테스트 max</td><td>벤더 DeepSWE low 2.4% · high 59.3% · max 66.6%, LiveBench max 문항당 $0.02</td></tr></tbody></table></div>
 <blockquote><p class="q-src">출처: 수치와 출처는 <code>models.json</code> 의 <code>bench</code></p></blockquote>
 <ul><li>벤더 발표 수치는 측정 하네스가 달라 회사 간 비교는 참고용이다. 같은 모델도 발표처마다 다르다(Opus 5.5 TB-Science: Anthropic 58.7% · OpenAI 측정 63.3%).</li><li>2026 모델들은 SWE-bench Verified·Pro 수치를 발표하지 않았다.</li><li>Anthropic 5.1·5.5 계열은 안전 장치가 걸리면 옛 모델로 넘기는 경우가 있어 점수가 낮게 나올 수 있다고 밝힌다.</li></ul>
+</div>
 </article>
   <div class="pager"><a class="prev" href="budget.html"><small>이전 · 설정 · 참고</small>예산</a><a class="next" href="packs.html"><small>다음 · 팩</small>개요</a></div></main>
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><a class="l2" href="#언제-하나" data-id="언제-하나">언제 하나</a><a class="l2" href="#주간-점검-자동" data-id="주간-점검-자동">주간 점검 (자동)</a><a class="l2" href="#1-조사" data-id="1-조사">1. 조사</a><a class="l2" href="#2-판단" data-id="2-판단">2. 판단</a><a class="l2" href="#3-반영" data-id="3-반영">3. 반영</a><a class="l2" href="#근거-2026-10-01" data-id="근거-2026-10-01">근거 (2026-10-01)</a><a class="l3" href="#벤치마크로-바꾼-판단" data-id="벤치마크로-바꾼-판단">벤치마크로 바꾼 판단</a></div></aside>
 </div>
-<script src="../assets/search.js"></script>
-<script src="../assets/nav.js"></script>
-<script src="../assets/site.js"></script>
+</div>
+<script type="application/json" id="ds-page">{"page":"docs/model-catalog.html","kind":"doc","title":"모델 카탈로그 관리","head":"모델 카탈로그 관리 · aikit 문서","crumb":"설정 · 참고","status":"","h1":"모델 카탈로그 관리","lead":"","src":{"href":"https://github.com/lsnwan/aidure/blob/main/docs/model-catalog.md","name":"model-catalog.md"},"toc":[{"lvl":2,"sid":"언제-하나","text":"언제 하나"},{"lvl":2,"sid":"주간-점검-자동","text":"주간 점검 (자동)"},{"lvl":2,"sid":"1-조사","text":"1. 조사"},{"lvl":2,"sid":"2-판단","text":"2. 판단"},{"lvl":2,"sid":"3-반영","text":"3. 반영"},{"lvl":2,"sid":"근거-2026-10-01","text":"근거 (2026-10-01)"},{"lvl":3,"sid":"벤치마크로-바꾼-판단","text":"벤치마크로 바꾼 판단"}],"prev":{"p":"docs/budget.html","t":"예산","g":"설정 · 참고"},"next":{"p":"docs/packs.html","t":"개요","g":"팩"},"site":{"title":"aikit 문서","logo":"ai","version":"v0.69.1","ink":true}}</script>
+<script src="../assets/search.js?v=455f50b1"></script>
+<script src="../assets/nav.js?v=ba3b68eb"></script>
+<script src="../assets/vendor.js?v=fb36e908"></script>
+<script src="../assets/site.js?v=6255e334"></script>
 </body>
 </html>

@@ -87,13 +87,27 @@ for (const k of Object.keys(P)) assert.strictEqual(String(again.pages[k]), Strin
 
 // 화면 틀: 상단 바 · 구분 메뉴 · 본문 머리 · 오른쪽 목차 · 이전/다음 · 검색 색인
 const nav = (h) => [...h.matchAll(/<summary class="nav-title"><span class="ico">[^<]*<\/span>([^<]*)(?:<a class="nav-act"[^>]*>[^<]*<\/a>)?<\/summary>((?:<a [^>]*>[^<]*<\/a>)*)/g)].map((m) => [m[1], [...m[2].matchAll(/>([^<]*)<\/a>/g)].map((x) => x[1])]);
-const navOf = (pages) => JSON.parse(String(pages['assets/nav.js']).replace(/^window\.DS_NAV = /, '').replace(/;\n$/, '')).html;
+const navOf = (pages) => M.navHtml(JSON.parse(String(pages['assets/nav.js']).replace(/^window\.DS_NAV = /, '').replace(/;\n$/, '')).groups);
 const NAV = navOf(P);
 const g0 = nav(NAV);
 // 메뉴는 쪽마다 넣지 않고 assets/nav.js 하나 (쪽에는 빈 nav + 지금 쪽)
 assert.match(P['30-design-a.html'], /<nav class="side" id="side-nav" data-page="30-design-a.html"><noscript>/);
 assert.ok(!/nav-link" href="(?!\.)/.test(P['30-design-a.html'].replace(/<noscript>.*?<\/noscript>/s, '')), '쪽에 메뉴 링크가 없다');
-assert.match(P['30-design-a.html'], /<script src="assets\/nav.js"><\/script>\n<script src="assets\/site.js">/);
+assert.match(P['30-design-a.html'], /<script src="assets\/nav.js\?v=[0-9a-f]{8}"><\/script>\n<script src="assets\/vendor.js(\?v=[0-9a-f]{8})?"><\/script>\n<script src="assets\/site.js(\?v=[0-9a-f]{8})?">/, '파일 주소에 내용 해시 (다시 만들면 옛 캐시를 쓰지 않는다)');
+assert.match(P['assets/nav.js'], /"v":\{"assets\/search-text\.js":"[0-9a-f]{8}"/, '나중에 읽는 파일 버전');
+// 앱이 쓰는 쪽 정보 (본문은 .ds-body 의 HTML 그대로) · 새로고침 없이 옮겨 다니는 쪽 목록 · 본문 검색 색인
+{
+  const meta = JSON.parse(P['30-design-a.html'].match(/<script type="application\/json" id="ds-page">(.*?)<\/script>/)[1]);
+  assert.strictEqual(meta.page, '30-design-a.html');
+  assert.strictEqual(meta.status, '초안');
+  assert.ok(meta.toc.some((x) => x.sid === '1-결정') && meta.prev && meta.next, '목차 · 이전/다음');
+  assert.match(P['30-design-a.html'], /<div class="ds-body">\n[\s\S]*<\/div>\n<\/article>/);
+  const N = JSON.parse(P['assets/nav.js'].replace(/^window\.DS_NAV = /, '').replace(/;\n$/, ''));
+  assert.ok(N.pages.includes('30-design-a.html') && N.pages.includes('print-all.html') && N.pages.includes('01-requirements/index.html'));
+  assert.ok(!N.pages.includes('02-screens/web.html'), '화면설계서 장은 따로 연다');
+  const T = JSON.parse(P['assets/search-text.js'].replace(/^[\s\S]*?window.DS_TEXT = /, '').replace(/;\s*$/, ''));
+  assert.ok(T.some((x) => x.u === '30-design-a.html' && x.h === '1-결정' && /한 번만 보낸다/.test(x.x)), '절마다 본문 글자');
+}
 // 머리 줄: 펜 필기 · 인쇄(이 문서 · 전체) · 테마, 같은 선 아이콘(SVG). 전체 인쇄 쪽은 하나 (site.js 가 문서를 불러와 잇는다)
 assert.match(P['30-design-a.html'], /<button id="ink" type="button"[^>]*><svg [^>]*width="18"[^>]*>.*?<\/svg><\/button><button id="print" type="button"[^>]*><svg .*?<\/svg><\/button><button id="theme" type="button"[^>]*><svg /);
 assert.match(P['print-all.html'], /<div id="print-all"><p class="print-status">/);
@@ -202,5 +216,26 @@ assert.match(lb, /<h1>긴 제목의 기획 문서<\/h1>/);
   const html = Object.entries(q.pages).find(([k]) => /q\.html$/.test(k))[1];
   assert.match(html, /<blockquote><p>결제는 하루 한 번 정산한다\.<\/p>\n?<p class="q-src">출처: 정산 정책 회의 · 2026-10-01<\/p><\/blockquote>/, html.slice(0, 0));
   assert.match(html, /<blockquote><p class="q-src">근거: OrderService\.java:120<\/p><\/blockquote>/);
+}
+// md 해석 (markdown-it + 한국어 굵게 보정): GitHub 과 같은 규칙 + 킷 표시
+{
+  const src = ['---', 'title: 머리', '---', '# 해석', '',
+    '**실계좌 경로(11곳)**다 · 「**확정**」 · `` ` ```mermaid ` `` · \\"따옴표\\" · 계좌 ****-**34', '',
+    '1. 하나', '   ```js', '   x', '   ```', '2. 둘', '', '3) 셋', '', '5. 다섯', '',
+    '| 항목 | 내용 |', '|---|---|', `| 긴 칸 | **첫 문장 안. 굵게 이어짐** 다음. ${'설명. '.repeat(60)} |`, '| br | 위<br>아래 |', '| 파이프 | a \\| b |', '',
+    '<div>글자로</div>', ''].join('\n');
+  const h = M.build({ 'p.md': src }, { title: 't' }).pages['p.html'];
+  assert.ok(!/title: 머리/.test(h), 'YAML 머리는 뺀다');
+  assert.match(h, /<strong>실계좌 경로\(11곳\)<\/strong>다/, '괄호로 끝난 굵게 + 조사');
+  assert.match(h, /「<strong>확정<\/strong>」/);
+  assert.match(h, /<code>` ```mermaid `<\/code>/, '백틱 여럿인 인라인 코드');
+  assert.match(h, / &quot;따옴표&quot; /, '역슬래시 이스케이프 (\\ 는 안 보인다)');
+  assert.match(h, /계좌 \*\*\*\*-\*\*34/, '별표 글자는 그대로');
+  assert.match(h, /<ol><li>하나<div class="code">.*<code class="lang-js">x<\/code>.*<\/li><li>둘<\/li><\/ol>/s, '목록 항목 안 코드 블록');
+  assert.match(h, /<ol start="5"><li>다섯/, '시작 번호');
+  assert.match(h, /<div class="ds-fold"><strong>첫 문장 안\. 굵게 이어짐<\/strong> 다음\.<details class="ds-more">/, '굵게 안에서는 접지 않는다');
+  assert.match(h, /<td>위<br>아래<\/td>/, '표 칸 <br>');
+  assert.match(h, /<td>a \| b<\/td>/, '표 칸 \\|');
+  assert.match(h, /&lt;div&gt;글자로&lt;\/div&gt;/, 'HTML 은 글자로');
 }
 console.log('mdsite.test.js ✔');

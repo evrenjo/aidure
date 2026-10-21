@@ -11,6 +11,9 @@
  *   wait <id> [--timeout 초(기본 480)]   끝날 때까지(또는 timeout 까지) 기다린다. 끝났으면 결과(보고 · 바뀐 파일 · 종료 코드), 아니면 경과 시간 · 마지막 로그 한 줄
  *        결과 머리에: 실패 원인(사용량 한도 · 로그인 · 시간 초과 · 네트워크)과 대안 (사용량 한도면 상대 도구로 다시 시작하는 명령 한 줄) · 실행 중 대상이 바뀌었으면 「결과가 낡았을 수 있음」
  *        끝나면 개인 알림(aikit notify my on)도 간다 (작업 끝 알림 기준 시간을 넘겼을 때)
+ *   status [<id>]                         지금 진행 현황 한 번: 경과 · 읽은 파일 · 실행한 명령 · 고친 파일 수 · 최근 동작 · 최근 말 (id 를 빼면 마지막 실행 중 작업)
+ *   watch [<id>]                          상대 에이전트가 읽고 실행하는 것을 생기는 대로 한 줄씩 (사용자가 다른 터미널에서 aikit delegate watch). 끝나면 요약
+ *        진행은 두 도구의 진행 이벤트(codex exec --json · claude -p --output-format stream-json)를 events.jsonl 에 받아 lib/delegate-progress.js 가 읽는다
  *   list                                  이 워크스페이스의 위임 작업
  *   run …                                 (내부) 앞에서 실행 — start 가 부른다
  *   --dry-run                             실행하지 않고 명령만
@@ -24,6 +27,7 @@ const { spawn, spawnSync } = require('child_process');
 const { load, git, stateDir } = require('../lib/workspace');
 const { findCli } = require('../lib/cli');
 const { REVIEW_ROLE, hasCheckLine, CHECK_MESSAGE, checkLevel } = require('../lib/review');
+const P = require('../lib/delegate-progress');
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -75,12 +79,12 @@ const READ_SHELL = ['cd', 'git diff', 'git show', 'git log', 'git status', 'git 
 function commandFor({ to, model, effort, mode, outFile }) {
   if (to === 'codex') {
     return { bin: 'codex', args: ['exec', '--skip-git-repo-check', '--sandbox', mode === 'write' ? 'workspace-write' : 'read-only', '-C', ROOT,
-      ...(model ? ['-m', model] : []), ...(effort ? ['-c', `model_reasoning_effort="${effort}"`] : []), '-o', outFile, '-'] };
+      ...(model ? ['-m', model] : []), ...(effort ? ['-c', `model_reasoning_effort="${effort}"`] : []), '--json', '-o', outFile, '-'] };
   }
   const tools = mode === 'write' ? 'Read,Grep,Glob,Edit,Write,Bash' : 'Read,Grep,Glob,Bash';
   // 읽기 전용: 셸은 읽기 명령만 허용 목록으로 (plan 모드라 그 밖의 명령은 돌지 않는다)
   const allowed = mode === 'write' ? tools : ['Read,Grep,Glob', ...READ_SHELL.map((c) => `Bash(${c}:*)`)].join(',');
-  return { bin: 'claude', args: ['-p', ...(model ? ['--model', model] : []), ...(effort ? ['--effort', effort] : []),
+  return { bin: 'claude', args: ['-p', '--output-format', 'stream-json', '--verbose', ...(model ? ['--model', model] : []), ...(effort ? ['--effort', effort] : []),
     '--permission-mode', mode === 'write' ? 'acceptEdits' : 'plan', '--tools', tools, '--allowedTools', allowed,
     '--disallowedTools', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(git reset:*)', 'Bash(rm -rf:*)'] };
 }
@@ -234,6 +238,7 @@ function start() {
   console.log(`작업 id: ${id}`);
   if (prior && prior.round >= 3) console.log(`⚠ 같은 범위 「${prior.scope}」 ${prior.round}차 리뷰입니다. 지적을 차수마다 땜질하지 말고, 원인 구조를 정리했는지 · 남은 지적을 한계로 문서화할지 사용자에게 묻습니다 (앞 차수 블로커 ${prior.blockers.length}개를 지시서에 붙였습니다)`);
   console.log(`다음: node packs/core/bin/delegate.js wait ${id}`);
+  console.log(`진행 보기 (사용자에게 알린다): aikit delegate watch ${id} (다른 터미널에서 상대 에이전트가 읽고 실행하는 것이 줄마다 보인다) · 한 번만 보기: aikit delegate status ${id}`);
 }
 
 /** 리뷰 확인을 켠 워크스페이스에서 reviewer 역할을 위임하면: 시작 때 상태 (끝나면 리뷰 기록이 된다. lib/review.js) */
@@ -246,14 +251,25 @@ function reviewSnapshot(role) {
   } catch { return null; }
 }
 
-function run() {
+/** 진행 이벤트(JSONL: codex --json · claude stream-json)를 events.jsonl 에 흘려 쓰며 끝날 때까지 기다린다 */
+function runCli(meta, dir) {
+  return new Promise((ok) => {
+    const log = fs.openSync(path.join(dir, 'log.txt'), 'a');
+    const ev = fs.openSync(path.join(dir, 'events.jsonl'), 'a');
+    const child = spawn(meta.cli, meta.args, { cwd: ROOT, stdio: ['pipe', ev, log], env: delegateEnv() });
+    child.on('error', (e) => ok({ status: null, signal: null, error: e }));
+    child.on('close', (status, signal) => { fs.closeSync(ev); fs.closeSync(log); ok({ status, signal, error: null }); });
+    child.stdin.end(fs.readFileSync(path.join(dir, 'prompt.md'), 'utf8'));
+  });
+}
+
+async function run() {
   const id = opt('job');
   const dir = path.join(JOBS, id);
   const meta = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
-  const log = fs.openSync(path.join(dir, 'log.txt'), 'a');
-  const r = spawnSync(meta.cli, meta.args, { cwd: ROOT, input: fs.readFileSync(path.join(dir, 'prompt.md'), 'utf8'), stdio: ['pipe', 'pipe', log], encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: delegateEnv() });
-  if (meta.to === 'claude' && r.stdout) fs.writeFileSync(path.join(dir, 'out.md'), r.stdout);
-  else if (r.stdout) fs.appendFileSync(path.join(dir, 'log.txt'), r.stdout);
+  const r = await runCli(meta, dir);
+  // claude 의 결과 = stream-json 마지막 result (없으면 응답 글을 모은 것). codex 는 -o 파일
+  if (meta.to === 'claude') { const out = P.finalText(readEvents(id)); if (out) fs.writeFileSync(path.join(dir, 'out.md'), out); }
   const after = dirtySnapshot();
   const changed = {};
   for (const [repo, files] of Object.entries(after)) {
@@ -329,6 +345,41 @@ function report(id) {
   return res.code === 0;
 }
 
+/** 진행 이벤트 (없으면 빈 목록) */
+function readEvents(id) {
+  try { return P.parse(fs.readFileSync(path.join(JOBS, id, 'events.jsonl'), 'utf8')); } catch { return []; }
+}
+const metaOf = (id) => {
+  if (!id || !fs.existsSync(path.join(JOBS, id, 'meta.json'))) throw new Error(`작업 id 가 없습니다: ${id} (목록: aikit delegate list)`);
+  return { ...JSON.parse(fs.readFileSync(path.join(JOBS, id, 'meta.json'), 'utf8')), root: ROOT };
+};
+const resultOf = (id) => { try { return JSON.parse(fs.readFileSync(path.join(JOBS, id, 'result.json'), 'utf8')); } catch { return null; } };
+
+/** status <id>: 지금 진행 현황 한 번 */
+function status() {
+  const id = argv[1] || runningJobs().slice(-1)[0];
+  const meta = metaOf(id);
+  const res = resultOf(id);
+  console.log(P.render(P.summarize(readEvents(id), meta, res), meta, res));
+}
+
+/** watch <id>: 상대 에이전트가 하는 일을 생기는 대로 한 줄씩 (끝나면 결과 요약). 사용자가 다른 터미널에서 본다 */
+async function watch() {
+  const id = argv[1] || runningJobs().slice(-1)[0];
+  const meta = metaOf(id);
+  console.log(`● ${meta.role} → ${meta.to}${meta.model ? ` (${meta.model})` : ''} · ${meta.mode === 'write' ? '쓰기' : '읽기 전용'} · 작업 ${id} (끝내기: Ctrl+C, 작업은 계속 돈다)`);
+  let seen = 0;
+  for (;;) {
+    const evs = readEvents(id);
+    const lines = P.actions(evs, meta);
+    for (const l of lines.slice(seen)) console.log(`  ${l}`);
+    seen = lines.length;
+    const res = resultOf(id);
+    if (res) { console.log(P.render(P.summarize(evs, meta, res), meta, res)); return; }
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+}
+
 async function wait() {
   const id = argv[1];
   if (!id || !fs.existsSync(path.join(JOBS, id))) throw new Error(`작업 id 가 없습니다: ${id} (목록: node packs/core/bin/delegate.js list)`);
@@ -336,9 +387,8 @@ async function wait() {
   const t0 = Date.now();
   while (!fs.existsSync(path.join(JOBS, id, 'result.json'))) {
     if (Date.now() - t0 > limit) {
-      const meta = JSON.parse(fs.readFileSync(path.join(JOBS, id, 'meta.json'), 'utf8'));
-      const last = lastLogLine(id);
-      console.log(`아직 실행 중 (${((Date.now() - meta.startedAt) / 60000).toFixed(1)}분 경과)${last ? ` · 마지막 로그: ${last}` : ''}. 다시: node packs/core/bin/delegate.js wait ${id}`);
+      const meta = metaOf(id);
+      console.log(`${P.render(P.summarize(readEvents(id), meta), meta)}\n다시: node packs/core/bin/delegate.js wait ${id} · 사용자 화면에서 보기: aikit delegate watch ${id}`);
       process.exit(2);
     }
     await new Promise((r) => setTimeout(r, 3000));
@@ -370,6 +420,8 @@ function list() {
     if (cmd === 'start') start();
     else if (cmd === 'run') await run();
     else if (cmd === 'wait') await wait();
+    else if (cmd === 'status') status();
+    else if (cmd === 'watch') await watch();
     else if (cmd === 'list') list();
     else { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(2, 16).map((l) => l.replace(/^ \* ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
   } catch (e) { console.error(`✖ ${e.message}`); process.exit(1); }

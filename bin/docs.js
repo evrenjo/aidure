@@ -36,7 +36,7 @@ function site() {
   const pkg = JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf8'));
   const config = { ...JSON.parse(fs.readFileSync(path.join(KIT, 'docs-site.json'), 'utf8')), version: `v${pkg.version}` };
   const repoFile = repoFileOf(pkg);
-  const assets = Object.fromEntries(Object.entries(DS.assets()).filter(([k]) => /^assets\/site\./.test(k)));
+  const assets = DS.siteAssets();
   const files = sources();
   const res = build(files, { config, title: config.title, assets, mermaid: DS.mermaidAssets(), srcOf: repoFile, fileUrl: repoFile });
   res.files = files;

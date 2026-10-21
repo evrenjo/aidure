@@ -1,6 +1,6 @@
 {
   "name": "aidure",
-  "version": "0.67.0",
+  "version": "0.69.1",
   "private": false,
   "description": "Claude Code · Codex 겸용 협업 워크스페이스 프레임워크",
   "license": "MIT",
@@ -30,7 +30,9 @@
     "!**/*.test.js",
     "!**/*.test.py",
     "!**/__pycache__",
-    "!bin/selftest.js"
+    "!bin/selftest.js",
+    "!bin/vendor.js",
+    "!bin/site-test.js"
   ],
   "scripts": {
     "test": "node bin/selftest.js",
@@ -38,7 +40,14 @@
     "models:doc": "node bin/models.js doc",
     "models:livebench": "node bin/models.js livebench",
     "models:watch": "node bin/models.js watch",
-    "docs": "node bin/docs.js"
+    "docs": "node bin/docs.js",
+    "test:site": "node bin/site-test.js",
+    "vendor": "node bin/vendor.js",
+    "vendor:check": "node bin/vendor.js --check"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright-core": "^1.63.0"
   },
   "homepage": "https://lsnwan.github.io/aidure/",
   "bugs": {

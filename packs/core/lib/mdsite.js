@@ -1,4 +1,5 @@
-// 문서 사이트 생성기: 기획 repo 의 md 를 같은 경로 구조의 HTML 사이트로 만든다 (외부 모듈 없음). 실행은 bin/docs-site.js
+// 문서 사이트 생성기: 기획 repo 의 md 를 같은 경로 구조의 HTML 사이트로 만든다. 실행은 bin/docs-site.js
+// md 해석은 markdown-it + 한국어 굵게 보정(cjk-friendly). 킷에 묶어 넣은 파일(lib/vendor/markdown-it.js, npm run vendor)이라 npm 설치 없이 돈다
 /*
  * 입력: { 'md 상대 경로': 내용 } (+ 화면설계서 장 HTML · 그림). 출력: { '사이트 상대 경로': 내용 } + 색인 + 경고.
  * - 같은 입력이면 같은 출력 (날짜 · 시각을 넣지 않고 키를 정렬한다).
@@ -13,6 +14,7 @@
 'use strict';
 const path = require('path').posix;
 const DM = require('./datamodel');
+const V = require('./vendor/markdown-it');
 
 // ID 모양: 대문자로 시작하고 「-숫자」 로 끝난다 (REQ-001 · REQ-SAF-001 · FN-ADM-001 · D1-1 · A-11 · SCR-AUTH-01)
 const ID_SRC = '[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\\d+';
@@ -31,16 +33,31 @@ const SHEET_RE = /<section\b[^>]*\bclass="[^"]*\bsheet\b/;
 const FOLD_MIN = 300;
 const CELL_FOLD = 200;
 const seen = (t) => String(t).replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/<br\s*\/?>/gi, ' ').replace(/[`*]/g, '').length;
+/** 여기서 끊어도 되는가: 앞부분에 굵게(**) · 코드(`) · 링크([ ]( ))가 열린 채 남지 않는다 */
+const closed = (pre) => (pre.match(/\*\*/g) || []).length % 2 === 0 && (pre.match(/`/g) || []).length % 2 === 0
+  && (pre.match(/\[/g) || []).length === (pre.match(/\]/g) || []).length && !/\]\([^)]*$/.test(pre);
 function foldCell(text, render, max = CELL_FOLD) {
   if (text.length >= FOLD_MIN) {
-    const parts = text.split(/(?:;\s*|\s·\s)(?=\d{4}-\d{2}-\d{2})/).map((s) => s.trim()).filter(Boolean);
-    if (parts.length >= 3) return `<div class="ds-fold">${render(parts[0])}<details><summary>나머지 ${parts.length - 1}건 보기</summary><ul>${parts.slice(1).map((p) => `<li>${render(p)}</li>`).join('')}</ul></details></div>`;
+    const parts = [];
+    let last = 0;
+    for (const m of text.matchAll(/(?:;\s*|\s·\s)(?=\d{4}-\d{2}-\d{2})/g)) {
+      if (!closed(text.slice(0, m.index))) continue;
+      parts.push(text.slice(last, m.index));
+      last = m.index + m[0].length;
+    }
+    parts.push(text.slice(last));
+    const list = parts.map((x) => x.trim()).filter(Boolean);
+    if (list.length >= 3) return `<div class="ds-fold">${render(list[0])}<details><summary>나머지 ${list.length - 1}건 보기</summary><ul>${list.slice(1).map((x) => `<li>${render(x)}</li>`).join('')}</ul></details></div>`;
   }
   if (seen(text) <= max) return render(text);
-  // 첫 문장: 「다.」 · 「.」 · 「<br>」 뒤 (코드 · 링크 안은 끊지 않는다)
-  const m = /^((?:`[^`]*`|\[[^\]]*\]\([^)]*\)|[^`[])+?(?:[.!?](?=\s)|<br\s*\/?>))\s*([\s\S]+)$/i.exec(text);
-  if (!m || !m[2].trim()) return render(text);
-  return `<div class="ds-fold">${render(m[1].replace(/<br\s*\/?>$/i, ''))}<details class="ds-more"><summary>더 보기</summary><div>${render(m[2])}</div></details></div>`;
+  // 첫 문장: 「다.」 · 「.」 · 「<br>」 뒤. 굵게 · 코드 · 링크 안에서는 끊지 않는다
+  for (const m of text.matchAll(/[.!?](?=\s)|<br\s*\/?>/gi)) {
+    const end = m.index + m[0].length;
+    const head = text.slice(0, end), rest = text.slice(end).trim();
+    if (!rest || !closed(head)) continue;
+    return `<div class="ds-fold">${render(head.replace(/<br\s*\/?>$/i, ''))}<details class="ds-more"><summary>더 보기</summary><div>${render(rest)}</div></details></div>`;
+  }
+  return render(text);
 }
 
 const titleTokens = (t) => String(t).split(/[\s·—()\-:]+/).filter((w) => w.length >= 2);
@@ -74,13 +91,38 @@ const rootOf = (page) => '../'.repeat(page.split('/').length - 1);
 
 // ───────────────────────── md 읽기 ─────────────────────────
 
-function cells(line) {
-  return line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '').split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
-}
-const isTableSep = (l) => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l);
-const LIST_RE = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+/**
+ * md 해석기: GitHub · GitLab 과 같은 CommonMark + 표 · 취소선. md 안의 HTML 은 글자로 보이고 <br> 만 줄바꿈으로 (표 칸에서 쓴다).
+ * 링크 주소는 그대로 넘겨 받고(링크를 걸지 · 어디로 걸지는 mdPage 의 link 가 정한다), 굵게는 한국어 조사가 바로 붙어도 된다 (「**확정(초안)**은」)
+ */
+const MD = V.MarkdownIt({ html: false, linkify: false, typographer: false }).use(V.cjkFriendly);
+MD.normalizeLink = (u) => u;
+MD.validateLink = () => true;
+MD.inline.ruler.before('autolink', 'br_tag', (state, silent) => {
+  if (state.src.charCodeAt(state.pos) !== 0x3C) return false;
+  const m = /^<br\s*\/?>/i.exec(state.src.slice(state.pos, state.pos + 8));
+  if (!m) return false;
+  if (!silent) state.push('hardbreak', 'br', 0);
+  state.pos += m[0].length;
+  return true;
+});
+MD.renderer.rules.hardbreak = () => '<br>';
+MD.renderer.rules.softbreak = () => ' ';
+MD.renderer.rules.s_open = () => '<del>';
+MD.renderer.rules.s_close = () => '</del>';
+MD.renderer.rules.link_open = (tokens, idx, o, env) => {
+  const href = tokens[idx].attrGet('href');
+  const h = env.ctx ? env.ctx.link(href, false) : href;
+  env.open.push(h == null);
+  return h == null ? `<span class="ds-nolink" title="${esc(href)}">` : `<a href="${esc(h)}">`;
+};
+MD.renderer.rules.link_close = (tokens, idx, o, env) => (env.open.pop() ? '</span>' : '</a>');
+MD.renderer.rules.image = (tokens, idx, o, env) => {
+  const t = tokens[idx], alt = t.children ? MD.renderer.renderInlineAsText(t.children, o, env) : t.content;
+  const h = env.ctx ? env.ctx.link(t.attrGet('src'), true) : t.attrGet('src');
+  return h ? `<img alt="${esc(alt)}" src="${esc(h)}">` : esc(alt);
+};
 
-/** md → 블록 목록: {t:'h',lvl,text} {t:'table',head,rows} {t:'list',ordered,items:[{text,task,kids}]} {t:'quote',blocks} {t:'code',lang,text} {t:'hr'} {t:'p',text} */
 /** 코드 블록 밖의 HTML 주석 줄(<!-- … -->, 여러 줄 포함)을 뺀다. 보이지 않는다 (GitHub 와 같게) */
 function dropComments(lines) {
   const out = [];
@@ -95,76 +137,65 @@ function dropComments(lines) {
   return out;
 }
 
+/**
+ * md → 블록 목록: {t:'h',lvl,text} {t:'table',head,rows} {t:'list',ordered,start,items:[{text,task,kids,blocks}]} {t:'quote',blocks} {t:'code',lang,text} {t:'hr'} {t:'p',text}
+ * text 는 그 자리의 md 글자 그대로 (정의 ID 찾기 · 상태 읽기가 쓰고, 그릴 때 inline 이 HTML 로). 맨 앞 YAML 머리(--- … ---)는 뺀다
+ */
 function parse(src) {
-  const lines = dropComments(String(src).replace(/\r\n?/g, '\n').split('\n'));
-  const out = [];
+  const text = dropComments(String(src).replace(/\r\n?/g, '\n').split('\n')).join('\n').replace(/^---\n(?:[\w-]+:.*\n|\s+.*\n)*---\n/, '');
+  const toks = MD.parse(text, {});
   let i = 0;
-  while (i < lines.length) {
-    const l = lines[i];
-    let m;
-    if ((m = /^\s*(```+|~~~+)\s*([\w-]*)/.exec(l))) {
-      const fence = m[1];
-      const buf = [];
-      i++;
-      while (i < lines.length && !lines[i].trim().startsWith(fence)) buf.push(lines[i++]);
-      i++;
-      out.push({ t: 'code', lang: m[2], text: buf.join('\n') });
-      continue;
+  function blocks(end) {
+    const out = [];
+    while (i < toks.length) {
+      const t = toks[i];
+      if (end && t.type === end) { i++; return out; }
+      if (t.type === 'heading_open') { out.push({ t: 'h', lvl: Number(t.tag.slice(1)), text: toks[i + 1].content }); i += 3; }
+      else if (t.type === 'paragraph_open') { out.push({ t: 'p', text: toks[i + 1].content }); i += 3; }
+      else if (t.type === 'fence' || t.type === 'code_block') { out.push({ t: 'code', lang: t.type === 'fence' ? (t.info || '').trim().split(/\s+/)[0] : '', text: t.content.replace(/\n$/, '') }); i++; }
+      else if (t.type === 'hr') { out.push({ t: 'hr' }); i++; }
+      else if (t.type === 'blockquote_open') { i++; out.push({ t: 'quote', blocks: blocks('blockquote_close') }); }
+      else if (t.type === 'bullet_list_open' || t.type === 'ordered_list_open') out.push(list());
+      else if (t.type === 'table_open') out.push(table());
+      else i++;
     }
-    if ((m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(l))) { out.push({ t: 'h', lvl: m[1].length, text: m[2] }); i++; continue; }
-    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) { out.push({ t: 'hr' }); i++; continue; }
-    if (/^\s*\|/.test(l) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
-      const head = cells(l);
-      i += 2;
-      const rows = [];
-      while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(cells(lines[i++]));
-      out.push({ t: 'table', head, rows });
-      continue;
-    }
-    if (/^\s*>/.test(l)) {
-      const q = [];
-      while (i < lines.length && /^\s*>/.test(lines[i])) q.push(lines[i++].replace(/^\s*>\s?/, ''));
-      out.push({ t: 'quote', blocks: parse(q.join('\n')) });
-      continue;
-    }
-    if (LIST_RE.test(l)) {
-      const items = [];
-      while (i < lines.length && (LIST_RE.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && items.length))) {
-        const mm = LIST_RE.exec(lines[i]);
-        if (mm) items.push({ ind: mm[1].replace(/\t/g, '    ').length, ordered: /\d/.test(mm[2]), text: mm[3] });
-        else items[items.length - 1].text += ` ${lines[i].trim()}`;
-        i++;
-      }
-      out.push(nestList(items));
-      continue;
-    }
-    if (!l.trim()) { i++; continue; }
-    const para = [];
-    while (i < lines.length && lines[i].trim() && !/^(#{1,6}\s|\s*```|\s*~~~|\s*>)/.test(lines[i]) && !LIST_RE.test(lines[i])
-      && !(/^\s*\|/.test(lines[i]) && i + 1 < lines.length && isTableSep(lines[i + 1]))) para.push(lines[i++].trim());
-    out.push({ t: 'p', text: para.join('\n') });
+    return out;
   }
-  return out;
-}
-
-/** 들여쓰기로 목록을 중첩한다 */
-function nestList(flat) {
-  const root = { t: 'list', ordered: flat[0].ordered, items: [] };
-  const stack = [{ ind: -1, list: root }];
-  for (const it of flat) {
-    while (stack.length > 1 && it.ind <= stack[stack.length - 1].ind) stack.pop();
-    const top = stack[stack.length - 1];
-    let list = top.list;
-    if (top.item) {
-      if (!top.item.kids) top.item.kids = { t: 'list', ordered: it.ordered, items: [] };
-      list = top.item.kids;
+  function list() {
+    const open = toks[i++];
+    const ordered = open.type === 'ordered_list_open';
+    const close = ordered ? 'ordered_list_close' : 'bullet_list_close';
+    const items = [];
+    while (toks[i].type !== close) {
+      i++; // list_item_open
+      const inner = blocks('list_item_close');
+      const first = inner[0] && inner[0].t === 'p' ? inner.shift().text : '';
+      const task = /^\[( |x|X)\]\s+/.exec(first);
+      const item = { text: task ? first.slice(task[0].length) : first, task: task ? task[1] !== ' ' : null };
+      // 끝의 하위 목록 하나 = kids (중첩 목록), 그 밖에 항목 안 블록(문단 · 코드 · 표 · 인용)은 blocks
+      if (inner.length && inner[inner.length - 1].t === 'list' && inner.filter((x) => x.t === 'list').length === 1) item.kids = inner.pop();
+      if (inner.length) item.blocks = inner;
+      items.push(item);
     }
-    const task = /^\[( |x|X)\]\s+/.exec(it.text);
-    const item = { text: task ? it.text.slice(task[0].length) : it.text, task: task ? task[1] !== ' ' : null };
-    list.items.push(item);
-    stack.push({ ind: it.ind, list, item });
+    i++;
+    const start = ordered ? Number(open.attrGet('start') || 1) : 1;
+    return { t: 'list', ordered, ...(start !== 1 ? { start } : {}), items };
   }
-  return root;
+  function table() {
+    const head = [], rows = [];
+    let cur = null, inHead = false;
+    for (i++; toks[i].type !== 'table_close'; i++) {
+      const t = toks[i];
+      if (t.type === 'thead_open') inHead = true;
+      else if (t.type === 'thead_close') inHead = false;
+      else if (t.type === 'tr_open') cur = [];
+      else if (t.type === 'tr_close') { if (inHead) head.push(...cur); else rows.push(cur); }
+      else if (t.type === 'inline') cur.push(t.content.trim());
+    }
+    i++;
+    return { t: 'table', head, rows };
+  }
+  return blocks(null);
 }
 
 /** 문서 정보: 제목(첫 #) · 상태(「> 상태: 초안」 · 「상태: 초안」 · 머리 표 「| 상태 | **확정** |」) */
@@ -275,36 +306,16 @@ function externalRefs(src, self) {
 // ───────────────────────── 글자 → HTML ─────────────────────────
 
 /**
- * 한 줄 md → HTML. ctx: { page, link(href) → 새 href | null, ids(html, defIds) → html }
- * 내부 md 링크는 페이지로, 외부 http(s) 는 그대로, 그 밖의 링크(원본 파일 등)는 글자만 남긴다.
+ * 한 줄 md → HTML. ctx: { page, link(href, img) → 새 href | null, ids(html, defIds) → html }
+ * 내부 md 링크는 페이지로, 외부 http(s) 는 그대로, 그 밖의 링크(원본 파일 등)는 글자만 남긴다 (ds-nolink).
  */
 function inline(t, ctx, defIds, skip) {
+  let s = MD.renderInline(String(t).replace(/\u0000/g, ''), { ctx, open: [] });
+  // 링크 · 코드 · 그림 · 걸지 않은 링크는 통째로 숨겨 둔 채 ID 를 잇고, 마지막에 되돌린다 (링크 글자 · 코드 안은 건드리지 않는다)
   const keep = [];
-  const stash = (h) => { keep.push(h); return `\u0000${keep.length - 1}\u0000`; };
-  let s = String(t).replace(/\u0000/g, '');   /* 자리표시자 문자는 입력에서 뺀다 */
-  s = s.replace(/`([^`]+)`/g, (_, c) => stash(`<code>${esc(c)}</code>`));
-  s = s.replace(/<br\s*\/?>/gi, () => stash('<br>'));
-  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_, alt, u) => {
-    const h = ctx.link(u, true);
-    return h ? stash(`<img alt="${esc(alt)}" src="${esc(h)}">`) : esc(alt);
-  });
-  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_, txt, u) => {
-    const h = ctx.link(u, false);
-    const inner = fmt(esc(txt));
-    return h ? stash(`<a href="${esc(h)}">${inner}</a>`) : stash(`<span class="ds-nolink" title="${esc(u)}">${inner}</span>`);
-  });
-  s = s.replace(/<(https?:\/\/[^>\s]+)>/g, (_, u) => stash(`<a href="${esc(u)}">${esc(u)}</a>`));
-  s = fmt(esc(s));
-  s = s.replace(/\n/g, ' ');
-  // 숨겨 둔 조각(링크 등)을 표시로 남긴 채 ID 를 잇고, 마지막에 되돌린다 (링크 글자 안은 건드리지 않는다)
-  s = ctx.ids ? ctx.ids(s, defIds || [], keep, skip || []) : s;
+  s = s.replace(/<a\b[^>]*>[\s\S]*?<\/a>|<code>[\s\S]*?<\/code>|<img\b[^>]*>|<span class="ds-nolink"[^>]*>[\s\S]*?<\/span>/g, (m) => { keep.push(m); return `\u0000${keep.length - 1}\u0000`; });
+  s = ctx && ctx.ids ? ctx.ids(s, defIds || [], keep, skip || []) : s;
   return s.replace(/\u0000(\d+)\u0000/g, (_, k) => keep[+k]);
-}
-function fmt(s) {
-  return s.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/__([^_]+?)__/g, '<strong>$1</strong>')
-    .replace(/~~([^~]+?)~~/g, '<del>$1</del>')
-    .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\w)/g, '$1<em>$2</em>');
 }
 
 // ───────────────────────── 사이트 ─────────────────────────
@@ -483,7 +494,7 @@ function build(input, opts = {}) {
   }
   const flat = [];
   for (const g of groups) for (const d of g.docs) { d.groupName = g.group; flat.push(d); }
-  const env0 = { docs, where, mdPages, opts, prefixRe, warnings, files, titleWords, docNames, groups, flat, splitPages };
+  const env0 = { docs, where, mdPages, opts, prefixRe, warnings, files, titleWords, docNames, groups, flat, splitPages, spa: new Set(), texts: [] };
   for (const d of docs) {
     if (d.kind === 'sheets') { pages[d.page] = sheetPage(d, opts.sheetTheme); continue; }
     pages[d.page] = mdPage(d, env0);
@@ -497,7 +508,8 @@ function build(input, opts = {}) {
   }
   for (const g of groups) for (const d of g.docs) if (d.kind === 'overview' && !pages[d.page]) pages[d.page] = folderPage(d.md.replace(/\/$/, '') || '.', d.page, docs, env0);
   // 전체 인쇄: 쪽마다 넣지 않고, 이 쪽이 메뉴 순서대로 모든 문서를 불러와 한 번에 인쇄한다 (site.js)
-  pages[PRINT_PAGE] = layout({ page: PRINT_PAGE, title: '전체 문서 인쇄', crumb: '인쇄', body: `<div id="print-all"${((opts.config || {}).printAll || {}).autoPrint === false ? ' data-auto="0"' : ''}><p class="print-status">문서를 불러오는 중…</p></div>`, toc: [] }, env0);
+  const autoPrint = ((opts.config || {}).printAll || {}).autoPrint !== false;
+  pages[PRINT_PAGE] = layout({ page: PRINT_PAGE, kind: 'print', autoPrint, title: '전체 문서 인쇄', crumb: '인쇄', body: `<div id="print-all"${autoPrint ? '' : ' data-auto="0"'}><p class="print-status">문서를 불러오는 중…</p></div>`, toc: [] }, env0);
 
   // 3. 색인: 생성한 HTML 의 실제 id 만
   const ids = {};
@@ -512,7 +524,11 @@ function build(input, opts = {}) {
   const index = { docs: sorted(byName), ids: sorted(ids), prefixes };
   pages['assets/ids.json'] = `${JSON.stringify(index, null, 1)}\n`;
   // 왼쪽 메뉴: 쪽마다 넣지 않고 한 파일 (문서가 많아도 쪽 크기가 그대로). 주소는 사이트 맨 위 기준, site.js 가 그 쪽 기준으로 바꾸고 지금 문서를 표시한다
-  pages['assets/nav.js'] = `window.DS_NAV = ${JSON.stringify({ key: cfg.title || opts.title || '문서', html: navHtml(groups) })};\n`;
+  // pages = 앱이 새로고침 없이 옮겨 다니는 쪽 (문서 · 폴더 · 전체 인쇄). 화면설계서 · ERD 뷰어는 따로 연다
+  // v = 나중에 읽는 파일의 버전 (맨 끝에서 채운다)
+  pages['assets/nav.js'] = `window.DS_NAV = ${JSON.stringify({ key: cfg.title || opts.title || '문서', groups: navData(groups), pages: [...env0.spa].sort(), v: {} }).replace(/</g, '\\u003c')};\n`;
+  // 본문 검색 색인: 절(## · ###)마다 글자. 처음 검색할 때만 읽는다
+  pages['assets/search-text.js'] = `/* 생성물: aikit docs build. 본문 검색 색인 */\nwindow.DS_TEXT = ${JSON.stringify(env0.texts).replace(/</g, '\\u003c')};\n`;
   pages['assets/search.js'] = searchJs({
     pages: flat.map((d) => ({ u: d.page, t: d.navTitle === '개요' ? d.title : d.title, g: d.groupName, h: (d.toc || []).map((x) => [x.sid, x.text]) })),
     ids: Object.keys(index.ids).map((k) => [k, index.ids[k][0], (flat.find((d) => d.page === index.ids[k][0].split('#')[0]) || {}).title || '']),
@@ -521,12 +537,33 @@ function build(input, opts = {}) {
   // mermaid 그림이 있는 사이트에만 mermaid 파일을 넣는다 (site.js 가 그 쪽에서만 읽는다)
   const mermaid = Object.entries(pages).some(([p, h]) => /\.html$/.test(p) && String(h).includes('<pre class="mermaid">'));
   for (const [p, c] of Object.entries({ ...(opts.assets || {}), ...(erds.length ? (opts.erd.assets || {}) : {}), ...(mermaid ? (opts.mermaid || {}) : {}) })) pages[p] = c;
+  versionAssets(pages);
   return {
     pages, index, warnings: [...new Set(warnings)].sort(), collisions: collisionsOf(pages, mdPages), docs: docs.map(({ md, page, title, status, kind }) => ({ md, page, title, status, kind })),
     erds: erds.map((e) => ({ dir: e.dir, page: e.page, title: e.title, model: e.model })),
     // docs-site.json groups 어느 묶음에도 맞지 않아 메뉴 「기타」 로 간 문서
     unlisted: [...new Set(groups.filter((g) => g.rest).flatMap((g) => g.docs.map((d) => d.origin || d.md)))],
   };
+}
+
+/**
+ * 사이트 파일 버전: 쪽이 부르는 assets/ 파일 주소에 내용 해시(?v=)를 붙인다. 다시 만들면 바뀐 파일만 주소가 바뀌어 브라우저가 옛 파일(메뉴 등)을 쓰지 않는다.
+ * 나중에 읽는 파일(본문 색인 · mermaid)은 메뉴 파일(nav.js)의 v 에 적는다
+ */
+function versionAssets(pages) {
+  const crypto = require('crypto');
+  const hash = (p) => crypto.createHash('sha1').update(pages[p]).digest('hex').slice(0, 8);
+  const late = ['assets/search-text.js', 'assets/mermaid/mermaid.min.js'].filter((p) => pages[p] != null);
+  if (pages['assets/nav.js']) pages['assets/nav.js'] = String(pages['assets/nav.js']).replace('"v":{}', `"v":${JSON.stringify(Object.fromEntries(late.map((p) => [p, hash(p)])))}`);
+  const ver = new Map();
+  const vOf = (p) => { if (!ver.has(p)) ver.set(p, hash(p)); return ver.get(p); };
+  for (const [p, h] of Object.entries(pages)) {
+    if (!/\.html$/.test(p) || Buffer.isBuffer(h)) continue;
+    pages[p] = String(h).replace(/(\s(?:src|href)=")((?:\.\.\/)*assets\/[^"?#]+)"/g, (m, a, u) => {
+      const t = path.normalize(path.join(path.dirname(p), u));
+      return pages[t] != null ? `${a}${u}?v=${vOf(t)}"` : m;
+    });
+  }
 }
 
 /** 대소문자를 구분하지 않는 PC(macOS · Windows)에서 같은 파일이 되는 출력 경로들. [[경로, 원본 md…]] (README.md 와 INDEX.md 가 같은 폴더에 있을 때 등) */
@@ -625,20 +662,18 @@ function navGroups(docs, config) {
 }
 
 /**
- * 왼쪽 메뉴 HTML (주소는 사이트 맨 위 기준, data-p = 쪽). docs-site.json 묶음 옵션:
- *   collapsed: true  처음엔 접힌 묶음 (지금 문서가 든 묶음은 site.js 가 편다)
+ * 왼쪽 메뉴 자료 (assets/nav.js 의 groups, 주소는 사이트 맨 위 기준 쪽 경로). docs-site.json 묶음 옵션:
+ *   collapsed: true  처음엔 접힌 묶음 (지금 문서가 든 묶음은 앱이 편다)
  *   tree: true       묶음 안 문서를 폴더대로 접히는 트리로 (issues/2024/… → 2024 ▸ …)
- * 묶음은 모두 접을 수 있다 (옵션이 없으면 처음엔 펼침). 「모두 펴기 · 접기」 와 바꾼 상태 기억은 site.js
+ * [{ k, group, icon, open, acts: [{ p, h, label }], items: [{ p, t } | { k, dir, items }] }]
  */
-function navHtml(groups) {
-  const link = (d) => `<a class="nav-link" href="${esc(d.page)}" data-p="${esc(d.page)}">${esc(d.navTitle || d.title)}</a>`;
+function navData(groups) {
+  const item = (d) => ({ p: d.page, t: d.navTitle || d.title });
   // 묶음 제목 옆 바로 가기: 하나면 그 뷰어로, 여럿이면 개요 쪽의 그 블록으로
   const act = (list, hash, label) => {
-    if (!list || !list.length) return '';
-    const to = list.length === 1 ? list[0].page : list[0].back || list[0].page;
-    return `<a class="nav-act" href="${esc(to)}${list.length === 1 ? '' : `#${hash}`}" data-p="${esc(to)}" data-h="${list.length === 1 ? '' : hash}" title="${label}" aria-label="${label}">▶</a>`;
+    if (!list || !list.length) return null;
+    return { p: list.length === 1 ? list[0].page : list[0].back || list[0].page, h: list.length === 1 ? '' : hash, label };
   };
-  const title = (g) => `<span class="ico">${esc(g.icon)}</span>${esc(g.group)}${act(g.sheets, 'sheet-docs', '설계서 보기')}${act(g.erds, 'erd-docs', 'ERD 보기')}`;
   const dirOf = (d) => (d.kind === 'overview' ? String(d.md).replace(/\/$/, '') || '.' : path.dirname(d.origin || d.md));
   const tree = (g) => {
     const parts = g.docs.map((d) => (dirOf(d) === '.' ? [] : dirOf(d).split('/')));
@@ -650,13 +685,23 @@ function navHtml(groups) {
       for (const seg of parts[i].slice(common.length)) { if (!node.kids.has(seg)) node.kids.set(seg, { docs: [], kids: new Map() }); node = node.kids.get(seg); }
       node.docs.push(d);
     });
-    const draw = (node, key) => `${node.docs.map(link).join('')}${[...node.kids].map(([seg, kid]) => `<details class="nav-dir" data-k="${esc(`${key}/${seg}`)}"><summary>${esc(seg.replace(/^\d+[-_]/, '') || seg)}</summary>${draw(kid, `${key}/${seg}`)}</details>`).join('')}`;
+    const draw = (node, key) => [...node.docs.map(item), ...[...node.kids].map(([seg, kid]) => ({ k: `${key}/${seg}`, dir: seg.replace(/^\d+[-_]/, '') || seg, items: draw(kid, `${key}/${seg}`) }))];
     return draw(root, g.group);
   };
-  return groups.map((g) => {
-    const body = g.tree ? tree(g) : g.docs.map(link).join('');
-    return `<details class="nav-group"${g.collapsed ? '' : ' open'} data-k="${esc(g.group)}"><summary class="nav-title">${title(g)}</summary>${body}</details>`;
-  }).join('');
+  return groups.map((g) => ({
+    k: g.group, group: g.group, icon: g.icon, open: !g.collapsed,
+    acts: [act(g.sheets, 'sheet-docs', '설계서 보기'), act(g.erds, 'erd-docs', 'ERD 보기')].filter(Boolean),
+    items: g.tree ? tree(g) : g.docs.map(item),
+  }));
+}
+
+/** 메뉴 자료 → HTML (앱의 메뉴와 같은 틀. 점검 · 시험용) */
+function navHtml(data) {
+  const items = (list) => list.map((x) => (x.items
+    ? `<details class="nav-dir" data-k="${esc(x.k)}"><summary>${esc(x.dir)}</summary>${items(x.items)}</details>`
+    : `<a class="nav-link" href="${esc(x.p)}" data-p="${esc(x.p)}">${esc(x.t)}</a>`)).join('');
+  const act = (a) => `<a class="nav-act" href="${esc(a.p)}${a.h ? `#${a.h}` : ''}" data-p="${esc(a.p)}" data-h="${a.h}" title="${a.label}" aria-label="${a.label}">▶</a>`;
+  return data.map((g) => `<details class="nav-group"${g.open ? ' open' : ''} data-k="${esc(g.k)}"><summary class="nav-title"><span class="ico">${esc(g.icon)}</span>${esc(g.group)}${g.acts.map(act).join('')}</summary>${items(g.items)}</details>`).join('');
 }
 
 /** 로고 글자: 설정 logo → 제목 첫 낱말이 2~3자 영문 약어면 그대로 대문자(「XD 분석」 → XD) → 앞 두 낱말 첫 글자 */
@@ -685,41 +730,74 @@ function layout(a, env) {
   const site = cfg.title || opts.title || '문서';
   const logo = logoOf(cfg, site);
   const i = flat.findIndex((d) => d.page === a.page);
+  env.spa.add(a.page);
   const pg = (d, cls, label) => (d ? `<a class="${cls}" href="${esc(relLink(a.page, d.page))}"><small>${label} · ${esc(d.groupName)}</small>${esc(d.navTitle || d.title)}</a>` : '<span></span>');
   const pager = i < 0 ? '' : `<div class="pager">${pg(flat[i - 1], 'prev', '이전')}${pg(flat[i + 1], 'next', '다음')}</div>`;
   const toc = (a.toc || []).length ? a.toc.map((x) => `<a class="l${x.lvl}" href="#${esc(x.sid)}" data-id="${esc(x.sid)}">${esc(x.text)}</a>`).join('') : `<div class="empty">${esc(a.title)}</div>`;
+  const title = `${a.title}${a.title !== site ? ` · ${site}` : ''}`;
+  const src = a.src && /^https?:\/\//i.test(a.src) ? a.src : null;
+  const near = (d) => (d ? { p: d.page, t: d.navTitle || d.title, g: d.groupName } : null);
+  // 앱(site.js)이 쓰는 이 쪽 정보: 본문(.ds-body)은 HTML 그대로 두고 그 밖의 화면은 이것으로 그린다
+  const meta = {
+    page: a.page, kind: a.kind || 'doc', title: a.title, head: title, crumb: a.crumb || '', status: a.status || '', h1: a.h1Html || esc(a.title), lead: a.lead || '',
+    src: src ? { href: src, name: path.basename(a.srcName || '') } : null, toc: a.toc || [], prev: i < 0 ? null : near(flat[i - 1]), next: i < 0 ? null : near(flat[i + 1]),
+    ...(a.kind === 'print' ? { autoPrint: a.autoPrint !== false } : {}),
+  };
+  const site0 = { title: site, logo, version: cfg.version || '', ink: cfg.ink !== false };
   return `<!doctype html>
 <html lang="ko" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="aikit docs">
-<title>${esc(a.title)}${a.title !== site ? ` · ${esc(site)}` : ''}</title>
+<title>${esc(title)}</title>
 <script>try { var t = localStorage.getItem('aikit-docs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <link rel="stylesheet" href="${r}assets/site.css">
 <link rel="icon" href="data:,">
 </head>
 <body data-root="${r}">
+<div id="ds-app">
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="${r}index.html"><span class="logo">${esc(logo)}</span>${esc(site)}</a></div>
-  <div class="search"><input id="q" placeholder="검색 (제목 · 소제목 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
+  <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
   <div class="tools"><span>${esc(cfg.version || '')}</span>${cfg.ink === false ? '' : `<button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false">${svgIcon('ink')}</button>`}<button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true">${svgIcon('print')}</button><button id="theme" type="button" title="테마" aria-label="테마">${svgIcon('theme')}</button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="${esc(a.page)}"><noscript><a class="nav-link" href="${r}index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
   <main id="main"><article class="page">
-<div class="page-head"><div><div class="crumb">${esc(a.crumb || '')}${a.badge || ''}</div><h1>${a.h1Html || esc(a.title)}</h1>${a.lead ? `<p class="lead">${a.lead}</p>` : ''}</div>${a.src && /^https?:\/\//i.test(a.src) ? `<a class="src" href="${esc(a.src)}" title="원본 md">원본 ${esc(path.basename(a.srcName || ''))}</a>` : ''}</div>
+<div class="page-head"><div><div class="crumb">${esc(a.crumb || '')}${a.badge || ''}</div><h1>${a.h1Html || esc(a.title)}</h1>${a.lead ? `<p class="lead">${a.lead}</p>` : ''}</div>${src ? `<a class="src" href="${esc(src)}" title="원본 md">원본 ${esc(path.basename(a.srcName || ''))}</a>` : ''}</div>
+<div class="ds-body">
 ${a.body}
+</div>
 </article>
   ${pager}</main>
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc">${toc}</div></aside>
 </div>
+</div>
+<script type="application/json" id="ds-page">${JSON.stringify({ ...meta, site: site0 }).replace(/</g, '\\u003c')}</script>
 <script src="${r}assets/search.js"></script>
 <script src="${r}assets/nav.js"></script>
+<script src="${r}assets/vendor.js"></script>
 <script src="${r}assets/site.js"></script>
 </body>
 </html>
 `;
+}
+
+/** 본문 HTML → 검색 색인 [{ u: 쪽, h: 절 id, t: 절 제목, x: 글자 }] (## · ### 마다, 절마다 글자 수 제한) */
+const TEXT_MAX = 4000;
+const unhtml = (h) => String(h).replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ')
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+function textsOf(page, title, html) {
+  const out = [];
+  const parts = String(html).split(/(?=<h[23] id=")/);
+  for (const part of parts) {
+    const m = /^<h[23] id="([^"]+)">([\s\S]*?)<\/h[23]>/.exec(part);
+    const t = m ? unhtml(m[2].replace(/<a class="anchor"[\s\S]*?<\/a>/, '')) : title;
+    const x = unhtml(m ? part.slice(m[0].length) : part).slice(0, TEXT_MAX);
+    if (x) out.push({ u: page, h: m ? m[1] : '', t, x });
+  }
+  return out;
 }
 
 const badge = (st) => (st ? ` <span class="ds-badge" data-status="${esc(st)}">${esc(st)}</span>` : '');
@@ -903,7 +981,7 @@ function mdPage(d, env) {
     if (b.t === 'code') return `<div class="code"><button class="copy" type="button">복사</button><pre><code${b.lang ? ` class="lang-${esc(b.lang)}"` : ''}>${esc(b.text)}</code></pre></div>`;
     if (b.t === 'quote') return `<blockquote>${render(quoteSrc(b.blocks))}</blockquote>`;
     if (b.t === 'list') {
-      const list = (l) => `<${l.ordered ? 'ol' : 'ul'}>${l.items.map((it) => `<li${it.task != null ? ' class="ds-task"' : ''}>${it.task != null ? `<input type="checkbox" disabled${it.task ? ' checked' : ''}> ` : ''}${L(it.text, itemDefs.get(it))}${it.kids ? list(it.kids) : ''}</li>`).join('')}</${l.ordered ? 'ol' : 'ul'}>`;
+      const list = (l) => `<${l.ordered ? `ol${l.start ? ` start="${l.start}"` : ''}` : 'ul'}>${l.items.map((it) => `<li${it.task != null ? ' class="ds-task"' : ''}>${it.task != null ? `<input type="checkbox" disabled${it.task ? ' checked' : ''}> ` : ''}${L(it.text, itemDefs.get(it))}${it.blocks ? render(it.blocks) : ''}${it.kids ? list(it.kids) : ''}</li>`).join('')}</${l.ordered ? 'ol' : 'ul'}>`;
       return list(b);
     }
     if (b.t === 'table') {
@@ -943,8 +1021,9 @@ function mdPage(d, env) {
   d.toc = toc;
   const origin = d.origin || d.md;
   const isReadme = /^readme\.md$/i.test(path.basename(origin)) && !d.part;
+  env.texts.push(...textsOf(page, d.title, content));
   return layout({
-    page, title: d.title, crumb: d.groupName || path.dirname(origin), badge: badge(d.status),
+    page, title: d.title, crumb: d.groupName || path.dirname(origin), badge: badge(d.status), status: d.status,
     h1Html: h1 ? L(h1.text, defsAt.get(h1) || []) : esc(d.title),
     src: opts.srcOf ? opts.srcOf(origin) : srcUrl(opts.config, origin), srcName: origin,
     // 화면설계 개요: 설계서 블록을 본문 맨 위에 (README 가 길어도 장 수 · 묶음별 화면 · 설계서 보기가 먼저 보이게)
@@ -1031,6 +1110,8 @@ function sheetPage(d, theme) {
   let h = d.html
     .replace(/(<link\b[^>]*href=")[^"]*storyboard\.css(")/, `$1${r}assets/storyboard/storyboard.css$2`)
     .replace(/(<script\b[^>]*src=")[^"]*storyboard\.js(")/, `$1${r}assets/storyboard/storyboard.js$2`);
+  // 뷰어가 쓰는 화면 라이브러리(Preact + htm)를 뷰어 앞에
+  if (!/assets\/vendor\.js"/.test(h)) h = h.replace(/(<script\b[^>]*src="[^"]*storyboard\.js")/, `<script src="${r}assets/vendor.js"></script>\n$1`);
   h = /<body\b[^>]*\bdata-root="/.test(h) ? h.replace(/(<body\b[^>]*\bdata-root=")[^"]*(")/, (_, a, b) => `${a}${r}${b}`) : h.replace(/<body\b/, `<body data-root="${r}"`);
   // 뷰어 「← 문서」 버튼이 돌아갈 곳: 화면설계 개요 쪽 (없으면 뷰어가 사이트 메인으로)
   const back = d.back ? `${relLink(d.page, d.back)}#sheet-docs` : null;
@@ -1039,4 +1120,4 @@ function sheetPage(d, theme) {
   return h;
 }
 
-module.exports = { build, parse, findDefs, docInfo, pageOf, wanted, inline, globRe, ID_FULL, ID_SRC };
+module.exports = { build, navHtml, parse, findDefs, docInfo, pageOf, wanted, inline, globRe, ID_FULL, ID_SRC };

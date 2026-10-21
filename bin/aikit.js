@@ -39,6 +39,8 @@
  *   aikit docs refs-quote <md 파일…> [--dry]   본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다
  *   aikit docs trace [--ids FN] [--all] [--strict]   기획 ID 와 코드의 구현 표시(주석의 ID) 대조: 코드에 없는 ID · 기획에 정의 없는 ID
  *   aikit docs pages [on|off] [repo|폴더]   문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태 (원격에 맞는 CI 파일 · .gitignore 의 /docs-site/)
+ *   aikit docs serve [repo|폴더] [--port 8000] [--open]   docs-site/ 를 이 PC 에서 웹 주소로 보기 (전체 인쇄 · 새로고침 없는 이동까지. Ctrl+C 로 끝)
+ *   aikit delegate list · status [<id>] · watch [<id>]   다른 도구에 맡긴 작업(위임: Claude Code ↔ Codex 리뷰 등): 목록 · 지금 진행 현황 · 상대 에이전트가 읽고 실행하는 것을 줄마다 보기 (id 를 빼면 마지막 실행 중 작업)
  *   aikit board [--no-open] [--no-fetch]   워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽 (.agents/board/, 이 PC 만 · 보기 전용)
  *   aikit screens check [repo|폴더]   화면설계서 검사: 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락 (screens 팩)
  *   aikit datamodel check [repo|폴더] 데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
@@ -129,9 +131,15 @@ const padTo = (t, n) => t + ' '.repeat(Math.max(0, n - width(t)));
 
 /** 입력칸 공통 머리 — 빈 세로선 · 상태 기호 + 굵은 제목 · (회색 안내) */
 let PROGRESS = ''; // "3/9" 처럼 질문 뒤에 붙는 진행 표시 (init · install · agent 가 단계마다 넣는다)
+let PROGRESS_FIRST = null; // [진행 표시, 그 단계의 첫 화면 제목]: 한 단계 안의 다음 화면(새 repo 이름 · 확정 등)은 「이어서」 로 (같은 번호가 되풀이돼 보이지 않게)
 function frame(pr, st, message, hint, bar) {
   const { styleText } = require('util');
-  const title = PROGRESS ? `${styleText('bold', message)} ${styleText('gray', `(${PROGRESS})`)}` : styleText('bold', message);
+  let tag = PROGRESS;
+  if (PROGRESS) {
+    if (!PROGRESS_FIRST || PROGRESS_FIRST[0] !== PROGRESS) PROGRESS_FIRST = [PROGRESS, message];
+    else if (PROGRESS_FIRST[1] !== message) tag = `${PROGRESS} 이어서`;
+  }
+  const title = tag ? `${styleText('bold', message)} ${styleText('gray', `(${tag})`)}` : styleText('bold', message);
   const head = `${styleText('gray', pr.S_BAR)}\n${pr.symbol(st)}  ${title}\n`;
   const guide = hint && st !== 'submit' && st !== 'cancel' ? `${bar}  ${styleText('gray', hint)}\n` : '';
   return head + guide;
@@ -236,21 +244,30 @@ const ARG_PRESETS = {
 /** 항상 붙일 인자 고르기: 자주 쓰는 조합 또는 직접 입력. current = 지금 저장된 값(문자열) */
 async function chooseArgs(agent, current) {
   const presets = ARG_PRESETS[agent] || [{ value: '', label: '없음' }];
-  const known = presets.some((o) => o.value === current);
-  const options = [...presets, { value: '__custom', label: '직접 입력', hint: current && !known ? `지금: ${current}` : '목록에 없는 옵션을 적는다' }];
-  const picked = await choose({
-    message: `${AGENTS[agent].command} 에 항상 붙일 인자`,
-    hint: 'aikit start 가 실행할 때마다 붙입니다. 이 PC 전용.',
-    options, initialValue: known ? current : '__custom',
-  });
-  if (picked === BACK || picked !== '__custom') return picked;
-  return input({
-    message: `${AGENTS[agent].command} 에 붙일 인자 직접 입력`,
-    hint: '없으면 Enter 를 누르세요.',
-    placeholder: agent === 'claude' ? '예: --permission-mode plan --verbose' : '예: --search --full-auto',
-    initialValue: known ? '' : current,
-  });
+  for (;;) {
+    const known = presets.some((o) => o.value === current);
+    const options = [...presets, { value: '__custom', label: '직접 입력', hint: current && !known ? `지금: ${current}` : '목록에 없는 옵션을 적는다' }];
+    const picked = await choose({
+      message: `${AGENTS[agent].command} 에 항상 붙일 인자`,
+      hint: 'aikit start 가 실행할 때마다 붙입니다. 이 PC 전용.',
+      options, initialValue: known ? current : '__custom',
+    });
+    const v = picked !== '__custom' ? picked : await input({
+      message: `${AGENTS[agent].command} 에 붙일 인자 직접 입력`,
+      hint: '없으면 Enter 를 누르세요.',
+      placeholder: agent === 'claude' ? '예: --permission-mode plan --verbose' : '예: --search --full-auto',
+      initialValue: known ? '' : current,
+    });
+    if (v === BACK || clack().isCancel(v) || !RISKY_ARGS.test(String(v || ''))) return v;
+    // 권한 확인을 끄는 인자는 한 번 더 묻는다 (아니오 = 인자 고르기로)
+    const ok = await yesNo({ message: '권한 확인 없이 실행할까요?', hint: '에이전트가 묻지 않고 파일을 지우거나 고치고, 셸 명령 · push 를 실행할 수 있습니다. 혼자 쓰는 PC 에서, 되돌릴 수 있는 작업에만 권합니다.', initialValue: false });
+    if (ok === true) return v;
+    if (clack().isCancel(ok)) return ok;
+    current = String(v || '');
+  }
 }
+/** 권한 확인을 끄는 인자 (Claude · Codex) */
+const RISKY_ARGS = /--dangerously-(skip-permissions|bypass-approvals-and-sandbox)|--yolo\b/;
 
 /** 모델 목록 (packs/core/models.json) */
 function modelCatalog(root) {
@@ -723,11 +740,13 @@ async function chooseRoleModels(root, tool, scope) {
   return changed;
 }
 
+const KEEP_LOCAL = ['access', 'plans', 'gatewayTrust', 'limits', 'mode', 'prefer', 'enforce'];
 /** 이 PC 의 직접 지정 내려놓기 — 'all' = 프로필·직접 지정 전부(팀 값을 따른다), 도구 이름 = 그 도구의 메인 모델만 */
 function dropLocalPicks(root, what) {
   const local = readLocal(root);
   if (!local.agents) return;
-  if (what === 'all') local.agents = {};
+  // 연결 방식 · 요금제 · 게이트웨이 승인 같은 모델 아닌 설정은 남긴다 (init 이 쓰는 AI 를 고른 뒤 프로필을 고르면 지워지던 것)
+  if (what === 'all') local.agents = Object.fromEntries(Object.entries(local.agents).filter(([k]) => KEEP_LOCAL.includes(k)));
   else if (local.agents.main) delete local.agents.main[what];
   writeLocal(root, { agents: local.agents });
 }
@@ -845,7 +864,8 @@ function parseRepoList(text, kind, root, taken) {
     if (fresh) repo.local = true; // 원격 없이 repos/<이름> 에 새로 만든다 — origin 을 달면 sync 가 remote 로 옮긴다
     else if (kit.isGitUrl(v)) repo.remote = v;
     else repo.path = path.relative(root, path.resolve(v)).split(path.sep).join('/');
-    if (kind === 'docs') repo.mdPath = 'md';
+    // md 사본 폴더: 새로 만드는 repo(견본에 md/ 가 있다) · 원격 repo 는 md, 기존 로컬 폴더는 md/ 가 있을 때만 (없는 폴더를 적으면 doctor 가 경고한다)
+    if (kind === 'docs' && (fresh || repo.remote || fs.existsSync(path.join(path.resolve(v), 'md')))) repo.mdPath = 'md';
     return repo;
   });
 }
@@ -923,7 +943,7 @@ const isFolder = (x) => { try { return fs.statSync(path.resolve(expandHome(x))).
 const REPO_METHODS = {
   clone: { label: 'clone (git 주소)', ask: 'git 주소', placeholder: '예: https://gitlab.example.com/group/repo.git',
     check: (x) => (kit.isGitUrl(x) ? undefined : `git 주소가 아닙니다: ${x}`), entry: (x) => x },
-  link: { label: '기존 로컬 폴더', ask: '폴더 경로', placeholder: '예: ~/projects/xd/repos/xd-docs (원격 없이 로컬에서만 커밋하는 repo 도 됨)',
+  link: { label: '기존 로컬 폴더', ask: '폴더 경로', placeholder: '예: ~/projects/shop/repos/shop-docs (원격 없이 로컬에서만 커밋하는 repo 도 됨)',
     check: (x) => (isFolder(x) ? undefined : `있는 폴더가 아닙니다: ${x}`), entry: (x) => path.resolve(expandHome(x)) },
   new: { label: '새로 만들기 (git init)', ask: '새 repo 이름', placeholder: '예: my-api (repos/<이름> 에 원격 없이 만듦)',
     check: (x) => (NEW_NAME.test(x) ? undefined : `이름은 영문·숫자·._- 로 씁니다: ${x}`), entry: (x) => `${NEW_PREFIX}${x}` },
@@ -966,7 +986,7 @@ async function askRepo({ message, hint, allowNew, taken = [], skippable = false,
  * repo 를 하나씩 받는다 — 방식 → 값 → [추가][확정] → 추가면 다음. 선택 항목은 첫 방식 선택에 "없음" 이 있다.
  * Esc: 값 입력이면 방식 선택으로, 방식 선택이면 직전 [추가][확정] 으로(처음이면 이전 질문 = BACK).
  */
-async function collectAddresses({ message, hint, required, allowNew = false, initial = [] }) {
+async function collectAddresses({ message, hint, required, allowNew = false, initial = [], others = [] }) {
   const list = [...initial];
   let asking = list.length === 0;
   let draft = '';
@@ -975,8 +995,8 @@ async function collectAddresses({ message, hint, required, allowNew = false, ini
       const last = list.length ? list[list.length - 1] : draft;
       const v = await askRepo({
         message: list.length ? `${message} (${list.length + 1}번째)` : message,
-        hint: list.length ? `등록: ${list.map(repoLabelOf).join(', ')}` : hint,
-        allowNew, taken: list, skippable: !required && !list.length, method: last ? methodOf(last) : undefined, draft,
+        hint: list.length ? listHint(list) : hint,
+        allowNew, taken: [...list, ...others], skippable: !required && !list.length, method: last ? methodOf(last) : undefined, draft,
       });
       draft = '';
       if (v === BACK) { if (!list.length) return BACK; asking = false; continue; }
@@ -984,9 +1004,11 @@ async function collectAddresses({ message, hint, required, allowNew = false, ini
       if (v === SKIP) return list;
       list.push(v);
     }
+    // 가져온 것만 있으면 「그대로 확정」 이 기본: 같은 repo 를 다시 넣지 않게 (넣어도 주소 · 이름이 같으면 막는다)
+    const onlyGot = list.every((v) => IMPORTED.has(v));
     const next = await chooseInline({
-      message, hint: `등록: ${list.map(repoLabelOf).join(', ')}`,
-      options: [{ value: 'add', label: '추가' }, { value: 'done', label: '확정' }], initialValue: 'done',
+      message, hint: onlyGot ? `${listHint(list)}. 분석·설계 워크스페이스에서 가져왔습니다. 다른 repo 가 더 있을 때만 추가` : listHint(list),
+      options: [{ value: 'add', label: onlyGot ? '추가 등록' : '추가' }, { value: 'done', label: onlyGot ? '확정 (가져온 그대로)' : '확정' }], initialValue: 'done',
     });
     if (next === BACK) { draft = list.pop(); asking = true; continue; } // 마지막 값을 고쳐 쓰게
     if (clack().isCancel(next)) return next;
@@ -996,18 +1018,29 @@ async function collectAddresses({ message, hint, required, allowNew = false, ini
 }
 const repoNameOf = (v) => path.basename(String(v).replace(NEW_PREFIX, '').replace(/\/+$/, '')).replace(/\.git$/, '');
 const repoLabelOf = (v) => `${repoNameOf(v)}${String(v).startsWith(NEW_PREFIX) ? '(새로 만듦)' : methodOf(v) === 'link' ? '(로컬 폴더)' : ''}`;
+/** 분석·설계 워크스페이스에서 가져온 값 (takeFrom). 목록 안내에서 새로 넣은 것과 나눠 보인다 */
+const IMPORTED = new Set();
+/** 목록 안내: 「가져옴 n개: … · 새로 등록: …」 (가져온 것이 많으면 앞 5개만) */
+function listHint(list) {
+  const got = list.filter((v) => IMPORTED.has(v)).map(repoNameOf);
+  const mine = list.filter((v) => !IMPORTED.has(v)).map(repoLabelOf);
+  if (!got.length) return `등록: ${mine.join(', ')}`;
+  return [`가져옴 ${got.length}개: ${got.slice(0, 5).join(', ')}${got.length > 5 ? ' …' : ''}`, ...(mine.length ? [`새로 등록: ${mine.join(', ')}`] : [])].join(' · ');
+}
 
 /** 분석·설계 워크스페이스의 repo 를 init 목록에 채운다: 기획 · 이슈(· 레거시 질문이 있는 유형은 현행). 원격이 있으면 주소, 없으면 그 폴더 경로(링크) */
 function takeFrom(a, fl) {
   let ws;
   try { ws = kit.loadWorkspace(a.from); } catch { return; }
-  const put = (list, v) => { if (v && !list.includes(v)) list.push(v); };
+  const put = (list, v) => { if (v && !list.includes(v)) list.push(v); if (v) IMPORTED.add(v); };
   const left = [];
   const missing = [];
+  const linked = [];
   for (const r of ws.repos || []) {
     const local = path.join(a.from, kit.repoRel(r));
     const v = r.remote || (fs.existsSync(local) ? fs.realpathSync(local) : null);
     if (!v) { missing.push(r.name); continue; }
+    if (!r.remote && (r.kind === 'docs' || r.kind === 'issues' || (r.kind === 'legacy' && fl.legacy) || (r.kind === 'code' && fl.code))) linked.push(r.name);
     if (r.kind === 'docs') put(a.docs, v);
     else if (r.kind === 'issues') put(a.issues, v);
     else if (r.kind === 'legacy' && fl.legacy) put(a.legacy, v);
@@ -1016,7 +1049,8 @@ function takeFrom(a, fl) {
   }
   p.log.info([`${(ws.project || {}).title || path.basename(a.from)} 에서 가져옴: 기획 ${a.docs.length} · 이슈 ${a.issues.length}${fl.legacy ? ` · 현행 ${a.legacy.length}` : ''}`,
     ...(left.length ? [`현행 repo ${left.length}개 (${left.slice(0, 5).join(', ')}${left.length > 5 ? ' …' : ''}): 고칠 repo 는 프로젝트 repository 에 넣습니다`] : []),
-    ...(missing.length ? [`원격도 받은 폴더도 없어 건너뜀: ${missing.join(', ')}`] : [])].join('\n'));
+    ...(missing.length ? [`원격도 받은 폴더도 없어 건너뜀: ${missing.join(', ')}`] : []),
+    ...(linked.length ? [`원격 없는 repo ${linked.join(', ')} 는 링크로 함께 씁니다: 두 워크스페이스가 같은 파일을 고친다. 문서 사이트 · 커밋 훅은 ${path.basename(a.from)} 쪽 것을 쓴다 (따로 쓰려면 원격을 만들어 clone 으로)`] : [])].join('\n'));
 }
 
 async function cmdInit(argv) {
@@ -1034,6 +1068,8 @@ async function cmdInit(argv) {
   const targetOf = (name) => (here && (kit.folderState(cwd) === 'fresh-repo' || path.basename(cwd) === name) ? cwd : path.resolve(cwd, name));
   const a = { title: given, type: undefined, approach: undefined, from: '', code: [], docs: [], issues: [], legacy: [], hosts: {}, pages: false };
   const flow = () => TYPE_FLOW[a.type || 'new'];
+  // 다른 목록에 이미 넣은 값 (같은 repo 를 두 종류로 넣지 않게)
+  const othersOf = (kind) => ['code', 'docs', 'issues', 'legacy'].filter((k) => k !== kind).flatMap((k) => a[k]);
 
   // 단계 — when 이 거짓이면 건너뛴다 (앞으로·뒤로 모두). Esc 는 이전 단계, 첫 단계에서 Esc 는 취소
   const steps = [
@@ -1068,24 +1104,24 @@ async function cmdInit(argv) {
       message: '분석·설계 워크스페이스에서 이어 만들까요?', hint: '분석 · 설계를 끝낸 워크스페이스가 있으면 그 기획 · 이슈 repo 를 그대로 가져옵니다. 요구사항 ID 가 이어집니다.', initialValue: !!a.from,
     }), set: (v) => { a.from = v === true ? a.from || ' ' : ''; } },
     { when: () => a.type !== 'consulting' && !!a.from, run: async () => input({
-      message: '분석·설계 워크스페이스 폴더', placeholder: '예: ~/projects/xd-isp', initialValue: a.from.trim(),
+      message: '분석·설계 워크스페이스 폴더', placeholder: '예: ~/projects/shop-isp', initialValue: a.from.trim(),
       validate: (x) => { const d = path.resolve(expandHome(String(x || '').trim())); return x && kit.folderState(d) === 'workspace' ? undefined : `워크스페이스 폴더가 아닙니다 (workspace.json 이 없음): ${x || ''}`; },
     }), set: (v) => { a.from = path.resolve(expandHome(String(v).trim())); takeFrom(a, flow()); } },
     { when: () => !!flow().code, run: async () => collectAddresses({
-      message: flow().code.message, hint: flow().code.hint, required: flow().code.required, allowNew: !!flow().code.allowNew, initial: a.code,
+      message: flow().code.message, hint: flow().code.hint, required: flow().code.required, allowNew: !!flow().code.allowNew, initial: a.code, others: othersOf('code'),
     }), set: (v) => { a.code = v; } },
     { run: async () => collectAddresses({
-      message: '기획 repository 주소', hint: '요구사항의 근거가 되는 문서 repo 입니다. 분석 워크스페이스의 산출물 repo 가 로컬에만 있으면 기존 로컬 폴더 (뼈대는 aikit init-docs).', required: false, allowNew: true, initial: a.docs,
+      message: '기획 repository 주소', hint: '요구사항의 근거가 되는 문서 repo 입니다. 분석 워크스페이스의 산출물 repo 가 로컬에만 있으면 기존 로컬 폴더 (뼈대는 aikit init-docs).', required: false, allowNew: true, initial: a.docs, others: othersOf('docs'),
     }), set: (v) => { a.docs = v; } },
     { when: () => a.docs.length > 0, run: async () => yesNo({
       message: '기획 문서 사이트를 Pages 로 올릴까요?', hint: '기획 repo 의 docs-site/ 를 GitLab · GitHub Pages 로 공개합니다. 서버에 Pages · 러너가 있어야 합니다 (GitHub 비공개 repo 는 유료). 나중에 aikit docs pages on | off 로 바꿀 수 있습니다.',
       initialValue: a.pages,
     }), set: (v) => { a.pages = v === true; } },
     { run: async () => collectAddresses({
-      message: '이슈 repository 주소', hint: '이슈·확인 요청·테스트 결과 문서를 쓰는 repo 입니다.', required: false, allowNew: true, initial: a.issues,
+      message: '이슈 repository 주소', hint: '이슈·확인 요청·테스트 결과 문서를 쓰는 repo 입니다.', required: false, allowNew: true, initial: a.issues, others: othersOf('issues'),
     }), set: (v) => { a.issues = v; } },
     { when: () => !!flow().legacy, run: async () => collectAddresses({
-      message: flow().legacy.message, hint: flow().legacy.hint, required: flow().legacy.required, initial: a.legacy,
+      message: flow().legacy.message, hint: flow().legacy.hint, required: flow().legacy.required, initial: a.legacy, others: othersOf('legacy'),
     }), set: (v) => { a.legacy = v; } },
     { when: () => unknownHosts().length > 0, run: async () => {
       for (const h of unknownHosts()) {
@@ -1177,6 +1213,24 @@ async function cmdInit(argv) {
     if (r) p.log.info(`Pages\n${(r.stdout + r.stderr).trim()}\n기획 repo 의 바뀐 파일(CI · .gitignore)은 그 repo 에서 커밋 · push 한다`);
   }
   p.log.message(log.filter((l) => l.trim() && !l.includes('스택 감지')).join('\n'));
+  // clone 은 인증을 묻지 않게 막고 돌린다 (진행 표시 뒤에서 멈추지 않게). 직접 git clone 하면 되는 repo 가 여기서 빠질 수 있어,
+  // 받지 못한 repo 를 바로 보이고 인증을 물을 수 있는 git clone 으로 다시 받을지 묻는다 (스택 확인 전에)
+  const failed = () => { try { return kit.loadWorkspace(dir).repos.filter((r) => r.remote && !fs.existsSync(path.join(dir, r.dir))); } catch { return []; } };
+  if (failed().length) {
+    const first = repoStatus(dir, res.repos || []);
+    if (first) p.note(first.text, first.title);
+    const again = await yesNo({ message: `받지 못한 repo ${failed().length}개를 지금 다시 받을까요?`, hint: 'git clone 을 그대로 실행합니다. 인증을 물으면 입력하세요. 아니오면 나중에 aikit install.', initialValue: true });
+    if (again === true) {
+      for (const r of failed()) {
+        p.log.step(`git clone ${r.remote}`);
+        const c = spawnSync('git', ['clone', ...(r.branch ? ['-b', r.branch] : []), '--', r.remote, path.join(dir, r.dir)], { stdio: 'inherit' });
+        const x = (res.repos || []).find((y) => y.name === r.name);
+        if (c.status === 0 && x) Object.assign(x, { state: 'cloned', note: r.remote });
+        if (c.status !== 0) p.log.warn(`${r.name}: 받지 못했습니다. 주소 · 권한을 확인한 뒤 aikit install`);
+      }
+      runWorkspaceKit(dir, ['sync', '--quiet']); // 받은 repo 의 스택 감지 · 훅
+    }
+  }
   abortNote = `워크스페이스는 만들어졌습니다 (${dir}). 스택은 감지 결과대로 저장돼 있으니 aikit detect 로 고치고, 에이전트는 aikit agent 로 고르세요`;
   // 만든 뒤의 질문(스택 → 규칙 확인 → 에이전트)도 Esc 로 이전 화면에 돌아간다. 첫 화면에서 Esc 는 취소 (워크스페이스는 남는다)
   const preCount = steps.filter((s, i) => runnable(i)).length;
@@ -1236,6 +1290,9 @@ async function cmdInit(argv) {
     const raw = JSON.parse(read(wsFile));
     if (!(raw.team && (raw.team.admins || []).length)) { raw.team = { ...(raw.team || {}), admins: [leadId] }; fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n'); }
   }
+  // repo 별 상태: clone 실패 · 빠진 repo 는 질문 화면들 뒤로 밀려 안 보이므로 끝에 다시 보인다 (다시 받기 = aikit install, sync 는 받지 않는다)
+  const repoNote = repoStatus(dir, res.repos || []);
+  if (repoNote) p.note(repoNote.text, repoNote.title);
   const rel = path.relative(process.cwd(), dir);
   const hasRemote = remoteOf();
   p.note(pushed
@@ -1244,6 +1301,32 @@ async function cmdInit(argv) {
       ? `아직 push 하지 않았습니다. 준비되면:\ngit add -A && git commit -m "chore: init workspace" && git push -u origin HEAD\n→ 팀원은 clone 한 뒤 aikit install · aikit start`
       : `원격이 없습니다. GitLab·GitHub 에 빈 repo 를 만든 뒤:\ngit remote add origin <주소> && git add -A && git commit -m "chore: init workspace" && git push -u origin HEAD`, '공유하기');
   p.outro(`다음: ${rel ? `cd ${rel} && ` : ''}aikit start`);
+}
+
+/** init 끝 화면의 repo 상태 표 — 받은 결과와 지금 repos/ 를 맞춰 본다. 반환 { title, text } */
+function repoStatus(dir, results) {
+  let ws;
+  try { ws = kit.loadWorkspace(dir); } catch { return null; }
+  if (!(ws.repos || []).length) return null;
+  const by = new Map(results.map((x) => [x.name, x]));
+  const STATE = { ok: '있음', cloned: 'clone 함', linked: '링크', created: '새로 만듦', pending: '원격 대기', fail: '실패' };
+  const rows = ws.repos.map((r) => {
+    const x = by.get(r.name);
+    const there = fs.existsSync(path.join(dir, r.dir));
+    const state = there ? (x ? x.state : 'ok') : x && x.state === 'pending' ? 'pending' : 'fail';
+    return { name: r.name, kind: kit.REPO_KINDS[r.kind] || r.kind, state, note: state === 'fail' ? (x && x.state === 'fail' ? x.note : '받지 못함 (repos/ 에 없음)') : '' };
+  });
+  const bad = rows.filter((r) => r.state === 'fail');
+  const w = Math.max(...rows.map((r) => r.name.length));
+  const line = (r) => `${r.state === 'fail' ? '✖' : r.state === 'pending' ? '…' : '✓'} ${r.name.padEnd(w)}  ${padTo(r.kind, 12)} ${STATE[r.state]}${r.note ? `: ${r.note}` : ''}`;
+  // 많으면 문제 있는 것만 줄마다, 나머지는 개수로
+  const shown = rows.length > 12 ? rows.filter((r) => r.state !== 'ok' && r.state !== 'cloned' && r.state !== 'linked' && r.state !== 'created') : rows;
+  const okCount = rows.length - shown.length;
+  return {
+    title: bad.length ? `repo ${rows.length}개 중 ${bad.length}개 받지 못함` : `repo ${rows.length}개`,
+    text: [...shown.map(line), ...(okCount ? [`✓ 나머지 ${okCount}개 받음`] : []),
+      ...(bad.length ? ['', '인증 · 주소를 고친 뒤 워크스페이스에서 aikit install (빠진 repo 만 받는다. aikit sync 는 받지 않는다)'] : [])].join('\n'),
+  };
 }
 
 /** repo 마다 스택 확정 — 감지가 맞으면 한 화면, 아니면 서버/클라이언트 → 플랫폼 → 프레임워크 → 세부 → DB 순으로 좁힌다.
@@ -1322,7 +1405,7 @@ async function stackWizard(rel, catalog, layers, detected) {
   const layerSteps = () => [...(st.kind === 'server' || st.kind === 'both' ? ['backend'] : []), ...(st.kind === 'client' || st.kind === 'both' ? st.platforms : []), ...(st.kind && st.kind !== 'none' ? ['infra'] : [])];
   for (const layer of ['backend', ...clientLayers, 'infra']) {
     steps.push({ when: () => layerSteps().includes(layer), run: () => chooseMany({
-      message: layer === 'infra' ? '배포·인프라 도구' : `${layers[layer] || layer} 프레임워크`, hint: '없거나 모르면 Enter 로 건너뜁니다.',
+      message: layer === 'infra' ? '배포·인프라 도구' : `${layers[layer] || layer} 프레임워크`, hint: 'Space 로 고르고 Enter 로 확정 (아무것도 안 고르고 Enter 면 건너뜀)',
       // 세부만 잡힌 경우(Chart.yaml 만 있는 Helm)도 부모(Kubernetes)를 미리 골라 둔다. 안 그러면 세부 질문이 나오지 않아 빠진다
       initialValues: st.picks[layer] || topOf(layer).filter((c) => detected.includes(c.id) || kidsOf(c.id).some((k) => detected.includes(k.id))).map((c) => c.id),
       options: topOf(layer).map((c) => ({ value: c.id, label: c.label, hint: c.pack ? '전용 규칙' : withRules(c) || '공통 규칙만' })),
@@ -1331,14 +1414,14 @@ async function stackWizard(rel, catalog, layers, detected) {
   // 세부 프레임워크 — 고른 프레임워크마다 (예: Spring → MVC·WebFlux·Batch …)
   for (const parent of catalog.filter((c) => kidsOf(c.id).length)) {
     steps.push({ when: () => Object.values(st.picks).flat().includes(parent.id), run: () => chooseMany({
-      message: `${parent.label} 세부`, hint: '해당하는 것을 고르세요. 모르면 Enter 로 건너뜁니다.',
+      message: `${parent.label} 세부`, hint: 'Space 로 고르고 Enter 로 확정 (아무것도 안 고르고 Enter 면 건너뜀)',
       initialValues: st.children[parent.id] || detected.filter((id) => kidsOf(parent.id).some((c) => c.id === id)),
       options: kidsOf(parent.id).map((c) => ({ value: c.id, label: c.label })),
     }), set: (v) => { st.children[parent.id] = v; } });
   }
   // IaC repo 도 DB 를 만들 수 있어 인프라만이어도 묻는다
   steps.push({ when: () => st.kind === 'server' || st.kind === 'both' || st.kind === 'infra', run: () => chooseMany({
-    message: '쓰는 DB', hint: '없거나 모르면 Enter 로 건너뜁니다.', initialValues: st.db,
+    message: '쓰는 DB', hint: 'Space 로 고르고 Enter 로 확정 (아무것도 안 고르고 Enter 면 건너뜀)', initialValues: st.db,
     options: topOf('db').map((c) => ({ value: c.id, label: c.label, hint: c.pack ? '전용 규칙' : '공통 규칙만' })),
   }), set: (v) => { st.db = v; } });
 
@@ -1879,6 +1962,9 @@ function showAccess(root) {
     crossReview: (run.crossReview || {})[OTHER[agent]] || '쓰지 않음',
     warnings: runWarnings,
   }, null, 2));
+  // 정하지 않았는데 이 PC 의 Claude Code · Codex 가 게이트웨이로 이어져 있으면: 실제 연결과 저장값이 다르다
+  const found = a.set ? [] : gateway.detect();
+  if (found.length) console.warn(`⚠ 연결 방식을 정하지 않아 서비스 직접으로 봅니다. 이 PC 는 게이트웨이 ${found[0].url} 로 이어져 있습니다 (${found[0].source}). 맞추기: aikit ai gateway`);
 }
 
 async function cmdAi(argv = []) {
@@ -1926,8 +2012,12 @@ async function cmdAi(argv = []) {
   } else if (sub === 'gateway' || sub === 'refresh') {
     let g;
     if (val('--url')) {
-      const keyName = val('--key-env') || null;
-      g = { url: String(val('--url')).replace(/\/+$/, '').replace(/\/v1$/, ''), source: '직접 입력', keyName, key: keyName ? process.env[keyName] || null : null, aliases: false };
+      const url = String(val('--url')).replace(/\/+$/, '').replace(/\/v1$/, '');
+      // 키 환경변수를 안 주면 이 PC 설정에서 같은 주소를 찾아 그 키 이름을 쓴다 (ANTHROPIC_AUTH_TOKEN 등)
+      const same = gateway.detect().find((x) => x.url === url);
+      const keyName = val('--key-env') || (same && same.keyName) || null;
+      if (!val('--key-env') && keyName) console.log(`키 환경변수: ${keyName} (${same.source} 에서 찾음)`);
+      g = { url, source: '직접 입력', keyName, key: keyName ? process.env[keyName] || (same && same.keyName === keyName ? same.key : null) : null, aliases: !!(same && same.aliases) };
     } else {
       const saved = sub === 'refresh' ? (raw.gateway || accessOf(root).gateway) : null;
       if (sub === 'refresh' && !saved) fail('게이트웨이 설정이 없습니다. aikit ai gateway 로 먼저 정하세요');
@@ -3021,6 +3111,7 @@ async function main() {
     case 'handoff': return runWsTool('handoff.js', rest);
     case 'plan': return runWsTool('plan.js', rest);
     case 'docs': return runWsTool('docs-site.js', rest);
+    case 'delegate': return runWsTool('delegate.js', rest.length ? rest : ['list']);
     case 'board': return runWsTool('board.js', rest);
     case 'screens': return runWsTool('check-screens.js', rest.filter((x) => x !== 'check'), 'screens');
     case 'datamodel': return runWsTool('check-datamodel.js', rest.filter((x) => x !== 'check'), 'datamodel');
