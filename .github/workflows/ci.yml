@@ -1,4 +1,4 @@
-# 공개판 CI: push · PR 마다 test. v* 태그면 npm 발행 (신뢰 게시: 토큰 없이 OIDC, npmjs.com 패키지 설정에 이 저장소 · ci.yml 등록) 과 문서 사이트(GitHub Pages)
+# 공개판 CI: push · PR 마다 test. v* 태그면 npm 발행 (신뢰 게시: 토큰 없이 OIDC, npmjs.com 패키지 설정에 이 저장소 · ci.yml 등록). main push 면 문서 사이트(GitHub Pages)
 # 공급망: 액션은 태그가 아니라 커밋 SHA 로 고정한다 (태그 바꿔치기 대비, 뒤 주석이 그 버전). 의존 설치는 --ignore-scripts (설치 스크립트가 토큰을 훔치는 웜 대비)
 # 올릴 때: gh api repos/actions/<이름>/git/ref/tags/<태그> 로 SHA 를 확인해 SHA 와 주석을 같이 바꾼다
 name: ci
@@ -43,8 +43,8 @@ jobs:
       - run: cp npm-readme.md README.md   # npm 쪽 소개는 짧은 판 (설치 · 빠른 시작 · 링크). GitHub README 는 그대로
       - run: npm publish --access public   # 신뢰 게시면 출처 증명(provenance)도 자동
   pages:
-    # Pages 를 켠 저장소에서만 (Settings > Pages = GitHub Actions 뒤 저장소 변수 PAGES=on)
-    if: startsWith(github.ref, 'refs/tags/v') && vars.PAGES == 'on'
+    # 문서 사이트는 main push 때 (github-pages 환경이 main 만 허용). Pages 를 켠 저장소에서만 (Settings > Pages = GitHub Actions 뒤 저장소 변수 PAGES=on)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.PAGES == 'on'
     needs: test
     runs-on: ubuntu-latest
     permissions:

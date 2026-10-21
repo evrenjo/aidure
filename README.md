@@ -26,15 +26,15 @@
 
 **문서 사이트**: 기획 repo 의 md 를 검색 · 목차 · 흐름도가 있는 사이트로 만든다 (그림은 이 킷의 문서).
 
-![문서 사이트](.github/readme/docs-site.png)
+![문서 사이트](https://raw.githubusercontent.com/lsnwan/aidure/main/.github/readme/docs-site.png)
 
 **데이터 설계 (ERD)**: md 테이블 정의서에서 ERD 를 그린다. 영역 · 스키마로 거르고 SQL DDL · SVG · PDF 로 내보낸다.
 
-![ERD](.github/readme/erd.png)
+![ERD](https://raw.githubusercontent.com/lsnwan/aidure/main/.github/readme/erd.png)
 
 **화면설계서**: 같은 양식 · 같은 뷰어. 번호 마커와 설명, 근거 ID 가 기능 정의로 이어진다.
 
-![화면설계서](.github/readme/storyboard.png)
+![화면설계서](https://raw.githubusercontent.com/lsnwan/aidure/main/.github/readme/storyboard.png)
 
 ### 해결하는 문제
 
