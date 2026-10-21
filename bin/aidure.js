@@ -192,8 +192,10 @@ async function chooseMany({ message, hint, options, initialValues = [] }) {
         const on = (this.value || []).includes(o.value);
         const here = i === this.cursor;
         const box = on ? styleText('green', '◼') : here ? styleText('cyan', '◻') : styleText('dim', '◻');
-        const label = here ? padTo(o.label, col) : styleText(on ? 'reset' : 'dim', padTo(o.label, col));
-        return `${bar}  ${box} ${label}${o.hint ? styleText('gray', o.hint) : ''}`;
+        // 커서 줄: 앞에 › 와 굵은 청록 글자 (모두 켜져 있어도 어디인지 보이게)
+        const label = here ? styleText('bold', styleText('cyan', padTo(o.label, col))) : styleText(on ? 'reset' : 'dim', padTo(o.label, col));
+        const pointer = here ? styleText('cyan', '›') : ' ';
+        return `${bar} ${pointer}${box} ${label}${o.hint ? styleText(here ? 'cyan' : 'gray', o.hint) : ''}`;
       });
       return `${top}${rows.join('\n')}\n${bar}  ${styleText('gray', '↑/↓ 이동 · Space 선택 · Enter 확정 · Esc 뒤로')}\n${styleText('cyan', pr.S_BAR_END)}\n`;
     },
