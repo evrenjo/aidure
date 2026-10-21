@@ -40,12 +40,15 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm install -g --ignore-scripts npm@11.21.0   # 신뢰 게시(OIDC)는 npm 11.5.1 이상. 범위가 아닌 정확한 버전으로
       # 발행에는 의존 설치가 필요 없다 (빌드 단계 없음). OIDC 토큰을 받을 수 있는 이 작업에서는 남의 설치 스크립트를 돌리지 않는다
+      - run: cp npm-readme.md README.md   # npm 쪽 소개는 짧은 판 (설치 · 빠른 시작 · 링크). GitHub README 는 그대로
       - run: npm publish --access public   # 신뢰 게시면 출처 증명(provenance)도 자동
   pages:
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Pages 를 켠 저장소에서만 (Settings > Pages = GitHub Actions 뒤 저장소 변수 PAGES=on)
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PAGES == 'on'
     needs: test
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
