@@ -2,6 +2,14 @@
 
 **AI 에이전트로 팀 개발할 때, 모두가 같은 규칙으로 일하고 누구든 이어받게 해 주는 협업 워크스페이스 킷**
 
+[![ci](https://github.com/lsnwan/aidure/actions/workflows/ci.yml/badge.svg)](https://github.com/lsnwan/aidure/actions/workflows/ci.yml)
+![status](https://img.shields.io/badge/status-0.x%20%EA%B0%9C%EB%B0%9C%20%EC%A4%91-orange)
+![node](https://img.shields.io/badge/node-%3E%3D20.19-339933?logo=nodedotjs&logoColor=white)
+![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-D97757)
+![Codex](https://img.shields.io/badge/Codex-supported-412991)
+[![docs](https://img.shields.io/badge/docs-site-0969da)](https://lsnwan.github.io/aidure/)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 > 🚧 **개발 중 (0.x)**: 기능을 계속 더하고 있습니다. 정식 버전 전까지는 명령 · 설정 형식이 바뀔 수 있습니다. 바뀐 내용은 [변경 기록](CHANGELOG.md)에 버전마다 남깁니다.
 
 ### 문서 사이트
@@ -13,6 +21,20 @@
 프로젝트마다 git repo 하나로 된 **워크스페이스**를 세우면, 누가 어느 PC 에서 Claude Code 나 Codex 를 켜도 같은 규칙으로 일하고, 한 일이 기록으로 남아 다음 사람이 바로 이어받는다.
 
 > 처음이면 [빠른 시작](docs/quickstart.md) 부터. 문서를 브라우저로 보려면 위 「문서 사이트」 주소를 열거나 킷 repo 를 clone 했으면 `docs-site/index.html` 을 연다.
+
+### 화면
+
+**문서 사이트**: 기획 repo 의 md 를 검색 · 목차 · 흐름도가 있는 사이트로 만든다 (그림은 이 킷의 문서).
+
+![문서 사이트](.github/readme/docs-site.png)
+
+**데이터 설계 (ERD)**: md 테이블 정의서에서 ERD 를 그린다. 영역 · 스키마로 거르고 SQL DDL · SVG · PDF 로 내보낸다.
+
+![ERD](.github/readme/erd.png)
+
+**화면설계서**: 같은 양식 · 같은 뷰어. 번호 마커와 설명, 근거 ID 가 기능 정의로 이어진다.
+
+![화면설계서](.github/readme/storyboard.png)
 
 ### 해결하는 문제
 
