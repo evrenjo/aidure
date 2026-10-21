@@ -1,4 +1,4 @@
-# aikit 협업 AI 워크스페이스 킷
+# aidure 협업 AI 워크스페이스 킷
 
 **AI 에이전트로 팀 개발할 때, 모두가 같은 규칙으로 일하고 누구든 이어받게 해 주는 협업 워크스페이스 킷**
 
@@ -38,7 +38,7 @@
 
 ### 해결하는 문제
 
-| 팀에서 AI 를 쓰면 생기는 일 | aikit 에서는 |
+| 팀에서 AI 를 쓰면 생기는 일 | aidure 에서는 |
 |---|---|
 | 사람마다 프롬프트·규칙이 달라 결과 품질이 제각각이다 | 규칙·스킬·훅을 워크스페이스 repo 에 한 벌 두고 모두가 같은 것을 쓴다 |
 | 세션이 끝나면 AI 가 하던 일을 잊는다 | 작업을 마칠 때 **핸드오프**로 한 일·진행 중·남은 일을 남기고, 다음 세션이 **재개**로 이어 간다 |
@@ -103,7 +103,7 @@ GitLab · GitHub 그룹
 
 ## 설치 (PC 마다 1번)
 
-npm 공개 저장소에서 받는다. macOS 터미널 · Windows PowerShell 모두 같은 명령이다.
+npm 공개 저장소에서 받는다. macOS 터미널 · Windows PowerShell 모두 같은 명령이다. 패키지 이름은 `aidure`, 설치하면 생기는 명령은 `aikit` 이다.
 
 ```bash
 node -v                      # v20.19 이상
@@ -128,7 +128,7 @@ Claude Code(`npm i -g @anthropic-ai/claude-code`) 나 Codex(`npm i -g @openai/co
 
 repo 마다 토큰이 필요하지 않다.
 
-- clone 은 aikit 이 아니라 **git 이 저장해 둔 인증**을 쓴다 (macOS 키체인·Git Credential Manager·SSH 키). **호스트마다 한 번** 인증해 두면 그 호스트의 repo 는 모두 받아진다.
+- clone 은 aidure 가 아니라 **git 이 저장해 둔 인증**을 쓴다 (macOS 키체인·Git Credential Manager·SSH 키). **호스트마다 한 번** 인증해 두면 그 호스트의 repo 는 모두 받아진다.
 - 인증이 없으면 clone 이 멈추지 않고 바로 실패하며 "인증 필요" 를 알린다 → 그 주소로 `git clone` 을 한 번 직접 해서 인증을 저장한 뒤 `aikit install`.
 - MR·PR 을 만드는 스킬 · 파이프라인 조회만 따로 토큰이 필요하다. GitLab 은 `aikit secret set GITLAB_TOKEN`([비밀값](docs/workspace.md#비밀값-토큰)), GitHub 은 `gh auth login`.
 
