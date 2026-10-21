@@ -50,7 +50,7 @@ jobs:
             const words = (process.env.PRIVATE_WORDS || "").split(/\r?\n/).map((w) => w.trim().toLowerCase()).filter(Boolean);
             if (!words.length) { console.error("✖ 저장소 비밀값 PRIVATE_WORDS 가 없습니다"); process.exit(1); }
             const files = cp.execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(Boolean);
-            const hits = files.filter((f) => { try { const t = fs.readFileSync(f, "utf8").toLowerCase(); return words.some((w) => t.includes(w)); } catch { return false; } });
+            const hits = files.filter((f) => { try { const t = fs.readFileSync(f, "utf8").toLowerCase(); return words.some((w) => (/^[\x00-\x7f]+$/.test(w) ? new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(t) : t.includes(w))); } catch { return false; } });
             if (hits.length) { console.error("✖ 금지 낱말이 든 파일 (낱말은 찍지 않음):\n  " + hits.join("\n  ")); process.exit(1); }
             console.log("✔ 금지 낱말 0건 (" + words.length + "개 낱말 · " + files.length + "개 파일)");
           '
