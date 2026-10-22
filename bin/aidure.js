@@ -5,8 +5,8 @@
  *   aidure init [프로젝트명]    선택 화면으로 새 워크스페이스를 만든다 (clone 한 repo 안이면 그 자리에, 아니면 ./<이름> 에)
  *   aidure init-docs [폴더]     기획자 repo 뼈대를 만든다
  *   aidure install              repos/ clone + git 훅 + 생성 + 이 워크스페이스의 메인 에이전트 선택
- *   aidure start [--claude|--codex] [--no-brief] [--no-channel] [--pixel-agents] [-- 에이전트 인자]
- *   aidure start -c | -r [세션 ID]   지난 대화 이어서: -c 마지막 대화 · -r <ID> 그 세션(/exit 때 나온 ID) · -r 목록에서 고르기 (Claude · Codex 같은 옵션)   설정한 에이전트로 작업 시작. 첫 메시지로 브리핑(마지막 핸드오프 · 미완 작업 · TODO · 공지)
+ *   aidure start [--claude|--codex] [--no-brief] [--no-channel] [--pixel-agents] [-- 에이전트 인자]   설정한 에이전트로 작업 시작. 첫 메시지로 브리핑(마지막 핸드오프 · 미완 작업 · TODO · 공지)
+ *   aidure start -c | -r [세션 ID]   지난 대화 이어서: -c 마지막 대화 · -r <ID> 그 세션(/exit 때 나온 ID) · -r 목록에서 고르기 (Claude · Codex 같은 옵션)
  *   aidure agent                연결 방식·내 모델 프로필을 다시 고른다 (시작 도구는 연결 방식으로 정해진다)
  *   aidure ai [show | direct <claude,codex> | plan claude|gpt <요금제> | gateway [--url <주소> --key-env <변수>] | refresh | compose mix|vendor|single | main claude|codex] [--team]
  *                              AI 연결 방식 (서비스 직접 · 게이트웨이) · 쓰는 AI · 역할 구성
@@ -43,7 +43,7 @@
  *   aidure delegate list · status [<id>] · watch [<id>]   다른 도구에 맡긴 작업(위임: Claude Code ↔ Codex 리뷰 등): 목록 · 지금 진행 현황 · 상대 에이전트가 읽고 실행하는 것을 줄마다 보기 (id 를 빼면 마지막 실행 중 작업)
  *   aidure board [--no-open] [--no-fetch]   워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽 (.agents/board/, 이 PC 만 · 보기 전용)
  *   aidure screens check [repo|폴더]   화면설계서 검사: 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락 (screens 팩)
- *   aidure datamodel check [repo|폴더] 데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
+ *   aidure datamodel check [repo|폴더]   데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
  *   aidure secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>   비밀값(토큰): OS 저장소(키체인 · 자격 증명 관리자 · libsecret)에 프로젝트별 · 전역으로. 값은 숨김 입력, 어디에도 출력하지 않는다
  *   aidure gitlab pipeline [--repo R] [--ref 브랜치 | --mr 번호 | --id ID] [--limit N] [--log [줄 수]] [--json]   GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분. MR 은 머지 커밋의 파이프라인도 찾는다
  *   aidure timestamp [on|off|team] [--team]   답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss) 표시 (Claude Code, 기본 켜짐). 이 PC 값이 팀 값보다 먼저, team = 이 PC 값 지우기. 인자 없이 = 지금 값
@@ -60,8 +60,9 @@
  *   aidure team-mode enforce status off|block [--team]   상태 줄 점검 (Claude Code): 팀원(일하는 중 · 대기)이나 리더의 백그라운드 작업이 남은 채 멈추는데 답변에 「지금 도는 것: … · 예상 종료: … · 사용자가 할 일: …」 줄이 없으면 한 번 막는다 (기본)
  *   aidure team-mode enforce idle off|warn|block [--after 분] [--remind 분] [--team]   대기 팀원 점검 (Claude Code agent teams): 일을 마치고 대기로 오래 남은 팀원을 리더에게 알린다. block(기본) 멈출 때 한 번 막기 · warn 요청 시작 때 한 줄 · off. 대기 상한(기본 10분) · 다시 알리는 간격(기본 30분)은 팀 값(--team)
  *   aidure team-mode enforce name off|warn|block · roster off|warn [--team]   훅 강제 수준. name: 팀 모드(Claude Code agent teams)에서 역할 에이전트를 이름 없이 띄우면 막기(기본) · 경고 · 끄기. roster: 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄(기본) · 끄기. 이 PC 값은 팀 값보다 세게만
- *   aidure sync | check | doctor | packs
+ *   aidure sync | check | doctor | packs   생성물 다시 만들기 · 생성물 검사 · 환경 진단 · 팩 목록
  *   aidure upgrade [--add 팩]   이 킷 버전으로 워크스페이스의 bin·팩을 갱신
+ *   aidure help [번호|명령|--all]   명령 도움말: 인자 없이 = 자주 쓰는 명령 · 분류 목록 (터미널이면 분류를 골라 보기) · 번호 = 그 분류의 명령 · --all = 전체
  */
 'use strict';
 
@@ -3012,18 +3013,119 @@ function upgradeSummary(root, from) {
 
 // ───────────────────────── 진입 ─────────────────────────
 
-/** 도움말 머리(이 파일 첫 주석)에서 「aidure <명령>」 줄과 이어지는 설명 줄 */
-function usageOf(cmd) {
+/** 도움말 분류: [제목, 한 줄 설명, 명령(첫 낱말 · 「team-mode enforce」 처럼 두 낱말)]. 도움말 머리의 명령은 모두 어딘가에 들어가야 한다 (npm test) */
+const HELP_GROUPS = [
+  ['시작 · 설치', '워크스페이스 만들기 · 받기 · 작업 시작 · 킷 새 버전', ['init', 'init-docs', 'install', 'start', 'upgrade', 'list', 'remove', 'help']],
+  ['AI · 모델', '연결 방식 · 메인 에이전트 · 모델 프로필', ['agent', 'ai', 'models', 'timestamp']],
+  ['프로젝트 설정', '유형 · 진행 방식 · repo · 스택 · 규칙 · 생성물', ['type', 'approach', 'repo', 'detect', 'rules', 'sync', 'check', 'doctor', 'packs', 'reset']],
+  ['팀', '팀 현황 · 명단 · 팀 구성', ['team', 'team-mode']],
+  ['팀 규칙 점검', '리뷰 확인 · 훅이 알리거나 막는 수준', ['review', 'team-mode enforce']],
+  ['진행 · 기록', '로드맵 · 핸드오프 · 현황판 · 위임 · 옛 작업 가져오기', ['plan', 'handoff', 'board', 'delegate', 'import']],
+  ['문서', '문서 사이트 · ID 찾기 · 화면설계서 · 데이터 설계 검사', ['docs', 'screens', 'datamodel']],
+  ['알림 · 연동', '텔레그램 · 비밀값 · GitLab', ['notify', 'secret', 'gitlab']],
+];
+const HELP_COMMON = [['init', '새 워크스페이스 만들기'], ['install', '받은 워크스페이스 준비 (repos clone · 훅)'], ['start', '작업 시작'], ['upgrade', '킷 새 버전 반영'], ['doctor', '환경 점검']];
+
+/** 도움말 머리(이 파일 첫 주석)의 명령: { use: 「aidure …」 사용법, desc: 설명, words, group: HELP_GROUPS 번호(없으면 -1) } */
+function helpEntries() {
   const lines = read(__filename).split('\n');
   const head = lines.slice(2, lines.indexOf(' */')).map((l) => l.replace(/^ \* ?/, ''));
   const out = [];
-  let on = false;
   for (const l of head) {
-    if (/^\s{0,4}aidure /.test(l)) on = new RegExp(`^\\s*aidure ${cmd.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`).test(l);
-    else if (!/^\s{5,}\S/.test(l)) on = false;
-    if (on) out.push(l);
+    const m = /^\s{0,4}aidure ([a-z].*)$/.exec(l);
+    if (m) {
+      const [use, ...d] = m[1].split(/\s{3,}/);
+      out.push({ use: `aidure ${use.trim()}`, desc: d.join(' ').trim() });
+    } else if (/^\s{5,}\S/.test(l) && out.length) out[out.length - 1].desc = `${out[out.length - 1].desc} ${l.trim()}`.trim();
+  }
+  return out.map((e) => {
+    const words = e.use.split(/\s+/).slice(1);
+    let group = -1, len = 0;
+    HELP_GROUPS.forEach(([, , keys], i) => keys.forEach((k) => {
+      const kw = k.split(' ');
+      if (kw.length > len && kw.every((w, j) => words[j] === w)) { group = i; len = kw.length; }
+    }));
+    return { ...e, words, group };
+  });
+}
+
+/** 터미널 폭에 맞춰 낱말 단위로 줄바꿈 (한글 2칸) */
+function wrapText(text, max, indent) {
+  const lines = [];
+  let cur = '';
+  for (const w of String(text).split(' ')) {
+    if (cur && width(cur) + 1 + width(w) > max) { lines.push(cur); cur = w; } else cur = cur ? `${cur} ${w}` : w;
+  }
+  if (cur) lines.push(cur);
+  return lines.map((l) => indent + l);
+}
+const helpCols = () => Math.max(60, Math.min(process.stdout.columns || 100, 110));
+
+/** 명령 하나: 사용법(청록) 한 줄 이상 + 설명(들여 쓴 줄) */
+function fmtEntry(e) {
+  const { styleText } = require('util');
+  const w = helpCols();
+  return [...wrapText(e.use, w - 2, '  ').map((l) => styleText('cyan', l)), ...(e.desc ? wrapText(e.desc, w - 6, '      ') : [])].join('\n');
+}
+
+/** 「aidure <명령> --help」: 그 명령의 줄만 (「aidure sync | check」 처럼 묶인 줄도) */
+function usageOf(cmd) {
+  const re = new RegExp(`^aidure (?:[a-z-]+ \\| )*${cmd.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`);
+  return helpEntries().filter((e) => re.test(e.use)).map(fmtEntry).join('\n\n');
+}
+
+function helpGroup(i, entries = helpEntries()) {
+  const { styleText } = require('util');
+  const [title, sub] = HELP_GROUPS[i];
+  return `\n${styleText('bold', `${i + 1}. ${title}`)}  ${styleText('gray', sub)}\n\n${entries.filter((e) => e.group === i).map(fmtEntry).join('\n\n')}\n`;
+}
+
+function helpOverview({ menu = false } = {}) {
+  const { styleText } = require('util');
+  const ver = JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
+  const out = [`${styleText('bold', 'aidure')} ${ver}  AI 협업 워크스페이스 명령`, '', styleText('bold', '자주 쓰는 명령')];
+  const c1 = Math.max(...HELP_COMMON.map(([c]) => width(c))) + 10;
+  for (const [c, d] of HELP_COMMON) out.push(`  ${styleText('cyan', padTo(`aidure ${c}`, c1))}${d}`);
+  if (!menu) {
+    out.push('', `${styleText('bold', '분류별 명령')}  ${styleText('gray', 'aidure help <번호>')}`);
+    const c2 = Math.max(...HELP_GROUPS.map(([t]) => width(t))) + 3;
+    HELP_GROUPS.forEach(([t, , keys], i) => {
+      const [first, ...more] = wrapText(keys.join(' · '), helpCols() - c2 - 7, '');
+      out.push(`  ${i + 1}  ${padTo(t, c2)}${styleText('gray', first)}`, ...more.map((l) => `${' '.repeat(c2 + 5)}${styleText('gray', l)}`));
+    });
+    out.push('', styleText('gray', '자세히: aidure help <번호|명령> · aidure <명령> --help · 전체: aidure help --all'));
   }
   return out.join('\n');
+}
+
+/** aidure help [번호|분류|명령|--all]. 인자 없이 터미널이면 분류를 골라 들어가는 화면 */
+async function cmdHelp(rest) {
+  const entries = helpEntries();
+  const arg = rest.find((x) => !x.startsWith('-'));
+  if (rest.includes('--all')) return console.log(HELP_GROUPS.map((_, i) => helpGroup(i, entries)).join(''));
+  if (arg) {
+    const n = /^\d+$/.test(arg) ? Number(arg) - 1 : HELP_GROUPS.findIndex(([t]) => t.replace(/\s/g, '').includes(arg.replace(/\s/g, '')));
+    if (n >= 0 && n < HELP_GROUPS.length) return console.log(helpGroup(n, entries));
+    const u = usageOf(arg);
+    if (u) return console.log(u);
+    console.error(`✖ 모르는 분류 · 명령: ${arg}\n`);
+    console.log(helpOverview());
+    return process.exit(1);
+  }
+  if (!process.stdin.isTTY || !process.stdout.isTTY) return console.log(helpOverview());
+  console.log(helpOverview({ menu: true }));
+  let last;
+  for (;;) {
+    const v = await choose({
+      message: '분류를 고르세요',
+      hint: '명령 하나만: aidure <명령> --help',
+      initialValue: last,
+      options: [...HELP_GROUPS.map(([t, sub], i) => ({ value: i, label: `${i + 1}. ${t}`, hint: sub })), { value: 'all', label: '전체 보기', hint: '모든 분류를 한 번에' }, { value: 'quit', label: '끝내기' }],
+    });
+    if (v === BACK || clack().isCancel(v) || v === 'quit') return;
+    last = v;
+    console.log(v === 'all' ? HELP_GROUPS.map((_, i) => helpGroup(i, entries)).join('') : helpGroup(v, entries));
+  }
 }
 
 /** 상태를 바꾸는 명령: 모르는 옵션이면 실행하지 않는다 (오타 · 다른 명령의 옵션으로 엉뚱하게 돌지 않게) */
@@ -3043,7 +3145,8 @@ async function main() {
   ensureGlobalShim();
   // 모든 하위 명령: --help · -h 면 사용법만 (start 의 「--」 뒤는 에이전트 인자라 보지 않는다)
   const own = rest.includes('--') ? rest.slice(0, rest.indexOf('--')) : rest;
-  if (cmd && !cmd.startsWith('-') && cmd !== 'help' && (own.includes('--help') || own.includes('-h'))) {
+  if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') return cmdHelp(rest);
+  if (!cmd.startsWith('-') && (own.includes('--help') || own.includes('-h'))) {
     const u = usageOf(cmd);
     console.log(u || `aidure ${cmd}: 따로 적힌 사용법이 없습니다. 전체 명령: aidure help`);
     process.exit(0);
@@ -3159,8 +3262,9 @@ async function main() {
     case '--version': case '-v':
       return console.log(JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version);
     default:
-      console.log(read(__filename).split('\n').slice(2, read(__filename).split('\n').indexOf(' */')).map((l) => l.replace(/^ \* ?/, '')).join('\n'));
-      process.exit(cmd && cmd !== 'help' && cmd !== '--help' ? 1 : 0);
+      console.error(`✖ 모르는 명령: ${cmd}\n`);
+      console.log(helpOverview());
+      process.exit(1);
   }
 }
 

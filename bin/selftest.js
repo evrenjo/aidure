@@ -1337,6 +1337,15 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const cmds = [...new Set(help.flatMap((l) => [...l.matchAll(/aidure ([a-z][a-z-]*)(?: ([a-z][a-z-]+))?/g)].map((m) => (m[2] && !['init', 'check'].includes(m[1]) ? `aidure ${m[1]} ${m[2]}` : `aidure ${m[1]}`))))];
   const missing = cmds.filter((c) => !skill.includes(`\`${c}`) && !skill.includes(`${c}\``) && !skill.includes(`${c} `));
   record('채팅에서도 모든 기능 (aidure 도움말 ↔ aidure 스킬)', missing.length === 0, missing.length ? `스킬에 없음: ${missing.join(' · ')}` : `명령 ${cmds.length}개`);
+  // aidure --help 는 분류 요약만, aidure help <번호> 가 그 분류의 명령: 도움말 머리의 명령은 모두 분류에 들어가야 한다
+  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { encoding: 'utf8', input: '' });
+  const all = cli('help', '--all').stdout;
+  const head = fs.readFileSync(path.join(KIT, 'bin', 'aidure.js'), 'utf8').split('\n');
+  const loose = head.slice(0, head.indexOf(' */')).filter((l) => /^ \*   aidure /.test(l)).map((l) => l.replace(/^ \*   /, '').split(/\s{3,}/)[0].trim()).filter((u) => !all.includes(u.slice(0, 40)));
+  const short = cli('--help');
+  const unknown = cli('no-such-command');
+  const ok = !loose.length && short.status === 0 && /분류별 명령/.test(short.stdout) && short.stdout.split('\n').length < 30 && /aidure docs show/.test(cli('help', '7').stdout) && /aidure start -c/.test(cli('start', '--help').stdout) && unknown.status === 1 && /모르는 명령/.test(unknown.stderr);
+  record('도움말 분류 (aidure --help · help <번호> · <명령> --help)', ok, loose.length ? `분류에 없음: ${loose.join(' · ')}` : `요약 ${short.stdout.split('\n').length}줄 · 모르는 명령 exit ${unknown.status}`);
 }
 
 // 진행 방식 — 신규는 스프린트(반복 단계 · AGENTS.md 안내), 분석·설계는 전체. 바꾸면 기본 단계 그대로인 로드맵만 새 뼈대로, 없으면(옛 워크스페이스) 안내 없이 전체처럼

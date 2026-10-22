@@ -332,6 +332,7 @@ flowchart TD
     Q -->|"repo 를 그룹 폴더로"| RMV["aidure repo move &lt;이름&gt; --group &lt;그룹&gt; · --no-group (관리자)<br/>폴더 옮김 · workspace.json group · 문서의 옛 경로 → sync"]
     Q -->|"새로 만든 repo 를 원격에 올림"| RP["git -C repos/&lt;이름&gt; remote add origin &lt;주소&gt; → push"]
     RP --> RF["sync 가 workspace.json 에 remote 기록 (local 삭제)<br/>→ workspace.json commit · push → 팀원 git pull · aidure install"]
+    Q -->|"명령 찾기"| HLP["aidure --help: 자주 쓰는 명령 · 분류 목록<br/>분류를 고르세요 (터미널) → 그 분류의 명령과 설명<br/>aidure help &lt;번호&gt; · aidure help --all · aidure &lt;명령&gt; --help"]
     Q -->|"킷 새 버전 반영"| UP["aidure upgrade [--add 팩]<br/>bin·팩 교체 → sync → commit · push<br/>몇 버전 뒤져도 한 번에 · 꺼진 기본 팩 · 진행 방식은 알림만"]
     Q -->|"워크스페이스 지우기"| RM["aidure remove [이름] [--force]"]
     RM --> RW{"여기가 워크스페이스 루트인가 (이름을 줬으면 목록에서 찾음)"}
@@ -346,6 +347,7 @@ flowchart TD
 | 명령 | 하는 일 |
 |---|---|
 | `aidure list` | 이 PC 에서 만들거나 쓴 워크스페이스 목록 |
+| `aidure help [번호\|명령\|--all]` | 명령 도움말: 분류별로 보기 (`aidure --help` 는 자주 쓰는 명령 · 분류 목록만) |
 | `aidure sync` | 정본(`packs/`·`workspace.json`)으로 생성물을 다시 만든다 |
 | `aidure check` | 생성물이 정본과 같은지 (pre-commit 이 부른다) |
 | `aidure doctor` | 설치·설정 진단 |

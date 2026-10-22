@@ -2,7 +2,7 @@
 
 아래 명령은 모두 `aidure start` 로 띄운 AI 채팅에서 말로도 된다 ("스프린트로 바꿔줘" · "FN-001 어디서 써?" · "리뷰는 GPT 로"). core 의 `aidure` 스킬이 말을 명령으로 바꿔 실행하고, 팀 범위 설정은 실행 전에 무엇이 바뀌는지 보여 주고 확인받는다. 채팅 안에서 하지 않는 것은 `aidure start`(에이전트 안에서 또 띄움) · `aidure init` · `aidure remove`(선택 화면 · 삭제) · `aidure notify setup`(터미널 화면) 뿐이고, 그때는 AI 가 명령을 알려 준다.
 
-명령마다 `--help` · `-h` 를 붙이면 그 명령의 사용법만 보이고 실행하지 않는다 (`aidure upgrade --help`). `upgrade` · `reset` · `install` 은 모르는 옵션이 있으면 실행하지 않는다.
+`aidure --help` 는 자주 쓰는 명령과 분류 8개(시작 · 설치 · AI · 모델 · 프로젝트 설정 · 팀 · 팀 규칙 점검 · 진행 · 기록 · 문서 · 알림 · 연동)만 보인다. 터미널에서는 분류를 골라 그 명령들을 보고, `aidure help <번호>` 는 그 분류만, `aidure help --all` 은 전체다. 명령마다 `--help` · `-h` 를 붙이면 그 명령의 사용법만 보이고 실행하지 않는다 (`aidure upgrade --help`). `upgrade` · `reset` · `install` 은 모르는 옵션이 있으면 실행하지 않는다.
 
 | 명령 | 언제 | 하는 일 |
 |---|---|---|
@@ -58,6 +58,7 @@
 | `aidure detect` | repo 스택이 바뀌었을 때 | 코드 repo 의 기술 스택을 다시 감지하고 고친다 → repo 별 규칙이 바뀐다 |
 | `aidure detect --hint <스택> --contains <정규식>` | 사내 라이브러리를 거쳐 쓰는 프레임워크가 감지되지 않을 때 | 감지 힌트를 `workspace.json` 의 `stackHints` 에 더하고 다시 감지한다 |
 | `aidure list` | 워크스페이스를 찾을 때 | 이 PC 의 워크스페이스 이름·킷 버전·경로. init 으로 만들거나 그 폴더에서 `aidure` 명령을 한 번 쓰면 오른다 (`~/.aidure/workspaces.json`, 지운 폴더는 자동으로 빠진다) |
+| `aidure help [번호\|명령\|--all]` | 명령을 찾을 때 | 인자 없이 = 자주 쓰는 명령과 분류 목록 (터미널이면 분류를 골라 보기). 번호 = 그 분류의 명령, 명령 이름 = 그 명령의 사용법, `--all` = 전체 |
 | `aidure remove [이름] [--force]` | 다시 만들 때 | 이름을 주면 `aidure list` 에서 찾아 어디서든, 없으면 지금 폴더의 워크스페이스를 비운다 (`repos/` 포함, `.git`·README·LICENSE 는 남기고 `.gitignore` 는 킷이 넣은 줄만 걷어 내 그 자리에서 다시 init 할 수 있다). 커밋·push 안 한 작업이 있으면 멈추고, 예/아니오 확인 뒤 실행된다. 워크스페이스가 아닌 곳에서 이름 없이 실행하면 안내만 한다. |
 | `aidure init-docs [폴더]` | 기획 repo 가 없을 때 | 기획자 repo 뼈대 생성 (요구사항·화면·정책·용어집·결정 기록·데이터 설계·md 사본)  기획 repo 를 두지 않는 프로젝트는 `workspace.json` 에 `"docsRepo": false` 를 넣으면 sync 의 "기획 repo 가 없습니다" 경고가 꺼진다 (운영·고도화 유형은 처음부터 경고하지 않는다) |
 | `aidure sync` · `check` · `doctor` · `packs` | 필요할 때 | 생성 · 생성물 검사 · 환경 진단 · 팩 목록 |

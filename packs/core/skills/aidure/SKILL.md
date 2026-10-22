@@ -58,6 +58,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 명령에 토큰 넣어 실행 | `aidure secret exec [--only A,B] -- <명령>` (그 명령에만 환경변수로. 값은 출력하지 않는다) | 이 PC |
 | 생성물 다시 맞추기 · 검사 | `aidure sync` (정본 → AGENTS.md · 스킬 · 훅) · `aidure check` (생성물이 정본과 같은지 · 예산) | 이 PC |
 | 이 PC 의 워크스페이스 목록 | `aidure list` | 보기 |
+| 명령 도움말 (분류별 · 명령 하나) | `aidure help [번호\|명령]` · `aidure <명령> --help` | 보기 |
 | 알림 설정 화면 (사용자가 직접) | `aidure notify setup`: 터미널 화면이라 AI 가 대신 못 한다. 사용자에게 명령을 알려 주고, AI 가 바꿀 때는 아래 명령 | 이 PC |
 | 이 PC 설정 초기화 | `aidure reset <local,channel,state,guide,secrets> --yes` (팀 설정 · repos 는 그대로). 지우기 전에 사용자에게 무엇을 지울지 확인한다 | 이 PC |
 | 텔레그램 개인 봇 | 연결은 **AI 가 하지 않는다**: 사용자에게 별도 터미널에서 `aidure notify my setup` (토큰은 숨김 입력, 봇 바꾸기는 `--new`) 을 실행하라고 알린다. 사용자가 토큰을 대화에 붙여 넣으면 쓰지 말고 다시 발급하라고 알린다. AI 가 하는 것: 제거 `aidure notify my remove` · 상태 `aidure notify` · `aidure notify my test` | 이 PC |
