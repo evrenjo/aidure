@@ -25,7 +25,8 @@
           "https://code.claude.com/docs/en/model-config",
           "https://platform.claude.com/docs/en/about-claude/pricing",
           "https://www.anthropic.com/claude-fable-and-mythos-5-1",
-          "https://livebench.ai/table_2026_06_25.csv"
+          "https://livebench.ai/table_2026_06_25.csv",
+          "https://platform.claude.com/docs/en/build-with-claude/context-windows"
         ],
         "released": "2026-09-01",
         "bench": [
@@ -62,6 +63,9 @@
             "언어": 89.5,
             "지시 따르기": 73
           }
+        ],
+        "window1m": [
+          "claude-fable-5-1"
         ]
       },
       {
@@ -73,7 +77,8 @@
           "https://code.claude.com/docs/en/model-config",
           "https://platform.claude.com/docs/en/about-claude/pricing",
           "https://www.anthropic.com/claude-opus-5-5",
-          "https://livebench.ai/table_2026_06_25.csv"
+          "https://livebench.ai/table_2026_06_25.csv",
+          "https://platform.claude.com/docs/en/build-with-claude/context-windows"
         ],
         "released": "2026-09-22",
         "bench": [
@@ -133,6 +138,9 @@
             "언어": 85.5,
             "지시 따르기": 67
           }
+        ],
+        "window1m": [
+          "claude-opus-5-5"
         ]
       },
       {
@@ -156,7 +164,8 @@
           "https://code.claude.com/docs/en/model-config",
           "https://platform.claude.com/docs/en/about-claude/pricing",
           "https://www.anthropic.com/claude-sonnet-5-5",
-          "https://livebench.ai/table_2026_06_25.csv"
+          "https://livebench.ai/table_2026_06_25.csv",
+          "https://platform.claude.com/docs/en/build-with-claude/context-windows"
         ],
         "released": "2026-09-28",
         "bench": [
@@ -210,6 +219,9 @@
             "언어": 83.4,
             "지시 따르기": 70.5
           }
+        ],
+        "window1m": [
+          "claude-sonnet-5-5"
         ]
       },
       {
@@ -220,7 +232,8 @@
         "sources": [
           "https://code.claude.com/docs/en/model-config",
           "https://platform.claude.com/docs/en/about-claude/pricing",
-          "https://www.anthropic.com/news/claude-haiku-4-5"
+          "https://www.anthropic.com/news/claude-haiku-4-5",
+          "https://platform.claude.com/docs/en/build-with-claude/context-windows"
         ],
         "released": "2025-10-15",
         "bench": [
@@ -230,6 +243,9 @@
             "setting": "50회 평균, 128K thinking",
             "source": "https://www.anthropic.com/news/claude-haiku-4-5"
           }
+        ],
+        "window1m": [
+          "claude-haiku-5-5"
         ]
       }
     ],

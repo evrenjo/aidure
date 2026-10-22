@@ -278,4 +278,6 @@ async function main() {
   return cmdCreate(ws, a);
 }
 
-main().catch((e) => die(e.message));
+if (require.main === module) main().catch((e) => die(e.message));
+
+module.exports = { loadWs, parseArgs, die, token, api, apiBase, repoOf, repoOrOnly };

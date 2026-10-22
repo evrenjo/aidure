@@ -76,7 +76,7 @@
 
 **팀 에이전트 역할**: 분석 (`analyst`) · 설계 (`architect`) · 문서화 (`documenter`) · 구현 (`implementer`) · 리뷰 (`reviewer`) · 설계 문서 (`spec-writer`) · 테스트 (`tester`)
 
-**도구**: `bin/board.js` · `bin/brief.js` · `bin/budget.js` · `bin/check-docs.js` · `bin/check-refs.js` · `bin/cross-review.js` · `bin/delegate.js` · `bin/docs-site.js` · `bin/doctor.js` · `bin/handoff.js` · `bin/import-scan.js` · `bin/notify.js` · `bin/plan.js` · `bin/rename-ref.js` · `bin/repo-activity.js` · `bin/review.js` · `bin/secret.js` · `bin/strip-ai-trailers.js` · `bin/team-status.js`
+**도구**: `bin/board.js` · `bin/brief.js` · `bin/budget.js` · `bin/check-docs.js` · `bin/check-refs.js` · `bin/cross-review.js` · `bin/delegate.js` · `bin/docs-site.js` · `bin/doctor.js` · `bin/handoff.js` · `bin/import-scan.js` · `bin/issue-check.js` · `bin/notify.js` · `bin/plan.js` · `bin/rename-ref.js` · `bin/repo-activity.js` · `bin/review.js` · `bin/secret.js` · `bin/strip-ai-trailers.js` · `bin/team-status.js`
 
 **훅**: 세션 시작: `check-repo-updates.js` · 세션 시작: `check-context-sync.js` · 세션 시작: `handoff-brief.js` · 세션 시작: `session-brief.js` · 세션 시작: `model-profile.js` · 세션 시작: `team-mode.js` · 세션 시작: `channel-mode.js` · 세션 끝: `task-check.js` · 세션 끝: `decision-ask.js` · 세션 끝: `handoff-reminder.js` · 세션 끝: `agent-cleanup.js` · 세션 끝: `budget-check.js` · 세션 끝: `team-idle.js` · 세션 끝: `notify.js` · UserPromptSubmit: `agent-budget.js` · UserPromptSubmit: `task-focus.js` · UserPromptSubmit: `prompt-time.js` · UserPromptSubmit: `budget-check.js` · UserPromptSubmit: `team-idle.js` · UserPromptSubmit: `decision-ask.js` · UserPromptSubmit: `plan-first.js` · UserPromptSubmit: `notify.js` · PreToolUse: `agent-budget.js` · PreToolUse: `notify.js` · PreToolUse: `decision-ask.js` · PreToolUse: `notify.js` · PreToolUse: `plan-first.js` · PreToolUse: `team-guard.js` · PreToolUse: `review-gate.js` · PostToolUse: `channel-progress.js` · PostToolUse: `notify.js` · PostToolUse: `notify.js` · Notification: `team-idle.js` · Notification: `notify.js` · SubagentStop: `agent-budget.js` · SubagentStop: `notify.js` · TeammateIdle: `team-idle.js` · TeammateIdle: `notify.js`
 
@@ -158,9 +158,9 @@
 ## 협업 도구 팩
 
 <details>
-<summary><b>github</b> · GitHub 팀 워크플로: 브랜치 전략 · PR 생성 · 커밋 규칙</summary>
+<summary><b>github</b> · GitHub 팀 워크플로: 브랜치 전략 · PR 생성 · 이슈 등록 · 커밋 규칙</summary>
 
-GitHub 협업: 브랜치 전략(작업 브랜치 → PR, 머지는 사람만), 커밋 메시지, 이슈·PR 어조, gh CLI 로 PR 을 만드는 스킬
+GitHub 협업: 브랜치 전략(작업 브랜치 → PR, 머지는 사람만), 커밋 메시지, 이슈·PR 어조, gh CLI 로 PR 을 만드는 스킬, 이슈 찾기 · 읽기 · 등록 · 조치 보고 댓글 스킬
 
 | 항목 | 내용 |
 |---|---|
@@ -180,20 +180,21 @@ GitHub 협업: 브랜치 전략(작업 브랜치 → PR, 머지는 사람만), �
 
 | 이름 | 설명 |
 |---|---|
+| `github-issue` | GitHub 이슈를 찾고 · 읽고 · 등록하고 · 조치 보고를 댓글로 단다. 초안 → 비슷한 이슈 · 민감정보 검사 → 사용자 OK → gh issue create / comment. 닫기 · 라벨 · 담당자는 하지 않는다. "이슈 등록해줘", "#12 이슈 봐줘", "조치 내용 이슈에 남겨줘" 요청에 쓴다. |
 | `pr` | 지정한 head→base 로 GitHub 풀리퀘스트를 만든다 (base 생략 시 통합 브랜치). 미리보기 → 사용자 OK → gh pr create → 팀 배포 안내까지. 머지는 하지 않는다. "PR 만들어줘", "QA PR" 요청에 쓴다. |
 
 </details>
 
 <details>
-<summary><b>gitlab</b> · GitLab 팀 워크플로: 브랜치 전략 · MR 생성 · 파이프라인 조회 · 커밋 규칙</summary>
+<summary><b>gitlab</b> · GitLab 팀 워크플로: 브랜치 전략 · MR 생성 · 이슈 등록 · 파이프라인 조회 · 커밋 규칙</summary>
 
-GitLab 협업: 브랜치 전략(작업 브랜치 → MR, 머지는 사람만), 커밋 메시지, 이슈·MR 어조, MR 생성 스킬, 파이프라인 조회(aidure gitlab pipeline)
+GitLab 협업: 브랜치 전략(작업 브랜치 → MR, 머지는 사람만), 커밋 메시지, 이슈·MR 어조, MR 생성 스킬, 이슈 찾기 · 읽기 · 등록 · 조치 보고 댓글 스킬, 파이프라인 조회(aidure gitlab pipeline)
 
 | 항목 | 내용 |
 |---|---|
 | 붙는 조건 | repo 주소가 GitLab 인 repo 에 |
 | 함께 붙는 팩 | `core` |
-| 비밀값 | `GITLAB_TOKEN` (프로젝트): MR 생성 · 파이프라인 조회 · 권한 api |
+| 비밀값 | `GITLAB_TOKEN` (프로젝트): MR 생성 · 이슈 등록 · 파이프라인 조회 · 권한 api |
 
 **규칙**
 
@@ -208,9 +209,10 @@ GitLab 협업: 브랜치 전략(작업 브랜치 → MR, 머지는 사람만), �
 
 | 이름 | 설명 |
 |---|---|
+| `gitlab-issue` | GitLab 이슈를 찾고 · 읽고 · 등록하고 · 조치 보고를 댓글로 단다. 초안 → 비슷한 이슈 · 민감정보 검사 → 사용자 OK → 등록 · 댓글. 닫기 · 라벨 · 담당자는 하지 않는다. "이슈 등록해줘", "#12 이슈 봐줘", "조치 내용 이슈에 남겨줘" 요청에 쓴다. |
 | `mr` | 지정한 source→target 으로 GitLab 머지리퀘스트를 만든다 (target 생략 시 통합 브랜치). 미리보기 → 사용자 OK → 생성 → 팀 배포 안내까지. 머지는 하지 않는다. "MR 만들어줘", "QA MR" 요청에 쓴다. |
 
-**도구**: `bin/gitlab-mr.js`
+**도구**: `bin/gitlab-issue.js` · `bin/gitlab-mr.js`
 
 </details>
 

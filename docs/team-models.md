@@ -147,10 +147,18 @@
 | 메인 모델 전달 | `aidure start` 가 `--model`·`--effort`(Claude), `-m`·`-c model_reasoning_effort`(Codex)로 넘긴다. 전역 설정보다 우선 |
 | 역할 에이전트 파일 | 사람마다 모델이 다를 수 있어 git 에 올리지 않고 각자 sync 가 만든다 |
 | Fable 과금 | Claude Pro·표준 좌석은 첫 요청부터 사용량 크레딧, Max·프리미엄 좌석은 주간 한도 50% 까지 포함 |
-| AI 게이트웨이 | 위 "AI 연결 방식". Claude 별칭(`opus` 등)이 게이트웨이 모델로 이어져 있으면(`ANTHROPIC_DEFAULT_*_MODEL`) 별칭을 그대로, 아니면 게이트웨이 모델 ID 로 바꿔 쓴다 |
+| AI 게이트웨이 | 위 "AI 연결 방식". 별칭(`opus` 등)이 게이트웨이 모델로 이어져 있으면(`ANTHROPIC_DEFAULT_*_MODEL`) 별칭 그대로, 아니면 게이트웨이 모델 ID 로 바꿔 쓴다. 아래 「게이트웨이 모델 이름」 |
 | 팀원 승인 질문 | 팀 모드 팀원 창에 권한 승인이 뜨면 팀원은 멈추고 리더 화면에는 보이지 않는다. 훅이 승인 대기를 적어 리더의 다음 요청 · 턴 끝에 알리고(텔레그램을 켰으면 바로 「🔐 팀원 … 승인 대기」), 사용자가 그 창에서 승인하면 풀린다 |
 | 미리 허용한 조회 명령 | 승인 없이 쓰는 읽기 전용 명령: `git log · show · diff · status · blame · grep · ls-files · rev-parse`, `ls · cat · head · tail · wc · grep · rg · tree · pwd`, `aidure docs show · refs · trace` (`.claude/settings.json` 의 `permissions.allow`, sync 가 만든다). 더 넣을 것은 팀이면 `workspace.json` 의 `claude.settings.permissions.allow`, 나만이면 `.claude/settings.local.json` |
 | Codex 역할 모델 | Codex(0.158)는 역할 파일(`.codex/agents`)을 하위 에이전트에 적용하지 않는다. 개인 지침(`AGENTS.override.md`)의 역할 모델 표대로 리더가 `spawn_agent` 에 모델 · 추론 강도를 넣는다 |
+
+### 게이트웨이 모델 이름
+
+| 항목 | 내용 |
+|---|---|
+| 이름 모양 | 게이트웨이마다 다른 모양을 같은 모델로 알아본다: `claude/claude-opus-5-5` · `anthropic/Claude-Opus-5.5` · `us.anthropic.claude-opus-5-5-v1:0` · `claude-opus-5-5@날짜` · `opus-5-5` |
+| 1M 창 | 1M 창 모델이면 이름 끝에 `[1m]` 을 붙여 넘긴다. Claude Code 는 모르는 이름을 200k 로 보고 일찍 압축하기 때문이다 (보낼 때는 뗀다) |
+| 별칭 연결 | `ANTHROPIC_DEFAULT_*_MODEL` 값 끝에 `[1m]` 이 있어야 한다. 빠지면 `aidure doctor` 가 알린다 |
 
 ## 모델 버전 관리
 

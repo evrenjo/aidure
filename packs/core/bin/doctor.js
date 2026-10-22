@@ -87,6 +87,15 @@ try {
     try { found = !!require('../lib/cli.js').findCli(cli); } catch { /* 옛 워크스페이스 */ }
     add(found ? OK : FAIL, `시작 도구 (${cli})`, found ? '설치됨' : '설치 안 됨', cli === 'claude' ? 'npm i -g @anthropic-ai/claude-code' : 'npm i -g @openai/codex');
     if (a.connection === 'gateway' && !((a.gateway && a.gateway.models) || []).length) add(WARN, '게이트웨이 모델 목록', '비어 있음 (조회 실패)', 'aidure ai refresh');
+    // 게이트웨이 별칭(ANTHROPIC_DEFAULT_*_MODEL)이 1M 모델인데 [1m] 이 없으면 Claude Code 가 200k 로 보고 일찍 압축한다
+    if (a.connection === 'gateway' && kitLib.window1m) {
+      let env = {};
+      try { env = JSON.parse(fs.readFileSync(path.join(require('os').homedir(), '.claude', 'settings.json'), 'utf8')).env || {}; } catch { /* 없음 */ }
+      const short = ['OPUS', 'SONNET', 'HAIKU', 'FABLE'].map((f) => `ANTHROPIC_DEFAULT_${f}_MODEL`)
+        .filter((k) => { const v = process.env[k] || env[k]; return v && !/\[1m\]$/i.test(v) && kitLib.window1m(v); });
+      add(short.length ? WARN : OK, '컨텍스트 창 (게이트웨이)', short.length ? `${short.join(' · ')} 에 [1m] 이 없어 Claude Code 가 200k 로 봅니다` : '1M 모델에 [1m] 을 붙여 넘김',
+        short.length ? `그 값 끝에 [1m] 을 붙인다 (예: ${short[0]}='<게이트웨이 모델>[1m]'). 셸 설정 또는 ~/.claude/settings.json 의 env` : undefined);
+    }
     for (const w of m.runWarnings) add(WARN, '역할 모델', w, 'aidure ai refresh 또는 aidure models');
   }
 } catch (e) { add(WARN, 'AI 연결 방식', `확인 실패: ${e.message}`); }

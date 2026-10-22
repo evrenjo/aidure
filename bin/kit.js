@@ -1078,8 +1078,8 @@ const CLAUDE_FAMILIES = ['opus', 'sonnet', 'haiku', 'fable'];
 function gatewayVendors(models) {
   const list = (models || []).map((m) => String(m).split('/').pop().toLowerCase());
   const out = [];
-  if (list.some((m) => m.startsWith('claude'))) out.push('claude');
-  if (list.some((m) => /^(gpt|o\d|codex)/.test(m))) out.push('codex');
+  if ((models || []).some((m) => claudeKey(m))) out.push('claude');
+  if (list.some((m) => /^(openai\.)?(gpt|o\d|codex)/.test(m))) out.push('codex');
   return out.length ? out : ['claude', 'codex'];
 }
 
@@ -1097,19 +1097,47 @@ function normalizeAccess(a = {}) {
 /** 이 PC 의 시작 도구 — 게이트웨이면 Claude Code(두 회사 모델을 안정적으로 섞는다), 직접이면 Claude 가 있으면 Claude Code, GPT 만이면 Codex */
 const startToolOf = (access) => (access.connection === 'gateway' || access.vendors.includes('claude') ? 'claude' : 'codex');
 
+/**
+ * 게이트웨이 · 클라우드마다 다른 Claude 모델 이름 → 표준 ID (claude-opus-5-5). Claude 모델이 아니면 null
+ * 예: claude/claude-opus-5-5 · anthropic/Claude-Opus-5.5 · us.anthropic.claude-opus-5-5-v1:0 · claude-opus-5-5@20260922 · claude-opus-5-5-20260922 · opus-5-5 · claude-3-5-sonnet
+ */
+function claudeKey(name) {
+  let s = String(name || '').toLowerCase().replace(/\[1m\]$/, '').split('/').pop();
+  s = s.replace(/^([a-z]{2,6}\.)?anthropic\./, '').replace(/[@:].*$/, '').replace(/-v\d+$/, '').replace(/[._ ]/g, '-').replace(/-\d{8}$/, '');
+  if (/^(opus|sonnet|haiku|fable)-\d/.test(s)) s = `claude-${s}`;
+  const old = /^claude-(\d+(?:-\d+)?)-(opus|sonnet|haiku|fable)$/.exec(s); // 옛 이름 순서 claude-3-5-sonnet
+  if (old) s = `claude-${old[2]}-${old[1]}`;
+  return /^claude-(opus|sonnet|haiku|fable)-\d+(-\d+)?$/.test(s) ? s : null;
+}
+
+/** 1M 창 모델 ID (models.json tools.claude[].window1m). Claude Code 는 모르는 ID(게이트웨이 이름)를 200k 로 보므로 [1m] 을 붙여 알린다 */
+let ONE_M = null;
+function window1m(name) {
+  if (!ONE_M) {
+    try { ONE_M = (JSON.parse(read(path.join(__dirname, '..', 'packs', 'core', 'models.json'))).tools.claude || []).flatMap((m) => m.window1m || []); } catch { ONE_M = []; }
+  }
+  const key = claudeKey(name);
+  return !!key && ONE_M.includes(key);
+}
+
+/** Claude Code 에 넘길 게이트웨이 이름: 1M 모델이면 [1m] (Claude Code 가 보낼 때 뗀다) */
+const claudeWindow = (name) => (name && !/\[1m\]$/i.test(name) && window1m(name) ? `${name}[1m]` : name);
+
 /** 킷 모델 ID → 게이트웨이 모델 ID. 목록에 없으면 null (호출한 쪽이 알린다) */
 function gatewayId(gw, tool, id) {
   if (!gw || !id || ['inherit', 'default', 'best'].includes(id)) return id;
+  const fix = (name) => (tool === 'claude' ? claudeWindow(name) : name);
+  const bare = String(id).replace(/\[1m\]$/i, '');
   const models = gw.models || [];
-  if (!models.length || models.includes(id)) return id;
-  const tail = models.find((m) => m.split('/').pop() === id);
-  if (tail) return tail;
-  const fam = tool === 'claude' && (id === 'opusplan' ? 'opus' : CLAUDE_FAMILIES.find((f) => f === id));
+  if (!models.length || models.includes(bare)) return fix(id);
+  const tail = models.find((m) => m.split('/').pop() === bare);
+  if (tail) return fix(tail);
+  const fam = tool === 'claude' && (bare === 'opusplan' ? 'opus' : CLAUDE_FAMILIES.find((f) => f === bare));
   if (fam) {
-    if (gw.aliases) return id; // Claude Code 가 ANTHROPIC_DEFAULT_*_MODEL 로 별칭을 게이트웨이 모델로 잇는다 (opusplan 도)
-    const ver = (m) => (m.match(/\d+/g) || []).map((n) => n.padStart(8, '0')).join('.');
-    const hit = models.filter((m) => m.split('/').pop().startsWith(`claude-${fam}`)).sort((x, y) => (ver(y) > ver(x) ? 1 : -1))[0];
-    return hit || null;
+    if (gw.aliases) return id; // Claude Code 가 ANTHROPIC_DEFAULT_*_MODEL 로 별칭을 게이트웨이 모델로 잇는다 (opusplan 도). [1m] 은 그 값에 (doctor 가 본다)
+    const ver = (m) => (claudeKey(m).match(/\d+/g) || []).map((n) => n.padStart(8, '0')).join('.');
+    const hit = models.filter((m) => (claudeKey(m) || '').startsWith(`claude-${fam}-`)).sort((x, y) => (ver(y) > ver(x) ? 1 : -1))[0];
+    return hit ? fix(hit) : null;
   }
   return null;
 }
@@ -2177,4 +2205,4 @@ function main() {
 
 main();
 
-module.exports = { SECRET_PATTERNS, secretHits, repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };
+module.exports = { claudeKey, window1m, claudeWindow, SECRET_PATTERNS, secretHits, repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };

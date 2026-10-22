@@ -74,7 +74,7 @@ assert.strictEqual(keep(cli(['set', 'GITLAB_TOKEN', SECRET])).status, 1, '값을
 assert.strictEqual(keep(cli(['set', 'GITLAB_TOKEN', '--no-test'], `${SECRET}\n`)).status, 0);
 assert.strictEqual(S.get('GITLAB_TOKEN', { project: 'alpha' }).value, SECRET, '표준 입력으로 넣는다');
 const listed = keep(cli(['list'])).stdout;
-assert.match(listed, /GITLAB_TOKEN {2}\(gitlab 팩: MR 생성 · 파이프라인 조회 · 권한 api\)\n {2}지금 읽는 곳: 프로젝트\(alpha\) 파일/);
+assert.match(listed, /GITLAB_TOKEN {2}\(gitlab 팩: MR 생성 · 이슈 등록 · 파이프라인 조회 · 권한 api\)\n {2}지금 읽는 곳: 프로젝트\(alpha\) 파일/);
 const ex = keep(cli(['exec', '--only', 'GITLAB_TOKEN', '--', process.execPath, '-e', 'process.exit(process.env.GITLAB_TOKEN === process.argv[1] ? 0 : 3)', SECRET]));
 assert.strictEqual(ex.status, 0, 'exec 는 그 명령에만 넣는다');
 assert.match(ex.stderr, /GITLAB_TOKEN ← 프로젝트\(alpha\) 파일/);

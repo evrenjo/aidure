@@ -731,10 +731,16 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const single = Object.values(apply({ compose: 'single' }).roles).every((m) => !m.claude && !m.codex);
   const gw = { models: ['claude/claude-opus-5-5', 'claude/claude-sonnet-5-5', 'claude/claude-haiku-4-5', 'codex/gpt-6.1-sol', 'codex/gpt-6-luna'], aliases: false };
   const g = apply({ connection: 'gateway', gateway: gw });
-  const native = g.roles.reviewer.claude === 'codex/gpt-6.1-sol' && g.roles.analyst.claude === 'claude/claude-opus-5-5' && g.roles.implementer.codex === 'claude:claude/claude-opus-5-5' && g.main.codex === 'codex/gpt-6.1-sol';
+  const native = g.roles.reviewer.claude === 'codex/gpt-6.1-sol' && g.roles.analyst.claude === 'claude/claude-opus-5-5[1m]' && g.roles.implementer.codex === 'claude:claude/claude-opus-5-5[1m]' && g.main.codex === 'codex/gpt-6.1-sol';
+  // 1M 모델의 게이트웨이 이름에는 [1m] (Claude Code 가 모르는 이름을 200k 로 본다). 옛 200k 모델 · GPT · 별칭 연결은 그대로
+  const win = kitLib.gatewayId(gw, 'claude', 'haiku') === 'claude/claude-haiku-4-5' && kitLib.gatewayId(gw, 'claude', 'claude/claude-opus-5-5[1m]') === 'claude/claude-opus-5-5[1m]'
+    && kitLib.gatewayId(gw, 'codex', 'gpt-6.1-sol') === 'codex/gpt-6.1-sol' && kitLib.gatewayId({ ...gw, aliases: true }, 'claude', 'opus') === 'opus'
+    // 게이트웨이마다 다른 이름 모양 (클라우드 접두사 · 버전 표기 · 날짜 · 대소문자)
+    && ['anthropic/Claude-Opus-5.5', 'us.anthropic.claude-opus-5-5-v1:0', 'claude-opus-5-5@20260922', 'opus-5-5'].every((n) => kitLib.gatewayId({ models: [n, 'x/claude-opus-4-1'] }, 'claude', 'opus') === `${n}[1m]`)
+    && kitLib.gatewayVendors(['us.anthropic.claude-sonnet-5-5-v1:0', 'openai.gpt-6-luna']).join() === 'claude,codex';
   const gv = apply({ connection: 'gateway', gateway: gw, main: 'codex', compose: 'vendor' });
   const gptMain = gv.main.claude === 'codex/gpt-6.1-sol' && Object.values(gv.roles).every((m) => /^codex\/gpt/.test(m.claude));
-  got.push(`Claude 만 ${claudeOnly}`, `GPT 만 ${gptOnly}`, `단일 모델 ${single}`, `게이트웨이 하위 에이전트 ${native}`, `게이트웨이 GPT 메인 ${gptMain}`);
+  got.push(`Claude 만 ${claudeOnly}`, `GPT 만 ${gptOnly}`, `단일 모델 ${single}`, `게이트웨이 하위 에이전트 ${native}`, `1M 창 [1m] ${win}`, `게이트웨이 GPT 메인 ${gptMain}`);
   // aidure ai — 화면 없이. 조회가 실패해도 저장하고, 키 값은 어디에도 없다
   const dir = path.join(tmp, 'ai-ws');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new'], tmp);
@@ -754,7 +760,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   try { show = JSON.parse(shown.stdout); } catch { /* 실패 */ }
   const cmds = d3 && show.compose === 'single' && Object.values(show.roles || {}).every((v) => v === '메인과 같게') && aidure('ai', 'main', 'gpt').status === 0 && aidure('ai', 'nope').status !== 0;
   got.push(`aidure ai direct ${direct}`, `gateway 저장 ${gwSaved}`, `키 값 저장 안 함 ${leaked.length === 0}`, `compose · show · main ${cmds}`);
-  record('AI 연결 방식 (쓰는 AI · 구성 · 게이트웨이 · aidure ai)', claudeOnly && gptOnly && single && native && gptMain && direct && gwSaved && leaked.length === 0 && cmds, got.join(' · '));
+  record('AI 연결 방식 (쓰는 AI · 구성 · 게이트웨이 · aidure ai)', claudeOnly && gptOnly && single && native && win && gptMain && direct && gwSaved && leaked.length === 0 && cmds, got.join(' · '));
 }
 
 // 역할 에이전트 상한 — Claude 훅이 한 요청의 개수를 세고 넘으면 막는다. Codex 훅에는 넣지 않고 config.toml 동시 상한으로

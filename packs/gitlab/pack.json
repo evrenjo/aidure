@@ -2,8 +2,8 @@
   "name": "gitlab",
   "title": "GitLab 팀 워크플로",
   "category": "workflow",
-  "summary": "브랜치 전략 · MR 생성 · 파이프라인 조회 · 커밋 규칙",
-  "description": "GitLab 협업: 브랜치 전략(작업 브랜치 → MR, 머지는 사람만), 커밋 메시지, 이슈·MR 어조, MR 생성 스킬, 파이프라인 조회(aidure gitlab pipeline)",
+  "summary": "브랜치 전략 · MR 생성 · 이슈 등록 · 파이프라인 조회 · 커밋 규칙",
+  "description": "GitLab 협업: 브랜치 전략(작업 브랜치 → MR, 머지는 사람만), 커밋 메시지, 이슈·MR 어조, MR 생성 스킬, 이슈 찾기 · 읽기 · 등록 · 조치 보고 댓글 스킬, 파이프라인 조회(aidure gitlab pipeline)",
   "requires": [
     "core"
   ],
@@ -30,7 +30,7 @@
     {
       "name": "GITLAB_TOKEN",
       "scope": "project",
-      "purpose": "MR 생성 · 파이프라인 조회",
+      "purpose": "MR 생성 · 이슈 등록 · 파이프라인 조회",
       "needs": [
         "api"
       ],
