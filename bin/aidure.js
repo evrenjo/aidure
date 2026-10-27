@@ -37,7 +37,7 @@
  *   aidure docs build [repo|폴더] [--out docs-site] [--force] [--no-source] · check [repo|폴더]   문서 사이트: 기획 repo 의 md · 화면설계서 장 → docs-site/ (가이드와 같은 화면 틀 · 근거 색인 ids.json · 묶음은 docs-site.json) · 어긋남 검사 · 문서 점검 경고
  *   aidure docs show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs]   기획 문서를 ID 단위로: 정의 부분만 출력 · 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄)
  *   aidure docs refs-quote <md 파일…> [--dry]   본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다
- *   aidure docs trace [--ids FN] [--all] [--strict]   기획 ID 와 코드의 구현 표시(주석의 ID) 대조: 코드에 없는 ID · 기획에 정의 없는 ID
+ *   aidure docs trace [--ids FN] [--all] [--strict] [--md] [--new]   기획 ID 와 코드의 @spec 주석 대조: 코드에 없는 ID · 테스트에 없는 수용 기준 · 기획에 정의 없는 ID. --md 추적표 · --new 새 진입 파일 중 ID 없는 것 (커밋 전)
  *   aidure docs pages [on|off] [repo|폴더]   문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태 (원격에 맞는 CI 파일 · .gitignore 의 /docs-site/)
  *   aidure docs serve [repo|폴더] [--port 8000] [--open]   docs-site/ 를 이 PC 에서 웹 주소로 보기 (전체 인쇄 · 새로고침 없는 이동까지. Ctrl+C 로 끝)
  *   aidure delegate list · status [<id>] · watch [<id>]   다른 도구에 맡긴 작업(위임: Claude Code ↔ Codex 리뷰 등): 목록 · 지금 진행 현황 · 상대 에이전트가 읽고 실행하는 것을 줄마다 보기 (id 를 빼면 마지막 실행 중 작업)
@@ -49,7 +49,7 @@
  *   aidure prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup   응답 언어 · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). 이 PC 값이 팀 값보다 먼저. 인자 없이 = 지금 값
  *   aidure timestamp [on|off|team] [--team]   답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss) 표시 (Claude Code, 기본 켜짐). 이 PC 값이 팀 값보다 먼저, team = 이 PC 값 지우기. 인자 없이 = 지금 값
  *   aidure type [유형] [--approach a] [--code 이름,…]   유형 바꾸기: 분석·설계 → 구축 · 고도화 등. 유형 팩 · 현행 repo 중 고칠 것(개발 repo 로) · 진행 방식 · 로드맵 새 뼈대 (관리자)
- *   aidure approach [sprint|full|issue]   진행 방식: 스프린트(최소 기능부터, 스프린트마다 데모하며 하나씩) · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수, 이슈 보드). 바꾸면 로드맵도 맞춘다 (관리자)
+ *   aidure approach [sprint|full|issue]   진행 방식: MVP · 스프린트(최소 기능부터, 스프린트마다 데모하며 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수, 이슈 보드). 바꾸면 로드맵도 맞춘다 (관리자)
  *   aidure team-mode [auto|fixed] · prefer <역할> <claude|codex>:<모델>|- · [--team]   팀 구성: 자동(리더가 작업마다 역할·모델, 요금제 여유도 반영) · 고정(프로필대로), 역할별 선호 모델. --team 은 팀 기본값(관리자)
  *   aidure review status · mark [--repo R] [--by "<누가>"] · skip --reason "<사유>" [--repo R]   리뷰 확인(commit · push 전에 리뷰를 거쳤나): 대상 repo 마다 리뷰 안 된 줄 수 · 지금 상태를 리뷰했다고 기록 · 한 번 생략(사용자 승인 뒤). 켜기는 team-mode enforce review
  *   aidure team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] [--team]   commit · push 전 리뷰 확인 (기본 꺼짐. Claude Code). 대상 · 기준 줄 수 · 경로는 팀 값(--team)
@@ -1095,13 +1095,20 @@ async function cmdInit(argv) {
       initialValue: a.type,
       options: Object.keys(TYPE_FLOW).map((k) => ({ value: k, label: kit.PROJECT_TYPES[k], hint: TYPE_FLOW[k].hint, detail: TYPE_FLOW[k].guide })),
     }), set: (v) => { a.type = v; } },
+    // 신규 구축: 아이디어 · 전체 그림 다음에 MVP 부터 하나씩(스프린트)인지, 전체 설계 뒤 구축(워터폴)인지
+    { when: () => a.type === 'new', run: async () => choose({
+      message: '개발 방식', hint: '두 방식 모두 아이디어 · 전체 그림(무엇을 왜 만드는지 대화)부터 시작합니다. 나중에 aidure approach 로 바꿉니다.',
+      initialValue: ['sprint', 'full'].includes(a.approach) ? a.approach : kit.TYPE_RULES.new.approach, // 운영·고도화에서 고른 이슈형이 남아 있으면 기본값
+      options: [{ value: 'sprint', label: 'MVP · 스프린트 (권장)', hint: '끝까지 동작하는 최소 기능부터, 스프린트마다 데모하며 하나씩 붙인다' },
+        { value: 'full', label: '워터폴 · 전체', hint: '요구사항 → 설계 → 구현 → 테스트 → 배포를 한 번에' }],
+    }), set: (v) => { a.approach = v; } },
     // 운영·고도화: 이슈마다 운영 반영(운영 · 유지보수)인지, 기능 묶음을 오픈까지 진행(고도화)인지 → 로드맵 모양이 다르다
     { when: () => a.type === 'enhancement', run: async () => choose({
       message: '진행 방식', hint: '운영 · 유지보수는 이슈마다 운영에 반영하므로 이슈형, 기능 묶음을 요구사항부터 오픈까지 진행하는 고도화는 스프린트 또는 전체입니다. 나중에 aidure approach 로 바꿉니다.',
       initialValue: a.approach || kit.TYPE_RULES.enhancement.approach,
       options: [{ value: 'issue', label: '이슈형 (운영 · 유지보수)', hint: '단계 대신 이슈 보드: 이슈마다 접수 · 분석 · 수정 · 검증 · 운영 반영' },
-        { value: 'sprint', label: '스프린트 (고도화)', hint: '기능 단위로 데모하며 하나씩' },
-        { value: 'full', label: '전체 (고도화)', hint: '요구사항 → 설계 → 구현 → 테스트 → 오픈' }],
+        { value: 'sprint', label: 'MVP · 스프린트 (고도화)', hint: '기능 단위로 데모하며 하나씩' },
+        { value: 'full', label: '워터폴 · 전체 (고도화)', hint: '요구사항 → 설계 → 구현 → 테스트 → 오픈' }],
     }), set: (v) => { a.approach = v; } },
     // 분석·설계 워크스페이스에서 이어 만들기: 그 기획 · 이슈 repo 를 그대로 가져온다 (현행 repo 는 목록만)
     { when: () => a.type !== 'consulting', run: async () => yesNo({
@@ -1169,7 +1176,7 @@ async function cmdInit(argv) {
     const rs = repos();
     return [
       `폴더   ${root()}`,
-      `유형   ${kit.PROJECT_TYPES[a.type]}${a.type === 'enhancement' && a.approach ? ` · 진행 방식 ${kit.APPROACHES[a.approach].split(' (')[0]}` : ''}`,
+      `유형   ${kit.PROJECT_TYPES[a.type]}${['enhancement', 'new'].includes(a.type) && a.approach ? ` · 진행 방식 ${kit.APPROACHES[a.approach].split(' (')[0]}` : ''}`,
       ...(a.from ? [`이어 받음 ${a.from}`] : []),
       `규칙   core${typePack ? `, ${typePack} (유형)` : ''} + repo 마다 스택·협업 도구 규칙`,
       ...(rs.length ? rs.map((r) => `repos/${r.name.padEnd(16)} ${padTo(kit.REPO_KINDS[r.kind], 14)} ${padTo(r.host ? kit.HOSTS[r.host] : '', 7)} ← ${r.remote || r.path || '새로 만듦 (원격 없음, git init)'}`) : ['repo   (없음: 나중에 workspace.json 에 추가)']),
@@ -1206,7 +1213,7 @@ async function cmdInit(argv) {
   const orig = { log: console.log, warn: console.warn, error: console.error };
   console.log = console.warn = console.error = (...x) => log.push(x.join(' '));
   let res;
-  try { res = kit.initWorkspace({ dir, name: a.title, title: a.title, type: a.type, approach: a.type === 'enhancement' ? a.approach : undefined, packs: [], repos: rs, out: (l) => process.stdout.write(`${l}\n`) }); }
+  try { res = kit.initWorkspace({ dir, name: a.title, title: a.title, type: a.type, approach: ['enhancement', 'new'].includes(a.type) ? a.approach : undefined, packs: [], repos: rs, out: (l) => process.stdout.write(`${l}\n`) }); }
   finally { Object.assign(console, orig); }
   remember(dir);
   p.log.success(res.ok ? '생성 완료' : '생성은 했지만 확인할 것이 있습니다');
@@ -2171,7 +2178,7 @@ function cmdApproach(argv) {
   if (!runWorkspaceKit(root, ['sync', '--quiet'])) process.exit(1);
   const planMade = kit.ensurePlan(root, { sw: true });
   console.log(`✔ 진행 방식: ${kit.APPROACHES[want]} (workspace.json. commit·push 하면 팀 적용)`);
-  console.log(planMade ? `  로드맵 ${planMade.replace(/^✔ /, '')}` : '  로드맵(handoffs/PLAN.md)은 고친 적이 있거나 끝낸 단계가 있어 그대로 둡니다. 필요하면 에이전트에게 진행 방식에 맞게 고쳐 달라고 하세요');
+  console.log(planMade ? `  로드맵 ${planMade.replace(/^✔ /, '')}` : '  로드맵(handoffs/PLAN.md)은 그대로 둡니다 (이미 이 진행 방식의 모양이거나, 고친 적 · 끝낸 단계가 있음). 필요하면 에이전트에게 진행 방식에 맞게 고쳐 달라고 하세요');
 }
 
 /**
@@ -2234,6 +2241,11 @@ async function cmdType(argv) {
   if (old) fs.unlinkSync(planFile);
   if (!runWorkspaceKit(root, ['sync', '--quiet'])) process.exit(1);
   kit.ensurePlan(root);
+  // 분석·설계 → 신규 구축: 무엇을 만들지는 분석·설계 산출물이 이미 정했다. 아이디어 단계는 건너뛴 것으로 두고 다음 단계부터
+  if (cur === 'consulting' && want === 'new' && fs.existsSync(planFile)) {
+    const P = require(path.join(root, 'packs', 'core', 'lib', 'plan.js'));
+    if (P.IDEA_STAGE) fs.writeFileSync(planFile, read(planFile).replace(`| 1 | ${P.IDEA_STAGE} | ▶ | | |`, `| 1 | ${P.IDEA_STAGE} | ✔ 건너뜀 (분석·설계 산출물) | | |`).replace(/\| 2 \| ([^|]+) \| ○ \|/, '| 2 | $1 | ▶ |'));
+  }
   if (old && fs.existsSync(planFile)) {
     const body = old.split('\n').filter((l) => !/^#\s/.test(l) && !l.includes('<!-- aidure:preset')).map((l) => l.replace(/^##\s/, '### '));
     fs.writeFileSync(planFile, `${read(planFile).trimEnd()}\n\n## 지난 로드맵 (${kit.PROJECT_TYPES[cur] || cur}, ~${new Date().toISOString().slice(0, 10)}. 읽지 않는다)\n\n${body.join('\n').trim()}\n`);
@@ -2639,10 +2651,15 @@ function initDocsRepo(dst) {
   if (fs.existsSync(path.join(ci, 'github-pages.yml'))) { fs.mkdirSync(path.join(dst, '.github', 'workflows'), { recursive: true }); fs.copyFileSync(path.join(ci, 'github-pages.yml'), path.join(dst, '.github', 'workflows', 'pages.yml')); }
   // 화면설계서 장 양식은 screens 팩의 견본 하나가 정본이다 (복사본을 템플릿에 따로 두지 않는다)
   const sheet = path.join(KIT_ROOT, 'packs', 'screens', 'assets', 'storyboard', 'template.html');
-  if (fs.existsSync(sheet)) fs.copyFileSync(sheet, path.join(dst, '02-screens', '_template.html'));
+  if (fs.existsSync(sheet)) fs.copyFileSync(sheet, path.join(dst, '30-screens', '_template.html'));
   // 테이블 정의서 양식도 datamodel 팩의 견본 하나가 정본이다
   const table = path.join(KIT_ROOT, 'packs', 'datamodel', 'assets', 'erd', 'template.md');
-  if (fs.existsSync(table)) fs.copyFileSync(table, path.join(dst, '06-data', '_template.md'));
+  if (fs.existsSync(table)) fs.copyFileSync(table, path.join(dst, '40-data', '_template.md'));
+  // 시스템 구성도 양식은 core 팩 architecture 견본 하나가 정본이다 (서버 아키텍처: 단계별 구성도 · 서비스 · DB · 미들웨어 · 외부 · 서버 사양)
+  const arch = path.join(KIT_ROOT, 'packs', 'core', 'assets', 'architecture', 'template.md');
+  // 견본 값(서버 이름 · 사양)은 예시라고 밝힌다
+  if (fs.existsSync(arch)) fs.writeFileSync(path.join(dst, '10-system', 'architecture.md'), fs.readFileSync(arch, 'utf8').replace(/\r\n/g, '\n')
+    .replace(/^# 시스템 구성$/m, '# 시스템 구성도').replace(/^> 상태: 초안$/m, '> 상태: 초안 · 아래 서비스 이름 · 버전 · 서버 사양은 견본이다. 프로젝트 값으로 바꾸거나 지운다'));
   if (!fs.existsSync(path.join(dst, '.git'))) {
     try { execFileSync('git', ['init', '-q', dst]); } catch { /* git 없음 — 폴더만 */ }
   }

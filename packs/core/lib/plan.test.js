@@ -7,7 +7,7 @@ const P = require('./plan');
 for (const type of Object.keys(P.PRESETS).filter((k) => !P.PRESETS[k].issue)) {
   const plan = P.parse(P.template(type));
   assert.ok(plan, `${type} 뼈대를 읽는다`);
-  assert.deepStrictEqual(plan.stages.map((s) => s.name), P.PRESETS[type].stages);
+  assert.deepStrictEqual(plan.stages.map((s) => s.name), [...(type === 'new' ? [P.IDEA_STAGE] : []), ...P.PRESETS[type].stages], '신규 구축은 아이디어 · 전체 그림부터');
   assert.strictEqual(plan.stages[0].state, 'doing');
   assert.strictEqual(plan.preset, true);
   assert.strictEqual(plan.changes.length, 0, '머리말의 안내 줄은 분모 변경으로 세지 않는다');
@@ -18,11 +18,18 @@ assert.ok(!P.template('new').includes('## 지난 릴리스'));
 assert.ok(P.parse(P.template('없는종류')), '모르는 종류는 신규 기본값');
 
 // 진행 방식 스프린트: 반복 단계 · 이번 스프린트(목표 · 끝 · 기능 = 구현 하위 작업) · 백로그 · 지난 스프린트. 운영·고도화는 단계 그대로 + 백로그. 전체 · 없음은 종류별 기본
-assert.deepStrictEqual(P.stagesFor('new', { db: true, ui: true }, 'sprint'), ['스프린트 계획', '구현', '데모', '회고'], '스프린트는 스택 단계를 늘리지 않는다');
+assert.deepStrictEqual(P.stagesFor('new', { db: true, ui: true }, 'sprint'), [P.IDEA_STAGE, '스프린트 계획', '구현', '데모', '회고'], '스프린트는 스택 단계를 늘리지 않는다 (신규는 아이디어부터)');
 assert.deepStrictEqual(P.stagesFor('enhancement', {}, 'sprint'), P.PRESETS.sprint.stages, '운영·고도화 + 스프린트 = 다른 유형과 같은 스프린트');
-assert.deepStrictEqual(P.stagesFor('new', {}, 'full'), P.PRESETS.new.stages);
+assert.deepStrictEqual(P.stagesFor('new', {}, 'full'), [P.IDEA_STAGE, ...P.PRESETS.new.stages]);
+assert.match(P.template('new', {}, 'sprint'), /「아이디어 · 전체 그림」: 무엇을 왜 만드는지 .*`idea` 스킬.*✔ 건너뜀/, '건너뛰는 법 안내');
+assert.match(P.template('new', {}, 'sprint'), /단계 상태를 처음으로 되돌린다 \(「아이디어 · 전체 그림」 은 그대로\)/);
+assert.strictEqual(P.skillOf({ name: P.IDEA_STAGE }), 'idea');
+assert.ok(P.isIdea('아이디어·전체 그림') && !P.isIdea('계획'), '띄어쓰기가 달라도 아이디어 단계');
+assert.strictEqual(P.skillOf({ name: '설계' }), null, '고도화 「설계」 는 아키텍처 스킬로 보내지 않는다');
+assert.strictEqual(P.parse(P.template('new').replace(`| 1 | ${P.IDEA_STAGE} | ▶ |`, `| 1 | ${P.IDEA_STAGE} | ✔ 건너뜀 |`)).stages[0].state, 'done', '건너뜀 = 완료로 셈');
 assert.deepStrictEqual(P.missingStages(P.parse(P.template('new', {}, 'sprint')), { db: true, ui: true }, 'new', 'sprint'), [], '스프린트는 데이터 설계 · 화면설계 단계가 없어도 경고하지 않는다');
-const sp = P.template('new', { db: true }, 'sprint');
+const sp = P.template('enhancement', { db: true }, 'sprint'); // 아이디어 단계 없는 스프린트 (신규는 아래에서 따로)
+assert.match(P.template('new', { db: true }, 'sprint'), /## 스프린트 계획\n\n- \[ \] 이번 스프린트의 목표/, '신규 스프린트도 스프린트 계획 확인 목록');
 assert.match(sp, /## 스프린트 계획\n\n- \[ \] 이번 스프린트의 목표/);
 assert.match(sp, /스키마 변경 여부 \(이번 스프린트 기능만\. 있으면 `datamodel`/);
 assert.ok(sp.includes('## 이번 스프린트') && sp.includes('## 백로그') && sp.includes('## 지난 스프린트') && !sp.includes('## 지난 릴리스'));
@@ -139,13 +146,13 @@ assert.strictEqual(j.releases, 2);
 
 // 스택에 따른 단계: 데이터 설계 → 화면설계 를 구현 앞에. 반복형은 단계를 늘리지 않고 분석 체크 목록
 assert.deepStrictEqual(P.stagesFor('modernization', { db: true, ui: true }), ['AS-IS 분석', '범위·계획', '요구사항', '아키텍처·설계', '데이터 설계', '화면설계', '구현', '테스트', '데이터 이관', '전환', '안정화']);
-assert.deepStrictEqual(P.stagesFor('new', { ui: true }), ['계획', '요구사항 분석', '설계', '화면설계', '구현', '테스트', '배포', '운영']);
-assert.deepStrictEqual(P.stagesFor('new', {}), P.PRESETS.new.stages);
+assert.deepStrictEqual(P.stagesFor('new', { ui: true }), [P.IDEA_STAGE, '계획', '요구사항 분석', '설계', '화면설계', '구현', '테스트', '배포', '운영']);
+assert.deepStrictEqual(P.stagesFor('new', {}), [P.IDEA_STAGE, ...P.PRESETS.new.stages]);
 assert.deepStrictEqual(P.stagesFor('enhancement', { db: true, ui: true }), ['요구사항', '설계', '데이터 설계', '화면설계', '구현', '테스트', '오픈'], '고도화도 스택 단계를 구현 앞에');
 const enh = P.parse(P.template('enhancement', { db: true, ui: true }, 'sprint'));
 assert.deepStrictEqual(enh.stages[0].detail.items.map((x) => x.name.split(' (')[0]).slice(1), ['스키마 변경 여부', '화면 변경 여부']);
-assert.deepStrictEqual(P.parse(P.template('new', { db: true })).stages.map((x) => x.name).slice(2, 5), ['설계', '데이터 설계', '구현']);
-assert.match(P.template('new', { db: true }), /단계별 스킬: 데이터 설계 → `datamodel`/);
+assert.deepStrictEqual(P.parse(P.template('new', { db: true })).stages.map((x) => x.name).slice(3, 6), ['설계', '데이터 설계', '구현']);
+assert.match(P.template('new', { db: true }), /단계별 스킬: 아이디어 · 전체 그림 → `idea` · 데이터 설계 → `datamodel`[\s\S]*「설계」: 서버 아키텍처.*`architecture` 스킬/);
 assert.strictEqual(P.skillOf({ name: '화면 설계' }), 'screens', '띄어 써도 같은 단계');
 // 사람이 고친 로드맵은 그대로 두고 경고만
 assert.deepStrictEqual(P.missingStages(plan, { db: true, ui: true }, 'new'), ['스택에 DB · 화면이 있는데 「데이터 설계」 · 「화면설계」 단계가 없습니다 (산출물: datamodel 스킬 · screens 스킬. 구현 앞에 넣을지 사용자에게 묻는다)'], '한 줄');
@@ -156,9 +163,13 @@ assert.deepStrictEqual(P.missingStages(plan, { db: true }, 'enhancement', 'sprin
 assert.deepStrictEqual(P.missingStages(plan, { db: true }, 'enhancement', 'issue'), [], '이슈형은 단계 경고 없음');
 assert.strictEqual(P.upgradePreset(text, 'new', { db: true }), null, '기본 단계 표시가 없으면 고치지 않는다');
 // 기본 단계 그대로면 상태 · 날짜를 옮기며 단계를 더한다
-const pre = P.template('new').replace('| 1 | 계획 | ▶ | | |', '| 1 | 계획 | ✔ | 2026-10-01 | 2026-10-03 |');
+const pre = P.template('new').replace(`| 1 | ${P.IDEA_STAGE} | ▶ | | |`, `| 1 | ${P.IDEA_STAGE} | ✔ | 2026-10-01 | 2026-10-03 |`);
 const up = P.parse(P.upgradePreset(pre, 'new', { db: true, ui: true }));
-assert.deepStrictEqual(up.stages.map((x) => [x.no, x.name, x.state]).slice(0, 6), [[1, '계획', 'done'], [2, '요구사항 분석', 'todo'], [3, '설계', 'todo'], [4, '데이터 설계', 'todo'], [5, '화면설계', 'todo'], [6, '구현', 'todo']]);
+assert.deepStrictEqual(up.stages.map((x) => [x.no, x.name, x.state]).slice(0, 6), [[1, P.IDEA_STAGE, 'done'], [2, '계획', 'todo'], [3, '요구사항 분석', 'todo'], [4, '설계', 'todo'], [5, '데이터 설계', 'todo'], [6, '화면설계', 'todo']]);
+// 0.74 전에 만든 신규 로드맵(아이디어 단계 없음)에는 아이디어 단계를 끼우지 않는다
+const old = P.template('new').split('\n').filter((l) => !l.includes(`| ${P.IDEA_STAGE} |`)).join('\n').replace('| 2 | 계획 | ○ | | |', '| 1 | 계획 | ✔ | 2026-10-01 | 2026-10-03 |');
+const upOld = P.parse(P.upgradePreset(old, 'new', { db: true }));
+assert.ok(upOld && !upOld.stages.some((x) => x.name === P.IDEA_STAGE) && upOld.stages.some((x) => x.name === '데이터 설계'), '옛 신규 로드맵: 아이디어 없이 스택 단계만');
 assert.strictEqual(up.stages[0].end, '2026-10-03');
 assert.strictEqual(P.upgradePreset(P.template('new', { db: true }), 'new', { db: true }), null, '이미 맞으면 null');
 

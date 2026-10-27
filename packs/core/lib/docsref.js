@@ -115,7 +115,7 @@ function show(targets, id, within) {
 function grepRepo(dir, id) {
   const re = idRe(id);
   try {
-    const out = execFileSync('git', ['-C', dir, 'grep', '-n', '-I', '-F', '-e', id, '--', '.', ':(exclude)docs-site/**', ':(exclude)html/**'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+    const out = execFileSync('git', ['-C', dir, '-c', 'core.quotePath=false', 'grep', '-n', '-I', '-F', '-e', id, '--', '.', ':(exclude)docs-site/**', ':(exclude)html/**'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
     return out.split('\n').filter(Boolean).map((l) => { const m = /^(.*?):(\d+):(.*)$/.exec(l); return m && { rel: m[1], line: Number(m[2]), text: m[3] }; })
       .filter((x) => x && re.test(x.text));
   } catch (e) {
@@ -177,6 +177,7 @@ function trace(docs, code, prefixes) {
   const defined = new Map();
   for (const t of docs) {
     for (const d of listDocs(t.dir)) {
+      if (path.basename(d.rel).startsWith('_')) continue; // 견본(_template)의 자리표시 ID 는 정의가 아니다 (문서 사이트도 뺀다)
       const frozen = !d.sheet && isFrozen(d.text);
       for (const x of defIdsIn(d, re)) if (!defined.has(x.id)) defined.set(x.id, { repo: t.name, rel: d.rel, line: x.line, frozen, later: x.later });
     }
@@ -188,7 +189,8 @@ function trace(docs, code, prefixes) {
     if (!fs.existsSync(r.dir)) continue;
     let out = '';
     try {
-      out = execFileSync('git', ['-C', r.dir, 'grep', '-n', '-I', '-E', '-e', `(${pat})-[A-Z0-9-]*[0-9]`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+      // --untracked: 아직 커밋 안 한 파일도 (.gitignore 는 따르므로 빌드 결과물은 보통 빠진다)
+      out = execFileSync('git', ['-C', r.dir, '-c', 'core.quotePath=false', 'grep', '--untracked', '-n', '-I', '-E', '-e', `(${pat})-[A-Z0-9-]*[0-9]`, '--', '.', ':(exclude)docs-site/**', ':(exclude)html/**'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
     } catch (e) { if (e.status !== 1) throw new Error(`${r.name}: git grep 실패 (git 저장소인지 확인)`); }
     for (const l of out.split('\n')) {
       const m = /^(.*?):(\d+):(.*)$/.exec(l);
@@ -386,7 +388,7 @@ function health(dir, opts = {}) {
   if (fr.length) warn.push(`파일:줄 참조 ${fr.reduce((a, x) => a + x.refs.length, 0)}곳: ${topList(fr, 5, (x) => `${x.rel}:${x.refs[0].line} 「${x.refs[0].text}」${x.refs.length > 1 ? ` 외 ${x.refs.length - 1}곳` : ''}`)}. 줄 번호는 코드가 바뀌면 틀린다. 기능 · 화면 이름이나 기획 ID 로`);
   const srcs = docs.map((d) => ({ rel: d.rel, list: sourceLines(d.text) })).filter((x) => x.list.length);
   if (srcs.length) warn.push(`본문에 쓴 근거 · 출처 ${srcs.reduce((a, x) => a + x.list.length, 0)}줄: ${topList(srcs, 5, (x) => `${x.rel}:${x.list[0].line}${x.list.length > 1 ? ` 외 ${x.list.length - 1}줄` : ''}`)}. 부가 설명 · 근거 · 출처는 본문을 가리지 않게 인용구로 (> 근거: …)`);
-  if (heavy.length) warn.push(`머리말에 변경 이력이 쌓인 문서 ${heavy.length}개: ${heavy.slice(0, 5).join(' · ')}${heavy.length > 5 ? ` 외 ${heavy.length - 5}개` : ''}. 이력은 결정 문서에 두고 머리말에는 최근 변경 한 줄만`);
+  if (heavy.length) warn.push(`머리말에 변경 이력이 쌓인 문서 ${heavy.length}개: ${heavy.slice(0, 5).join(' · ')}${heavy.length > 5 ? ` 외 ${heavy.length - 5}개` : ''}. 이력은 git 에 맡기고(바꾼 이유가 결정이면 결정 기록 ID 를 건다) 머리말에서 지운다`);
   const seen = new Map();
   for (const d of docs) {
     let fence = false;

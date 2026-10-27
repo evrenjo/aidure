@@ -1462,18 +1462,21 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const stages = () => P.parse(fs.readFileSync(file, 'utf8')).stages.map((x) => x.name).join('|');
   const agents = () => fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8');
   const setAp = (v) => { const w = JSON.parse(fs.readFileSync(wsFile, 'utf8')); if (v) w.project.approach = v; else delete w.project.approach; fs.writeFileSync(wsFile, JSON.stringify(w, null, 2)); return run(process.execPath, ['bin/kit.js', 'sync'], dir); };
-  const inc = JSON.parse(fs.readFileSync(wsFile, 'utf8')).project.approach === 'sprint' && /\*\*진행 방식: 스프린트/.test(agents()) && /「백로그」/.test(agents()) && stages() === P.PRESETS.sprint.stages.join('|');
-  const full = /\*\*진행 방식: 전체/.test(fs.readFileSync(path.join(tmp, 'plan-ws', 'AGENTS.md'), 'utf8'));
+  const inc = JSON.parse(fs.readFileSync(wsFile, 'utf8')).project.approach === 'sprint' && /\*\*진행 방식: MVP · 스프린트/.test(agents()) && /「백로그」/.test(agents()) && stages() === [P.IDEA_STAGE, ...P.PRESETS.sprint.stages].join('|'); // 신규는 아이디어 · 전체 그림부터
+  const full = /\*\*진행 방식: 워터폴 · 전체/.test(fs.readFileSync(path.join(tmp, 'plan-ws', 'AGENTS.md'), 'utf8'));
   // 스프린트 끝 날짜가 지났는데 데모 전이면 aidure plan check 가 ⚠
   const keep = fs.readFileSync(file, 'utf8');
   fs.writeFileSync(file, keep.replace(/끝: <[^>]*>/, '끝: 2020-01-01'));
   const overdue = /이번 스프린트 끝 날짜\(2020-01-01\)가 지났는데 데모 전/.test(spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'bin', 'plan.js'), 'check'], { cwd: dir, encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir } }).stdout);
   fs.writeFileSync(file, keep);
   setAp('full'); kitLib.ensurePlan(dir);
-  const switched = stages() === P.PRESETS.new.stages.join('|') && /\*\*진행 방식: 전체/.test(agents());
-  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('| 1 | 계획 | ▶ |', '| 1 | 계획 | ✔ |'));
+  const switched = stages() === [P.IDEA_STAGE, ...P.PRESETS.new.stages].join('|') && /\*\*진행 방식: 워터폴 · 전체/.test(agents());
+  // 아이디어 단계만 끝냈어도 진행 방식을 바꿀 때 로드맵을 새로 쓰지 않는다 (그 단계에서 적은 백로그가 사라지지 않게)
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(`| 1 | ${P.IDEA_STAGE} | ▶ |`, `| 1 | ${P.IDEA_STAGE} | ✔ 건너뜀 |`).replace('## 분모 변경', '## 백로그\n\n- 알림\n\n## 분모 변경'));
   setAp('sprint'); kitLib.ensurePlan(dir);
-  const kept = stages() === P.PRESETS.new.stages.join('|');
+  const after = fs.readFileSync(file, 'utf8');
+  const ideaKept = /✔ 건너뜀/.test(after) && /- 알림/.test(after);
+  const kept = ideaKept && stages() === [P.IDEA_STAGE, ...P.PRESETS.new.stages].join('|');
   setAp(null);
   const old = !/\*\*진행 방식:/.test(agents());
   const bad = !setAp('fast').ok;
@@ -1507,7 +1510,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const et = fs.readFileSync(ef, 'utf8');
   const switched = sw.status === 0 && P.parse(et).mode === 'issue' && /## 이슈형으로 바꾸기 전 로드맵/.test(et) && /\| 1 \| 스프린트 계획 \| ✔ \| 2026-10-01/.test(et);
   // 옛 운영·고도화 기본 단계(반복형) 그대로면 upgrade(ensurePlan)는 바꾸지 않는다
-  fs.writeFileSync(ef, P.template('new').replace(/\| 1 \| 계획[\s\S]*?\n\n/, `${P.OLD_ENHANCEMENT.map((n, i) => `| ${i + 1} | ${n} | ${i ? '○' : '▶'} | | |`).join('\n')}\n\n`));
+  fs.writeFileSync(ef, P.template('enhancement').replace(/\| 1 \| 요구사항[\s\S]*?\n\n/, `${P.OLD_ENHANCEMENT.map((n, i) => `| ${i + 1} | ${n} | ${i ? '○' : '▶'} | | |`).join('\n')}\n\n`));
   const w = JSON.parse(fs.readFileSync(path.join(enh, 'workspace.json'), 'utf8')); w.project.approach = 'sprint'; fs.writeFileSync(path.join(enh, 'workspace.json'), JSON.stringify(w, null, 2));
   kitLib.ensurePlan(enh);
   const oldKept = P.parse(fs.readFileSync(ef, 'utf8')).stages.map((x) => x.name).join('|') === P.OLD_ENHANCEMENT.join('|');
@@ -1616,6 +1619,60 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const ok = /\|[^\n]+\|[^\n]+\|/.test(sec.split('\n').slice(3).join('\n')) && pkgFiles.includes('CHANGELOG.md');
   record('변경 기록 CHANGELOG.md', ok, ok ? ver : `## ${ver} 항목(| 구분 | 내용 | 표)이 없거나 package.json files 에 빠짐`);
 }
+
+// 기획 repo 뼈대 (읽는 순서 메뉴 · 정본 하나 · 시스템 구성 양식) · 문서 사이트 메뉴 · @spec 추적(--md · --new) · 문서와 다름 설정
+{
+  const ws = path.join(tmp, 'plan-flow');
+  run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', ws, '--type', 'new', '--code', 'new:app'], tmp);
+  const docs = path.join(ws, 'repos', 'plans');
+  const nd = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'init-docs', docs], { cwd: ws, encoding: 'utf8' });
+  const has = (f) => fs.existsSync(path.join(docs, f));
+  const skeleton = nd.status === 0 && ['README.md', 'docs-site.json', '00-overview/overview.md', '00-overview/idea.md', '10-system/architecture.md', '20-features/requirements.md', '20-features/_template.md', '30-screens/README.md', '30-screens/_template.html', '30-screens/prototype/README.md', '40-data/_template.md', '45-api/README.md', '90-decisions/_template.md', '90-decisions/open-questions.md'].every(has)
+    && !['01-requirements', '02-screens', '05-decisions', '06-data'].some(has);
+  const built = spawnSync(process.execPath, [path.join(ws, 'packs', 'core', 'bin', 'docs-site.js'), 'build', docs], { cwd: ws, encoding: 'utf8' });
+  let menu = [];
+  try { menu = JSON.parse(fs.readFileSync(path.join(docs, 'docs-site', 'assets', 'nav.js'), 'utf8').replace(/^window\.DS_NAV = /, '').replace(/;\s*$/, '')).groups.map((g) => g.group || g.name); } catch { /* 없음 */ }
+  const order = ['개요', '시스템 구성', '기능', '화면', '데이터 · API', '결정 · 미결'];
+  const menuOk = built.status === 0 && order.every((g, i) => menu[i] === g) && !menu.includes('기타');
+  // @spec 추적: 코드 · 테스트 나눠 세기, --md 추적표, --new 새 진입 파일
+  const wsFile = path.join(ws, 'workspace.json');
+  const w = JSON.parse(fs.readFileSync(wsFile, 'utf8'));
+  w.repos.push({ name: 'plans', kind: 'docs', local: true });
+  w.vars = { ...(w.vars || {}), docs: { ...((w.vars || {}).docs || {}), traceIds: 'FN,SCR,AC' } };
+  fs.writeFileSync(wsFile, JSON.stringify(w, null, 2));
+  fs.writeFileSync(path.join(docs, '20-features', 'order.md'), '# 주문 기능\n\n> 상태: 확정\n\n## FN-ORD-001 주문\n\n| ID | 조건 | 결과 |\n|---|---|---|\n| AC-ORD-001-1 | a | b |\n| AC-ORD-001-2 | c | d |\n');
+  const app = path.join(ws, 'repos', 'app');
+  fs.mkdirSync(path.join(app, 'src'), { recursive: true }); fs.mkdirSync(path.join(app, 'test'), { recursive: true });
+  fs.writeFileSync(path.join(app, 'src', 'OrderController.java'), '// @spec FN-ORD-001 AC-ORD-001-2\nclass OrderController {}\n');
+  fs.writeFileSync(path.join(app, 'test', 'OrderTest.java'), '// @spec AC-ORD-001-1\n');
+  fs.writeFileSync(path.join(app, 'src', 'PayController.java'), 'class PayController {}\n');
+  spawnSync('git', ['-C', app, 'add', '-A']);
+  const tr = (...a) => spawnSync(process.execPath, [path.join(ws, 'packs', 'core', 'bin', 'docs-site.js'), 'trace', ...a], { cwd: ws, encoding: 'utf8' });
+  const base = tr().stdout;
+  const traced = /테스트에 없는 수용 기준 1개[\s\S]*AC-ORD-001-2/.test(base) && !/AC-ORD-001-1\n/.test(base.split('테스트에 없는')[1] || '');
+  const md = tr('--md').stdout;
+  const mdOk = /\| FN-ORD-001 \| 20-features\/order\.md \| `app\/src\/OrderController\.java` \| 없음 \|/.test(md) && /\| AC-ORD-001-1 \| .* \| 없음 \| `app\/test\/OrderTest\.java` \|/.test(md);
+  const nw = tr('--new').stdout;
+  const newOk = /기획 ID 가 없는 새 진입 파일 1개[\s\S]*app\/src\/PayController\.java/.test(nw) && !/OrderController/.test(nw);
+  // 문서와 다름 설정: 기본 approve 가 규칙에 들어간다
+  const agentsMd = fs.readFileSync(path.join(ws, 'AGENTS.md'), 'utf8');
+  const sync = /`vars\.docs\.syncMode` \(지금 `approve`\)/.test(agentsMd) && /@spec SCR-ORD-01 FN-ORD-003/.test(agentsMd) && /`approve` 면 사용자 승인 뒤/.test(fs.readFileSync(path.join(ws, '.agents', 'rules', 'core--45-docs-writing.md'), 'utf8'));
+  // 0.74 전 신규 스프린트 로드맵(아이디어 단계 없음 · 기본 단계 표시 · 끝낸 단계 없음 · 백로그 있음)을 upgrade 가 새로 쓰지 않는다
+  const P2 = require(path.join(KIT, 'packs', 'core', 'lib', 'plan.js'));
+  const planFile = path.join(ws, 'handoffs', 'PLAN.md');
+  const oldPlan = P2.template('new', {}, 'sprint').split('\n').filter((l) => !l.includes(`| ${P2.IDEA_STAGE} |`)).join('\n')
+    .replace('| 2 | 스프린트 계획 | ○ | | |', '| 1 | 스프린트 계획 | ▶ | 2026-10-25 | |').replace('## 백로그\n', '## 백로그\n\n- 알림\n');
+  fs.writeFileSync(planFile, oldPlan);
+  require(path.join(KIT, 'bin', 'kit.js')).ensurePlan(ws);
+  const kept = fs.readFileSync(planFile, 'utf8');
+  const planKept = /- 알림/.test(kept) && /\| 1 \| 스프린트 계획 \| ▶ \| 2026-10-25/.test(kept) && !kept.includes(`| ${P2.IDEA_STAGE} |`);
+  const arch = fs.readFileSync(path.join(docs, '10-system', 'architecture.md'), 'utf8');
+  const archOk = /^# 시스템 구성도/m.test(arch) && /견본이다/.test(arch) && !/## 변경 이력/.test(arch);
+  record('기획 repo 뼈대 · 메뉴 순서 · @spec 추적 · 문서와 다름 설정', skeleton && menuOk && traced && mdOk && newOk && sync && planKept && archOk,
+    `옛 신규 로드맵 그대로(백로그 · 날짜) ${planKept} · 구성도 견본 표시 · 이력 표 없음 ${archOk} · `
+    + `뼈대 ${skeleton} · 메뉴 ${menuOk} (${menu.join(' > ')}) · 코드 · 테스트 나눠 세기 ${traced} · --md 추적표 ${mdOk} · --new ${newOk} · syncMode · @spec 규칙 ${sync}`);
+}
+
 
 // 언어 ↔ 언어 팩: stacks.json languages[].pack 과 팩의 pack.json languages 가 서로 맞아야 한다 (한쪽만 고치면 문서와 실제 붙는 곳이 갈린다)
 {

@@ -14,7 +14,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 요청 | 명령 | 범위 |
 |---|---|---|
 | 지금 모델 보기 | `aidure models` (화면 없이 실행하면 표: 팀 구성 · 성향 · 역할별 등급과 출처, `--json` 은 JSON) | 보기 |
-| 진행 방식 보기 · 바꾸기 | `aidure approach` (지금 값) · `aidure approach sprint\|full\|issue` (스프린트: 최소 기능부터 기능 단위 스프린트 · 데모 · 회고, 전체: 전체 설계 뒤 구축, 이슈형: 운영 · 유지보수의 이슈 보드). 기본 단계 그대로인 로드맵은 새 뼈대로 바뀐다. "작게 시작하자" · "스프린트로" · "이슈 단위로 관리" 같은 말에 쓴다 | 팀 (관리자) |
+| 진행 방식 보기 · 바꾸기 | `aidure approach` (지금 값) · `aidure approach sprint\|full\|issue` (MVP · 스프린트: 최소 기능부터 기능 단위 스프린트 · 데모 · 회고, 워터폴 · 전체: 전체 설계 뒤 구축, 이슈형: 운영 · 유지보수의 이슈 보드). 기본 단계 그대로인 로드맵은 새 뼈대로 바뀐다. "작게 시작하자" · "스프린트로" · "이슈 단위로 관리" 같은 말에 쓴다 | 팀 (관리자) |
 | 유형 바꾸기 | `aidure type <new\|modernization\|enhancement\|consulting> [--approach a] [--code 이름,…]` (분석·설계 → 구축 · 고도화 등. 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 로드맵 새 뼈대, 지난 로드맵은 남김). 바꾸기 전에 무엇이 바뀌는지 보여 주고 확인받는다 | 팀 (관리자) |
 | 로드맵 보기 · 점검 | `aidure plan` (흐름도 · 지금 단계 표 · 다음, 이슈형은 이슈 보드) · `aidure plan --short` (한 줄) · `aidure plan check` (갱신 누락 ⚠) · `aidure plan --report [시작 [끝]]` (이슈형 주간 보고) | 보기 |
 | 팀 구성 바꾸기 | `aidure team-mode auto\|fixed` · `prefer <역할> <claude\|codex>:<모델>` (`--team` 은 팀 기본값, 관리자) | 이 PC · 팀 |
@@ -78,7 +78,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 문서 사이트 메뉴 묶음 · 이름 · 버전 바꾸기 | 기획 repo 의 `docs-site.json` 을 고치고 `aidure docs build` (README 의 「문서 사이트」 절 형식) | 기획 repo |
 | 기획 문서 ID 하나 보기 · 쓰는 곳 찾기 | `aidure docs show <ID> [--in <파일 조각>] [--all]` (정의 부분만) · `aidure docs refs <ID> [--docs]` (기획 · 코드 · 이슈 repo 의 파일:줄). "FN-001 내용" · "이 결정 어디서 써?" 같은 말에 쓴다 | 보기 |
 | 본문 근거를 인용구로 옮기기 | `aidure docs refs-quote <md 파일…> [--dry]` (본문 괄호 속 파일:줄을 그 문단 · 목록 · 표 아래 「> 근거:」 로). 「파일:줄 참조」 경고가 많을 때 · "근거 인용구로 빼 줘" 같은 말에 쓴다 | 기획 repo |
-| 기획과 코드 대조 | `aidure docs trace [--ids FN] [--all]` (코드 주석에 구현 표시가 없는 기획 ID · 기획에 정의 없는 코드의 ID). "기획대로 다 만들었어?" · "코드랑 문서 어긋난 곳" 같은 말에 쓴다. 머리말은 `vars.docs.traceIds` | 보기 |
+| 기획과 코드 대조 | `aidure docs trace [--ids FN] [--all] [--md] [--new]` (`--md` 추적표 · `--new` 새 진입 파일 중 ID 없는 것) (코드 주석에 구현 표시가 없는 기획 ID · 기획에 정의 없는 코드의 ID). "기획대로 다 만들었어?" · "코드랑 문서 어긋난 곳" 같은 말에 쓴다. 머리말은 `vars.docs.traceIds` | 보기 |
 | 리뷰 확인 (commit · push 전에 리뷰를 거쳤나) | 상태 `aidure review status` (대상 repo 마다 리뷰 안 된 줄 수 · 마지막 리뷰) · 훅이 알 수 없는 방법으로 리뷰했으면 `aidure review mark [--repo <이름>] [--by "<누가>"]` · 생략은 **사용자에게 먼저 묻고 승인받았을 때만** `aidure review skip --reason "<사유>"` (다음 한 번). 켜기 · 수준 · 대상은 `aidure team-mode enforce review off\|warn\|block [--repos a,b\|*] [--min-lines N] [--paths p1,p2] --team` (기본 꺼짐) | 이 PC · 수준은 팀 |
 | GitLab 파이프라인 보기 | `aidure gitlab pipeline [--repo <이름>] [--ref <브랜치> \| --mr <번호> \| --id <파이프라인 ID>] [--limit N] [--log] [--json]` (최근 목록 · 단계별 작업 상태 · `--log` 는 실패한 작업의 로그 끝부분. 읽기만 한다, gitlab 팩). "파이프라인 통과했어?" · "배포 왜 깨졌어?" 같은 말에 쓴다. MR 은 MR 파이프라인이 없으면 머지 커밋의 것을 찾는다 | 보기 |
 | 기획 repo 새로 만들기 | `aidure init-docs <폴더>` 로 뼈대를 만들고 `aidure repo add <폴더> --kind docs` 로 등록 | 팀 |

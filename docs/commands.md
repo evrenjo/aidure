@@ -15,7 +15,7 @@
 | `aidure ai` · `ai show` | 구독·게이트웨이가 바뀌었을 때 | 쓰는 AI(Claude · GPT · 둘 다 · AI 게이트웨이)만 다시 고른다 / 지금 값 보기 |
 | `aidure ai direct claude,gpt` · `gateway [--url <주소> --key-env <변수>]` · `refresh` · `compose mix\|vendor\|single` · `main claude\|gpt` | AI 에게 시킬 때 | 화면 없이 같은 일. `refresh` 는 게이트웨이 모델 목록을 다시 받는다. `--key-env` 를 빼면 이 PC 설정에서 같은 주소의 키 이름(`ANTHROPIC_AUTH_TOKEN` 등)을 찾아 쓴다. `--team` 이면 팀 기본값 |
 | `aidure models` | 필요할 때 | 모델 프로필, 또는 역할별(한 번에 차례로·하나씩)·교차 검토 모델을 **팀 기본값** 또는 **이 PC 만** 바꾼다. 화면 없이 실행하면 표(팀 구성 · 역할별 등급과 출처), `--json` 은 JSON |
-| `aidure approach [sprint\|full\|issue]` | 진행 방식을 바꿀 때 | 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 단계 대신 이슈 보드). 인자 없이 = 지금 값. 기본 단계 그대로인 로드맵은 새 뼈대로 바꾸고, 이슈형으로 바꾸면 고친 로드맵에도 맨 앞에 이슈 보드를 끼운다 (전 단계 표는 아래에 남김) (관리자) |
+| `aidure approach [sprint\|full\|issue]` | 진행 방식을 바꿀 때 | MVP · 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 단계 대신 이슈 보드). 인자 없이 = 지금 값. 기본 단계 그대로인 로드맵은 새 뼈대로 바꾸고, 이슈형으로 바꾸면 고친 로드맵에도 맨 앞에 이슈 보드를 끼운다 (전 단계 표는 아래에 남김) (관리자) |
 | `aidure type [유형] [--approach a] [--code 이름,…]` | 분석·설계를 끝내고 구축 · 고도화로 넘어갈 때 | 같은 워크스페이스에서 유형을 바꾼다: 고칠 repo (현행 → 개발 repo, 화면에서 고름) · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대(지난 로드맵은 아래 「지난 로드맵」 절에 남김) → sync. 기획 · 이슈 repo 와 작업 기록은 그대로 이어진다. 인자 없이 = 지금 값 (관리자) |
 | `aidure team-mode [auto\|fixed]` · `prefer <역할> <claude\|codex>:<모델>` `[--team]` | 팀 구성 방식을 바꿀 때 | 자동(리더가 작업마다 역할·모델) · 고정(프로필대로), 역할별 선호 모델. `--team` 은 팀 기본값(관리자), 없으면 이 PC 만 |
 | `aidure team-mode enforce review off\|warn\|block` `[--repos a,b\|*] [--min-lines N] [--paths p1,p2] --team` · `aidure review status` · `mark` · `skip --reason "<사유>"` | 리뷰 없이 commit · push 하는 것을 잡을 때 | 기본 꺼짐. 켜면 에이전트(Claude Code)가 코드 · 기획 repo 에서 `git commit` · `git push` 할 때 리뷰 기록과 비교해 리뷰 안 된 줄 수가 기준을 넘으면 알리거나(warn) 막는다(block). 리뷰 기록은 reviewer 역할 에이전트 · reviewer 위임 · 교차 검토 때 남고, 리뷰 뒤 고치면 고친 만큼만 다시 센다. `mark` 는 직접 기록, `skip` 은 사용자 승인 뒤 한 번 생략. 핸드오프 기록은 세지 않는다 |
@@ -45,7 +45,7 @@
 | `aidure docs pages [on\|off] [repo]` | 문서 사이트를 Pages 로 올릴지 정할 때 | on = 원격에 맞는 CI 파일 · `docs-site/` 커밋 대상, off = `.gitignore` 에 `/docs-site/`. 인자 없이 = repo 마다 상태 |
 | `aidure docs show <ID>` · `refs <ID>` | 근거를 볼 때 · 결정이 바뀌어 고칠 곳을 찾을 때 | `show` = 그 ID 의 정의 부분만(제목 절 · 표 행 · 문단 · 화면설계서 장). `refs` = 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결]). 에이전트도 큰 문서를 통째로 열지 않고 이것을 쓴다 |
 | `aidure docs refs-quote <파일…>` | 문서 점검의 「파일:줄 참조」 경고가 많을 때 | 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다. `--dry` 는 옮길 곳 수만 |
-| `aidure docs trace` | 기획대로 만들었는지 볼 때 | 기획 ID(`vars.docs.traceIds`, 예: FN)와 코드 주석의 구현 표시를 대조. ⚠ 코드에 표시 없는 ID · ✖ 기획에 정의 없는 ID(오타 · 지운 기능), 각각 파일:줄 |
+| `aidure docs trace` `[--md] [--new]` | 기획대로 만들었는지 볼 때 | 기획 ID(`vars.docs.traceIds`, 예: FN,SCR,API,AC)와 코드의 `@spec` 주석을 대조. ⚠ 코드에 표시 없는 ID · ⚠ 테스트에 없는 수용 기준(AC-) · ✖ 기획에 정의 없는 ID(오타 · 지운 기능), 각각 파일:줄. `--md` = 추적표(ID · 정의 · 코드 · 테스트), `--new` = 새로 만들거나 고친 진입 파일(컨트롤러 · 화면 · 라우트 등) 중 기획 ID 가 없는 것 (커밋 전) |
 | `aidure gitlab pipeline` | MR · 배포 뒤 파이프라인을 볼 때 | 최근 파이프라인 목록과 맨 위(또는 `--id`) 파이프라인의 단계별 작업 상태. `--ref <브랜치>` · `--mr <번호>`(MR 파이프라인이 없으면 머지 커밋의 것) · `--log`(실패한 작업의 로그 끝부분) · `--json`. 읽기만 한다 (gitlab 팩, `GITLAB_TOKEN`) |
 | `aidure board` | 팀 · 프로젝트 현황을 한눈에 볼 때 | 워크스페이스 현황판(로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지)과 기록 쪽을 이 PC 의 `.agents/board/` 에 만들어 연다. 보기 전용 |
 | `aidure screens check [repo]` | 화면설계서를 쓴 뒤 | 근거 ID 가 색인에 있는지 · 화면 ID 중복 · Description 줄이 결론 한 줄인지(60자 넘음 · 날짜 · 결정 경위는 ⚠) · 기능 ID 누락(`vars.screens.functionIds`, 화면 목록의 「화면 없음」 행은 뺀다) · 화면 목록과 장 대조 (이어지는 장 `data-continues` 는 뺀다) |
@@ -61,7 +61,7 @@
 | `aidure list` | 워크스페이스를 찾을 때 | 이 PC 의 워크스페이스 이름·킷 버전·경로. init 으로 만들거나 그 폴더에서 `aidure` 명령을 한 번 쓰면 오른다 (`~/.aidure/workspaces.json`, 지운 폴더는 자동으로 빠진다) |
 | `aidure help [번호\|명령\|--all]` | 명령을 찾을 때 | 인자 없이 = 자주 쓰는 명령과 분류 목록 (터미널이면 분류를 골라 보기). 번호 = 그 분류의 명령, 명령 이름 = 그 명령의 사용법, `--all` = 전체 |
 | `aidure remove [이름] [--force]` | 다시 만들 때 | 이름을 주면 `aidure list` 에서 찾아 어디서든, 없으면 지금 폴더의 워크스페이스를 비운다 (`repos/` 포함, `.git`·README·LICENSE 는 남기고 `.gitignore` 는 킷이 넣은 줄만 걷어 내 그 자리에서 다시 init 할 수 있다). 커밋·push 안 한 작업이 있으면 멈추고, 예/아니오 확인 뒤 실행된다. 워크스페이스가 아닌 곳에서 이름 없이 실행하면 안내만 한다. |
-| `aidure init-docs [폴더]` | 기획 repo 가 없을 때 | 기획자 repo 뼈대 생성 (요구사항·화면·정책·용어집·결정 기록·데이터 설계·md 사본)  기획 repo 를 두지 않는 프로젝트는 `workspace.json` 에 `"docsRepo": false` 를 넣으면 sync 의 "기획 repo 가 없습니다" 경고가 꺼진다 (운영·고도화 유형은 처음부터 경고하지 않는다) |
+| `aidure init-docs [폴더]` | 기획 repo 가 없을 때 | 기획자 repo 뼈대 생성 (읽는 순서대로: 개요 · 아이디어 → 시스템 구성(아키텍처 양식) → 기능(요구 목록 · 영역별 기능 문서 · 업무 규칙) → 화면(목록 · 정책 · 프로토타입) → 데이터 · API → 결정 · 미결, 메뉴 `docs-site.json`)  기획 repo 를 두지 않는 프로젝트는 `workspace.json` 에 `"docsRepo": false` 를 넣으면 sync 의 "기획 repo 가 없습니다" 경고가 꺼진다 (운영·고도화 유형은 처음부터 경고하지 않는다) |
 | `aidure sync` · `check` · `doctor` · `packs` | 필요할 때 | 생성 · 생성물 검사 · 환경 진단 · 팩 목록 |
 | `aidure upgrade [--add 팩]` | 킷 새 버전 후 | 워크스페이스의 `bin/kit.js` 와 팩을 이 킷 버전으로 (project 팩은 그대로). 몇 버전 뒤져도 한 번에 올라가고 그 사이 변경 기록을 모두 보여 준다. 저절로 켜지 않는 것은 한 줄씩 알린다: 그 유형의 기본 팩인데 꺼진 팩(`--add` 로 켬) · 진행 방식 · 새로 감지되는 스택 |
 

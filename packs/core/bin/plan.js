@@ -107,8 +107,8 @@ function report(ws, plan) {
   if (plan.backlog) out.push(`백로그 ${plan.backlog.length}개${plan.backlog.length ? `: ${plan.backlog.slice(0, 5).join(' · ')}${plan.backlog.length > 5 ? ' …' : ''}` : ''}`, '');
   out.push(`**다음** → ${P.nextLine(plan)}`);
   const skill = P.skillOf(stage);
-  if (skill) out.push(`**스킬** → \`${skill}\` (이 단계를 시작할 때 그 스킬의 「진행 방식 합의」 부터)`);
-  if (plan.preset) out.push('', '⚠ 기본 단계 그대로입니다. 프로젝트에 맞게 고칠지 사용자에게 묻는다.');
+  if (skill) out.push(`**스킬** → \`${skill}\` (이 단계를 시작할 때 그 스킬을 따른다. 「진행 방식 합의」 가 있으면 거기부터)`);
+  if (plan.preset) out.push('', `⚠ 기본 단계 그대로입니다. ${P.presetHint(plan)}.`);
   for (const w of P.missingStages(plan, layersOf(ws), (ws.project || {}).type, (ws.project || {}).approach)) out.push('', `⚠ ${w}`);
   return out.join('\n');
 }
@@ -118,13 +118,19 @@ function check(ws, plan, root) {
   const warn = [];
   if (!plan) return ['로드맵(handoffs/PLAN.md)이 없거나 단계 표가 없습니다. aidure plan init 으로 만든다'];
   if (plan.issues) return issueCheck(plan);
-  if (plan.preset) warn.push('로드맵이 기본 단계 그대로입니다. 프로젝트에 맞게 고칠지 사용자에게 묻는다');
+  // 아이디어 단계 중이면 로드맵을 고칠지는 그 대화가 끝난 뒤에 묻는다 (첫 질문이 겹치지 않게)
+  if (plan.preset) warn.push(`로드맵이 기본 단계 그대로입니다. ${P.presetHint(plan)}`);
   warn.push(...P.missingStages(plan, layersOf(ws), (ws.project || {}).type, (ws.project || {}).approach));
+  // 진행 방식과 로드맵 모양이 다르면 (aidure approach 가 손댄 로드맵을 그대로 둔 경우) 단계 표를 고치게 알린다
+  const sprintShape = plan.stages.some((s) => s.name.replace(/\s+/g, '') === '스프린트계획');
+  const ap = (ws.project || {}).approach;
+  const oldEnh = plan.stages.map((s) => s.name).join('|') === P.OLD_ENHANCEMENT.join('|'); // 0.63 전 운영·고도화 기본 단계는 일부러 그대로 둔다
+  if (plan.preset && !oldEnh && ((ap === 'sprint' && !sprintShape) || (ap === 'full' && sprintShape))) warn.push(`진행 방식(${ap === 'sprint' ? 'MVP · 스프린트' : '워터폴 · 전체'})과 로드맵 단계 모양이 다릅니다. 적어 둔 백로그 · 기록은 두고 단계 표만 진행 방식에 맞게 고칠지 사용자에게 묻는다`);
   const doing = plan.stages.filter((s) => s.state === 'doing');
   // 스프린트 끝 날짜(선택)가 지났는데 데모 전이면: 범위를 줄일지 끝 날짜를 고칠지 묻게
   const demo = plan.stages.find((s) => s.name === '데모');
   if (plan.sprint && plan.sprint.end && plan.sprint.end < localDate() && demo && demo.state !== 'done') warn.push(`이번 스프린트 끝 날짜(${plan.sprint.end})가 지났는데 데모 전입니다. 범위를 줄여 데모할지, 끝 날짜를 고칠지 사용자에게 묻는다`);
-  else if (plan.sprint && !plan.sprint.goal && doing.some((s) => s.no > 1)) warn.push('이번 스프린트 목표가 비었습니다. 데모에서 보여 줄 한 줄을 `목표:` 에 적는다');
+  else if (plan.sprint && !plan.sprint.goal && doing.some((s) => s.name.replace(/\s+/g, '') !== '스프린트계획' && !P.isIdea(s.name))) warn.push('이번 스프린트 목표가 비었습니다. 데모에서 보여 줄 한 줄을 `목표:` 에 적는다');
   if (!doing.length && P.doneCount(plan) < plan.stages.length) warn.push('진행(▶) 중인 단계가 없습니다. 지금 단계를 ▶ 로 둔다');
   for (const s of doing) {
     if (!s.start) warn.push(`${s.no}.${s.name}: 시작 날짜가 없습니다 (이번에 생긴 것을 셀 수 없다)`);
@@ -162,9 +168,11 @@ function main() {
         if (cur0.preset && !cur0.issues.rows.length && !/바꾸기 전 로드맵/.test(text)) { fs.writeFileSync(file, `${P.template(type, layers, approach)}\n`); return console.log(`✔ ${P.FILE} 진행 방식에 맞게 다시 만듦 (${want.join(' → ')})`); }
         return console.log(`✔ ${P.FILE} 이슈 보드가 있어 그대로 둔다 (단계형으로 쓰려면 \`## 이슈\` 절을 지우고 단계 표를 둔다)`);
       }
+      // 손댄 흔적: 끝낸 단계 · 첫 단계 밖의 날짜 · 끝 날짜 · 백로그 · 스프린트 목표 · 지난 기록 (첫 단계 시작 날짜는 시작했다는 뜻일 뿐)
+      const touchedOf = (p) => !!p && (p.stages.some((x, i) => x.state === 'done' || x.end || (i > 0 && x.start)) || (p.backlog || []).length > 0 || (p.releases || []).length > 0 || !!(p.sprint && p.sprint.goal));
       if (wantIssue && !(cur0 && cur0.issues)) {
         // 단계형에서 이슈형으로: 기본 뼈대 그대로면 새로, 고친 로드맵은 --switch 일 때만 맨 앞에 이슈 절을 끼운다 (단계 표는 남는다)
-        if (!cur0 || (cur0.preset && !cur0.stages.some((x) => x.state === 'done'))) { fs.writeFileSync(file, `${P.template(type, layers, approach)}\n`); return console.log(`✔ ${P.FILE} 이슈 보드로 다시 만듦 (상태: ${P.ISSUE_STATES.join(' · ')})`); }
+        if (!cur0 || (cur0.preset && !touchedOf(cur0))) { fs.writeFileSync(file, `${P.template(type, layers, approach)}\n`); return console.log(`✔ ${P.FILE} 이슈 보드로 다시 만듦 (상태: ${P.ISSUE_STATES.join(' · ')})`); }
         if (!has('switch')) return console.log(`✔ ${P.FILE} 이미 있음 (그대로 둔다)`);
         const old = text.split('\n').filter((l) => !/^#\s/.test(l) && !l.includes(PRESET)).map((l) => l.replace(/^##\s/, '### '));
         fs.writeFileSync(file, `${P.template(type, layers, approach).trimEnd()}\n\n## 이슈형으로 바꾸기 전 로드맵 (${localDate()}. 읽지 않는다. 필요 없으면 지운다)\n\n${old.join('\n').trim()}\n`);
@@ -179,7 +187,10 @@ function main() {
       }
       // 진행 방식을 바꿔 단계 모양이 다르면: 기본 단계 그대로이고 끝낸 단계가 없을 때만 새 뼈대로
       const cur = P.parse(text);
-      if (cur && cur.preset && !cur.stages.some((x) => x.state === 'done') && cur.stages.map((x) => x.name).join('|') !== want.join('|')) {
+      // 0.74 전에 만든 신규 로드맵에는 아이디어 단계가 없다: 그 단계만 다른 것은 모양이 같다고 본다 (다시 만들면 백로그 · 스프린트 기록이 사라진다)
+      const same = (raw) => { const names = raw.map((n) => (P.isIdea(n) ? P.IDEA_STAGE : n)); return names.join('|') === want.filter((n) => n !== P.IDEA_STAGE || names.includes(P.IDEA_STAGE)).join('|'); };
+      // 손댄 흔적(끝낸 단계 · 날짜 · 백로그 · 스프린트 목표 · 지난 기록)이 있으면 그대로 둔다: 적어 둔 것이 사라지지 않게. 단계 표는 사람(에이전트)이 고친다
+      if (cur && cur.preset && !touchedOf(cur) && !same(cur.stages.map((x) => x.name))) {
         fs.writeFileSync(file, `${P.template(type, layers, approach)}\n`);
         return console.log(`✔ ${P.FILE} 진행 방식에 맞게 다시 만듦 (${want.join(' → ')})`);
       }
@@ -188,7 +199,7 @@ function main() {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, `${P.template(type, layers, approach)}\n`);
     if (approach === 'issue') return console.log(`✔ ${P.FILE} 만듦 (이슈 보드, 상태: ${P.ISSUE_STATES.join(' · ')})`);
-    const extra = want.filter((x) => P.STAGE_SKILLS[x]);
+    const extra = want.filter((x) => P.STACK_STAGES.some((st) => st.name === x));
     return console.log(`✔ ${P.FILE} 만듦 (${approach === 'sprint' ? '스프린트' : type} 기본 단계 ${want.length}개${extra.length ? `, 스택에 따라 ${extra.join(' · ')} 포함` : ''})`);
   }
   const plan = P.read(root);

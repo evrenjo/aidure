@@ -50,8 +50,10 @@ flowchart TD
 flowchart TD
     S(["aidure init"]) --> N["프로젝트명<br/>영문 소문자와 -"]
     N --> T{"시작 유형<br/>(고르는 유형의 근거 · 넣는 repo · AI 가 하는 일을 아래에 보여 줌)"}
-    T -->|"운영·고도화 (SM 포함)"| AP{"진행 방식<br/>이슈형 (운영 · 유지보수) · 스프린트 (고도화) · 전체 (고도화)"}
-    T -->|"신규 구축 · 차세대 전환"| FR
+    T -->|"운영·고도화 (SM 포함)"| AP{"진행 방식<br/>이슈형 (운영 · 유지보수) · MVP · 스프린트 (고도화) · 워터폴 · 전체 (고도화)"}
+    T -->|"신규 구축"| DV{"개발 방식<br/>MVP · 스프린트 (권장) · 워터폴 · 전체<br/>(둘 다 아이디어 · 전체 그림부터)"}
+    T -->|"차세대 전환"| FR
+    DV --> FR
     AP --> FR{"분석·설계 워크스페이스에서 이어 만들까요?<br/>(기본 아니오)"}
     FR -->|"예"| FP["분석·설계 워크스페이스 폴더<br/>그 기획 · 이슈 repo 를 가져옴 (원격이 있으면 주소, 없으면 그 로컬 폴더)<br/>현행 repo 는 목록만 (차세대는 레거시로)"]
     FR -->|"아니오"| C1
@@ -187,7 +189,7 @@ Codex 는 역할 파일(`.codex/agents`)을 하위 에이전트에 적용하지 
 
 팀 구성 모드는 새 워크스페이스가 **자동**(리더가 작업마다 역할 · 등급 · 모델을 골라 구성표를 알리고 시작), `agents.mode` 가 없는 옛 워크스페이스가 **고정**(프로필대로)이다. `aidure team-mode` 로 바꾼다.
 
-진행 방식은 새 워크스페이스가 유형마다 정해진다 (운영·고도화는 init 에서 이슈형 · 스프린트 · 전체 중 고른다): 신규 · 운영·고도화 = **스프린트**(기능 단위 스프린트. 끝까지 동작하는 최소 기능부터 만들고 나머지는 백로그, 스프린트마다 데모 · 회고하며 하나씩 붙임), 차세대 · 분석·설계 = **전체**(전체 범위를 설계한 뒤 구축). `project.approach` 가 없는 옛 워크스페이스는 전체처럼 동작하고, `aidure upgrade` 가 고르는 법을 알린다. `aidure approach` 로 바꾼다. 이슈마다 운영에 반영하는 운영 · 유지보수는 **이슈형**(단계 대신 이슈 보드)이다.
+진행 방식은 새 워크스페이스가 유형마다 정해진다 (신규 구축은 init 에서 MVP · 워터폴, 운영·고도화는 이슈형 · 스프린트 · 전체 중 고른다): 신규 · 운영·고도화 = **MVP · 스프린트**(기능 단위 스프린트. 끝까지 동작하는 최소 기능부터 만들고 나머지는 백로그, 스프린트마다 데모 · 회고하며 하나씩 붙임), 차세대 · 분석·설계 = **워터폴 · 전체**(전체 범위를 설계한 뒤 구축). 신규 구축은 두 방식 모두 첫 단계가 「아이디어 · 전체 그림」(무엇을 왜 만드는지 대화 → 기능 지도 → MVP 범위, 건너뛸 수 있음)이다. `project.approach` 가 없는 옛 워크스페이스는 전체처럼 동작하고, `aidure upgrade` 가 고르는 법을 알린다. `aidure approach` 로 바꾼다. 이슈마다 운영에 반영하는 운영 · 유지보수는 **이슈형**(단계 대신 이슈 보드)이다.
 프로필 선택 화면은 시작 도구와 연결 방식을 반영한 표를 보여 준다.
 역할 에이전트 상한(한 요청에 동시 · 모두)은 프로필마다 정해져 있다 (절약 1·3, 표준 2·5, 최고 3·8). `workspace.json`·`.agents/local.json` 의 `agents.limits` 로 바꾼다. 이 PC 값은 팀 값보다 낮게만 적용된다.
 
@@ -370,7 +372,7 @@ flowchart TD
 | `aidure secret` | 비밀값(토큰): `set <이름> [--global]`(숨김 입력) · `list` · `test <이름>`(권한 · 만료) · `rm` · `import`(옛 telegram.env · gitlab-token · 환경변수에서) · `exec -- <명령>`(그 명령에만 주입). OS 저장소에 프로젝트별 · 전역으로, 값은 출력하지 않는다 |
 | `aidure prefs` | 응답 언어(한국어 · English) · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). `language` · `style` 이 PC · 값 `team` 이 PC 값 지우기 · `--team` 팀 기본값(관리자) · `mermaid install` · `setup` 화면. 인자 없이 = 지금 값 |
 | `aidure timestamp` | 답변 첫 줄 시각 표시 (Claude Code, 기본 켜짐): 요청 받은 시각 yyyy-MM-dd HH:mm:ss. `on\|off` 이 PC · `team` 이 PC 값 지우기 · `--team` 팀 기본값(관리자). 인자 없이 = 지금 값 |
-| `aidure approach` | 진행 방식: 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 이슈 보드). 인자 없이 = 지금 값 (관리자) |
+| `aidure approach` | 진행 방식: MVP · 스프린트(최소 기능부터 기능 단위로 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 이슈 보드). 인자 없이 = 지금 값 (관리자) |
 | `aidure type` | 유형 바꾸기 (분석·설계 → 구축 · 고도화 등): 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대. 인자 없이 = 지금 값 (관리자) |
 | `aidure plan` | 로드맵(`handoffs/PLAN.md`): 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음. 이슈형은 이슈 보드(상태별 건수 · 진행 중 이슈 · 멈춘 이슈 ⚠) (`--short` · `--json` · `--report` 기간 보고 · `init` · `check` 도) |
 | `aidure docs build [repo]` | 기획 repo 의 md · 화면설계서 장 → 같은 경로 구조의 `docs-site/` (정의 ID 앵커 · 근거 색인 · 정의서 폴더마다 ERD). 묶음 · 포함 범위는 `docs-site.json`, 옛 `html/` 은 처음 build 때 옮긴다. `check` 는 md 와 어긋났는지. 둘 다 문서 점검 경고와 mermaid 문법 오류를 낸다. 자세히는 [문서 사이트](docs-site.md) |
@@ -379,7 +381,7 @@ flowchart TD
 | `aidure docs serve [repo]` | `docs-site/` 를 이 PC 에서 웹 주소(`http://127.0.0.1:8000/`)로 보기. 전체 인쇄와 새로고침 없는 이동까지 된다 |
 | `aidure docs pages [on\|off] [repo]` | 문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일(`.gitlab-ci.yml` · `.github/workflows/pages.yml`)을 두고 `docs-site/` 를 커밋 대상으로(원격이 없으면 둘 다), off = `.gitignore` 에 `/docs-site/` (CI 는 두어도 돌지 않는다) |
 | `aidure docs refs-quote <파일…>` | 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다 (`--dry` = 수만) |
-| `aidure docs trace` | 기획 ID(`vars.docs.traceIds`)와 코드 주석의 구현 표시 대조: 코드에 표시 없는 ID(⚠) · 기획에 정의 없는 ID(✖) |
+| `aidure docs trace` | 기획 ID(`vars.docs.traceIds`)와 코드의 `@spec` 주석 대조: 코드에 표시 없는 ID(⚠) · 테스트에 없는 수용 기준(⚠) · 기획에 정의 없는 ID(✖). `--md` 추적표 · `--new` 새 진입 파일 중 ID 없는 것 |
 | `aidure repo add … --group <그룹>` · `aidure repo move <이름> --group <그룹>` | 그룹 폴더 `repos/<그룹>/<이름>`: 더할 때 그룹을 주거나(이미 그룹을 쓰면 화면에서 고름) 있는 repo 를 옮긴다(폴더 · `workspace.json` · 문서의 옛 경로, `--no-group` 은 빼기) (관리자) |
 | `aidure repo remove <이름>` | repo 빼기: `workspace.json` · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 `--delete` 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) (관리자) |
 | `aidure import` | 기존 AI 작업 폴더 훑기 (읽기만): 종류별 분류 · 큰 폴더 · 문서 속 절대경로 · 비밀값 의심 줄. 옮기기는 `import` 스킬 (계획 → 승인 → 반영) |
@@ -389,7 +391,7 @@ flowchart TD
 | `aidure screens check [repo]` | 화면설계서 검사 (screens 팩): 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락(「화면 없음」 행은 뺀다) · 화면 목록과 장 대조 (이어지는 장 `data-continues` 는 뺀다) |
 | `aidure datamodel check [repo]` | 데이터 설계 검사 (datamodel 팩): 참조 대상 · 기본키 · 중복 · 표 형식(✖), 논리명 · 컨벤션(`vars.datamodel`) · 기능 ID 대조 · 논리 참조 대상 · 고정 스키마 기본키(⚠). ERD 는 `aidure docs build` 가 정의서 폴더마다 `erd.html` 로 만든다 |
 | `aidure packs` | 팩 목록 |
-| `aidure init-docs [폴더]` | 기획자 repo 뼈대 (화면 목록 · 장 양식 `_template.html` · Pages CI 포함) |
+| `aidure init-docs [폴더]` | 기획자 repo 뼈대: 개요 · 아이디어 → 시스템 구성(아키텍처) → 기능(요구 목록 · 기능 문서) → 화면(목록 · 정책 · 프로토타입) → 데이터 · API → 결정 · 미결 (메뉴 `docs-site.json` · 장 양식 · Pages CI 포함) |
 
 ## 9. 인수인계
 

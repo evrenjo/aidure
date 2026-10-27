@@ -1,0 +1,71 @@
+{
+  "title": "<프로젝트명> 기획 문서",
+  "groups": [
+    {
+      "group": "개요",
+      "icon": "◆",
+      "files": [
+        "README.md",
+        "00-overview/overview.md",
+        "00-overview/idea.md",
+        "00-overview/*.md"
+      ]
+    },
+    {
+      "group": "시스템 구성",
+      "icon": "⬡",
+      "files": [
+        "10-system/README.md",
+        "10-system/architecture.md",
+        "10-system/*.md"
+      ]
+    },
+    {
+      "group": "기능",
+      "icon": "☰",
+      "files": [
+        "20-features/README.md",
+        "20-features/requirements.md",
+        "20-features/*.md",
+        "25-policies/*.md"
+      ]
+    },
+    {
+      "group": "화면",
+      "icon": "▦",
+      "files": [
+        "30-screens/README.md",
+        "30-screens/**"
+      ]
+    },
+    {
+      "group": "데이터 · API",
+      "icon": "⬢",
+      "files": [
+        "40-data/*",
+        "45-api/*"
+      ]
+    },
+    {
+      "group": "결정 · 미결",
+      "icon": "✎",
+      "files": [
+        "90-decisions/README.md",
+        "90-decisions/open-questions.md",
+        "90-decisions/*.md"
+      ]
+    },
+    {
+      "group": "원본",
+      "icon": "…",
+      "files": [
+        "md/**",
+        "originals/**"
+      ],
+      "collapsed": true
+    }
+  ],
+  "exclude": [
+    "30-screens/prototype/**"
+  ]
+}

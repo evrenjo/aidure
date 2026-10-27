@@ -5,7 +5,7 @@ description: 시스템 구성도(서비스 · DB 와 스키마 · Redis · 메�
 
 # architecture: 시스템 구성도 (단계별 · 서버 사양 포함)
 
-양식은 킷이 준다 (`packs/core/assets/architecture/template.md`). 이 스킬은 내용을 채우는 순서다. 정할 것은 사용자에게 **하나씩** 묻고, 권장안을 첫째 선택지로 둔다. 문서 사이트(`aidure docs build`)가 mermaid 블록을 그림으로 그린다 (확대 · 새 창).
+양식은 킷이 준다 (`packs/core/assets/architecture/template.md`, 기획 repo 뼈대에는 `<기획 repo>/10-system/architecture.md` 로 들어 있다. 옛 뼈대면 그 repo 의 설계 폴더). 이 스킬은 내용을 채우는 순서다. 정할 것은 사용자에게 **하나씩** 묻고, 권장안을 첫째 선택지로 둔다. 문서 사이트(`aidure docs build`)가 mermaid 블록을 그림으로 그린다 (확대 · 새 창).
 
 ## 1. 근거 모으기 (지어내지 않는다)
 
@@ -41,5 +41,5 @@ description: 시스템 구성도(서비스 · DB 와 스키마 · Redis · 메�
 ## 5. 마무리
 
 1. `aidure docs build` 로 그림을 확인한다. mermaid 문법이 틀리면 ✖ 로 알리고 사이트에는 원문과 오류 문구가 보인다.
-2. 머리말 표는 짧게 둔다. 변경은 맨 아래 변경 이력 표에 한 줄씩 쓰고 머리말에 쌓지 않는다.
+2. 머리말 표는 짧게 둔다. 바뀐 이유는 결정 기록(`DEC-…`)에 두고 ID 를 건다. 이력은 git 이 남긴다 (그 프로젝트가 이력 표를 쓰고 있으면 그것을 따른다).
 3. 구성이 바뀌는 결정이 나면 결정 문서에 남기고 이 문서의 해당 단계를 고친다.

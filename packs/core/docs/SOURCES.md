@@ -199,7 +199,7 @@
 | 확인됨/추정/미확인 | 팀 · biome "If evidence is unavailable, state that rather than presenting the claim as fact." |
 | 지어내지 않기 | C09 9곳 · temporal "NEVER assume a library/framework is available", "NEVER assume standard test commands." · langchain "Do not rely on memorized or cached model names" |
 | 한 갈래로 일반화 금지 | 팀 · dotnet "A review comment or an issue flags examples of a problem, not every instance." |
-| 문서는 낡았을 수 있다 | 팀 · langchain "Treat source code and tests as authoritative." · superset "instead of using cached content" |
+| 문서와 다름은 판정 후 한 곳만 | 팀 · langchain "Treat source code and tests as authoritative." · superset "instead of using cached content" · 실제 프로젝트 기획 repo 분석(같은 사실이 7~9개 문서에 다시 쓰여 어긋남) · Ambler "fewest documents with least overlap" |
 | 닫는 주장은 더 강한 근거 | 팀 · deno "If you claim something is missing … search the full diff AND the existing codebase" · uv "NEVER assume … failures are pre-existing" |
 | 완료는 실행한 검증으로, 검사 끄기 금지 | C05 22곳 · C07 13곳 · Claude Code best practices "show evidence rather than asserting success", "don't suppress the error" · Codex best practices "run the relevant checks, confirm the result" |
 | 검증표 | 팀 · dotnet "Say what you built and ran, and what you didn't." |

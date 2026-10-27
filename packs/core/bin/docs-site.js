@@ -10,8 +10,9 @@
  *   hook <repo 폴더>                           기획 repo 의 pre-commit 이 부른다 (aidure docs build 로 만든 적이 없으면 아무것도 안 한다)
  *   show <ID> [--in <파일 조각>] [--all]         그 ID 의 정의 부분만 출력 (문서를 통째로 읽지 않는다). --all = 정의가 여럿이면 모두
  *   refs <ID> [--docs]                         그 ID 가 나오는 곳 (기획 · 코드 · 이슈 repo, 파일:줄). --docs = 기획 repo 만
- *   trace [--ids FN,API] [--all] [--strict]     기획 ID 와 코드의 구현 표시(주석의 ID) 대조: 코드에 없는 ID(⚠) · 기획에 정의 없는 ID(✖, 오타 · 지운 기능).
- *                                              머리말 = --ids, 없으면 vars.docs.traceIds, 그것도 없으면 vars.screens.functionIds. --strict = ✖ 이 있으면 exit 1
+ *   trace [--ids FN,API] [--all] [--strict] [--md] [--new]   기획 ID 와 코드의 구현 표시(@spec 주석의 ID) 대조 (머리말: --ids → vars.docs.traceIds → vars.screens.functionIds → FN,SCR,API,AC). 코드에 없는 ID(⚠) · 기획에 정의 없는 ID(✖, 오타 · 지운 기능) · 테스트에 없는 수용 기준(AC-).
+ *                                              --md = 추적표(ID · 정의 · 코드 · 테스트) · --new = 새로 만들거나 고친 진입 파일 중 기획 ID 가 없는 것
+ *                                              --strict = ✖(또는 --new 의 ⚠)이 있으면 exit 1
  * build · check 는 문서 점검 경고도 낸다: 큰 문서(vars.docs.maxKB) · 문장형 제목 · 긴 코드 블록(vars.docs.codeMax) · 파일:줄 참조 · 머리말에 쌓인 변경 이력 · 여러 문서에 같은 문장 ·
  *   긴 표 칸(vars.docs.cellMax) · 문단형 표(vars.docs.cellAvg) · 표 칸 안 경위 · 그림 없는 큰 문서(vars.docs.figureKB) · ASCII 그림 · 메뉴 「기타」 문서 (「상태: 동결」 문서는 뺀다)
  * 기획 repo 의 docs-site.json (선택): { title, logo, version, source, ink: false(펜 필기 끔), printAll: { autoPrint: false }(전체 인쇄 쪽이 인쇄 창을 열지 않음), groups: [{ group, icon, files: [glob], split: true|[glob], collapsed, tree }], labels: { 'md 경로': '메뉴 이름' }, include: [glob], exclude: [glob], repos: { … } }. 메뉴 묶음 · 상단 바 · 원본 버튼 · 포함 범위.
@@ -542,24 +543,113 @@ function cmdRefs(ws, id) {
 
 function traceIds(ws) {
   const v = (ws && ws.vars) || {};
-  return String(opt('ids') || (v.docs && v.docs.traceIds) || (v.screens && v.screens.functionIds) || '').split(',').map((x) => x.trim()).filter(Boolean);
+  // --ids → vars.docs.traceIds → vars.screens.functionIds (옛 설정 그대로) → 기획 repo 뼈대의 FN,SCR,API. 수용 기준은 cmdTrace 가 기본값일 때만 더한다
+  const pick = opt('ids') || (v.docs && v.docs.traceIds) || (v.screens && v.screens.functionIds) || 'FN,SCR,API';
+  return [...new Set(String(pick).split(',').map((x) => x.trim()).filter(Boolean))];
 }
 
 /** trace: 기획 ID ↔ 코드의 구현 표시 */
+// 테스트 파일 (언어마다 흔한 꼴). 수용 기준(AC-) 은 테스트에, 나머지는 코드에 구현 표시가 있어야 한다
+const TEST_FILE = /(^|\/)(tests?|__tests__|androidTest|testing|e2e|cypress|playwright)\/|\.cy\.[jt]sx?$|[._-](test|spec)\.[a-z]+$|[a-z0-9](Test|Tests|IT)\.(java|kt|swift|cs|scala|php)$|[a-z0-9]Spec\.(kt|scala)$|_test\.(go|py|dart)$|(^|\/)test_[^/]*\.py$/; // 대문자 Test 만 (Latest · Contest 는 테스트가 아니다)
+// 진입 파일 (화면 · API · 배치 · 소비자). 새로 만들거나 고친 것에 기획 ID(@spec)가 없으면 --new 가 알린다
+const ENTRY_FILE = /[A-Za-z0-9](Controller|Resource|Handler|Endpoint|Router|Job|Batch|Scheduler|Consumer)\.(java|kt|swift|dart|ts|js|py|cs|go)$|_(handler|controller|router)\.(go|py)$|(Screen|Page|Activity)\.(tsx|jsx|vue|svelte|swift|dart|kt|java|cs)$|\.(controller|resolver|gateway|processor)\.ts$|(^|\/)(page|route|actions)\.[jt]sx?$|(^|\/)(views|routers?|api)\.py$|(^|\/)(routes?|controllers?|handlers?|endpoints?)\/[^/]+\.(ts|js|py|go|kt|java)$/; // api/ 폴더는 화면 쪽 API 클라이언트일 때가 많아 넣지 않는다
+
+/** --new: 코드 repo 에서 새로 만들거나 고친 진입 파일(커밋 안 한 것 + 아직 push 안 한 커밋) 중 기획 ID 가 없는 것. 반환 { missing, unread } */
+function untracedEntries(code, re) {
+  const missing = [];
+  const unread = [];
+  const noRemote = [];
+  for (const r of code) {
+    if (!fs.existsSync(r.dir)) continue;
+    const git = (...a) => { try { return execFileSync('git', ['-C', r.dir, '-c', 'core.quotePath=false', ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }); } catch { return null; } };
+    const top = (git('rev-parse', '--show-toplevel') || '').trim();
+    if (!top) { unread.push(`${r.name}: git 으로 읽지 못함 (저장소가 아니거나 권한 · safe.directory 문제)`); continue; }
+    const files = new Set();
+    // 커밋 안 한 것 (-z: 따옴표 · 이스케이프 없는 경로, -- . : 이 repo 폴더 안만). 지운 것은 뺀다
+    const stOut = git('status', '--porcelain', '-z', '-uall', '--', '.');
+    if (stOut === null) unread.push(`${r.name}: 커밋하지 않은 파일을 읽지 못함 (git status 실패)`);
+    const st = (stOut || '').split('\0');
+    for (let i = 0; i < st.length; i++) {
+      const e = st[i];
+      if (!e) continue;
+      const xy = e.slice(0, 2);
+      if (/[RC]/.test(xy)) i++; // 이름 바꾸기 · 복사는 다음 칸이 옛 이름
+      if (!/D/.test(xy)) files.add(e.slice(3));
+    }
+    // 아직 push 안 한 커밋 = 어느 원격 브랜치에도 없는 커밋 (남이 올린 변경 · 이미 올린 커밋은 세지 않는다).
+    // 원격이 없으면 커밋하지 않은 것만 본다 (전체 기록을 다 보면 옛 진입 파일이 모두 나온다. 전체는 aidure docs trace)
+    // 원격 브랜치(받아 온 것)가 하나도 없으면 원격이 없는 것으로 본다 (원격만 추가하고 push 전이면 전체 기록이 잡힌다)
+    const remote = (git('for-each-ref', '--count=1', '--format=%(refname)', 'refs/remotes') || '').trim();
+    const hasHead = git('rev-parse', '--verify', '-q', 'HEAD') !== null;
+    const out = remote && hasHead ? git('log', '--name-only', '--diff-filter=AMR', '--format=', '-z', 'HEAD', '--not', '--remotes', '--', '.') : '';
+    if (out === null) unread.push(`${r.name}: push 안 한 커밋을 읽지 못함 (git log 실패)`);
+    if (!remote) noRemote.push(r.name);
+    for (const f of (out || '').split('\0')) if (f.trim()) files.add(f.trim());
+    for (const f of files) {
+      if (!ENTRY_FILE.test(f) || TEST_FILE.test(f)) continue;
+      let text = null;
+      if (!fs.existsSync(path.join(top, f))) continue; // 그 뒤에 지운 파일
+      try { text = fs.readFileSync(path.join(top, f), 'utf8'); } catch { unread.push(`${r.name}/${f}`); continue; }
+      re.lastIndex = 0;
+      const realDir = (() => { try { return fs.realpathSync(r.dir); } catch { return r.dir; } })(); // git 은 실제 경로를 준다 (/var → /private/var 같은 링크)
+      if (!re.test(text)) missing.push(`${r.name}/${path.relative(realDir, path.join(top, f)).split(path.sep).join('/')}`); // repo 폴더 기준 (trace 와 같게)
+    }
+  }
+  return { missing, unread, noRemote };
+}
+
 function cmdTrace(ws) {
-  const ids = traceIds(ws);
+  // 수용 기준 머리말 (코드가 아니라 테스트에 있어야 하는 ID): vars.docs.acceptanceIds, 기본 AC
+  // 대조 머리말을 정하지 않았을 때만 수용 기준 머리말을 더한다 (정한 워크스페이스에 새 머리말이 끼어 오탐 · --strict 실패가 생기지 않게). acceptanceIds: "" 면 끈다
+  const dv = ((ws && ws.vars && ws.vars.docs) || {});
+  const acPre = String(dv.acceptanceIds === undefined ? 'AC' : dv.acceptanceIds).split(',').map((x) => x.trim()).filter(Boolean);
+  const isAc = (id) => acPre.some((p) => id.startsWith(`${p}-`));
+  const configured = !!(opt('ids') || dv.traceIds || (ws && ws.vars && ws.vars.screens && ws.vars.screens.functionIds)); // 옛 워크스페이스는 정한 머리말만 본다
+  const ids = [...new Set([...traceIds(ws), ...(configured ? [] : acPre)])];
   if (!ids.length) throw new Error('대조할 ID 머리말이 없습니다. aidure docs trace --ids FN 또는 workspace.json 의 vars.docs.traceIds (예: "FN")');
-  const docs = targets(ws, null);
   const code = ((ws && ws.repos) || []).filter((r) => (r.kind || 'code') === 'code');
+  const hasDocs = ((ws && ws.repos) || []).some((r) => r.kind === 'docs');
+  if (has('new') && (!code.length || !hasDocs)) return console.log(`✔ ${!code.length ? '코드 repo' : '기획 repo'}가 없어 기획 ID 를 대조하지 않습니다`); // 커밋 전 확인이 기획 없는 워크스페이스를 막지 않게
   if (!code.length) throw new Error('코드 repo(kind: code)가 없습니다');
+  if (has('new')) { // 새 진입 파일에 기획 ID 가 있나 (커밋 전 확인)
+    const { missing: list, unread, noRemote } = untracedEntries(code, DR.prefixRe(ids));
+    if (noRemote.length) console.log(`  원격 브랜치를 받아 온 적이 없는 repo(${noRemote.join(', ')})는 커밋하지 않은 파일만 봤습니다 (기획에 정의가 있는지는 aidure docs trace)`);
+    if (unread.length) console.log(`⚠ 읽지 못해 보지 못한 진입 파일 ${unread.length}개: ${unread.slice(0, 10).join(', ')}`);
+    if (unread.length && has('strict')) process.exitCode = 1; // 보지 못한 것이 있으면 통과로 치지 않는다
+    if (!list.length) return console.log(`${unread.length ? '…' : '✔'} 새로 만들거나 고친 진입 파일에 기획 ID(${ids.join(', ')})가 ${unread.length ? '읽은 것은 ' : ''}모두 있습니다`);
+    console.log(`⚠ 기획 ID 가 없는 새 진입 파일 ${list.length}개 (머리 주석에 // @spec <ID> 를 단다. 기획에 없는 기능이면 사용자에게 확인):`);
+    for (const f of list) console.log(`  ${f}`);
+    if (has('strict')) process.exitCode = 1;
+    return;
+  }
+  const docs = targets(ws, null); // --new 는 기획 repo 를 읽지 않는다 (기획 repo 가 없어도 된다)
   const res = DR.trace(docs, code, ids);
   const all = has('all');
+  // 코드 · 테스트 나눠 세기: 수용 기준(AC-)은 테스트에 있어야 한다
+  const parts = new Map([...res.found].map(([id, at]) => [id, { code: at.filter((x) => !TEST_FILE.test(x.rel)), test: at.filter((x) => TEST_FILE.test(x.rel)) }]));
+  const split = (id) => parts.get(id) || { code: [], test: [] };
+  if (has('md')) { // 추적표 (기획 repo 에 두려면 > 파일로 저장)
+    const rows = [...res.defined].map(([id, d]) => { const s2 = split(id); const fmt = (l) => { const u = [...new Set(l.map((x) => `${x.repo}/${x.rel}`))]; return u.length ? u.slice(0, 3).map((x) => `\`${x}\``).join('<br>') + (u.length > 3 ? ` 외 ${u.length - 3}` : '') : '없음'; }; return `| ${id} | ${d.rel} | ${fmt(s2.code)} | ${fmt(s2.test)} |`; });
+    console.log(['# 추적표', '', `> 생성: aidure docs trace --md (머리말 ${ids.join(', ')}). 손으로 고치지 않는다`, '', '| ID | 정의 | 코드 | 테스트 |', '|---|---|---|---|', ...rows, ''].join('\n'));
+    return;
+  }
+  // 수용 기준(AC-)은 테스트에 있어야 한다: 어디에도 없거나 코드에만 있으면 「테스트에 없는 수용 기준」 으로 묶는다
+  // 동결 · 「다음 스프린트」 는 세지 않는다. 수용 기준은 테스트에, 나머지(기능 · 화면 · API)는 테스트가 아닌 코드에 표시가 있어야 한다 (--md 의 칸과 같게)
+  const active = [...res.defined].filter(([, d]) => !d.frozen && !d.later).map(([id]) => id);
+  const acActive = active.filter(isAc);
+  const noTest = acActive.filter((id) => !split(id).test.length);
+  const codeActive = active.filter((id) => !isAc(id));
+  res.missing = codeActive.filter((id) => !split(id).code.length);
   const many = (list, n) => (all || list.length <= n ? list : [...list.slice(0, n), `… 외 ${list.length - n}개 (모두: --all)`]);
-  const total = res.defined.size - res.skipped.frozen - res.skipped.later;
-  const skip = [res.skipped.later && `「다음 스프린트」 ${res.skipped.later}`, res.skipped.frozen && `동결 문서 ${res.skipped.frozen}`].filter(Boolean).join(' · ');
+  const total = codeActive.length; // 수용 기준은 아래 「테스트」 로 따로 센다
+  const nonAc = [...res.defined].filter(([id]) => !isAc(id)).map(([, d]) => d); // 아래 비율은 기능 · 화면 · API ID 만
+  const later = nonAc.filter((d) => d.later).length;
+  const frozen = nonAc.filter((d) => d.frozen && !d.later).length;
+  const skip = [later && `「다음 스프린트」 ${later}`, frozen && `동결 문서 ${frozen}`].filter(Boolean).join(' · ');
+  if (!configured) console.log(`  머리말을 정하지 않아 기획 repo 뼈대의 기본값 ${ids.join(',')} 로 봅니다 (바꾸기: workspace.json vars.docs.traceIds)`);
   console.log(`기획 ID 대조 (머리말 ${ids.join(', ')} · 기획 ${docs.map((t) => t.name).join(', ')} · 코드 ${code.map((r) => r.name).join(', ')})`);
   if (!res.defined.size) console.log(`정의된 ID 가 없습니다 (머리말 ${ids.join(', ')}: 제목 · 표 첫 칸 · **ID** 문단 · 화면설계서 장). 머리말이 맞는지 확인: --ids 또는 vars.docs.traceIds`);
-  if (res.defined.size) console.log(`${res.missing.length ? '⚠' : '✔'} 코드에 구현 표시가 있는 ID ${total - res.missing.length}/${total}${skip ? ` (뺀 것: ${skip})` : ''}`);
+  if (total) console.log(`${res.missing.length ? '⚠' : '✔'} 코드에 구현 표시가 있는 ID ${total - res.missing.length}/${total}${skip ? ` (뺀 것: ${skip})` : ''}`);
   if (res.missing.length) {
     console.log(`⚠ 코드에 표시 없음 ${res.missing.length}개 (아직 안 만들었거나, 만들었는데 주석에 ID 를 안 적음):`);
     for (const id of many(res.missing, 30)) { const d = res.defined.get(id); console.log(d ? `  ${id}  ${d.repo}/${d.rel}:${d.line}` : `  ${id}`); }
@@ -569,7 +659,13 @@ function cmdTrace(ws) {
     for (const u of many(res.unknown, 30)) console.log(typeof u === 'string' ? `  ${u}` : `  ${u.id}  ${u.repo}/${u.rel}:${u.line}`);
     if (has('strict')) process.exitCode = 1;
   }
-  if (!res.found.size && total) console.log('  구현한 코드의 함수 · 클래스 머리 주석에 기획 ID 를 한 번 적으면 대조된다 (예: // FN-001 수동 주문)');
+  if (acActive.length) console.log(`${noTest.length ? '⚠' : '✔'} 테스트에 표시가 있는 수용 기준 ${acActive.length - noTest.length}/${acActive.length}`);
+  if (noTest.length) {
+    console.log(`⚠ 테스트에 없는 수용 기준 ${noTest.length}개 (테스트 이름 · 태그 · 주석에 @spec <ID> 를 단다):`);
+    for (const id of many(noTest, 30)) console.log(`  ${id}`);
+  }
+  if (!res.found.size && total) console.log('  구현한 코드의 진입점 머리 주석에 기획 ID 를 한 번 적으면 대조된다 (예: // @spec FN-ORD-003 SCR-ORD-01)');
+  console.log('  추적표: aidure docs trace --md · 새 진입 파일 확인: aidure docs trace --new');
 }
 
 /** 크기 한 줄: docs-site/ 전체 · 묶음(repos/<이름> · 첫 폴더)별, 워크스페이스 루트면 repo 마다 넣은 방식 */
@@ -720,7 +816,7 @@ async function main() {
     if (cmd === 'trace') return cmdTrace(ws);
     if (cmd === 'pages') return cmdPages(ws);
     if (cmd === 'serve') return cmdServe(ws);
-    console.log('사용법: aidure docs build [repo|폴더] [--out docs-site] [--force] · pages [on|off] [repo|폴더] · check [repo|폴더] · serve [repo|폴더] [--port 8000] [--open] · show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs] · refs-quote <md 파일…> [--dry] · trace [--ids FN] [--all] [--strict]');
+    console.log('사용법: aidure docs build [repo|폴더] [--out docs-site] [--force] · pages [on|off] [repo|폴더] · check [repo|폴더] · serve [repo|폴더] [--port 8000] [--open] · show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs] · refs-quote <md 파일…> [--dry] · trace [--ids FN] [--all] [--strict] [--md] [--new]');
     process.exitCode = cmd ? 1 : 0;
   } catch (e) {
     console.error(`✖ ${e.message}`);

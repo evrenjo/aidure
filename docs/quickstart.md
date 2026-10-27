@@ -34,7 +34,7 @@ Claude·GPT 를 모두 구독하거나 AI 게이트웨이를 쓰면 역할마다
 |---|---|
 | 워크스페이스 repo (예: `order`) | GitLab·GitHub 에 빈 repo 를 만든다 |
 | 코드 repo (예: `order-api` · `order-web`) | 만들지 않아도 된다. init 에서 이름만 입력하면 새로 만든다 |
-| 기획 repo | `aidure init-docs plan` 으로 뼈대(요구사항 · 화면 · 정책 · 용어집 · 결정 기록)를 만들어 push 한다. 나중에 해도 된다 |
+| 기획 repo | `aidure init-docs plan` 으로 뼈대(개요 · 시스템 구성 · 기능 · 화면 · 데이터 · API · 결정)를 만들어 push 한다. 나중에 해도 된다 |
 
 **② 워크스페이스 만들기**
 
@@ -70,7 +70,8 @@ aidure sync      # workspace.json 에 원격 주소를 기록한다 → commit �
 aidure start
 ```
 
-1. 기획자가 기획 repo 에 요구사항을 쓴다 (`01-requirements`, Word·Excel 원본은 `originals`, md 사본은 `md`).
+1. 신규 구축이면 첫 단계 「아이디어 · 전체 그림」 에서 무엇을 왜 만드는지 AI 와 대화해 기능 지도와 MVP 범위를 정한다 (`idea` 스킬, 정해져 있으면 건너뛴다).
+1. 기획자가 기획 repo 에 요구 목록 · 기능 문서를 쓴다 (`20-features`, Word·Excel 원본은 `originals`, md 사본은 `md`).
 2. 에이전트에게 요구사항 ID 로 시킨다: "REQ-ORD-001 주문 목록 화면 만들어줘".
 3. 에이전트가 영향 범위 · 할 일 · 검증 계획을 먼저 보이고, 필요하면 역할 에이전트(분석 · 설계 · 구현 · 테스트 · 리뷰)를 불러 진행한다.
 4. "리뷰" 로 변경을 검토받고, 하루 끝에 "핸드오프".
