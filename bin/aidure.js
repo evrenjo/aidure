@@ -46,6 +46,7 @@
  *   aidure datamodel check [repo|폴더]   데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
  *   aidure secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>   비밀값(토큰): OS 저장소(키체인 · 자격 증명 관리자 · libsecret)에 프로젝트별 · 전역으로. 값은 숨김 입력, 어디에도 출력하지 않는다
  *   aidure gitlab pipeline [--repo R] [--ref 브랜치 | --mr 번호 | --id ID] [--limit N] [--log [줄 수]] [--json]   GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분. MR 은 머지 커밋의 파이프라인도 찾는다
+ *   aidure prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup   응답 언어 · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). 이 PC 값이 팀 값보다 먼저. 인자 없이 = 지금 값
  *   aidure timestamp [on|off|team] [--team]   답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss) 표시 (Claude Code, 기본 켜짐). 이 PC 값이 팀 값보다 먼저, team = 이 PC 값 지우기. 인자 없이 = 지금 값
  *   aidure type [유형] [--approach a] [--code 이름,…]   유형 바꾸기: 분석·설계 → 구축 · 고도화 등. 유형 팩 · 현행 repo 중 고칠 것(개발 repo 로) · 진행 방식 · 로드맵 새 뼈대 (관리자)
  *   aidure approach [sprint|full|issue]   진행 방식: 스프린트(최소 기능부터, 스프린트마다 데모하며 하나씩) · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수, 이슈 보드). 바꾸면 로드맵도 맞춘다 (관리자)
@@ -2210,6 +2211,111 @@ function cmdTimestamp(argv) {
   show();
 }
 
+// ───────── 응답 언어 · 대화 스타일 (aidure prefs) ─────────
+const chatPrefs = require(path.join(KIT_ROOT, 'packs', 'core', 'lib', 'chatprefs.js'));
+const MERMAID_PLUGIN = { id: 'claude-mermaid@claude-mermaid', marketplace: 'veelenga/claude-mermaid', repo: 'https://github.com/veelenga/claude-mermaid' };
+
+/** claude-mermaid 플러그인이 이 PC 의 Claude Code 에 설치됐나 (null = 확인 못 함) */
+function mermaidInstalled() {
+  if (!hasCommand('claude')) return null;
+  try {
+    const r = spawnSync(findCli('claude'), ['plugin', 'list'], { encoding: 'utf8', timeout: 15000 });
+    if (r.status !== 0) return null;
+    return /claude-mermaid/.test(`${r.stdout}${r.stderr}`);
+  } catch { return null; }
+}
+
+/** claude-mermaid 설치 (Claude Code CLI 의 plugin 명령). 반환: 성공 여부 */
+function installMermaid() {
+  const cli = findCli('claude');
+  if (!cli) { console.error('Claude Code(claude) 가 없어 설치하지 못했습니다'); return false; }
+  for (const args of [['plugin', 'marketplace', 'add', MERMAID_PLUGIN.marketplace], ['plugin', 'install', MERMAID_PLUGIN.id]]) {
+    const r = spawnSync(cli, args, { stdio: 'inherit', timeout: 120000 });
+    if (r.status !== 0 && args[1] !== 'marketplace') return false; // 마켓플레이스가 이미 있으면 실패해도 이어 간다
+  }
+  return true;
+}
+
+function showPrefs(root) {
+  const r = chatPrefs.resolve(root);
+  const where = { local: '이 PC', team: '팀', default: '기본' };
+  const L = (k) => (k ? chatPrefs.LANGUAGES[k].label : '-');
+  const S = (k) => (k ? chatPrefs.STYLES[k].label : '-');
+  console.log(`응답 언어: ${L(r.language)} (${where[r.from.language]})  · 이 PC ${L(r.local.language)} · 팀 ${L(r.team.language)}`);
+  console.log(`대화 스타일: ${S(r.style)} (${where[r.from.style]})  · 이 PC ${S(r.local.style)} · 팀 ${S(r.team.style)}`);
+  const m = mermaidInstalled();
+  console.log(`그림 미리보기(claude-mermaid): ${m === null ? '확인 못 함 (Claude Code 없음)' : m ? '설치됨: 세션에 mermaid_preview 가 있으면 브라우저로 띄움' : '없음: 텍스트 그림으로 (설치: aidure prefs mermaid install)'}`);
+  console.log('  바꾸기: aidure prefs language ko|en · aidure prefs style learn|normal|expert · 이 PC 값 지우기: team · 팀 기본값: --team (관리자)');
+}
+
+/** 저장 → sync. key = language | style, value = 값 | 'team'(이 PC 값 지우기) */
+function savePref(root, key, value, team) {
+  if (team) {
+    requireAdmin(root, '응답 언어 · 대화 스타일 팀 기본값 변경');
+    const wsFile = path.join(root, 'workspace.json');
+    const w = JSON.parse(read(wsFile));
+    w.chat = { ...(w.chat || {}), [key]: value };
+    fs.writeFileSync(wsFile, `${JSON.stringify(w, null, 2)}\n`);
+  } else {
+    const chat = { ...(readLocal(root).chat || {}) };
+    if (value === 'team') delete chat[key]; else chat[key] = value;
+    writeLocal(root, { chat });
+  }
+}
+
+/** 설치 화면 질문: 응답 언어 → 대화 스타일 → (Claude 이고 플러그인이 없으면) 그림 미리보기. onlyMissing 이면 이 PC 값이 없는 것만 묻는다 */
+async function choosePrefs(root, { onlyMissing = false } = {}) {
+  const r = chatPrefs.resolve(root);
+  if (!onlyMissing || !r.local.language) {
+    const v = ask(await choose({ message: '응답 언어', hint: 'AI 가 답하는 언어입니다. 진행 알림 · 중간 설명 · 결과 보고까지 이 언어로 씁니다. 나중에 aidure prefs language 로 바꿉니다.', initialValue: r.language,
+      options: Object.entries(chatPrefs.LANGUAGES).map(([value, x]) => ({ value, label: x.label })) }));
+    savePref(root, 'language', v, false);
+  }
+  if (!onlyMissing || !r.local.style) {
+    const v = ask(await choose({ message: '대화 스타일', hint: '설명을 얼마나 자세히 할지 정합니다. 나중에 aidure prefs style 로 바꿉니다.', initialValue: r.style,
+      options: Object.entries(chatPrefs.STYLES).map(([value, x]) => ({ value, label: x.label, hint: x.hint })) }));
+    savePref(root, 'style', v, false);
+  }
+  const conf = readLocal(root);
+  if (conf.agent === 'claude' && !conf.mermaidAsked && mermaidInstalled() === false) {
+    const yes = ask(await yesNo({ message: '그림을 브라우저로 띄우는 claude-mermaid 플러그인을 설치할까요?', hint: `커뮤니티 플러그인(${MERMAID_PLUGIN.repo})입니다. 없으면 터미널에 텍스트 그림으로 그립니다. 나중에 aidure prefs mermaid install.`, initialValue: false }));
+    writeLocal(root, { mermaidAsked: true });
+    if (yes && installMermaid()) p.log.success('claude-mermaid 를 설치했습니다. 새 세션부터 적용됩니다');
+  }
+  runWorkspaceKit(root, ['sync', '--quiet']);
+}
+
+/** aidure prefs [language|style <값|team> [--team] | mermaid [install] | setup] */
+async function cmdPrefs(argv) {
+  const root = locateWorkspace();
+  const team = argv.includes('--team');
+  const [what, want] = argv.filter((a) => a !== '--team');
+  if (!fs.existsSync(path.join(root, 'packs', 'core', 'lib', 'chatprefs.js'))) fail('이 워크스페이스의 킷이 응답 언어 · 대화 스타일을 모릅니다. aidure upgrade 를 먼저 하세요');
+  const usage = '사용법: aidure prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup';
+  if (!what) return showPrefs(root);
+  if (what === 'setup') {
+    if (!process.stdin.isTTY) fail('setup 은 터미널에서만 됩니다. 채팅에서는 aidure prefs language · style');
+    clack();
+    await choosePrefs(root);
+    p.outro('저장했습니다. 언어 줄은 다음 요청부터, 출력 스타일은 새 세션부터 적용됩니다');
+    return showPrefs(root);
+  }
+  if (what === 'mermaid') {
+    if (want === 'install') { if (!installMermaid()) fail('claude-mermaid 설치에 실패했습니다. Claude Code 안에서 /plugin marketplace add veelenga/claude-mermaid → /plugin install claude-mermaid@claude-mermaid'); console.log('✔ claude-mermaid 를 설치했습니다. 새 세션부터 적용됩니다'); return; }
+    if (want) fail(usage);
+    const m = mermaidInstalled();
+    console.log(m ? '✔ claude-mermaid 설치됨' : m === false ? '없음: aidure prefs mermaid install' : '확인 못 함 (Claude Code 없음)');
+    console.log(`  ${MERMAID_PLUGIN.repo} (커뮤니티 플러그인). 세션에 mermaid_preview 도구가 있으면 그림을 브라우저로 띄우고, 없으면 텍스트 그림으로 그립니다`);
+    return;
+  }
+  const valid = what === 'language' ? chatPrefs.LANGUAGES : what === 'style' ? chatPrefs.STYLES : null;
+  if (!valid || !want || !(valid[want] || (want === 'team' && !team))) fail(usage);
+  savePref(root, what, want, team);
+  runWorkspaceKit(root, ['sync', '--quiet']);
+  console.log(`✔ ${team ? '팀 기본값(workspace.json. commit·push 하면 팀 적용)' : '이 PC(.agents/local.json)'} 에 저장했습니다. 언어 줄은 다음 요청부터, 출력 스타일은 새 세션부터`);
+  showPrefs(root);
+}
+
 function cmdTeamMode(argv) {
   const root = locateWorkspace();
   const team = argv.includes('--team');
@@ -2487,6 +2593,7 @@ async function cmdInstall() {
   if (process.stdin.isTTY) {
     clack();
     ask(await chooseAgent(root, { force: !readLocal(root).agent ? true : false, progress: true }));
+    await choosePrefs(root, { onlyMissing: true });
     await joinTeam(root);
     const cur = readLocal(root);
     p.outro(`메인 에이전트: ${AGENTS[cur.agent].label}${cur.args && cur.args.length ? ` (${cur.args.join(' ')})` : ''}: 바꾸려면 aidure agent`);
@@ -2686,7 +2793,7 @@ function unsavedWork(dir) {
 // ───────────────────────── reset ─────────────────────────
 
 const RESET_ITEMS = [
-  { value: 'local', label: '이 PC 설정', hint: '.agents/local.json: 메인 에이전트 · 인자 · 모델 프로필 · 역할 상한 · 알림 · 채널 · 질문 방식' },
+  { value: 'local', label: '이 PC 설정', hint: '.agents/local.json: 메인 에이전트 · 인자 · 모델 프로필 · 역할 상한 · 응답 언어 · 대화 스타일 · 알림 · 채널 · 질문 방식' },
   { value: 'channel', label: '텔레그램 채널', hint: '이 프로젝트 봇 상태 폴더 · 플러그인 설치(local)' },
   { value: 'state', label: '세션 임시 기록', hint: '위임 작업 결과 · 훅 상태 (워크스페이스 밖 임시 폴더)' },
   { value: 'guide', label: '개인 지침', hint: '.agents/local.md (직접 쓴 내용이 지워진다)' },
@@ -3016,7 +3123,7 @@ function upgradeSummary(root, from) {
 /** 도움말 분류: [제목, 한 줄 설명, 명령(첫 낱말 · 「team-mode enforce」 처럼 두 낱말)]. 도움말 머리의 명령은 모두 어딘가에 들어가야 한다 (npm test) */
 const HELP_GROUPS = [
   ['시작 · 설치', '워크스페이스 만들기 · 받기 · 작업 시작 · 킷 새 버전', ['init', 'init-docs', 'install', 'start', 'upgrade', 'list', 'remove', 'help']],
-  ['AI · 모델', '연결 방식 · 메인 에이전트 · 모델 프로필', ['agent', 'ai', 'models', 'timestamp']],
+  ['AI · 모델', '연결 방식 · 메인 에이전트 · 모델 프로필 · 응답 언어 · 대화 스타일', ['agent', 'ai', 'models', 'prefs', 'timestamp']],
   ['프로젝트 설정', '유형 · 진행 방식 · repo · 스택 · 규칙 · 생성물', ['type', 'approach', 'repo', 'detect', 'rules', 'sync', 'check', 'doctor', 'packs', 'reset']],
   ['팀', '팀 현황 · 명단 · 팀 구성', ['team', 'team-mode']],
   ['팀 규칙 점검', '리뷰 확인 · 훅이 알리거나 막는 수준', ['review', 'team-mode enforce']],
@@ -3248,6 +3355,7 @@ async function main() {
     case 'approach': return cmdApproach(rest);
     case 'type': return cmdType(rest);
     case 'timestamp': return cmdTimestamp(rest);
+    case 'prefs': return cmdPrefs(rest);
     case 'gitlab': return runWsTool('gitlab-mr.js', rest, 'gitlab');
     case 'review': return runWsTool('review.js', rest);
     case 'import': return runWsTool('import-scan.js', rest.map((a) => (a.startsWith('--') ? a : path.resolve(a)))); // 도구는 워크스페이스 루트에서 돈다

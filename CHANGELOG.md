@@ -2,6 +2,16 @@
 
 `aidure upgrade` 가 올린 버전 사이의 항목을 표로 보여 준다. 배포할 때 이번 버전 항목을 맨 위에 더한다 (`## 버전` 아래 `| 구분 | 내용 |` 표, 한 줄씩 짧게).
 
+## 0.72.0
+
+| 구분 | 내용 |
+|---|---|
+| 기능 | 응답 언어 (한국어 · English): 진행 알림 · 중간 설명까지 고른 언어로. Claude `language` 설정 · 개인 지침 맨 앞 · 요청마다 한 줄 |
+| 기능 | 대화 스타일: 학습(단계마다 왜 · 어떻게) · 일반(지금 수준) · 전문가(현업 용어 · 결과 · 근거 표와 그림). Claude 는 출력 스타일로도 |
+| 기능 | 그림: claude-mermaid 가 있으면 브라우저로 띄우고, 없으면 텍스트 그림 |
+| 명령 | `aidure prefs` · `language ko\|en` · `style learn\|normal\|expert` · `--team` · `mermaid install` · `setup` |
+| 화면 | `aidure install` 이 이 PC 의 응답 언어 · 대화 스타일과 claude-mermaid 설치를 물음 |
+
 ## 0.71.1
 
 | 구분 | 내용 |

@@ -243,8 +243,15 @@ flowchart TD
     HK --> SY["sync: AGENTS.md · CLAUDE.md · .claude · .codex · .agents 생성<br/>repos/* 에 commit-msg 훅 (AI 서명 제거)"]
     SY --> Q{"이 PC 에 연결 방식이 정해졌나"}
     Q -->|"아니오 (처음)"| AG["AI 연결 방식 · 항상 붙일 인자 (5절)"]
-    Q -->|"예"| J
-    AG --> J{"원격에 내 합류 기록이 있나"}
+    Q -->|"예"| PQ
+    AG --> PQ{"이 PC 에 응답 언어 · 대화 스타일이 있나"}
+    PQ -->|"없음"| PL["응답 언어 (한국어 · English)<br/>대화 스타일 (학습 · 일반 · 전문가)"]
+    PL --> PM{"Claude Code 이고 claude-mermaid 가 없음 (처음 한 번)"}
+    PM -->|"예"| PMQ["그림을 브라우저로 띄우는 claude-mermaid 플러그인을 설치할까요?<br/>(기본 아니오 · 없으면 텍스트 그림)"]
+    PM -->|"아니오"| J
+    PMQ --> J
+    PQ -->|"있음"| PM
+    J{"원격에 내 합류 기록이 있나"}
     J -->|"없음"| JQ{"팀에 합류 기록을 올릴까요?"}
     JQ -->|"예"| JP["handoffs/&lt;id&gt;/TODO.md 를 워크스페이스 repo 에 push<br/>→ 팀 현황에 합류함"]
     JQ -->|"아니오"| E
@@ -306,6 +313,7 @@ flowchart TD
     Q -->|"기존 폴더 가져오기"| IMP["aidure import &lt;폴더&gt;<br/>분류 · 절대경로 · 비밀값 의심 줄 (읽기만)<br/>옮기기는 import 스킬: 계획 → 승인 → 반영"]
     Q -->|"리뷰 확인"| RVW["aidure review status · mark · skip --reason &lt;사유&gt;<br/>commit · push 전 리뷰 안 된 줄 수 (훅이 알림 · 막기)<br/>켜기: aidure team-mode enforce review warn · block --team"]
     Q -->|"파이프라인 보기"| GLP["aidure gitlab pipeline [--ref 브랜치 · --mr 번호 · --id ID] [--log]<br/>최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분 (읽기만)"]
+    Q -->|"응답 언어 · 대화 스타일"| PRF["aidure prefs language ko · en · style learn · normal · expert [--team]<br/>값 team = 이 PC 값 지우기 · mermaid [install] · setup (화면)<br/>→ .agents/local.json (팀은 workspace.json) → sync"]
     Q -->|"답변 시각 표시"| TS["aidure timestamp on · off · team [--team]<br/>답변 첫 줄에 요청 받은 시각 (기본 켜짐, Claude Code)<br/>→ .agents/local.json (팀은 workspace.json)"]
     Q -->|"진행 방식"| APR["aidure approach sprint · full · issue (관리자)<br/>스프린트: 최소 기능부터, 스프린트마다 데모 · 회고 · 전체: 전체 설계 뒤 구축 · 이슈형: 단계 대신 이슈 보드<br/>→ sync · 기본 단계 그대로인 로드맵은 새 뼈대 (이슈형은 고친 로드맵 앞에도 이슈 보드)"]
     Q -->|"유형 바꾸기"| TYP["aidure type &lt;유형&gt; [--approach a] [--code 이름,…] (관리자)<br/>고칠 repo (현행 → 개발 repo) → 진행 방식<br/>→ 유형 팩 교체 · 로드맵 새 뼈대 (지난 로드맵은 아래에 남김) → sync"]
@@ -360,6 +368,7 @@ flowchart TD
 | `aidure team-mode` | 팀 구성: 자동(리더가 작업마다 역할 · 모델) · 고정(프로필대로), `prefer` 역할별 선호 모델. `enforce <대상>` 은 훅으로 지키게 하는 수준(off · warn · block)이고, 대상(name · roster · idle · status · ask · run · check · plan · review)과 기본값은 [명령](commands.md). `--team` 은 팀 기본값 |
 | `aidure ai plan claude\|gpt <요금제>` | 회사별 요금제 (빠듯 · 넉넉 · 종량). 보통은 `aidure ai` 화면에서 |
 | `aidure secret` | 비밀값(토큰): `set <이름> [--global]`(숨김 입력) · `list` · `test <이름>`(권한 · 만료) · `rm` · `import`(옛 telegram.env · gitlab-token · 환경변수에서) · `exec -- <명령>`(그 명령에만 주입). OS 저장소에 프로젝트별 · 전역으로, 값은 출력하지 않는다 |
+| `aidure prefs` | 응답 언어(한국어 · English) · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). `language` · `style` 이 PC · 값 `team` 이 PC 값 지우기 · `--team` 팀 기본값(관리자) · `mermaid install` · `setup` 화면. 인자 없이 = 지금 값 |
 | `aidure timestamp` | 답변 첫 줄 시각 표시 (Claude Code, 기본 켜짐): 요청 받은 시각 yyyy-MM-dd HH:mm:ss. `on\|off` 이 PC · `team` 이 PC 값 지우기 · `--team` 팀 기본값(관리자). 인자 없이 = 지금 값 |
 | `aidure approach` | 진행 방식: 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 이슈 보드). 인자 없이 = 지금 값 (관리자) |
 | `aidure type` | 유형 바꾸기 (분석·설계 → 구축 · 고도화 등): 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대. 인자 없이 = 지금 값 (관리자) |

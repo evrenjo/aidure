@@ -996,6 +996,29 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const wiredTs = /prompt-time/.test(claudeHooks) && !/prompt-time/.test(codexHooks);
     record('답변 첫 줄 시각 (요청마다 주입 · aidure timestamp)', on && off && mineFirst && teamFollow && bad && wiredTs, `기본 켜짐 ${on} · 끄기 ${off} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredTs}`);
   }
+  // 응답 언어 · 대화 스타일 (aidure prefs): 기본(팀 문서 언어 · 일반) · 이 PC 값 먼저 · 팀 값 · 개인 지침 머리 · settings.local.json · 출력 스타일 · 요청마다 한 줄(Claude 만)
+  {
+    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'prefs', ...a], { cwd: dir, encoding: 'utf8' });
+    const line = () => hook('chat-prefs.js', 'selftest-prefs-1');
+    const local = () => JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.local.json'), 'utf8'));
+    const head = (f) => fs.readFileSync(path.join(dir, f), 'utf8');
+    const wsFile = path.join(dir, 'workspace.json');
+    const wsBefore = fs.readFileSync(wsFile, 'utf8');
+    const def = /^응답: 한국어만/.test(line()) && /스타일 일반/.test(line()) && local().language === 'korean' && !local().outputStyle && /## 응답 언어 · 대화 스타일 \(한국어 · 일반/.test(head('CLAUDE.local.md'));
+    const styles = fs.existsSync(path.join(dir, '.claude', 'output-styles', 'aidure-expert.md')) && /keep-coding-instructions: true/.test(head('.claude/output-styles/aidure-learn.md'));
+    const expert = cli('style', 'expert').status === 0 && local().outputStyle === 'aidure-expert' && /스타일 전문가/.test(line()) && /현업에서 쓰는 이름/.test(head('CLAUDE.local.md'));
+    const en = cli('language', 'en').status === 0 && local().language === 'english' && /^Reply in English/.test(line()) && /응답 언어: English/.test(head('AGENTS.override.md').split('\n').slice(0, 6).join('\n'));
+    fs.writeFileSync(wsFile, JSON.stringify({ ...JSON.parse(wsBefore), chat: { language: 'ko', style: 'learn' } }));
+    const mineFirst = cli('language', 'en').status === 0 && /^Reply in English/.test(line());
+    const teamFollow = cli('language', 'team').status === 0 && cli('style', 'team').status === 0 && /^응답: 한국어만/.test(line()) && /스타일 학습/.test(line());
+    fs.writeFileSync(wsFile, wsBefore);
+    spawnSync(process.execPath, ['bin/kit.js', 'sync', '--quiet'], { cwd: dir });
+    const cleared = !local().outputStyle && local().language === 'korean';
+    const bad = cli('style', 'chatty').status !== 0 && cli('language', 'jp').status !== 0;
+    const wiredP = /chat-prefs/.test(claudeHooks) && !/chat-prefs/.test(codexHooks);
+    record('응답 언어 · 대화 스타일 (aidure prefs · 개인 지침 머리 · 출력 스타일 · 요청마다 한 줄)', def && styles && expert && en && mineFirst && teamFollow && cleared && bad && wiredP,
+      `기본 ${def} · 출력 스타일 파일 ${styles} · 전문가 ${expert} · 영어 ${en} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 되돌리면 킷 스타일 지움 ${cleared} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredP}`);
+  }
   // 시간 예산 (budget.js · budget-check 훅): 선언 · 요청마다 한 줄 · 1.5배 넘으면 요청 때 알림 + 멈출 때 한 번 막기 · 늘리기 · 끝내기
   {
     const tool = (...a) => spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'bin', 'budget.js'), ...a], { cwd: dir, encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir } });

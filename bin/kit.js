@@ -27,7 +27,7 @@ const DEFAULT_AGENTS_MD_BYTES = 32 * 1024; // Codex project_doc_max_bytes 기본
 const ENFORCE_LEVELS = ['off', 'warn', 'block']; // agents.enforce.* 훅 강제 수준 (약한 것부터)
 const ENFORCE_DEFAULTS = { teammateName: { level: 'block', max: 'block' }, rosterAnnounce: { level: 'warn', max: 'warn' }, reviewBeforePush: { level: 'off', max: 'block' }, idleTeammates: { level: 'block', max: 'block' }, waitStatus: { level: 'block', max: 'block' }, decisionAsk: { level: 'block', max: 'block' }, longRunning: { level: 'block', max: 'block' }, checkBeforeReview: { level: 'block', max: 'block' }, planFirst: { level: 'warn', max: 'block' } }; // 기본값 · 가장 센 값
 const MAX_AGENTS_MD_BYTES = 96 * 1024; // 이 위로는 sync 가 막는다 (context 낭비)
-const PERSONAL_HEADROOM = 12 * 1024; // 개인 지침(역할 상한 · 팀 구성(역할 · 모델 메뉴) · 위임 표 · 잠금)이 AGENTS.override.md 에 더해지는 몫. 자동 모드에서 약 8KB
+const PERSONAL_HEADROOM = 12 * 1024; // 개인 지침(응답 언어 · 대화 스타일 약 1.7KB · 역할 상한 · 팀 구성(역할 · 모델 메뉴) · 위임 표 · 잠금)이 AGENTS.override.md 에 더해지는 몫. 자동 모드에서 약 8KB
 const MANIFEST = '.agents/.generated.json';
 const REPOS_DIR = 'repos'; // 코드·기획·레거시 repo 는 전부 워크스페이스 안 repos/<이름> (git 제외)
 /** repo 폴더 (워크스페이스 기준) — repos/<이름>, group 이 있으면 repos/<그룹>/<이름>. packs/core/lib/workspace.js · workspace.py 와 한 쌍 */
@@ -857,6 +857,9 @@ function generate(root) {
   const claudeSettings = deepMerge(base, (ws.claude && ws.claude.settings) || {});
   files.set('.claude/settings.json', JSON.stringify(claudeSettings, null, 2) + '\n');
   files.set('.codex/hooks.json', JSON.stringify({ description: GEN_NOTE, hooks: hookGroups(hooks, 'codex') }, null, 2) + '\n');
+  // 대화 스타일 (학습 · 전문가) Claude 출력 스타일. 고르는 것은 각자 (.claude/settings.local.json outputStyle, aidure prefs)
+  const chat = chatPrefsLib(root);
+  if (chat) for (const [rel, content] of chat.outputStyleFiles()) files.set(rel, content);
   if (ws.mcp && Object.keys(ws.mcp).length) files.set('.mcp.json', buildMcpJson(ws));
   // Codex 는 계정 설정으로 서명을 넣게 해 규칙으로 못 막는다 — 커밋 단계에서 지운다 (repos/* 는 installCommitMsgHooks)
   files.set('.githooks/pre-commit', PRE_COMMIT_HOOK);
@@ -1526,17 +1529,18 @@ function writeLocalGenerated(root, files) {
 }
 
 function writePersonal(root, agentsMd, extra = { claude: '', codex: '' }) {
+  const head = extra.head || ''; // 응답 언어 · 대화 스타일: 다른 지침보다 앞에 둔다
   const local = path.join(root, '.agents/local.md');
   const claudeLocal = path.join(root, 'CLAUDE.local.md');
   const override = path.join(root, 'AGENTS.override.md');
   const body = exists(local) ? read(local).trim() : '';
   const generated = (f) => exists(f) && read(f).includes(GEN_NOTE);
   // Claude — CLAUDE.local.md: 개인 지침(@.agents/local.md) + 이 PC 의 역할 위임
-  if (body || extra.claude) fs.writeFileSync(claudeLocal, `<!-- ${GEN_NOTE} -->\n${body ? '\n@.agents/local.md\n' : ''}${extra.claude ? `\n${extra.claude}` : ''}`);
+  if (body || extra.claude || head) fs.writeFileSync(claudeLocal, `<!-- ${GEN_NOTE} -->\n${head ? `\n${head}` : ''}${body ? '\n@.agents/local.md\n' : ''}${extra.claude ? `\n${extra.claude}` : ''}`);
   else if (generated(claudeLocal)) fs.unlinkSync(claudeLocal);
   // Codex 는 같은 폴더에 AGENTS.override.md 가 있으면 AGENTS.md 대신 그것만 읽는다 — 그래서 합쳐 쓴다
-  if (!body && !extra.codex) { if (generated(override)) fs.unlinkSync(override); return null; }
-  fs.writeFileSync(override, `<!-- ${GEN_NOTE} -->\n\n${agentsMd.trim()}\n${body ? `\n## 개인 지침 (.agents/local.md — 이 PC 전용, 겹치면 이쪽이 우선)\n\n${body}\n` : ''}${extra.codex ? `\n${extra.codex}` : ''}`);
+  if (!body && !extra.codex && !head) { if (generated(override)) fs.unlinkSync(override); return null; }
+  fs.writeFileSync(override, `<!-- ${GEN_NOTE} -->\n\n${head ? `${head}\n` : ''}${agentsMd.trim()}\n${body ? `\n## 개인 지침 (.agents/local.md — 이 PC 전용, 겹치면 이쪽이 우선)\n\n${body}\n` : ''}${extra.codex ? `\n${extra.codex}` : ''}`);
   return Buffer.byteLength(read(override));
 }
 
@@ -1639,6 +1643,7 @@ function cmdSync(root, { quiet, soft } = {}) {
   warnings.push(...resolved.runWarnings, ...agentWarnings);
   const lockText = lockSection(root, ws);
   applyEditGuard(root, ws);
+  const chatHead = applyChatPrefs(root, ws);
   const limitText = limitSection(resolved.limits, resolved.teamLimits);
   let localAgents = {};
   try { localAgents = JSON.parse(read(path.join(root, LOCAL_CONFIG))).agents || {}; } catch { /* 없음 */ }
@@ -1659,6 +1664,7 @@ function cmdSync(root, { quiet, soft } = {}) {
   }
   const team = (tool) => teamSection(tool, { roles: generated.roles, run: resolved.run, access: resolved.access, opts, cat, profile: resolved.profile.local || resolved.profile.team, dele: built.delegations[tool], rooms });
   const personalBytes = writePersonal(root, files.get('AGENTS.md'), {
+    head: chatHead,
     claude: limitText + team('claude') + delegationSection('claude', built.delegations.claude, opts.mode) + lockText,
     codex: limitText + team('codex') + delegationSection('codex', built.delegations.codex, opts.mode) + lockText,
   });
@@ -1796,6 +1802,35 @@ function applyEditGuard(root, ws) {
   if (!Object.keys(conf.permissions).length) delete conf.permissions;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   if (Object.keys(conf).length) fs.writeFileSync(file, JSON.stringify(conf, null, 2) + '\n'); else if (exists(file)) fs.unlinkSync(file);
+}
+
+/** 응답 언어 · 대화 스타일 모듈 (워크스페이스의 packs/core/lib/chatprefs.js). 옛 킷 워크스페이스면 null */
+function chatPrefsLib(root) {
+  const f = path.join(root, 'packs', 'core', 'lib', 'chatprefs.js');
+  if (!exists(f)) return null;
+  try { return require(f); } catch { return null; }
+}
+
+/**
+ * 응답 언어 · 대화 스타일을 이 PC 에 적용한다: .claude/settings.local.json 의 language · outputStyle (킷이 넣은 aidure-* 스타일만 관리, 사용자가 고른 다른 스타일은 그대로).
+ * 반환: 개인 지침 머리 글 (없으면 '')
+ */
+function applyChatPrefs(root, ws) {
+  const lib = chatPrefsLib(root);
+  if (!lib) return '';
+  const p = lib.resolve(root, ws);
+  const want = lib.claudeSettings(p);
+  const file = path.join(root, '.claude', 'settings.local.json');
+  let conf = {};
+  try { conf = JSON.parse(read(file)); } catch { /* 없음 */ }
+  const next = { ...conf, language: want.language };
+  if (want.outputStyle) next.outputStyle = want.outputStyle;
+  else if (String(conf.outputStyle || '').startsWith(lib.OUTPUT_STYLE_PREFIX)) delete next.outputStyle;
+  if (JSON.stringify(next) !== JSON.stringify(conf)) {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(next, null, 2) + '\n');
+  }
+  return lib.headSection(p, { codeLanguage: ((ws.vars || {}).language || {}).code });
 }
 
 /** 잠금 지침 — 관리자가 아닌 PC 의 개인 지침에 넣는다 (Codex 는 경로별 편집 금지가 없어 이 지침과 pre-commit 이 막는다) */
