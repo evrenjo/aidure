@@ -1,0 +1,14 @@
+{
+  "name": "stack-django",
+  "title": "Django 스택",
+  "summary": "Django 업무 로직 위치 · 모델 · 쿼리 · 설정",
+  "description": "Django: 업무 로직 위치(서비스 · 선택자) · 뷰 · 시그널에 로직 금지 · DB 제약 · 쿼리 · 설정. 서버 공통은 backend 팩",
+  "category": "stack",
+  "layer": "backend",
+  "stacks": [
+    "django"
+  ],
+  "requires": [
+    "core"
+  ]
+}

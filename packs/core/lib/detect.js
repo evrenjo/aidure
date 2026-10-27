@@ -4,7 +4,10 @@ const fs = require('fs');
 const path = require('path');
 
 // .devcontainer: 개발 컨테이너 설정(Dockerfile · compose)은 앱의 배포 인프라가 아니다
-const SKIP = new Set(['.git', 'node_modules', 'build', 'dist', 'target', 'out', '.gradle', '.idea', '.vscode', '.devcontainer', 'venv', '.venv', '__pycache__', 'vendor', 'bin', 'obj', 'coverage']);
+// 내려받은 의존성 · 도구 캐시(Pods · .dart_tool · site-packages 등)도 그 repo 가 쓴 코드가 아니라 건너뛴다
+const SKIP = new Set(['.git', 'node_modules', 'build', 'dist', 'target', 'out', '.gradle', '.idea', '.vscode', '.devcontainer', 'venv', '.venv', '__pycache__', 'vendor', 'bin', 'obj', 'coverage',
+  'Pods', 'Carthage', '.build', 'DerivedData', '.dart_tool', '.pub-cache', '.symlinks', '.tox', '.nox', 'site-packages', '.eggs', '.mypy_cache', '.pytest_cache',
+  '.next', '.nuxt', '.svelte-kit', '.angular', '.turbo', '.output', '.expo']);
 const MAX_DEPTH = 4;      // 조건의 기본 깊이 — 빌드·설정 파일은 대부분 여기 안에 있다
 const DEEP_LIMIT = 10;    // 조건에 depth 를 적으면 이 깊이까지 (소스 파일 표식용)
 const MAX_FILES = 50000;  // 거대 repo 에서 멈추지 않게
@@ -17,19 +20,27 @@ function loadCatalog(root) {
 
 const toRegex = (glob) => new RegExp(`^${glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`, 'i');
 
-/** 깊이 maxDepth 까지 파일 목록 [{ file, depth }] — depth 는 파일이 든 폴더의 깊이 (repo 루트 = 0) */
-function index(dir, maxDepth = MAX_DEPTH) {
+/**
+ * 깊이 maxDepth 까지 파일 목록 [{ file, depth }]. depth 는 파일이 든 폴더의 깊이 (repo 루트 = 0).
+ * 얕은 폴더부터 훑는다 (MAX_FILES 에 걸려도 빌드 · 설정 파일이 있는 위쪽은 빠지지 않게)
+ */
+function index(dir, maxDepth = MAX_DEPTH, skip = SKIP, maxFiles = MAX_FILES) {
   const files = [];
-  const walk = (d, depth) => {
-    let ents;
-    try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
-    for (const e of ents) {
-      if (files.length >= MAX_FILES) return;
-      if (e.isDirectory()) { if (depth < maxDepth && !SKIP.has(e.name)) walk(path.join(d, e.name), depth + 1); }
-      else if (e.isFile()) files.push({ file: path.join(d, e.name), depth });
+  let level = [dir];
+  for (let depth = 0; level.length && files.length < maxFiles; depth++) {
+    const next = [];
+    for (const d of level) {
+      if (files.length >= maxFiles) break;
+      let ents;
+      try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { continue; }
+      for (const e of ents) {
+        if (files.length >= maxFiles) break;
+        if (e.isDirectory()) { if (depth < maxDepth && !skip.has(e.name)) next.push(path.join(d, e.name)); }
+        else if (e.isFile()) files.push({ file: path.join(d, e.name), depth });
+      }
     }
-  };
-  walk(dir, 0);
+    level = next;
+  }
   return files;
 }
 
@@ -85,9 +96,10 @@ function moduleOf(dir, file) {
  * 감지 결과: [{ id, evidence: '상대경로', modules? }] — 조건마다 파일 이름 일치 + (있으면) 내용 정규식 일치.
  * modules = 그 스택이 쓰이는 하위 모듈 (멀티모듈 repo 의 api/·client/ 등). repo 전체에 걸치면 빠진다
  */
-function detect(dir, catalog) {
+function detect(dir, catalog, scanned = null) {
   if (!fs.existsSync(dir)) return [];
-  const files = index(dir, Math.max(MAX_DEPTH, ...catalog.flatMap((s) => (s.detect || []).map(depthOf))));
+  const files = scanned ? scanned.filter((x) => !path.relative(dir, x.file).split(path.sep).slice(0, -1).some((seg) => SKIP.has(seg)))
+    : index(dir, Math.max(MAX_DEPTH, ...catalog.flatMap((s) => (s.detect || []).map(depthOf))));
   const cache = new Map();
   const content = (f) => {
     if (!cache.has(f)) {
@@ -112,11 +124,48 @@ function detect(dir, catalog) {
     if (!hit) continue;
     // 루트 빌드 파일이 하위 모듈을 설정만 하는 경우(Gradle 멀티모듈)가 흔하다 — 하위 모듈이 따로 잡히면 루트는 뺀다
     let modules = [...new Set(hit.all.map((x) => moduleOf(dir, x.file)))];
+    const atRoot = modules.includes('.'); // 루트에서도 잡혔다 (하위 모듈과 함께면 아래에서 빠진다)
     if (modules.length > 1) modules = modules.filter((m) => m !== '.');
     found.push({ id: s.id, evidence: path.relative(dir, hit.file).split(path.sep).join('/') + (hit.hint ? ' (힌트)' : ''),
-      ...(modules.includes('.') ? {} : { modules: modules.sort() }) });
+      ...(modules.includes('.') ? {} : { modules: modules.sort(), ...(atRoot ? { atRoot: true } : {}) }) });
   }
   return found;
 }
 
-module.exports = { detect, loadCatalog, withHints, checkHints, buildFiles };
+const SCAN_MAX_FILES = 200000; // 깊이 훑으면 얕은 파일로 상한이 먼저 차 깊은 소스를 못 센다
+const LANG_DEPTH = 16;      // 소스 파일을 세는 깊이 (src/main/java/kr/co/회사/프로젝트/… 같은 깊은 패키지까지)
+/** 언어 감지용 파일 목록 (스택 감지보다 깊게: src/main/java/kr/co/… 같은 깊은 패키지까지) */
+// 언어를 셀 때는 bin/ · out/ 도 본다 (Node CLI 는 bin/ 에 소스를 둔다). 스택 감지(detect)는 원래 SKIP 으로 거른다
+const LANG_SKIP = new Set([...SKIP].filter((x) => !['bin', 'out'].includes(x)));
+function scan(dir) { return index(dir, LANG_DEPTH, LANG_SKIP, SCAN_MAX_FILES); }
+
+const LANG_MIN_FILES = 5;    // 이만큼 있으면서
+const LANG_MIN_PART = 0.1;   // 감지 대상 소스의 이 비율 이상이거나 (큰 repo 의 보조 스크립트 몇 개는 빠진다)
+const LANG_MIN_SHARE = 0.5;  // 절반을 넘으면 그 언어 (파일 몇 개뿐인 작은 repo 도)
+/**
+ * repo 의 언어: 소스 파일 확장자 수로 고른다. [{ id, files }] (많은 순). 5개 이상이면서 10% 이상이거나 절반 이상이면 그 언어.
+ * 서버 repo 의 보조 스크립트 몇 개는 빠진다. ignore = 세지 않을 폴더 (repo 기준 경로, 크로스 플랫폼 앱의 ios/ · windows/ 등)
+ */
+function detectLanguages(dir, languages, scanned = null, ignore = []) {
+  if (!fs.existsSync(dir) || !languages.length) return [];
+  const byExt = new Map();
+  for (const l of languages) for (const e of l.ext || []) byExt.set(e.toLowerCase(), l.id);
+  const count = new Map();
+  for (const { file } of scanned || scan(dir)) {
+    const base = path.basename(file);
+    if (/\.d\.ts$|\.config\.[cm]?[jt]s$|^\.[\w-]+rc\.[cm]?js$/i.test(base)) continue; // 타입 선언 · 도구 설정 파일은 그 repo 의 언어가 아니다
+    const rel = path.relative(dir, file).split(path.sep).join('/');
+    if (ignore.some((p) => rel.startsWith(`${p}/`))) continue;
+    const ext = path.extname(file).slice(1).toLowerCase();
+    const id = byExt.get(ext);
+    if (id) count.set(id, (count.get(id) || 0) + 1);
+  }
+  const total = [...count.values()].reduce((a, b) => a + b, 0);
+  // 반반이면 둘 다 붙지 않게 절반 '초과'. 기준을 넘는 언어가 없으면 가장 많은 언어 (작은 repo)
+  const pick = [...count.entries()].filter(([, n]) => (n >= LANG_MIN_FILES && n / total >= LANG_MIN_PART) || n / total > LANG_MIN_SHARE);
+  const top = Math.max(0, ...count.values());
+  return (pick.length ? pick : [...count.entries()].filter(([, n]) => n === top && n > 0))
+    .sort((a, b) => b[1] - a[1]).map(([id, files]) => ({ id, files }));
+}
+
+module.exports = { detect, scan, loadCatalog, withHints, checkHints, buildFiles, detectLanguages };

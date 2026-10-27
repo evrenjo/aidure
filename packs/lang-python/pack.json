@@ -1,0 +1,13 @@
+{
+  "name": "lang-python",
+  "title": "Python 클린 코드",
+  "summary": "Python 이름 · 함수 · 타입 힌트 · docstring · 관용구 · ML/AI 코드",
+  "description": "Python 소스가 있는 repo 에: PEP 8 이름 · 함수 · 타입 힌트 · docstring · 예외 · 관용구. ML · AI 코드는 작업할 때 읽는 규칙",
+  "category": "lang",
+  "languages": [
+    "python"
+  ],
+  "requires": [
+    "core"
+  ]
+}

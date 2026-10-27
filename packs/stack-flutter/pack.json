@@ -1,0 +1,14 @@
+{
+  "name": "stack-flutter",
+  "title": "Flutter 스택",
+  "summary": "Flutter 구조(MVVM · Repository) · 위젯 나누기",
+  "description": "Flutter: View · ViewModel · Repository 구조 · 위젯에는 표시만 · 작은 위젯 클래스 · 상태 범위. 모바일 공통은 mobile 팩",
+  "category": "stack",
+  "layer": "mobile",
+  "stacks": [
+    "flutter"
+  ],
+  "requires": [
+    "core"
+  ]
+}

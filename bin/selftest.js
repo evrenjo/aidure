@@ -1019,6 +1019,86 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     record('응답 언어 · 대화 스타일 (aidure prefs · 개인 지침 머리 · 출력 스타일 · 요청마다 한 줄)', def && styles && expert && en && mineFirst && teamFollow && cleared && bad && wiredP,
       `기본 ${def} · 출력 스타일 파일 ${styles} · 전문가 ${expert} · 영어 ${en} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 되돌리면 킷 스타일 지움 ${cleared} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredP}`);
   }
+  // 언어 감지 · 클린 코드 팩 (repos[].languages · clean-code · lang-*) · repo 별 바꾸기(repos:) · repo 별 끄기(rules.offIn · --repo) · 옛 워크스페이스 채우기
+  {
+    const src = path.join(tmp, 'lang-src');
+    const mkRepo = (name, files) => {
+      const d = path.join(src, name);
+      for (const [f, body] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(d, f)), { recursive: true }); fs.writeFileSync(path.join(d, f), body); }
+      spawnSync('git', ['init', '-q', d]); spawnSync('git', ['-C', d, 'add', '-A']); spawnSync('git', ['-C', d, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'i']);
+      return d;
+    };
+    const java = {}; for (let i = 0; i < 6; i++) java[`api/src/main/java/kr/co/company/project/user/controller/A${i}.java`] = `class A${i} {}`; // 깊은 패키지
+    const api = mkRepo('api', { 'build.gradle': 'plugins { id "org.springframework.boot" }', ...java, 'tools/x.py': 'x = 1' }); // 파이썬 1개는 언어로 안 봄
+    const py = {}; for (let i = 0; i < 3; i++) py[`pkg/m${i}.py`] = `x = ${i}`;
+    const pods = {}; for (let i = 0; i < 8; i++) pods[`ios/Pods/Lib/S${i}.swift`] = '';
+    const ml = mkRepo('ml', { 'requirements.txt': 'fastapi', ...py, ...pods }); // 내려받은 의존성(Pods)은 언어로 안 봄
+    const ts = {}; for (let i = 0; i < 6; i++) ts[`src/c${i}.tsx`] = '';
+    const web = mkRepo('web', { 'package.json': '{"dependencies":{"react":"18","next":"14"}}', ...ts });
+    // flutter create 구조: android 가 모듈 android/app 으로 잡힌다
+    const dart = {}; for (let i = 0; i < 6; i++) dart[`lib/w${i}.dart`] = '';
+    const app = mkRepo('app', { 'pubspec.yaml': 'dependencies:\n  flutter:\n    sdk: flutter\n', 'android/app/src/main/AndroidManifest.xml': '<manifest/>', 'android/app/build.gradle': 'apply plugin: "com.android.application"', 'android/build.gradle': '', 'android/app/src/main/kotlin/a/MainActivity.kt': '', 'android/app/src/main/kotlin/a/P.kt': '', ...dart, ...Object.fromEntries([0, 1, 2, 3, 4, 5].flatMap((i) => [[`ios/Runner/S${i}.swift`, ''], [`windows/runner/c${i}.cpp`, '']])) });
+    const one = mkRepo('one', { 'main.py': 'print(1)' });
+    const empty = mkRepo('empty', { 'README.md': '# 아직 코드 없음' });
+    const lw = path.join(tmp, 'lang-ws');
+    run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', lw, '--type', 'new', '--code', `${api},${ml},${web},${app},${one},${empty}`], tmp);
+    const wsOf = () => JSON.parse(fs.readFileSync(path.join(lw, 'workspace.json'), 'utf8'));
+    const repoOf = (n) => wsOf().repos.find((r) => r.name === n) || {};
+    const table = () => (fs.readFileSync(path.join(lw, 'AGENTS.md'), 'utf8').match(/\| repo \| 스택[\s\S]*?\n\n/) || [''])[0];
+    const rowOf = (n) => table().split('\n').find((l) => l.startsWith(`| **${n}**`)) || '';
+    const detected = JSON.stringify(repoOf('api').languages) === '["java"]' && JSON.stringify(repoOf('ml').languages) === '["python"]';
+    const attached = /Spring · Java/.test(rowOf('api')) && /clean-code--10-clean-code/.test(rowOf('api')) && /clean-code--20-layer-responsibility/.test(rowOf('api')) && /lang-java--10-java/.test(rowOf('api')) && /stack-spring--60-clean-code/.test(rowOf('api'))
+      && /lang-python--10-python/.test(rowOf('ml')) && /stack-fastapi--10-fastapi/.test(rowOf('ml')) && !/lang-python/.test(rowOf('api'));
+    const tsRepo = JSON.stringify(repoOf('web').languages) === '["typescript"]' && /clean-code--20-layer-responsibility/.test(rowOf('web')) && /stack-nextjs--10-nextjs/.test(rowOf('web')) && /stack-react--40-logic-placement/.test(rowOf('web'));
+    const flutterOk = JSON.stringify(repoOf('app').languages) === '["dart"]' && /stack-flutter--10-flutter/.test(rowOf('app')) && !/stack-android/.test(rowOf('app')) && /lang-dart--10-dart/.test(rowOf('app'));
+    const oneFile = JSON.stringify(repoOf('one').languages) === '["python"]' && JSON.stringify(repoOf('empty').languages) === '[]';
+    const notInBody = !/## Java 클린 코드/.test(fs.readFileSync(path.join(lw, 'AGENTS.md'), 'utf8'));
+    fs.mkdirSync(path.join(lw, 'packs', 'project', 'rules'), { recursive: true });
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'), '---\ntitle: 우리 Python\nload: always\nreplaces: lang-python--10-python\nrepos: ml\n---\n\n## 우리 Python\n');
+    const sync = () => run(process.execPath, ['bin/kit.js', 'sync', '--quiet'], lw);
+    const replacedOne = sync().ok && /project--my-py/.test(rowOf('ml')) && !/lang-python--10-python/.test(rowOf('ml')) && !/project--my-py/.test(rowOf('api'));
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'), '---\ntitle: 우리 Python\nload: always\nreplaces: lang-python--10-python\nrepos: nope\n---\n\n## x\n');
+    const badRepo = !sync().ok;
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'), '---\ntitle: 우리 Python\nload: always\nreplaces: lang-python--10-python\nrepos: api\n---\n\n## x\n');
+    const strayRefused = !sync().ok; // api 에는 원래 Python 규칙이 걸리지 않는다
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'), '---\ntitle: 우리 Python\nload: always\nagents: claude\nrepos: ml\n---\n\n## x\n');
+    const claudeRefused = !sync().ok;
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py2.md'), '---\ntitle: 또 Python\nload: always\nreplaces: lang-python--10-python\nrepos: ml\n---\n\n## y\n');
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'), '---\ntitle: 우리 Python\nload: always\nreplaces: lang-python--10-python\nrepos: ml\n---\n\n## x\n');
+    const overlapRefused = !sync().ok;
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py2.md'), '---\ntitle: 전체 Python\nload: always\nreplaces: lang-python--10-python\n---\n\n## z\n');
+    const fullPartialRefused = !sync().ok;
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py2.md'), '---\ntitle: 목록\nload: always\nrepos:\n  - ml\n---\n\n## z\n');
+    const yamlListRefused = !sync().ok;
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py2.md'), '---\ntitle: 괄호\nload: always\nrepos: [ml]\n---\n\n## z\n');
+    const bracketOk = sync().ok && /project--my-py2/.test(rowOf('ml')) && !/project--my-py2/.test(rowOf('api'));
+    fs.rmSync(path.join(lw, 'packs', 'project', 'rules', 'my-py2.md'));
+    fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'), '---\ntitle: 우리 Python\nload: always\nreplaces: lang-python--10-python\nrepos: ml\n---\n\n## x\n');
+    sync();
+    const listed = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'rules', 'list'], { cwd: lw, encoding: 'utf8' }).stdout;
+    const partialShown = /켜짐\s+lang-python--10-python .*ml 에서만 project--my-py 가 대신/.test(listed);
+    const removePinned = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', 'remove', 'ml'], { cwd: lw, encoding: 'utf8' }).status !== 0 && repoOf('ml').name === 'ml';
+    fs.rmSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'));
+    spawnSync('git', ['-C', lw, 'config', 'user.name', 't']);
+    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'rules', ...a], { cwd: lw, encoding: 'utf8' });
+    const onTypo = cli('on', 'lang-java--10-java', '--repo', 'apii').status !== 0;
+    const offOne = cli('off', 'lang-java--10-java', '--repo=api').status === 0 && JSON.stringify((wsOf().rules || {}).offIn) === '{"lang-java--10-java":["api"]}' && !/lang-java--10-java/.test(rowOf('api'));
+    const onAgain = cli('on', 'lang-java--10-java', '--repo', 'api').status === 0 && !(wsOf().rules || {}).offIn && /lang-java--10-java/.test(rowOf('api'))
+      && cli('off', 'lang-java--10-java', '--repo', 'api').status === 0 && cli('on', 'lang-java--10-java').status === 0 && !(wsOf().rules || {}).offIn && /lang-java--10-java/.test(rowOf('api')) && onTypo;
+    const raw0 = wsOf(); raw0.rules = { offIn: { 'gone--rule': ['api'] } }; fs.writeFileSync(path.join(lw, 'workspace.json'), JSON.stringify(raw0, null, 2));
+    const staleCleared = cli('on', 'gone--rule', '--repo', 'api').status === 0 && !(wsOf().rules || {}).offIn && cli('ondemand', 'lang-java--10-java', '--repo', 'api').status !== 0;
+    const wholeRefused = cli('off', 'core--10-communication', '--repo', 'api').status !== 0 && cli('off', 'lang-java--10-java', '--repo', 'nope').status !== 0 && cli('off', 'lang-java--10-java', '--repo', 'ml').status !== 0;
+    for (let i = 0; i < 6; i++) fs.writeFileSync(path.join(lw, 'repos', 'empty', `m${i}.py`), 'x = 1'); // 비어 있던 repo([])에 코드가 생김
+    spawnSync('git', ['-C', path.join(lw, 'repos', 'empty'), 'add', '-A']);
+    const raw = wsOf(); for (const r of raw.repos) if (r.name !== 'empty') delete r.languages; raw.repos.find((r) => r.name === 'one').languages = false; fs.writeFileSync(path.join(lw, 'workspace.json'), JSON.stringify(raw, null, 2));
+    const filled = spawnSync(process.execPath, ['-e', `const k=require(${JSON.stringify(path.join(KIT, 'bin', 'kit.js'))});console.log(JSON.stringify(k.fillLanguages(${JSON.stringify(lw)})))`], { encoding: 'utf8' }).stdout.trim();
+    const upgraded = /"api","languages":\["java"\]/.test(filled) && JSON.stringify(repoOf('ml').languages) === '["python"]' && JSON.stringify(repoOf('empty').languages) === '["python"]' && repoOf('one').languages === false;
+    const checked = sync().ok && run(process.execPath, ['bin/kit.js', 'check'], lw).ok && !/lang-python|clean-code/.test(rowOf('one')); // false = 건너뛴 repo: 언어 규칙 없음
+    cli('off', 'lang-python--10-python', '--repo', 'ml');
+    const removeCleans = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', 'remove', 'ml'], { cwd: lw, encoding: 'utf8' }).status === 0 && !(wsOf().rules || {}).offIn;
+    record('언어 감지 · 클린 코드 팩 (repo 별 규칙 · repos: 바꾸기 · --repo 끄기 · 옛 워크스페이스)', detected && attached && tsRepo && flutterOk && oneFile && fullPartialRefused && yamlListRefused && bracketOk && overlapRefused && staleCleared && notInBody && replacedOne && badRepo && strayRefused && claudeRefused && partialShown && removePinned && offOne && onAgain && wholeRefused && upgraded && checked && removeCleans,
+      `TS repo 에 clean-code · Next.js ${tsRepo} · Flutter 에 Android 팩 안 붙음 · 플랫폼 폴더(ios · windows) 제외 ${flutterOk} · 파일 하나 repo · 빈 repo 는 [] ${oneFile} · 전체 + 일부 대체 거부 ${fullPartialRefused} · 여러 줄 repos: 거부 ${yamlListRefused} · repos: [a] ${bracketOk} · 같은 repo 두 번 바꾸기 거부 ${overlapRefused} · 없어진 규칙 기록 지우기 · 다른 하위 명령 --repo 거부 ${staleCleared} · 감지(Pods 제외 · 깊은 패키지) ${detected} · 안 걸리는 repo 바꾸기 거부 ${strayRefused} · Claude 전용 repos: 거부 ${claudeRefused} · 일부 대체 표시 ${partialShown} · repos: 가 가리키면 repo 빼기 거부 ${removePinned} · repo 빼면 offIn 정리 ${removeCleans} · 감지 ${detected} · repo 표 ${attached} · 본문 아님 ${notInBody} · repos: 한 repo 만 바꿈 ${replacedOne} · 없는 repo 거부 ${badRepo} · --repo 끄기 ${offOne} · 다시 켜기 ${onAgain} · 전체 규칙 · 없는 repo 거부 ${wholeRefused} · 옛 워크스페이스 채우기 ${upgraded} · check ${checked}`);
+  }
   // 시간 예산 (budget.js · budget-check 훅): 선언 · 요청마다 한 줄 · 1.5배 넘으면 요청 때 알림 + 멈출 때 한 번 막기 · 늘리기 · 끝내기
   {
     const tool = (...a) => spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'bin', 'budget.js'), ...a], { cwd: dir, encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir } });
@@ -1535,6 +1615,26 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const sec = (log.split(/^## /m).find((x) => x.startsWith(`${ver}\n`)) || '');
   const ok = /\|[^\n]+\|[^\n]+\|/.test(sec.split('\n').slice(3).join('\n')) && pkgFiles.includes('CHANGELOG.md');
   record('변경 기록 CHANGELOG.md', ok, ok ? ver : `## ${ver} 항목(| 구분 | 내용 | 표)이 없거나 package.json files 에 빠짐`);
+}
+
+// 언어 ↔ 언어 팩: stacks.json languages[].pack 과 팩의 pack.json languages 가 서로 맞아야 한다 (한쪽만 고치면 문서와 실제 붙는 곳이 갈린다)
+{
+  const st = JSON.parse(fs.readFileSync(path.join(KIT, 'packs', 'core', 'stacks.json'), 'utf8'));
+  const bad = [];
+  for (const l of st.languages || []) {
+    if (!l.pack) continue;
+    const f = path.join(KIT, 'packs', l.pack, 'pack.json');
+    if (!fs.existsSync(f)) { bad.push(`${l.id}: 팩 ${l.pack} 없음`); continue; }
+    const m = JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (m.category !== 'lang' || !(m.languages || []).includes(l.id)) bad.push(`${l.pack}: category lang · languages 에 ${l.id} 필요`);
+  }
+  for (const n of fs.readdirSync(path.join(KIT, 'packs'))) {
+    const f = path.join(KIT, 'packs', n, 'pack.json');
+    if (!fs.existsSync(f)) continue;
+    const m = JSON.parse(fs.readFileSync(f, 'utf8'));
+    for (const id of m.languages || []) if (!(st.languages || []).some((l) => l.id === id && l.pack === n)) bad.push(`${n}: stacks.json languages 의 ${id} 에 "pack": "${n}" 필요`);
+  }
+  record('언어 ↔ 언어 팩 (stacks.json languages · pack.json languages)', !bad.length, bad.join(' | '));
 }
 
 // 업무 흐름 문서 — 선택 화면의 질문 문구와 aidure 명령이 docs/workflow.md 에 모두 있어야 한다 (화면을 고치면 문서도 같이)

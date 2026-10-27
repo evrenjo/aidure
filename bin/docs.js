@@ -74,7 +74,7 @@ function warnLines(res) {
 const PACK_MD = path.join(KIT, 'docs', 'packs.md');
 const CAT_MARK = ['<!-- packs:catalog: node bin/docs.js 가 packs/ 로 쓴다. 손으로 고치지 않는다 -->', '<!-- /packs:catalog -->'];
 const CATEGORIES = [
-  ['core', '공통'], ['type', '유형'], ['workflow', '협업 도구'], ['layer', '계층'], ['stack', '스택'], ['other', '산출물'],
+  ['core', '공통'], ['type', '유형'], ['workflow', '협업 도구'], ['layer', '계층'], ['stack', '스택'], ['lang', '언어'], ['other', '산출물'],
 ];
 
 function frontmatter(file) {
@@ -102,6 +102,7 @@ function packCatalogMd() {
     if (cat === 'workflow') return `repo 주소가 ${pk.name === 'github' ? 'GitHub' : 'GitLab'} 인 repo 에`;
     if (cat === 'layer') { const ids = stackList.filter((s) => s.layer === pk.meta.layer && !s.parent).map((s) => s.label || s.id); return `repo 스택의 계층이 ${pk.meta.layer} 일 때 (${ids.length}종: ${ids.slice(0, 8).join(', ')}${ids.length > 8 ? ' …' : ''})`; }
     if (cat === 'stack') return `repo 스택이 ${(pk.meta.stacks || []).join(', ')} 일 때 (${pk.meta.layer} 계층 팩과 함께)`;
+    if (cat === 'lang') { const langs = stacks.languages || []; return pk.meta.languages ? `repo 에 ${kit.labelLanguages(langs, pk.meta.languages)} 소스가 있을 때 (언어 감지)` : `repo 에 감지된 언어(${kit.labelLanguages(langs, langs.map((l) => l.id))})가 하나라도 있을 때`; }
     const on = Object.entries(kit.TYPE_RULES || {}).filter(([, t]) => (t.defaults || []).includes(pk.name)).map(([k]) => (kit.PROJECT_TYPES || {})[k] || k);
     return on.length ? `시작 유형이 ${on.join(' · ')} 이면 기본. 다른 유형은 aidure upgrade --add ${pk.name}` : `aidure upgrade --add ${pk.name}`;
   };

@@ -50,7 +50,7 @@
 | `aidure board` | 팀 · 프로젝트 현황을 한눈에 볼 때 | 워크스페이스 현황판(로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지)과 기록 쪽을 이 PC 의 `.agents/board/` 에 만들어 연다. 보기 전용 |
 | `aidure screens check [repo]` | 화면설계서를 쓴 뒤 | 근거 ID 가 색인에 있는지 · 화면 ID 중복 · Description 줄이 결론 한 줄인지(60자 넘음 · 날짜 · 결정 경위는 ⚠) · 기능 ID 누락(`vars.screens.functionIds`, 화면 목록의 「화면 없음」 행은 뺀다) · 화면 목록과 장 대조 (이어지는 장 `data-continues` 는 뺀다) |
 | `aidure datamodel check [repo]` | 테이블 정의서를 쓴 뒤 | ✖ 참조 대상 없음 · 기본키 없음 · 테이블 · 컬럼 중복 · 표 형식. ⚠ 논리명 없음 · 컨벤션 위반(`vars.datamodel`) · 기능 ID 없는 테이블 · 테이블 없는 기능(「없음」 으로 적은 것은 뺀다) |
-| `aidure rules [list \| off <ID> \| on <ID>]` | 규칙이 팀에 맞지 않을 때 | 킷이 넣은 규칙을 켜고 끈다 (필수 규칙 제외). 바꾸기는 `packs/project/rules` 에 `replaces` |
+| `aidure rules [list \| off <ID> \| on <ID>]` `[--repo <이름,…>]` | 규칙이 팀에 맞지 않을 때 | 킷이 넣은 규칙을 켜고 끈다 (필수 규칙 제외). `--repo` 는 스택 · 언어 규칙을 그 repo 에서만. 바꾸기는 `packs/project/rules` 에 `replaces` (`repos:` 를 더하면 그 repo 만) |
 | `aidure rules ondemand\|always <ID…\|repo-tasks>` | AGENTS.md 가 Codex 한도를 넘을 때 | 상시 규칙을 필요할 때만 읽게 한다 (`rules.onDemand`). `repo-tasks` 는 「repo 별 작업 규칙」의 작업별 표를 `.agents/rules/repo-tasks.md` 로 뺀다. sync 경고가 큰 절을 알려 준다 |
 | `aidure repo add [주소·폴더·이름]` | repo 를 더할 때 | clone · 링크(원격 없는 로컬 repo 도), 또는 이름만 주면 `repos/<이름>` 에 원격 없이 새로 만든다. 인자 없이 = 화면에서 방식(clone · 기존 로컬 폴더 · 새로 만들기)을 먼저 고른다 (레거시 제외. 기획 repo 면 뼈대는 `aidure init-docs`) → 스택 확인 → sync |
 | `aidure repo add … --group <그룹>` | repo 가 많아 폴더를 나눌 때 | `repos/<그룹>/<이름>` 에 받는다. 이미 그룹을 쓰는 워크스페이스면 화면에서 고른다 ([그룹 폴더](workspace.md#repo-그룹-폴더)) |

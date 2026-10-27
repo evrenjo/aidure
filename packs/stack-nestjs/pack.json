@@ -1,0 +1,14 @@
+{
+  "name": "stack-nestjs",
+  "title": "NestJS 스택",
+  "summary": "NestJS 레이어 책임 · 모듈 경계 · 공통 처리 위치 · 파일 이름",
+  "description": "NestJS: Controller · provider · Module 책임 · 모듈 경계 · 공통 처리는 pipe · guard · interceptor · 파일 이름. 서버 공통은 backend 팩",
+  "category": "stack",
+  "layer": "backend",
+  "stacks": [
+    "nestjs"
+  ],
+  "requires": [
+    "core"
+  ]
+}

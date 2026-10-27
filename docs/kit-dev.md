@@ -30,7 +30,22 @@ repo 를 보고 스택을 감지하는 조건이다. **새 기술은 여기에 �
 - 감지 결과는 `workspace.json` 의 `repos[].stacks` 에 저장되고 사람이 고칠 수 있다 (`aidure detect`).
   멀티모듈 repo 는 스택별 모듈이 `repos[].stackPaths` 에 함께 저장되고, AGENTS.md repo 별 규칙 표에서 layer·stack 팩 규칙마다 모듈 경로가 붙는다.
 - `parent` 를 적으면 그 프레임워크의 세부가 된다 (예: `spring-webflux` → `spring`). 세부는 부모의 layer·팩을 함께 받는다.
+- `packSkipWith` 에 적은 스택과 함께 감지되면 전용 팩을 붙이지 않는다 (예: Flutter · React Native 앱 안의 `android/` 에는 `stack-android` 를 붙이지 않는다).
+- `languageIgnore` 에 적은 폴더(그 스택이 감지된 모듈 기준)는 언어를 셀 때 뺀다 (예: Flutter 앱의 `ios/` · `windows/` 실행 파일 때문에 Swift · C++ 규칙이 붙지 않게).
 - 감지 조건마다 근거(공식 문서 URL)는 `docs/stack-catalog-sources.json` 에 둔다.
+
+## 언어 목록 (`stacks.json` 의 `languages`)
+
+repo 의 언어는 소스 확장자 수로 감지한다 (5개 이상이면서 감지 대상 소스의 10% 이상이거나, 절반을 넘거나, 유일한 언어). 결과는 `workspace.json` 의 `repos[].languages` 에 저장되고 `aidure detect` · `aidure upgrade` 가 채운다 (비어 있으면 다시 감지: 새로 만든 빈 repo 에 코드가 생긴 경우). 빌드 결과물 · 내려받은 의존성 폴더(`node_modules` · `Pods` · `.next` 등)와 도구 설정 파일(`*.config.js` · `.d.ts`)은 세지 않는다. `aidure detect` 에서 건너뛴 repo 는 `false` 로 기록돼 다시 채우지 않는다.
+언어가 하나라도 있으면 `clean-code` 팩(언어 공통)이, 언어마다 그 항목의 `pack`(`lang-*`)이 그 repo 에 붙는다. `pack` 이 없는 언어(TypeScript · JavaScript · Go · C#)는 공통 규칙만 받는다.
+
+```json
+{ "id": "kotlin", "label": "Kotlin", "ext": ["kt"], "pack": "lang-kotlin" }
+```
+
+- 새 언어는 여기에 한 줄과 `category: "lang"` · `"languages": ["<id>"]` 팩을 더한다. 두 곳이 어긋나면 `npm test` 가 잡는다.
+- 확장자가 두 언어에 걸치면(`.h`) 세지 않는다. 빌드 스크립트(`.kts`)도 세지 않는다.
+- 규칙 근거(스타일 가이드 · 책 · 논문)는 팩 `description` 끝의 「근거:」 에 적는다 (팩 종류 쪽에 그대로 나온다).
 
 ## AI 도구(CLI) 추가
 

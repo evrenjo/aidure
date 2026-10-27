@@ -271,14 +271,41 @@ function loadCatalog(root) {
   try { return JSON.parse(read(f)).stacks; } catch { return []; }
 }
 
+/** 언어 목록 (stacks.json languages): [{ id, label, ext, pack }] */
+function loadLanguages(root) {
+  try { return JSON.parse(read(path.join(root, 'packs', 'core', 'stacks.json'))).languages || []; } catch { return []; }
+}
+/** 언어 id → 이름 (Java · Kotlin). languages = stacks.json languages */
+function labelLanguages(languages, ids) {
+  return (ids || []).map((id) => (languages.find((l) => l.id === id) || {}).label || id).join(' · ');
+}
+
+/** 규칙 머리말 repos: 값 → 이름 목록 (repos: a, b · repos: [a, "b"]). 값이 없으면 null */
+function parseRepos(value) {
+  if (value === undefined) return null;
+  return String(value).replace(/^\s*\[|\]\s*$/g, '').split(',').map((x) => x.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+}
+
+/** project 규칙 중 repos: 에 이 repo 이름을 적은 것 (repo 를 빼기 전에 확인). 반환: 규칙 파일 경로 */
+function projectRulesPinning(root, name) {
+  const dir = path.join(root, 'packs', 'project', 'rules');
+  return listFiles(dir).filter((f) => f.endsWith('.md')).filter((f) => {
+    const { meta } = parseFrontmatter(read(path.join(dir, f)));
+    return (parseRepos(meta.repos) || []).includes(name);
+  }).map((f) => posix(path.join('packs', 'project', 'rules', f)));
+}
+const CLEAN_CODE_PACK = 'clean-code'; // 언어가 하나라도 있는 코드 repo 에 붙는 언어 공통 규칙
+
 /** repo 의 stacks → 붙을 팩 { 팩이름: [repo 이름…] }. 코드 repo 만 (참고 자료는 읽기 전용이라 규칙 대상 아님) */
-function repoPacks(root, ws, catalog, warnings) {
+function repoPacks(root, ws, catalog, warnings, langs = loadLanguages(root)) {
   const out = {};
   const add = (pack, repo) => { (out[pack] = out[pack] || []).includes(repo) || out[pack].push(repo); };
   for (const r of ws.repos.filter((x) => x.kind === 'code' || x.kind === 'issues')) {
     const host = hostOf(root, r);
     if (host && host !== 'none' && isDir(path.join(root, 'packs', host))) add(host, r.name);
     if (r.kind !== 'code') continue;
+    const under = (m, x) => x === '.' || m === x || m.startsWith(`${x}/`);
+    const pathsOf = (id) => (((r.stackPaths || {})[id] || []).length ? r.stackPaths[id] : null); // null = 모듈 모름 (repo 전체 또는 손으로 고름)
     for (const id of r.stacks || []) {
       const s = catalog.find((c) => c.id === id);
       if (!s) { warnings.push(`repos '${r.name}': 모르는 스택 '${id}'. packs/core/stacks.json 에 없습니다`); continue; }
@@ -286,8 +313,23 @@ function repoPacks(root, ws, catalog, warnings) {
       for (const e of [s, catalog.find((c) => c.id === s.parent)].filter(Boolean)) {
         const layer = LAYER_PACKS[e.layer];
         if (layer && isDir(path.join(root, 'packs', layer))) add(layer, r.name);
-        if (e.pack && isDir(path.join(root, 'packs', e.pack))) add(e.pack, r.name);
+        // packSkipWith: 다른 스택과 함께면 전용 팩을 붙이지 않는다 (Flutter · React Native 앱 안의 android/ 는 네이티브 Android 앱이 아니다)
+        // 이 스택의 모듈이 모두 함께 감지된 스택(Flutter · RN 등)의 모듈 안에 있을 때만 (그 앱의 android/ 다. 하위 폴더의 작은 브리지 · 예제는 그대로)
+        // 함께 감지된 스택의 모듈을 모르면 이 스택도 모듈을 모를 때만 (손으로 고른 Flutter 가 별도 네이티브 앱의 규칙까지 빼지 않게)
+        // 모듈을 모르면(루트 앱) 그 스택의 플랫폼 폴더(languageIgnore: android/ 등) 안이면 같은 앱으로 본다
+        const platformOf = (x) => (catalog.find((c) => c.id === x) || {}).languageIgnore || [];
+        const skipPack = (e.packSkipWith || []).some((x) => (r.stacks || []).includes(x)
+          && (pathsOf(x) ? (pathsOf(e.id) || ['.']).every((m) => pathsOf(x).some((xm) => under(m, xm)))
+            : !pathsOf(e.id) || pathsOf(e.id).every((m) => platformOf(x).some((d) => under(m, d)))));
+        if (e.pack && !skipPack && isDir(path.join(root, 'packs', e.pack))) add(e.pack, r.name);
       }
+    }
+    // 언어 (repos[].languages): 언어가 있는 코드 repo 에 언어 공통 클린 코드 + 언어별 규칙
+    if (Array.isArray(r.languages) && r.languages.length && isDir(path.join(root, 'packs', CLEAN_CODE_PACK))) add(CLEAN_CODE_PACK, r.name);
+    for (const id of Array.isArray(r.languages) ? r.languages : []) {
+      const l = langs.find((x) => x.id === id);
+      if (!l) { warnings.push(`repos '${r.name}': 모르는 언어 '${id}'. packs/core/stacks.json languages 에 없습니다`); continue; }
+      if (l.pack && isDir(path.join(root, 'packs', l.pack))) add(l.pack, r.name);
     }
   }
   return out;
@@ -308,7 +350,7 @@ function migrateTypes(root) {
 }
 
 /** 스택이 정해지지 않은 코드 repo 를 감지해 workspace.json 에 적는다 (force 면 전부 다시). 반환: [{ name, stacks, evidence }] */
-function detectRepos(root, { force = false, write = true } = {}) {
+function detectRepos(root, { force = false, write = true, languages: withLanguages = true, only = null } = {}) {
   const detectLib = path.join(root, 'packs', 'core', 'lib', 'detect.js');
   if (!exists(detectLib)) return [];
   const lib = require(detectLib);
@@ -316,6 +358,7 @@ function detectRepos(root, { force = false, write = true } = {}) {
   const raw = JSON.parse(read(file));
   // 옛 detect.js(withHints 없음)를 가진 워크스페이스도 돈다 — 힌트만 빠진다
   const catalog = lib.withHints ? lib.withHints(loadCatalog(root), raw.stackHints) : loadCatalog(root);
+  const languages = loadLanguages(root);
   const results = [];
   let hostChanged = false;
   for (const r of raw.repos || []) {
@@ -323,14 +366,16 @@ function detectRepos(root, { force = false, write = true } = {}) {
       const h = hostOf(root, r);
       if (h) { r.host = h; hostChanged = true; }
     }
-    if ((r.kind || 'code') !== 'code' || (!force && Array.isArray(r.stacks))) continue;
+    if ((r.kind || 'code') !== 'code' || (!force && Array.isArray(r.stacks)) || (only && r.name !== only)) continue;
     const dir = path.join(root, repoRel(r));
     if (!exists(dir)) continue;
-    const found = lib.detect(dir, catalog);
+    const files = withLanguages && lib.scan ? lib.scan(dir) : null; // 한 번 훑어 스택 · 언어 감지가 같이 쓴다
+    const found = lib.detect(dir, catalog, files);
+    const langs = withLanguages && lib.detectLanguages ? lib.detectLanguages(dir, languages, files, languageIgnore(catalog, found)).map((x) => x.id) : null;
     // 아무것도 못 잡았는데 빌드 파일이 있으면 사내 라이브러리를 거친 간접 의존일 수 있다 → stackHints 안내
     const builds = !found.length && lib.buildFiles ? lib.buildFiles(dir) : [];
-    results.push({ name: r.name, stacks: found.map((f) => f.id), evidence: found, before: r.stacks, builds });
-    if (write) { r.stacks = found.map((f) => f.id); setStackPaths(r, found); }
+    results.push({ name: r.name, stacks: found.map((f) => f.id), evidence: found, before: r.stacks, builds, ...(langs ? { languages: langs } : {}) });
+    if (write) { r.stacks = found.map((f) => f.id); setStackPaths(r, found); if (langs && (force || r.languages !== false)) r.languages = langs; } // 빈 결과도 기록한다 (빈 repo 는 upgrade · detect 때 다시 감지). false = 건너뛴 repo
   }
   if (write && (results.length || hostChanged)) fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
   return results;
@@ -364,10 +409,83 @@ function fillStackPaths(root) {
   return filled;
 }
 
+/** 감지에 쓰는 스택 목록: 킷 목록 + workspace.json stackHints (옛 detect.js 면 힌트 없이) */
+function hintedCatalog(root, raw = null) {
+  const f = path.join(root, 'packs', 'core', 'lib', 'detect.js');
+  const lib = exists(f) ? require(f) : {};
+  const ws = raw || JSON.parse(read(path.join(root, 'workspace.json')));
+  return lib.withHints ? lib.withHints(loadCatalog(root), ws.stackHints) : loadCatalog(root);
+}
+
+/** 워크스페이스의 감지 모듈 (packs/core/lib/detect.js). 없거나 언어 감지를 모르는 옛 킷이면 null */
+function detectLibOf(root) {
+  const f = path.join(root, 'packs', 'core', 'lib', 'detect.js');
+  if (!exists(f)) return null;
+  const lib = require(f);
+  return lib.detectLanguages ? lib : null;
+}
+
+/**
+ * 스택이 정한 언어 감지 제외 폴더 (stacks.json languageIgnore: Flutter 앱의 ios/ · windows/ 등 플랫폼 실행 폴더).
+ * found = 감지 결과 [{ id, modules?, atRoot? }]: 그 스택이 잡힌 모듈 아래만 (모듈이 없으면 repo 루트, 루트에서도 잡혔으면 루트도)
+ */
+function languageIgnore(catalog, found) {
+  const out = [];
+  for (const f of found || []) {
+    const dirs = (catalog.find((c) => c.id === f.id) || {}).languageIgnore || [];
+    const mods = f.modules ? [...f.modules, ...(f.atRoot ? ['.'] : [])] : ['.'];
+    for (const m of mods) for (const d of dirs) out.push(m === '.' ? d : `${m}/${d}`);
+  }
+  return [...new Set(out)];
+}
+
+/** 이 repo 의 언어 (지금 고른 스택 · 모듈로 플랫폼 폴더를 뺀다). 폴더가 없으면 null */
+function repoLanguages(root, r, { catalog = null, languages = loadLanguages(root) } = {}) {
+  const lib = detectLibOf(root);
+  const dir = path.join(root, repoRel(r));
+  if (!lib || !exists(dir)) return null;
+  // 지금 고른 스택 기준: 감지된 것은 모듈 정보를 쓰고, 손으로 고른(감지 안 된) 스택은 repo 전체로 본다
+  if (!catalog) catalog = hintedCatalog(root); // detectRepos 와 같은 힌트로
+  const files = lib.scan ? lib.scan(dir) : null; // 한 번 훑어 스택 · 언어 감지가 같이 쓴다
+  const found = lib.detect(dir, catalog, files).filter((f) => (r.stacks || []).includes(f.id));
+  for (const id of r.stacks || []) if (!found.some((f) => f.id === id)) found.push({ id });
+  return lib.detectLanguages(dir, languages, files, languageIgnore(catalog, found)).map((x) => x.id);
+}
+
+/** 규칙이 걸리는 repo: repos: 로 정한 규칙은 그 repo, 아니면 그 팩이 붙은 repo (rules.offIn · repos: 대체로 뺀 repo 는 빼지 않은 값) */
+function ruleRepos(rule, repoMap) {
+  return rule.repos || repoMap[rule.forPack || rule.pack] || [];
+}
+
+/** 언어(repos[].languages)가 없는 코드 repo 에 언어만 채운다 (이 기능 전에 만든 워크스페이스용 · install · upgrade). 반환: [{ name, languages }] */
+function fillLanguages(root) {
+  if (!detectLibOf(root)) return [];
+  const file = path.join(root, 'workspace.json');
+  const raw = JSON.parse(read(file));
+  const opts = { catalog: hintedCatalog(root, raw), languages: loadLanguages(root) };
+  const filled = [];
+  let changed = false;
+  for (const r of raw.repos || []) {
+    // 비었으면 (새 repo 에 코드가 생겼을 수 있다) 다시 감지. false = aidure detect 에서 건너뛴 repo
+    if ((r.kind || 'code') !== 'code' || r.languages === false || (Array.isArray(r.languages) && r.languages.length)) continue;
+    const langs = repoLanguages(root, r, opts);
+    if (!langs) continue;
+    if (!Array.isArray(r.languages) || langs.length) { r.languages = langs; changed = true; }
+    if (langs.length) filled.push({ name: r.name, languages: langs });
+  }
+  if (changed) fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
+  return filled;
+}
+
+
 /** 감지 결과 한 줄 — 없으면 빌드 파일 유무로 간접 의존 가능성을 알린다 */
-function detectLine(catalog, d) {
+function detectLine(catalog, d, languages = []) {
+  const lang = d.languages && d.languages.length ? ` · 언어 ${labelLanguages(languages, d.languages)}` : '';
+  return detectLineStacks(catalog, d) + lang;
+}
+function detectLineStacks(catalog, d) {
   if (d.stacks.length) return `${stacksLabel(catalog, d.stacks)}   (${[...new Set(d.evidence.map((e) => e.evidence))].join(', ')})`;
-  if (!d.builds || !d.builds.length) return '없음 (공통 규칙만)';
+  if (!d.builds || !d.builds.length) return (d.languages || []).length ? '없음' : '없음 (공통 규칙만)';
   return `없음: 빌드 파일(${d.builds.slice(0, 2).join(', ')})은 있습니다. 사내 라이브러리를 거쳐 프레임워크를 쓰면 ${HINT_HELP}`;
 }
 const HINT_HELP = 'aidure detect --hint <스택 id> --contains <라이브러리 좌표 정규식> 으로 힌트를 적으세요';
@@ -475,9 +593,17 @@ function collect(root, ws, packs, errors, warnings, repoMap = {}) {
       if (!['all', 'claude'].includes(agents)) errors.push(`${src}: agents 는 all | claude`);
       const out = `.agents/rules/${pack.name}--${rel.replace(/\//g, '--')}`;
       // repo 스택으로 붙은 layer·stack 팩만 repo 단위. packs 에 직접 적은 옛 방식은 워크스페이스 전체에 적용
-      const scope = ['layer', 'stack', 'workflow'].includes(pack.meta.category) && repoMap[pack.name] ? 'repo' : 'workspace';
+      // repos: a,b (project 팩 규칙) = 그 repo 에만 거는 규칙
+      // repos: a, b 또는 repos: [a, b] (한 줄). 여러 줄 YAML 목록은 머리말이 한 줄 값만 읽어 빈 값이 된다 → 오류
+      const listed = parseRepos(meta.repos);
+      if (listed && !listed.length) errors.push(`${src}: repos: 는 한 줄로 쓴다 (예: repos: api, batch)`);
+      const onlyRepos = pack.name === 'project' && listed && listed.length ? listed : null;
+      if (meta.repos && pack.name !== 'project') errors.push(`${src}: repos: 는 project 팩 규칙에만 쓴다`);
+      if (meta.repos && (meta.agents || 'all') !== 'all') errors.push(`${src}: repos: 는 agents: all 규칙에만 쓴다 (Claude 전용 규칙은 repo 별로 나눌 수 없다)`);
+      for (const n of onlyRepos || []) if (!ws.repos.some((r) => r.name === n && ['code', 'issues'].includes(r.kind))) errors.push(`${src}: repos: '${n}' 는 이 워크스페이스의 코드 · 이슈 repo 가 아닙니다`);
+      const scope = onlyRepos || (['layer', 'stack', 'workflow', 'lang'].includes(pack.meta.category) && repoMap[pack.name]) ? 'repo' : 'workspace';
       const id = `${pack.name}--${rel.replace(/\//g, '--').replace(/\.md$/, '')}`; // 규칙 ID — workspace.json rules.off · replaces 가 가리킨다
-      rules.push({ id, pack: pack.name, scope, src, out, meta, load, agents, required: meta.required === true || meta.required === 'true', title: meta.title || path.basename(rel, '.md'), body: render(body, ws, src, errors) });
+      rules.push({ id, pack: pack.name, scope, ...(onlyRepos ? { repos: onlyRepos } : {}), src, out, meta, load, agents, required: meta.required === true || meta.required === 'true', title: meta.title || path.basename(rel, '.md'), body: render(body, ws, src, errors) });
     }
 
     const skillsDir = path.join(pack.dir, 'skills');
@@ -522,10 +648,12 @@ function collect(root, ws, packs, errors, warnings, repoMap = {}) {
  * 규칙 끄기·바꾸기 — workspace.json rules.off 의 규칙은 빼고, project 팩 규칙의 replaces: <ID> 는 그 규칙 대신 들어간다 (범위도 이어받는다).
  * required 규칙(킷의 전제: 근거·안전·보안)은 끄거나 바꿀 수 없다. 반환 { rules, state: { off, replaced: { id: 대체 규칙 id } } }
  */
-function applyRuleChoices(ws, all, errors, warnings) {
+function applyRuleChoices(ws, all, errors, warnings, repoMap = {}) {
   const byId = new Map(all.map((r) => [r.id, r]));
   const off = new Set();
   const replaced = {};
+  const partial = {}; // 일부 repo 에서만 바꾼 규칙 { 규칙 ID: { by, repos } }. 나머지 repo 에는 원래 규칙이 그대로 걸린다
+  const appliesTo = (r) => ruleRepos(r, repoMap);
   for (const id of ((ws.rules || {}).off || [])) {
     const r = byId.get(id);
     if (!r) { warnings.push(`workspace.json rules.off: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (aidure rules 로 목록 확인)`); continue; }
@@ -537,11 +665,43 @@ function applyRuleChoices(ws, all, errors, warnings) {
       const target = byId.get(t);
       if (!target) { warnings.push(`${r.src}: replaces '${t}' 는 이 워크스페이스에 없는 규칙입니다`); continue; }
       if (target.required) { errors.push(`${r.src}: '${t}'(${target.title}) 는 필수 규칙이라 바꿀 수 없습니다`); continue; }
+      r.forPack = target.pack;
+      if (r.repos) { // 정한 repo 에서만 바꾼다. 나머지 repo 는 원래 규칙 그대로
+        if (target.scope !== 'repo') { errors.push(`${r.src}: '${t}' 는 워크스페이스 전체 규칙이라 repos: 로 일부 repo 만 바꿀 수 없습니다 (repos: 를 빼면 전체를 바꾼다)`); continue; }
+        const stray = r.repos.filter((n) => !appliesTo(target).includes(n));
+        if (stray.length) { errors.push(`${r.src}: '${t}' 는 ${stray.join(', ')} 에 걸리지 않는 규칙이라 바꿀 수 없습니다 (걸리는 repo: ${appliesTo(target).join(', ') || '없음'}). 새 규칙을 더하려면 replaces 를 뺀다`); continue; }
+        const twice = r.repos.filter((n) => (target.skipRepos || []).includes(n));
+        if (twice.length) { errors.push(`${r.src}: '${t}' 를 ${twice.join(', ')} 에서 바꾸는 규칙이 이미 있습니다 (${(partial[t] || []).map((x) => x.by).join(', ')}). 하나로 합친다`); continue; }
+        target.skipRepos = [...new Set([...(target.skipRepos || []), ...r.repos])];
+        (partial[t] = partial[t] || []).push({ by: r.id, repos: [...r.repos] });
+        continue;
+      }
       off.add(t);
       replaced[t] = r.id;
       r.scope = target.scope; // repo 단위 규칙을 바꾸면 같은 repo 에만
-      r.forPack = target.pack;
     }
+  }
+  for (const t of Object.keys(partial)) if (off.has(t) && replaced[t]) errors.push(`'${t}' 를 전체로 바꾸는 규칙(${replaced[t]})과 일부 repo 만 바꾸는 규칙(${partial[t].map((x) => x.by).join(', ')})이 함께 있습니다. 하나로 정한다`);
+  // repo 별 끄기 (rules.offIn: { 규칙 ID: [repo…] }). repo 단위 규칙만
+  for (const [id, raw] of Object.entries((ws.rules || {}).offIn || {})) {
+    const names = [].concat(raw); // 손으로 쓴 "api" 꼴도 목록으로
+    const r = byId.get(id);
+    if (!r) { warnings.push(`workspace.json rules.offIn: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (지우기: aidure rules on ${id} --repo ${names.join(',')})`); continue; }
+    for (const p of partial[id] || []) { // 일부 repo 를 대체한 규칙: 겹치는 repo 는 대체 규칙에서도 뺀다
+      const by = byId.get(p.by);
+      const both = names.filter((n) => p.repos.includes(n));
+      if (by && both.length) by.skipRepos = [...new Set([...(by.skipRepos || []), ...both])];
+    }
+    if (replaced[id] && off.has(id)) { // 전체 대체된 규칙: 대체한 규칙에서 같은 repo 를 뺀다 (repo 별 끄기가 풀리지 않게)
+      const by = byId.get(replaced[id]);
+      if (by) by.skipRepos = [...new Set([...(by.skipRepos || []), ...names])];
+      continue;
+    }
+    if (r.required) { errors.push(`workspace.json rules.offIn: '${id}'(${r.title}) 는 필수 규칙이라 끌 수 없습니다`); continue; }
+    if (r.scope !== 'repo' || r.agents !== 'all') { warnings.push(`workspace.json rules.offIn: '${id}' 는 ${r.agents !== 'all' ? 'Claude 전용' : '워크스페이스 전체'} 규칙이라 repo 별로 끌 수 없습니다 (aidure rules off 로 전체를 끈다)`); continue; }
+    const stray = names.filter((n) => !appliesTo(r).includes(n));
+    if (stray.length) warnings.push(`workspace.json rules.offIn: '${id}' 는 ${stray.join(', ')} 에 걸리지 않는 규칙입니다 (걸리는 repo: ${appliesTo(r).join(', ') || '없음'}). 지우기: aidure rules on ${id} --repo ${stray.join(',')}`);
+    r.skipRepos = [...new Set([...(r.skipRepos || []), ...names])];
   }
   // 상시 규칙을 필요할 때만 읽게 (AGENTS.md 를 줄인다). REPO_TASKS 는 「repo 별 작업 규칙」의 작업별 표
   const lazy = [];
@@ -555,7 +715,7 @@ function applyRuleChoices(ws, all, errors, warnings) {
     r.meta = { ...r.meta, when: r.meta.when || `${r.title} 에 해당하는 작업을 시작할 때` };
     lazy.push(id);
   }
-  return { rules: all.filter((r) => !off.has(r.id)), state: { off: [...off], replaced, onDemand: lazy } };
+  return { rules: all.filter((r) => !off.has(r.id)), state: { off: [...off], replaced, partial, onDemand: lazy } };
 }
 
 /** rules.onDemand 에 이 이름을 넣으면 「repo 별 작업 규칙」의 작업별 표를 따로 파일로 뺀다 */
@@ -608,11 +768,15 @@ function repoTable(ws) {
   return out.join('\n');
 }
 
-function repoRulesSection(ws, rules, repoMap, catalog, extra = new Map()) {
+function repoRulesSection(ws, rules, repoMap, catalog, extra = new Map(), languages = []) {
   const code = ws.repos.filter((r) => r.kind === 'code' || r.kind === 'issues');
   const scoped = rules.filter((r) => r.scope === 'repo' && r.agents === 'all');
   if (!code.length || (!scoped.length && !code.some((r) => r.kind === 'code' && (!Array.isArray(r.stacks) || !r.stacks.length)))) return '';
   const packsOf = (repo) => Object.keys(repoMap).filter((pk) => repoMap[pk].includes(repo));
+  // 규칙이 그 repo 에 걸리나: repos: 로 정한 규칙은 그 repo 만, 나머지는 팩이 붙은 repo. rules.offIn · repos: 대체로 뺀 repo 는 제외
+  const applies = (x, name) => ruleRepos(x, repoMap).includes(name) && !(x.skipRepos || []).includes(name);
+  const repoNames = (x) => code.filter((r) => applies(x, r.name)).map((r) => r.name);
+  const langLabel = (r) => ((r.languages || []).length ? ` · ${labelLanguages(languages, r.languages)}` : '');
   // 멀티모듈 repo — 팩이 붙게 한 스택들의 모듈. 협업 도구 팩이나 모듈을 모르는 스택이 섞이면 repo 전체(null)
   const packModules = (r, pack) => {
     if (!r.stackPaths) return null;
@@ -631,15 +795,15 @@ function repoRulesSection(ws, rules, repoMap, catalog, extra = new Map()) {
   for (const r of code) {
     const stacks = r.stacks || [];
     const host = HOSTS[r.host] || '협업 도구 미확인';
-    const label = r.kind === 'issues' ? `이슈 기록 · ${host}` : (!Array.isArray(r.stacks) ? '스택 미확인: `aidure detect`' : !stacks.length ? '스택 없음: 공통 규칙만' :
-      stacksLabel(catalog, stacks, (s) => !(s.pack && packsOf(r.name).includes(s.pack)), r.stackPaths)) + (r.kind === 'code' ? ` · ${host}` : '');
-    const docs = scoped.filter((x) => x.load === 'always' && packsOf(r.name).includes(x.forPack || x.pack)).map((x) => `\`${x.out}\`${where(r, x.forPack || x.pack)}`);
+    const label = r.kind === 'issues' ? `이슈 기록 · ${host}` : (!Array.isArray(r.stacks) ? '스택 미확인: `aidure detect`' : !stacks.length ? ((r.languages || []).length ? '스택 없음' : '스택 없음: 공통 규칙만') :
+      stacksLabel(catalog, stacks, (s) => !(s.pack && packsOf(r.name).includes(s.pack)), r.stackPaths)) + (r.kind === 'code' ? `${langLabel(r)} · ${host}` : '');
+    const docs = scoped.filter((x) => x.load === 'always' && applies(x, r.name)).map((x) => `\`${x.out}\`${x.repos && !x.forPack ? '' : where(r, x.forPack || x.pack)}`);
     out.push(`| **${r.name}** | ${label} | ${docs.length ? docs.join('<br>') : '—'} |`);
   }
-  const od = scoped.filter((x) => x.load === 'on-demand');
+  const od = scoped.filter((x) => x.load === 'on-demand' && repoNames(x).length); // 끄거나 바꿔 걸리는 repo 가 없는 규칙은 뺀다
   if (od.length) {
     const table = ['| 언제 | 문서 | repo |', '|---|---|---|',
-      ...od.map((x) => `| ${x.meta.when} | \`${x.out}\` | ${(repoMap[x.forPack || x.pack] || []).map((n) => `${n}${where(code.find((r) => r.name === n) || {}, x.forPack || x.pack)}`).join(', ')} |`)];
+      ...od.map((x) => `| ${x.meta.when} | \`${x.out}\` | ${repoNames(x).map((n) => `${n}${x.repos && !x.forPack ? '' : where(code.find((r) => r.name === n) || {}, x.forPack || x.pack)}`).join(', ')} |`)];
     if (((ws.rules || {}).onDemand || []).includes(REPO_TASKS)) {
       out.push('', `그 repo 에서 작업을 시작하기 전에 \`${REPO_TASKS_FILE}\` 의 표(작업별로 먼저 읽을 문서 ${od.length}개)를 읽고, 해당하는 문서를 읽는다.`);
       extra.set(REPO_TASKS_FILE, [`<!-- ${GEN_NOTE} -->`, '', '# repo 별 작업별 규칙', '', '그 repo 에서 아래 작업을 할 때는 이것도 먼저 읽는다.', '', ...table, ''].join('\n'));
@@ -649,7 +813,7 @@ function repoRulesSection(ws, rules, repoMap, catalog, extra = new Map()) {
   return out.join('\n');
 }
 
-function buildAgentsMd(ws, rules, skills, repoMap = {}, catalog = [], extra = new Map()) {
+function buildAgentsMd(ws, rules, skills, repoMap = {}, catalog = [], extra = new Map(), languages = []) {
   const p = ws.project;
   const parts = [`<!-- ${GEN_NOTE} -->`, '', `# ${p.title || p.name || '워크스페이스'}`, ''];
   if (p.type) parts.push(`**프로젝트 유형: ${PROJECT_TYPES[p.type] || p.type}**`, '');
@@ -669,7 +833,7 @@ function buildAgentsMd(ws, rules, skills, repoMap = {}, catalog = [], extra = ne
     '> 룰·스킬을 고치려면 `packs/` 를 고치고 `node bin/kit.js sync` 를 돌린다.', '');
   const repos = repoTable(ws);
   if (repos) parts.push(repos);
-  const perRepo = repoRulesSection(ws, rules, repoMap, catalog, extra);
+  const perRepo = repoRulesSection(ws, rules, repoMap, catalog, extra, languages);
   if (perRepo) parts.push(perRepo);
 
   const always = rules.filter((r) => r.load === 'always' && r.agents === 'all' && r.scope !== 'repo');
@@ -801,7 +965,8 @@ function generate(root) {
   const ws = loadWorkspace(root);
   const catalog = loadCatalog(root);
   for (const r of ws.repos) if (!r.host) { const h = hostOf(root, r); if (h) r.host = h; } // 메모리에서만
-  const repoMap = repoPacks(root, ws, catalog, warnings);
+  const languages = loadLanguages(root);
+  const repoMap = repoPacks(root, ws, catalog, warnings, languages);
   const packs = loadPacks(root, ws, errors, Object.keys(repoMap).filter((pk) => !ws.packs.includes(pk)));
   applyPackVarDefaults(ws, packs.map((pk) => pk.dir)); // 메모리에서만 — 새로 붙은 스택 팩 변수가 비어 sync 가 멈추지 않게
   validateProject(ws, errors, warnings);
@@ -811,15 +976,15 @@ function generate(root) {
     if (checkHints) errors.push(...checkHints(catalog, ws.stackHints));
   }
   const { rules: allRules, skills, hooks } = collect(root, ws, packs, errors, warnings, repoMap);
-  const { rules, state: ruleState } = applyRuleChoices(ws, allRules, errors, warnings);
+  const { rules, state: ruleState } = applyRuleChoices(ws, allRules, errors, warnings, repoMap);
   for (const pk of packs) {
-    if (['layer', 'stack'].includes(pk.meta.category) && ws.packs.includes(pk.name) && !repoMap[pk.name]) {
+    if (['layer', 'stack', 'lang'].includes(pk.meta.category) && ws.packs.includes(pk.name) && !repoMap[pk.name]) {
       warnings.push(`팩 '${pk.name}' 이 packs 에 직접 적혀 있어 워크스페이스 전체에 적용됩니다. repo 별로 붙이려면 packs 에서 빼고 aidure detect`);
     }
   }
   const files = new Map();
 
-  const agentsMd = buildAgentsMd(ws, rules, skills, repoMap, catalog, files);
+  const agentsMd = buildAgentsMd(ws, rules, skills, repoMap, catalog, files, languages);
   files.set('AGENTS.md', agentsMd);
   files.set('CLAUDE.md', buildClaudeMd(rules));
   for (const r of rules) {
@@ -889,7 +1054,7 @@ function generate(root) {
 
   const roles = collectRoles(packs, ws, errors);
   for (const a of auditModels(root, ws)) warnings.push(a.message); // 퇴역 모델은 경고로 — 생성은 막지 않는다 (개인 설정 때문에 팀 커밋이 막히지 않게)
-  return { ws, files, roles, packs, errors, warnings, allRules, ruleState, stats: { rules: rules.length, always: rules.filter((r) => r.load === 'always').length, skills: skills.length, hooks: hooks.length, bytes, limit: effective } };
+  return { ws, files, roles, packs, errors, warnings, allRules, ruleState, repoMap, stats: { rules: rules.length, always: rules.filter((r) => r.load === 'always').length, skills: skills.length, hooks: hooks.length, bytes, limit: effective } };
 }
 
 /** 개인 지침(.agents/local.md) → CLAUDE.local.md · AGENTS.override.md. 둘 다 gitignore 대상이라 check 대상이 아니다. */
@@ -2019,7 +2184,7 @@ function cmdInstall(root, opts = {}) {
   if (opts.results) opts.results.push(...got); // aidure init 이 끝 화면에 repo 별 상태를 다시 보인다
   if (opts.detect !== false) {
     const catalog = loadCatalog(root);
-    for (const d of detectRepos(root)) console.log(`  ◎ ${d.name.padEnd(14)} 스택 감지: ${detectLine(catalog, d)}`);
+    for (const d of detectRepos(root)) console.log(`  ◎ ${d.name.padEnd(14)} 스택 감지: ${detectLine(catalog, d, loadLanguages(root))}`);
   }
   // 로드맵: 스택을 안 뒤에 만든다 (DB · 화면 스택이면 데이터 설계 · 화면설계 단계). 기본 단계 그대로면 새 스택 단계를 더한다
   const planMade = ensurePlan(root);
@@ -2230,7 +2395,7 @@ function main() {
     }
     const res = detectRepos(root, { force: !!args.force || args.hint !== undefined });
     if (!res.length) console.log('감지할 코드 repo 가 없습니다 (이미 스택이 정해졌으면 --force)');
-    for (const d of res) console.log(`  ${d.name.padEnd(14)} ${detectLine(catalog, d)}`);
+    for (const d of res) console.log(`  ${d.name.padEnd(14)} ${detectLine(catalog, d, loadLanguages(root))}`);
     return cmdSync(root);
   }
   if (cmd === 'upgrade') return cmdUpgrade(root, args);
@@ -2240,4 +2405,4 @@ function main() {
 
 main();
 
-module.exports = { claudeKey, window1m, claudeWindow, SECRET_PATTERNS, secretHits, repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };
+module.exports = { hintedCatalog, parseRepos, repoLanguages, labelLanguages, ruleRepos, projectRulesPinning, fillLanguages, loadLanguages, claudeKey, window1m, claudeWindow, SECRET_PATTERNS, secretHits, repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };

@@ -1,0 +1,14 @@
+{
+  "name": "stack-android",
+  "title": "Android 스택",
+  "summary": "Android 구조(UI · 데이터 층) · ViewModel · Compose",
+  "description": "Android: UI 층 · 데이터 층 분리 · 화면당 ViewModel · UiState · Compose 인자 · 상태 끌어올리기. 모바일 공통은 mobile 팩",
+  "category": "stack",
+  "layer": "mobile",
+  "stacks": [
+    "android"
+  ],
+  "requires": [
+    "core"
+  ]
+}

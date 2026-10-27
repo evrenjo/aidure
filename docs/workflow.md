@@ -328,7 +328,7 @@ flowchart TD
     Q -->|"알림 · 텔레그램"| NS["aidure notify setup: 무엇을 설정할까요?<br/>알림 수준(전체 · 결과와 결정 · 진행 현황 · 끄기) · 양방향 대화(이 프로젝트 봇 토큰 · 다시 점검 · 끄기 · 제거) · 자리 비움<br/>개인 알림 봇(개인 봇 토큰 · 바꾸기 · 제거) · 팀 방 알림(팀 봇 토큰 · 팀 방 ID · 팀 봇 제거)<br/>고급(결과 알림 기준 · PC 앞이면 생략 · 진행 현황 알림) · 시험 메시지 · 알림 설정을 모두 지울까요?<br/>→ .agents/local.json · ~/.config/aidure/telegram.env (팀 방은 workspace.json)"]
     Q -->|"이 PC 설정을 처음 상태로"| RST["aidure reset: 무엇을 초기화할까요?<br/>이 PC 설정 · 텔레그램 채널 · 세션 임시 기록 · 개인 지침 · 텔레그램 토큰<br/>→ 선택한 항목을 초기화할까요? → sync<br/>팀 설정 · repos · 핸드오프는 그대로. 화면 없이: aidure reset local,channel --yes"]
     Q -->|"팀 명단"| TA["aidure team add · remove &lt;id&gt; · members<br/>aidure team restrict on · off (명단 밖 aidure start 막기)<br/>→ workspace.json team → commit · push"]
-    Q -->|"규칙"| RL["aidure rules (켤 규칙 고르기)<br/>aidure rules list · off &lt;ID&gt; · on &lt;ID&gt;<br/>aidure rules ondemand · always &lt;ID&gt; (AGENTS.md 줄이기)"]
+    Q -->|"규칙"| RL["aidure rules (켤 규칙 고르기)<br/>aidure rules list · off &lt;ID&gt; · on &lt;ID&gt; [--repo &lt;이름&gt;]<br/>aidure rules ondemand · always &lt;ID&gt; (AGENTS.md 줄이기)"]
     RL --> RL2["끈 규칙은 AGENTS.md 에서 빠짐 → workspace.json commit · push<br/>바꾸기: packs/project/rules 에 replaces: &lt;ID&gt;"]
     Q -->|"repo 빼기"| RRM["aidure repo remove &lt;이름&gt; [--delete] (관리자)<br/>workspace.json · 리뷰 대상에서 지움 → sync<br/>이름이 남은 문서 알림 · 폴더는 --delete 때만"]
     Q -->|"repo 추가"| RA["aidure repo add [주소 · 폴더 · 이름] [--group &lt;그룹&gt;]"]

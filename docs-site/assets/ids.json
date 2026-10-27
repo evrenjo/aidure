@@ -2,9 +2,11 @@
  "docs": {
   "README.md": "index.html",
   "budget.md": "docs/budget.html",
+  "clean-code.md": "docs/clean-code.html",
   "commands.md": "docs/commands.html",
   "docs-site.md": "docs/docs-site.html",
   "docs/budget.md": "docs/budget.html",
+  "docs/clean-code.md": "docs/clean-code.html",
   "docs/commands.md": "docs/commands.html",
   "docs/docs-site.md": "docs/docs-site.html",
   "docs/handoff.md": "docs/handoff.html",

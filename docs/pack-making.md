@@ -7,10 +7,13 @@
 | 하고 싶은 것 | 방법 | 저장 |
 |---|---|---|
 | 킷 규칙 끄기 | `aidure rules` (켤 규칙 고르기) 또는 `aidure rules off <ID>` | `workspace.json` 의 `rules.off` (팀 공유) |
+| 스택 · 언어 규칙을 일부 repo 에서만 끄기 | `aidure rules off <ID> --repo <이름,…>` (켜기는 `on`) | `workspace.json` 의 `rules.offIn` (팀 공유) |
 | 상시 규칙을 필요할 때만 | `aidure rules ondemand <ID>` (`repo-tasks` = repo 별 작업별 표) | `workspace.json` 의 `rules.onDemand` (팀 공유) |
 | 킷 규칙을 우리 방식으로 바꾸기 | `packs/project/rules/<이름>.md` 머리말에 `replaces: <ID>` | 그 규칙 대신 들어가고, 원래 규칙이 걸리던 repo 에 똑같이 걸린다 |
+| repo 마다 다른 규칙 (예: 이 repo 만 다른 Java 규칙) | 머리말에 `replaces: <ID>` + `repos: <이름,…>` | 적은 repo 에서만 바꾸고 나머지 repo 는 킷 규칙 그대로. `replaces` 없이 `repos:` 만 쓰면 그 repo 에만 더해진다 |
 | 우리 규칙·스킬 더하기 | `packs/project/rules/*.md` · `packs/project/skills/<이름>/SKILL.md` | 워크스페이스 repo (팀 공유) |
 | 스택 규칙을 repo 에서 빼기 | `aidure detect` 에서 그 repo 스택을 고치거나 건너뛰기 | `workspace.json` 의 `repos[].stacks` |
+| 언어 규칙을 repo 에서 빼기 | `aidure rules off lang-<언어>--10-<언어> --repo <이름>` 또는 `aidure detect` 에서 그 repo 를 건너뛴다 (`repos[].languages: false`). 감지 결과를 손으로 지우면 다음 감지 때 되살아난다 | `workspace.json` 의 `rules.offIn` |
 | 협업 도구 규칙 빼기 | `workspace.json` 에서 그 repo 의 `host` 를 `none` | `workspace.json` |
 | 나만 쓰는 지침 | `.agents/local.md` | 이 PC 만 |
 
@@ -88,8 +91,9 @@ packs/<이름>/
 | `workflow` | repo 주소(또는 `host`)가 그 도구인 repo 에만 | `gitlab` · `github` |
 | `layer` | **repo 스택**이 그 layer 면 자동. 기술과 무관한 공통 원칙 | `backend` · `frontend` · `db` |
 | `stack` | **repo 스택**이 그 기술이면 자동. `"layer"` · `"stacks": ["<id>"]` 를 적는다 | `stack-spring` · `stack-react` · `stack-postgres` |
+| `lang` | **repo 언어**(소스 확장자로 감지, `stacks.json` 의 `languages`)가 그 언어면 자동. `"languages": ["<id>"]` 를 적는다. 언어가 하나라도 있으면 `clean-code` 도 붙는다 | `lang-java` · `lang-python` · `clean-code` |
 
-- **layer·stack 팩의 룰은 AGENTS.md 본문에 들어가지 않는다.** "repo 별 작업 규칙" 표에서 그 스택을 쓰는 repo 에만 걸린다
+- **layer·stack·lang 팩의 룰은 AGENTS.md 본문에 들어가지 않는다.** "repo 별 작업 규칙" 표에서 그 스택을 쓰는 repo 에만 걸린다
   (`always` = 그 repo 를 고치기 전에 읽을 문서, `on-demand` = 해당 작업 때). 그래서 repo 가 많아도 AGENTS.md 가 커지지 않는다.
 - **stack 팩에는 그 기술에만 해당하는 것만** 둔다. 기술과 무관한 원칙은 layer 팩으로.
 - **특정 프로젝트·사내 프레임워크의 관례(응답 봉투, 오류 코드 체계, 메시지 키 등)를 표준처럼 쓰지 않는다.** "그 프로젝트의 기존 관례를 찾아 따른다" 로 쓰고, 관례 예시가 필요하면 `docs/example-*.md` 로 "강요하지 않는다" 를 머리에 달아 둔다.

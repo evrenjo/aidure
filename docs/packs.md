@@ -12,13 +12,14 @@
 | 협업 도구 (`workflow`) | repo 주소가 GitLab · GitHub 인 repo 에 | 브랜치 전략 · 커밋 규칙 · MR · PR 스킬 |
 | 계층 (`layer`) | repo 스택의 계층(서버 · 화면 · DB · 모바일 …)에 | 기술과 무관한 공통 원칙 |
 | 스택 (`stack`) | repo 스택이 그 기술일 때 | 그 기술의 구체 규칙과 검사 도구 |
+| 언어 (`lang`) | repo 에 그 언어 소스가 있을 때 (언어 감지: Java · Kotlin · Python · C · C++ · Swift · Dart · TypeScript · JavaScript · Go · C#) | 클린 코드: 이름 · 함수 · 클래스 · 주석 · 읽히는 코드 · 레이어 책임. 언어가 감지된 코드 repo 에 공통(`clean-code`), 언어별(`lang-*`)은 전용 팩이 있는 언어만 |
 | 프로젝트 (`project`) | 워크스페이스마다 하나, 처음엔 비어 있다 | 그 프로젝트만의 규칙 · 스킬 · 역할 정의 |
 
-계층·스택·협업 도구 팩은 **그 스택을 쓰는 repo 에만** 걸린다 (AGENTS.md 의 "repo 별 작업 규칙" 표). 그래서 repo 가 많아도 AGENTS.md 가 커지지 않는다.
+계층·스택·언어·협업 도구 팩은 **그 스택 · 언어를 쓰는 repo 에만** 걸린다 (AGENTS.md 의 "repo 별 작업 규칙" 표). 그래서 repo 가 많아도 AGENTS.md 가 커지지 않는다.
 
 규칙을 끄거나 우리 방식으로 바꾸거나 새로 더하려면 [팩 제작](pack-making.md).
 
-모든 팩은 종류마다 한 쪽(공통 · 유형 · 협업 도구 · 계층 · 스택 · 산출물)이다. 팩 이름을 누르면 설명 · 붙는 조건 · 규칙 · 스킬 · 도구가 펼쳐진다. 이 목록은 `npm run docs` 가 `packs/` 로 만든다.
+모든 팩은 종류마다 한 쪽(공통 · 유형 · 협업 도구 · 계층 · 스택 · 언어 · 산출물)이다. 팩 이름을 누르면 설명 · 붙는 조건 · 규칙 · 스킬 · 도구가 펼쳐진다. 이 목록은 `npm run docs` 가 `packs/` 로 만든다.
 
 <!-- packs:catalog: node bin/docs.js 가 packs/ 로 쓴다. 손으로 고치지 않는다 -->
 ## 공통 팩
@@ -410,6 +411,114 @@ DBMS 공통 DB 작업 원칙: 환경 확정·운영 직접 변경 금지·파괴
 ## 스택 팩
 
 <details>
+<summary><b>stack-android</b> · Android 스택: Android 구조(UI · 데이터 층) · ViewModel · Compose</summary>
+
+Android: UI 층 · 데이터 층 분리 · 화면당 ViewModel · UiState · Compose 인자 · 상태 끌어올리기. 모바일 공통은 mobile 팩
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 스택이 android 일 때 (mobile 계층 팩과 함께) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `stack-android--10-android` | Android 구조 · ViewModel · Compose | 상시 |
+
+</details>
+
+<details>
+<summary><b>stack-django</b> · Django 스택: Django 업무 로직 위치 · 모델 · 쿼리 · 설정</summary>
+
+Django: 업무 로직 위치(서비스 · 선택자) · 뷰 · 시그널에 로직 금지 · DB 제약 · 쿼리 · 설정. 서버 공통은 backend 팩
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 스택이 django 일 때 (backend 계층 팩과 함께) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `stack-django--10-django` | Django 기본 규약 | 상시 |
+
+</details>
+
+<details>
+<summary><b>stack-fastapi</b> · FastAPI 스택: FastAPI 라우터 · Pydantic 모델 · 의존성 · async · 설정</summary>
+
+FastAPI: 얇은 라우터 · Pydantic 모델 분리 · Annotated 의존성 · async 안 블로킹 금지 · 설정 의존성. 서버 공통은 backend 팩
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 스택이 fastapi 일 때 (backend 계층 팩과 함께) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `stack-fastapi--10-fastapi` | FastAPI 기본 규약 | 상시 |
+
+</details>
+
+<details>
+<summary><b>stack-flutter</b> · Flutter 스택: Flutter 구조(MVVM · Repository) · 위젯 나누기</summary>
+
+Flutter: View · ViewModel · Repository 구조 · 위젯에는 표시만 · 작은 위젯 클래스 · 상태 범위. 모바일 공통은 mobile 팩
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 스택이 flutter 일 때 (mobile 계층 팩과 함께) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `stack-flutter--10-flutter` | Flutter 구조 · 위젯 | 상시 |
+
+</details>
+
+<details>
+<summary><b>stack-nestjs</b> · NestJS 스택: NestJS 레이어 책임 · 모듈 경계 · 공통 처리 위치 · 파일 이름</summary>
+
+NestJS: Controller · provider · Module 책임 · 모듈 경계 · 공통 처리는 pipe · guard · interceptor · 파일 이름. 서버 공통은 backend 팩
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 스택이 nestjs 일 때 (backend 계층 팩과 함께) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `stack-nestjs--10-nestjs` | NestJS 레이어 책임 · 모듈 · 공통 처리 | 상시 |
+
+</details>
+
+<details>
+<summary><b>stack-nextjs</b> · Next.js 스택: Next.js App Router 레이어 책임 · 데이터 접근 층 · 배치</summary>
+
+Next.js(App Router): page · route · Server Action 책임 · server-only 데이터 접근 층 · 배치. stack-react 와 함께 붙는다
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 스택이 nextjs 일 때 (frontend 계층 팩과 함께) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `stack-nextjs--10-nextjs` | Next.js 레이어 책임 · 데이터 접근 층 | 상시 |
+
+</details>
+
+<details>
 <summary><b>stack-postgres</b> · PostgreSQL 스택: PostgreSQL 문법 · 잠금 · 확장·시퀀스 함정</summary>
 
 PostgreSQL 전용 규칙: 트랜잭션 DDL 로 건수 시험, CONCURRENTLY 는 트랜잭션 밖, search_path·식별자 대소문자, 확장 설치 스키마, 시퀀스 보정, SELECT DISTINCT + ORDER BY 식, 스키마 순회 DO 블록, 잠금 시간 제한
@@ -445,6 +554,7 @@ React + TypeScript + Vite + TanStack Query + React Router 구현 규약: 생성 
 | `stack-react--10-react-baseline` | React 구현 기본 규약 | 상시 |
 | `stack-react--20-react-patterns` | React 구조·쿼리·URL·폼·다이얼로그 구현 | 필요할 때: React 화면 코드를 새로 쓰거나 고칠 때 (파일 추가·이동, TanStack Query 연동, URL 상태·폼·다이얼로그 구현 포함) |
 | `stack-react--30-react-a11y` | React 접근성 구현·검사기 | 필요할 때: React 폼 컨트롤·버튼·표·탭·드롭다운·모달을 만들거나 고칠 때, 접근성 검사기를 돌리거나 공용 입력 컴포넌트를 추가할 때 |
+| `stack-react--40-logic-placement` | React 컴포넌트 책임 · 로직 위치 | 상시 |
 
 **스킬**
 
@@ -475,8 +585,157 @@ Spring Boot + JPA + QueryDSL 구체 규칙: @Transactional 기본값·checked �
 | `stack-spring--30-persistence` | Spring 데이터 접근: 리포지토리·QueryDSL·네이티브 SQL | 필요할 때: Repository·QueryDSL·네이티브 SQL 로 DB 를 읽거나 쓰는 코드를 새로 쓰거나 고칠 때 (대량 수정·삭제·복제 포함) |
 | `stack-spring--40-api-and-validation` | Spring 기존 관례 찾기·입력 검증 | 필요할 때: Spring 에서 엔드포인트를 새로 만들거나 요청·응답·예외·검증·사용자 메시지를 정하거나 바꿀 때 |
 | `stack-spring--50-logging` | Spring 로깅 | 필요할 때: Spring 백엔드에서 로그를 새로 넣거나, 예외를 잡아 로그로 남기는 코드·@RestControllerAdvice 를 고칠 때 |
+| `stack-spring--60-clean-code` | Spring 레이어 책임 · 주입 · 설정값 | 상시 |
 
 **도구**: `bin/check-logging-convention.js` · `bin/check-querydsl-distinct-order.js` · `bin/check-querydsl-projection-arity.js` · `bin/query-predicates.js`
+
+</details>
+
+## 언어 팩
+
+<details>
+<summary><b>clean-code</b> · 클린 코드 공통: 이름 · 함수 · 클래스 · 주석 · 읽히는 코드 · 레이어 책임 (언어 공통)</summary>
+
+언어가 감지된 모든 코드 repo 에 붙는 클린 코드 공통 규칙: 이름 · 함수 · 모듈 · 주석 · 읽히는 코드 · 레이어 파일에 private 상수 · 함수 늘어놓지 않기와 공통 로직 위치. 근거는 클린 코드 규칙 문서
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 감지된 언어(Java · Kotlin · Python · C · C++ · Swift · Dart · TypeScript · JavaScript · Go · C#)가 하나라도 있을 때 |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `clean-code--10-clean-code` | 클린 코드 공통 | 상시 |
+| `clean-code--20-layer-responsibility` | 레이어 책임 · 공통 로직 추출 | 상시 |
+
+</details>
+
+<details>
+<summary><b>lang-c</b> · C 클린 코드: C 이름 · 함수 · 모듈 · 메모리 · 오류 처리</summary>
+
+C 소스가 있는 repo 에: 이름 · 함수 · 모듈 · 반환값 확인 · 정리 경로 · 위험 함수 금지
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 C 소스가 있을 때 (언어 감지) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `lang-c--10-c` | C 클린 코드 | 상시 |
+
+</details>
+
+<details>
+<summary><b>lang-cpp</b> · C++ 클린 코드: C++ 이름 · 함수 · 클래스 · 소유권(RAII) · const · 오류 방식</summary>
+
+C++ 소스가 있는 repo 에: 출력은 반환값 · rule of zero · RAII · 소유권 · const · 오류 방식 하나
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 C++ 소스가 있을 때 (언어 감지) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `lang-cpp--10-cpp` | C++ 클린 코드 | 상시 |
+
+</details>
+
+<details>
+<summary><b>lang-dart</b> · Dart 클린 코드: Dart 이름 · 함수 · 변수 · 타입 · 비동기 · 문서 주석 (Effective Dart)</summary>
+
+Dart 소스가 있는 repo 에: Effective Dart 이름 · final · const · 불변 · sealed · async · 문서 주석
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 Dart 소스가 있을 때 (언어 감지) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `lang-dart--10-dart` | Dart 클린 코드 | 상시 |
+
+</details>
+
+<details>
+<summary><b>lang-java</b> · Java 클린 코드: Java 이름 · 메서드 · 클래스 · Javadoc · 관용구</summary>
+
+Java 소스가 있는 repo 에: 이름 · 메서드 · record · sealed · Optional · Javadoc · 관용구
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 Java 소스가 있을 때 (언어 감지) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `lang-java--10-java` | Java 클린 코드 | 상시 |
+
+</details>
+
+<details>
+<summary><b>lang-kotlin</b> · Kotlin 클린 코드: Kotlin 이름 · 함수 · 클래스 · KDoc · 관용구</summary>
+
+Kotlin 소스가 있는 repo 에: 이름 · 식 본문 · 불변 · data · sealed · KDoc · 스코프 함수 · !! 금지
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 Kotlin 소스가 있을 때 (언어 감지) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `lang-kotlin--10-kotlin` | Kotlin 클린 코드 | 상시 |
+
+</details>
+
+<details>
+<summary><b>lang-python</b> · Python 클린 코드: Python 이름 · 함수 · 타입 힌트 · docstring · 관용구 · ML/AI 코드</summary>
+
+Python 소스가 있는 repo 에: PEP 8 이름 · 함수 · 타입 힌트 · docstring · 예외 · 관용구. ML · AI 코드는 작업할 때 읽는 규칙
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 Python 소스가 있을 때 (언어 감지) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `lang-python--10-python` | Python 클린 코드 | 상시 |
+| `lang-python--20-ml-ai` | ML · AI 코드 | 필요할 때: 학습 · 추론 · 데이터 전처리 · 노트북 · LLM 호출(프롬프트 · 모델 설정) 코드를 쓰거나 고칠 때 |
+
+</details>
+
+<details>
+<summary><b>lang-swift</b> · Swift 클린 코드: Swift 이름(API Design Guidelines) · 인자 레이블 · 타입 · DocC · 동시성 · SwiftUI</summary>
+
+Swift 소스가 있는 repo 에: 문장처럼 읽히는 이름 · 인자 레이블 · 타입 · DocC · 동시성 · SwiftUI
+
+| 항목 | 내용 |
+|---|---|
+| 붙는 조건 | repo 에 Swift 소스가 있을 때 (언어 감지) |
+| 함께 붙는 팩 | `core` |
+
+**규칙**
+
+| ID | 제목 | 읽는 때 |
+|---|---|---|
+| `lang-swift--10-swift` | Swift 클린 코드 | 상시 |
 
 </details>
 

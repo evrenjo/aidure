@@ -43,7 +43,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 지난 대화 이어서 시작 | `aidure start -c`(마지막 대화) · `aidure start -r <세션 ID>` · `aidure start -r`(목록). 세션 안에서는 할 수 없으니 사용자에게 명령을 알려 준다 | 이 PC |
 | 에이전트 · 팀원을 캐릭터 화면으로 보기 | `aidure start --pixel-agents`. 이 PC 에 `pixel-agents`(`npm i -g pixel-agents`)가 있어야 한다. 브라우저로 열고 세션이 끝나면 끈다. 세션 안에서는 할 수 없으니 사용자에게 명령을 알려 준다 | 이 PC |
 | 시작 도구 바꾸기 | `aidure agent --claude\|--codex [--args "<인자>"]` | 이 PC |
-| 규칙 목록 · 끄기 · 켜기 | `aidure rules list` · `aidure rules off <ID…>` · `aidure rules on <ID…>` | 팀 |
+| 규칙 목록 · 끄기 · 켜기 | `aidure rules list` · `aidure rules off <ID…>` · `aidure rules on <ID…>` · 한 repo 에서만: 끝에 `--repo <이름,…>` (스택 · 언어 규칙) | 팀 |
 | AGENTS.md 줄이기 (상시 규칙을 필요할 때만) | `aidure rules ondemand <ID…\|repo-tasks>` · 되돌리기 `aidure rules always <ID…>` | 팀 |
 | 팀 현황 · 한 사람 · 인수 | `aidure team` · `aidure team <id>` · `aidure team <id> --take <번호\|all>` | 보기 · 내 TODO |
 | 팀 명단 · 제한 | `aidure team add\|remove <id…>` · `aidure team members` · `aidure team restrict on\|off` | 팀 |
@@ -89,7 +89,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 
 - 역할 이름: `analyst` · `architect` · `implementer` · `tester` · `reviewer` · `documenter`, 메인 `main`, 교차 검토 `crossReview`.
 - 모델 이름은 `aidure models` 결과나 `packs/core/models.json` 의 목록에서 고른다. 없는 이름을 지어내지 않는다.
-- 규칙 ID 는 `aidure rules list` 로 확인한다. 킷 규칙을 **우리 방식으로 바꾸려면** 끄지 말고 `packs/project/rules/<이름>.md` 에 `replaces: <ID>` 를 둔다.
+- 규칙 ID 는 `aidure rules list` 로 확인한다. 킷 규칙을 **우리 방식으로 바꾸려면** 끄지 말고 `packs/project/rules/<이름>.md` 에 `replaces: <ID>` 를 둔다. 일부 repo 에서만 바꾸려면 `repos: <이름,…>` 도 적는다.
 
 ## 2. 실행 전에
 

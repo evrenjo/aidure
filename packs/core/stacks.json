@@ -51,7 +51,8 @@
           ],
           "contains": "fastapi"
         }
-      ]
+      ],
+      "pack": "stack-fastapi"
     },
     {
       "id": "django",
@@ -71,7 +72,8 @@
           ],
           "contains": "(^|[\"'\\s])django([\"'\\s=<>~]|$)"
         }
-      ]
+      ],
+      "pack": "stack-django"
     },
     {
       "id": "flask",
@@ -112,7 +114,8 @@
           ],
           "contains": "\"@nestjs/core\""
         }
-      ]
+      ],
+      "pack": "stack-nestjs"
     },
     {
       "id": "aspnet",
@@ -152,6 +155,29 @@
           "contains": "\"react\"\\s*:"
         }
       ]
+    },
+    {
+      "id": "nextjs",
+      "label": "Next.js",
+      "layer": "frontend",
+      "parent": "react",
+      "pack": "stack-nextjs",
+      "detect": [
+        {
+          "files": [
+            "package.json"
+          ],
+          "contains": "\"next\"\\s*:\\s*\"(?:[~^<>=]*\\d|latest|canary|next|workspace:|\\*)"
+        },
+        {
+          "files": [
+            "next.config.js",
+            "next.config.mjs",
+            "next.config.ts"
+          ]
+        }
+      ],
+      "note": "React 의 세부 프레임워크. stack-react 와 stack-nextjs 가 함께 붙는다"
     },
     {
       "id": "angular",
@@ -346,7 +372,17 @@
           "contains": "com\\.android\\.application"
         }
       ],
-      "note": "기존 항목 확인 — 유효. 수정안: 버전 카탈로그(alias(libs.plugins.android.application))를 위해 libs.versions.toml 추가. Flutter·RN·Capacitor 저장소는 android/ 아래 매니페스트(깊이 4)로 함께 잡힌다."
+      "note": "기존 항목 확인 — 유효. 수정안: 버전 카탈로그(alias(libs.plugins.android.application))를 위해 libs.versions.toml 추가. Flutter·RN·Capacitor 저장소는 android/ 아래 매니페스트(깊이 4)로 함께 잡힌다.",
+      "pack": "stack-android",
+      "packSkipWith": [
+        "flutter",
+        "react-native",
+        "expo",
+        "capacitor",
+        "ionic",
+        "cordova",
+        "nativescript"
+      ]
     },
     {
       "id": "ios",
@@ -386,7 +422,15 @@
           "contains": "^\\s*flutter:\\s*$|sdk:\\s*flutter"
         }
       ],
-      "note": "기존 항목 확인 — 유효(변경 없음). 순수 Dart 패키지는 sdk: flutter 가 없어 제외된다."
+      "note": "기존 항목 확인 — 유효(변경 없음). 순수 Dart 패키지는 sdk: flutter 가 없어 제외된다.",
+      "pack": "stack-flutter",
+      "languageIgnore": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux"
+      ]
     },
     {
       "id": "react-native",
@@ -400,7 +444,14 @@
           "contains": "\\\"react-native\\\"\\s*:"
         }
       ],
-      "note": "기존 항목 확인 — 유효. react-native-web 만 쓰는 웹앱은 키가 달라 제외된다."
+      "note": "기존 항목 확인 — 유효. react-native-web 만 쓰는 웹앱은 키가 달라 제외된다.",
+      "languageIgnore": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux"
+      ]
     },
     {
       "id": "watchos",
@@ -1218,6 +1269,13 @@
           ],
           "contains": "\\\"expo\\\"\\s*:"
         }
+      ],
+      "languageIgnore": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux"
       ]
     },
     {
@@ -1272,6 +1330,13 @@
           ],
           "contains": "\\\"@capacitor/core\\\"\\s*:"
         }
+      ],
+      "languageIgnore": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux"
       ]
     },
     {
@@ -1290,6 +1355,13 @@
           ],
           "contains": "\\\"@ionic/(angular|react|vue|core)\\\"\\s*:"
         }
+      ],
+      "languageIgnore": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux"
       ]
     },
     {
@@ -1309,6 +1381,13 @@
           ],
           "contains": "\\\"cordova-(android|ios)\\\"\\s*:"
         }
+      ],
+      "languageIgnore": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux"
       ]
     },
     {
@@ -1328,6 +1407,13 @@
           ],
           "contains": "\\\"@nativescript/core\\\"\\s*:"
         }
+      ],
+      "languageIgnore": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux"
       ]
     },
     {
@@ -1474,5 +1560,111 @@
     "tv": "TV",
     "db": "DB",
     "infra": "인프라"
-  }
+  },
+  "languages": [
+    {
+      "id": "java",
+      "label": "Java",
+      "ext": [
+        "java"
+      ],
+      "pack": "lang-java"
+    },
+    {
+      "id": "kotlin",
+      "label": "Kotlin",
+      "ext": [
+        "kt"
+      ],
+      "pack": "lang-kotlin",
+      "note": "빌드 스크립트(.kts)는 세지 않는다"
+    },
+    {
+      "id": "python",
+      "label": "Python",
+      "ext": [
+        "py",
+        "ipynb"
+      ],
+      "pack": "lang-python"
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "ext": [
+        "c"
+      ],
+      "pack": "lang-c",
+      "note": ".h 는 C · C++ 어느 쪽인지 알 수 없어 세지 않는다"
+    },
+    {
+      "id": "cpp",
+      "label": "C++",
+      "ext": [
+        "cc",
+        "cpp",
+        "cxx",
+        "c++",
+        "hpp",
+        "hh",
+        "hxx"
+      ],
+      "pack": "lang-cpp"
+    },
+    {
+      "id": "swift",
+      "label": "Swift",
+      "ext": [
+        "swift"
+      ],
+      "pack": "lang-swift"
+    },
+    {
+      "id": "dart",
+      "label": "Dart",
+      "ext": [
+        "dart"
+      ],
+      "pack": "lang-dart"
+    },
+    {
+      "id": "typescript",
+      "label": "TypeScript",
+      "ext": [
+        "ts",
+        "tsx",
+        "mts",
+        "cts"
+      ],
+      "note": "전용 언어 팩 없음: clean-code 만"
+    },
+    {
+      "id": "javascript",
+      "label": "JavaScript",
+      "ext": [
+        "js",
+        "jsx",
+        "mjs",
+        "cjs"
+      ],
+      "note": "전용 언어 팩 없음: clean-code 만"
+    },
+    {
+      "id": "go",
+      "label": "Go",
+      "ext": [
+        "go"
+      ],
+      "note": "전용 언어 팩 없음: clean-code 만"
+    },
+    {
+      "id": "csharp",
+      "label": "C#",
+      "ext": [
+        "cs"
+      ],
+      "note": "전용 언어 팩 없음: clean-code 만"
+    }
+  ],
+  "languagesNote": "언어 감지: 소스 파일 확장자 수. 5개 이상이면서 감지 대상 소스의 10% 이상이거나, 절반을 넘거나, 유일한 언어면 그 언어. 언어가 있는 코드 repo 에는 언어 공통 clean-code 팩이, 언어마다 그 항목의 pack(lang-*)이 붙는다 (repos[].languages). pack 이 없는 언어는 clean-code 만. 팩의 pack.json languages 와 맞아야 한다 (npm test)."
 }

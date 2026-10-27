@@ -1,0 +1,13 @@
+{
+  "name": "lang-c",
+  "title": "C 클린 코드",
+  "summary": "C 이름 · 함수 · 모듈 · 메모리 · 오류 처리",
+  "description": "C 소스가 있는 repo 에: 이름 · 함수 · 모듈 · 반환값 확인 · 정리 경로 · 위험 함수 금지",
+  "category": "lang",
+  "languages": [
+    "c"
+  ],
+  "requires": [
+    "core"
+  ]
+}

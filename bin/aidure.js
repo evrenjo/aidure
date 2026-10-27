@@ -11,7 +11,7 @@
  *   aidure ai [show | direct <claude,codex> | plan claude|gpt <요금제> | gateway [--url <주소> --key-env <변수>] | refresh | compose mix|vendor|single | main claude|codex] [--team]
  *                              AI 연결 방식 (서비스 직접 · 게이트웨이) · 쓰는 AI · 역할 구성
  *   aidure detect               코드 repo 의 기술 스택을 다시 감지하고 고친다 (repo 별 규칙이 바뀐다)
- *   aidure rules [list | off <ID…> | on <ID…>]   킷이 넣은 규칙을 켜고 끈다 (필수 규칙 제외). 바꾸기는 project 팩의 replaces
+ *   aidure rules [list | off <ID…> | on <ID…>] [--repo <이름,…>]   킷이 넣은 규칙을 켜고 끈다 (필수 규칙 제외, --repo 는 그 repo 만). 바꾸기는 project 팩의 replaces (repos: 면 그 repo 만)
  *   aidure rules ondemand|always <ID…|repo-tasks>   상시 규칙을 필요할 때만 읽게 (AGENTS.md 를 줄인다) · 되돌리기
  *   aidure repo add [주소|폴더|이름] [--kind …] [--group <그룹>]   repo 를 더한다 (이름만 주면 repos/<이름> 에 원격 없이 새로 만든다, legacy 제외. --group 이면 repos/<그룹>/<이름>)
  *   aidure repo move <이름> --group <그룹>|--no-group   repo 를 그룹 폴더로 옮긴다: 폴더 · workspace.json · 문서의 경로를 고치고 sync
@@ -1361,11 +1361,15 @@ function repoStatus(dir, results) {
 async function reviewStacks(root, { force = false, only = null } = {}) {
   const catalog = kit.loadCatalog(root);
   const layers = kit.loadLayers(root);
-  const found = kit.detectRepos(root, { force, write: false });
+  const found = kit.detectRepos(root, { force, write: false, only });
+  const languages = kit.loadLanguages(root);
+  const hinted = kit.hintedCatalog(root); // 감지와 같은 힌트
   const file = path.join(root, 'workspace.json');
   const raw = JSON.parse(read(file));
   const codeRepos = (raw.repos || []).filter((r) => (r.kind || 'code') === 'code' && fs.existsSync(path.join(root, kit.repoRel(r))) && (!only || r.name === only));
   if (!codeRepos.length) return;
+  const skipped = new Set();
+  const before = new Map(codeRepos.map((r) => [r.name, JSON.stringify([...(r.stacks || [])].sort())])); // 화면 전 스택
   let i = 0;
   while (i < codeRepos.length) {
     const r = codeRepos[i];
@@ -1377,12 +1381,13 @@ async function reviewStacks(root, { force = false, only = null } = {}) {
     if (detected.length) {
       const v = await chooseInline({
         message: `${kit.repoRel(r)} 스택`,
-        hint: `감지: ${kit.stacksLabel(catalog, detected, undefined, shown.stackPaths)}${evidence}`,
+        hint: `감지: ${kit.stacksLabel(catalog, detected, undefined, shown.stackPaths)}${evidence}${d && d.languages && d.languages.length ? ` · 언어 ${kit.labelLanguages(languages, d.languages)}` : ''}`,
         options: [{ value: 'ok', label: '맞음' }, { value: 'edit', label: '고치기' }, { value: 'skip', label: '건너뛰기' }], initialValue: 'ok',
       });
       if (v === BACK || clack().isCancel(v)) { if (i === 0) return BACK; i--; continue; }
+      skipped.delete(r.name); // Esc 로 돌아와 다시 고른 경우
       if (v === 'ok') { r.stacks = detected; i++; continue; }
-      if (v === 'skip') { r.stacks = []; i++; continue; }
+      if (v === 'skip') { r.stacks = []; skipped.add(r.name); i++; continue; } // 건너뛴 repo 는 언어 규칙도 붙이지 않는다 (아래에서 languages: false)
     }
     if (!detected.length && d && d.builds && d.builds.length) {
       p.log.warn(`${kit.repoRel(r)}: 빌드 파일(${d.builds.slice(0, 2).join(', ')})은 있는데 스택을 찾지 못했습니다.\n사내 라이브러리를 거쳐 프레임워크를 쓰는 경우입니다. 아래에서 직접 고르고, 다음 감지부터 자동으로 잡으려면\n${kit.HINT_HELP}`);
@@ -1397,6 +1402,13 @@ async function reviewStacks(root, { force = false, only = null } = {}) {
     const d = found.find((x) => x.name === r.name);
     if (d) kit.setStackPaths(r, d.evidence);
     else if (r.stackPaths) kit.setStackPaths(r, Object.entries(r.stackPaths).map(([id, modules]) => ({ id, modules })));
+    // 언어는 고르지 않고 감지대로 다시 쓴다 (스택을 손으로 고쳤으면 그 스택 기준으로 플랫폼 폴더를 빼고 다시 센다).
+    // 언어 규칙을 빼려면 aidure rules off <ID> --repo (감지와 상관없이 남는다)
+    const setLangs = (l) => { r.languages = l || []; }; // 빈 결과도 기록한다 (빈 repo 는 upgrade · detect 때 다시 감지)
+    if (skipped.has(r.name)) r.languages = false; // 건너뛴 repo: 언어 규칙 없음 (upgrade 가 다시 채우지 않는다)
+    else if (d && d.languages && JSON.stringify([...(r.stacks || [])].sort()) === JSON.stringify([...(d.stacks || [])].sort())) setLangs(d.languages);
+    else if (Array.isArray(r.languages) && JSON.stringify([...(r.stacks || [])].sort()) === (before.get(r.name) || '')) { /* 스택을 바꾸지 않았으면 그대로 (다시 훑지 않는다) */ }
+    else { const again = kit.repoLanguages(root, r, { catalog: hinted, languages }); if (again) setLangs(again); }
   }
   fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
   runWorkspaceKit(root, ['sync']);
@@ -1571,23 +1583,27 @@ async function joinTeam(root) {
 
 // ───────────────────────── 규칙 켜고 끄기 ─────────────────────────
 
-const RULES_USAGE = 'aidure rules [list | off <ID…> | on <ID…> | ondemand <ID…|repo-tasks> | always <ID…|repo-tasks>]';
+const RULES_USAGE = 'aidure rules [list | off <ID…> [--repo <이름,…>] | on <ID…> [--repo <이름,…>] | ondemand <ID…|repo-tasks> | always <ID…|repo-tasks>]';
 const ruleMark = (r, st) => (r.required ? '필수' : st.replaced[r.id] ? '대체됨' : st.off.includes(r.id) ? '꺼짐' : '켜짐');
 
-/** workspace.json rules.off (또는 rules.onDemand) 저장 → sync */
-function saveRulesOff(root, off, key = 'off') {
+/** workspace.json rules 의 한 칸을 쓴다 (off · onDemand = 목록, offIn = { 규칙 ID: [repo…] }). 비면 지운다. sync: false 면 sync 하지 않는다 */
+function saveRulesOff(root, value, key = 'off', { sync = true } = {}) {
   const file = path.join(root, 'workspace.json');
   const raw = JSON.parse(read(file));
-  raw.rules = { ...(raw.rules || {}), [key]: [...new Set(off)].sort() };
-  if (!raw.rules[key].length) delete raw.rules[key];
+  raw.rules = { ...(raw.rules || {}), [key]: Array.isArray(value) ? [...new Set(value)].sort() : value };
+  if (!(Array.isArray(raw.rules[key]) ? raw.rules[key].length : Object.keys(raw.rules[key] || {}).length)) delete raw.rules[key];
   if (!Object.keys(raw.rules).length) delete raw.rules;
   fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
-  return runWorkspaceKit(root, ['sync', '--quiet']);
+  return sync ? runWorkspaceKit(root, ['sync', '--quiet']) : true;
 }
 
-/** 킷이 넣은 규칙을 켜고 끈다 (필수 규칙·project 규칙·다른 규칙으로 대체된 규칙은 목록에 없다). 반환: 저장했으면 true · BACK */
+/** rules.offIn 을 목록 꼴로 읽는다 (손으로 쓴 "api" 꼴도) */
+const readOffIn = (root) => Object.fromEntries(Object.entries((kit.loadWorkspace(root).rules || {}).offIn || {}).map(([k, v]) => [k, [].concat(v)]));
+
+/** 킷이 넣은 규칙을 켜고 끈다 (필수 규칙·project 규칙·다른 규칙으로 대체된 규칙은 목록에 없다). repo 별로 꺼 둔 것(rules.offIn)은 그대로 두고 알린다. 반환: 저장했으면 true · BACK */
 async function chooseRules(root) {
   const g = kit.generate(root);
+  const offIn = readOffIn(root);
   const st = g.ruleState || { off: [], replaced: {} };
   const all = g.allRules || [];
   const fixed = all.filter((r) => r.required);
@@ -1595,10 +1611,12 @@ async function chooseRules(root) {
   p.note([
     `필수 (끌 수 없음): ${fixed.map((r) => r.title).join(' · ') || '없음'}`,
     ...(swapped.length ? [`project 규칙으로 대체됨: ${swapped.map((r) => `${r.id} → ${st.replaced[r.id]}`).join(' · ')}`] : []),
+    ...(Object.keys(st.partial || {}).length ? [`일부 repo 에서만 대체됨: ${Object.entries(st.partial).map(([id, xs]) => `${id} (${xs.map((x) => x.repos.join(', ')).join(' · ')})`).join(' · ')}`] : []),
+    ...(Object.keys(offIn).length ? [`repo 별로 꺼짐 (여기서 켜도 그대로, 되돌리기: aidure rules on <ID> --repo <이름>): ${Object.entries(offIn).map(([id, n]) => `${id} (${n.join(', ')})`).join(' · ')}`] : []),
     '우리 방식으로 바꾸려면 packs/project/rules/<이름>.md 에 replaces: <규칙 ID> 를 적는다',
   ].join('\n'), '규칙');
   const options = all.filter((r) => !r.required && !st.replaced[r.id] && r.pack !== 'project')
-    .map((r) => ({ value: r.id, label: `${r.pack} · ${r.title}`, hint: `${r.id} · ${r.load === 'always' ? '상시' : '필요할 때'}${r.scope === 'repo' ? ' · 해당 repo 만' : ''}` }));
+    .map((r) => ({ value: r.id, label: `${r.pack} · ${r.title}`, hint: `${r.id} · ${r.load === 'always' ? '상시' : '필요할 때'}${r.scope === 'repo' ? ' · 해당 repo 만' : ''}${offIn[r.id] ? ` · ${offIn[r.id].join(', ')} 에서 꺼짐` : ''}` }));
   if (!options.length) { p.log.info('켜고 끌 규칙이 없습니다'); return false; }
   const on = await chooseMany({ message: '켤 규칙', hint: 'Space 로 켜고 끈다. 끈 규칙은 AGENTS.md 에서 빠진다 (팀 전체, commit · push 하면 적용).', options, initialValues: options.map((o) => o.value).filter((id) => !st.off.includes(id)) });
   if (on === BACK || clack().isCancel(on)) return BACK;
@@ -1610,10 +1628,51 @@ async function chooseRules(root) {
 
 async function cmdRules(argv = []) {
   const root = locateWorkspace();
-  const [sub, ...ids] = argv;
+  // --repo a,b 또는 --repo=a,b (off · on 에만)
+  if (argv.filter((x) => x === '--repo' || x.startsWith('--repo=')).length > 1) fail('--repo 는 한 번만 씁니다 (여러 repo 는 --repo a,b)');
+  const repoAt = argv.findIndex((x) => x === '--repo' || x.startsWith('--repo='));
+  const repoArg = repoAt < 0 ? null : argv[repoAt].startsWith('--repo=') ? argv[repoAt].slice(7) : String(argv[repoAt + 1] || '');
+  const onlyRepos = repoAt < 0 ? null : repoArg.split(',').map((x) => x.trim()).filter(Boolean);
+  const [sub, ...ids] = repoAt < 0 ? argv : argv.filter((_, i) => i !== repoAt && !(i === repoAt + 1 && argv[repoAt] === '--repo'));
+  if (onlyRepos && !['off', 'on'].includes(sub)) fail(`--repo 는 off · on 에만 씁니다. 사용법: ${RULES_USAGE}`);
   const g = kit.generate(root);
   const all = g.allRules || [];
   const st = g.ruleState || { off: [], replaced: {} };
+  if ((sub === 'off' || sub === 'on') && onlyRepos) {
+    // repo 별 끄기 · 켜기 (rules.offIn). 스택 · 언어 팩 규칙처럼 repo 에 걸리는 규칙만
+    requireAdmin(root, '규칙 켜고 끄기');
+    if (!ids.length || !onlyRepos.length) fail(`사용법: ${RULES_USAGE}`);
+    const raw = JSON.parse(read(path.join(root, 'workspace.json')));
+    const ruleRepos = (raw.repos || []).filter((r) => ['code', 'issues'].includes(r.kind || 'code')).map((r) => r.name); // 규칙이 걸리는 repo (코드 · 이슈)
+    if (sub === 'off') for (const n of onlyRepos) if (!ruleRepos.includes(n)) fail(`코드 · 이슈 repo 가 아닙니다: ${n} (있는 것: ${ruleRepos.join(', ') || '없음'})`);
+    const offIn = readOffIn(root);
+    if (sub === 'on') for (const id of ids) {
+      const notOff = onlyRepos.filter((n) => !(offIn[id] || []).includes(n));
+      if (notOff.length) fail(`${id} 는 ${notOff.join(', ')} 에서 꺼져 있지 않습니다 (repo 별로 꺼진 곳: ${(offIn[id] || []).join(', ') || '없음'})`);
+    }
+    for (const id of ids) {
+      const r = all.find((x) => x.id === id);
+      if (sub === 'on' && offIn[id] && (!r || r.scope !== 'repo' || r.agents !== 'all' || st.off.includes(id))) { // 없어졌거나 범위가 바뀐 규칙의 남은 기록은 지운다
+        offIn[id] = offIn[id].filter((n) => !onlyRepos.includes(n));
+        if (!offIn[id].length) delete offIn[id];
+        continue;
+      }
+      if (!r) fail(`없는 규칙입니다: ${id} (aidure rules list 로 확인)`);
+      if (r.required) fail(`${id}(${r.title}) 는 필수 규칙이라 끌 수 없습니다`);
+      if (r.scope !== 'repo') fail(`${id} 는 워크스페이스 전체 규칙이라 repo 별로 끌 수 없습니다 (--repo 없이 aidure rules off ${id})`);
+      if (r.agents !== 'all') fail(`${id} 는 Claude 전용 규칙이라 repo 별로 끌 수 없습니다 (--repo 없이 aidure rules off ${id})`);
+      if (st.off.includes(id)) fail(`${id} 는 ${st.replaced[id] ? `${st.replaced[id]} 로 대체돼` : '워크스페이스 전체에서 꺼져'} 있습니다. repo 별로 바꿀 것이 없습니다${st.replaced[id] ? '' : ` (전체 켜기: aidure rules on ${id})`}`);
+      const applies = kit.ruleRepos(r, g.repoMap || {});
+      const stray = onlyRepos.filter((n) => !applies.includes(n));
+      if (sub === 'off' && stray.length) fail(`${id} 는 ${stray.join(', ')} 에 걸리지 않는 규칙입니다 (걸리는 repo: ${applies.join(', ') || '없음'})`);
+      const cur = new Set(offIn[id] || []);
+      for (const n of onlyRepos) { if (sub === 'off') cur.add(n); else cur.delete(n); }
+      if (cur.size) offIn[id] = [...cur].sort(); else delete offIn[id];
+    }
+    const ok = saveRulesOff(root, offIn, 'offIn');
+    console.log(`✔ repo 별로 끈 규칙: ${Object.entries(offIn).map(([id, names]) => `${id} (${names.join(', ')})`).join(' · ') || '없음'}. workspace.json 을 commit · push 하면 팀에 적용됩니다`);
+    process.exit(ok ? 0 : 1);
+  }
   if (sub === 'off' || sub === 'on') {
     requireAdmin(root, '규칙 켜고 끄기');
     if (!ids.length) fail(`사용법: ${RULES_USAGE}`);
@@ -1623,6 +1682,11 @@ async function cmdRules(argv = []) {
       if (!r) fail(`없는 규칙입니다: ${id} (aidure rules list 로 확인)`);
       if (r.required) fail(`${id}(${r.title}) 는 필수 규칙이라 끌 수 없습니다`);
       if (sub === 'off') off.add(id); else off.delete(id);
+    }
+    if (sub === 'on') { // repo 별로 꺼 둔 기록도 지운다 (모든 repo 에서 켜기)
+      const offIn = readOffIn(root);
+      const had = ids.filter((id) => offIn[id]);
+      if (had.length) { for (const id of had) delete offIn[id]; saveRulesOff(root, offIn, 'offIn', { sync: false }); console.log(`  repo 별로 꺼 둔 기록도 지웠습니다: ${had.join(', ')} (모든 repo 에서 켜짐)`); }
     }
     const ok = saveRulesOff(root, [...off]);
     console.log(`✔ 꺼진 규칙: ${[...off].join(', ') || '없음'}. workspace.json 을 commit · push 하면 팀에 적용됩니다`);
@@ -1649,9 +1713,11 @@ async function cmdRules(argv = []) {
   if (sub === 'list' || !process.stdin.isTTY) {
     const w = Math.max(...all.map((r) => r.id.length));
     const lazy = st.onDemand || [];
-    for (const r of all) console.log(`${padTo(ruleMark(r, st), 8)} ${r.id.padEnd(w)}  ${r.title} (${r.load === 'always' ? '상시' : lazy.includes(r.id) ? '필요할 때, ondemand 로 바꿈' : '필요할 때'})${st.replaced[r.id] ? ` → ${st.replaced[r.id]} 가 대신` : ''}`);
+    for (const r of all) console.log(`${padTo(ruleMark(r, st), 8)} ${r.id.padEnd(w)}  ${r.title} (${r.load === 'always' ? '상시' : lazy.includes(r.id) ? '필요할 때, ondemand 로 바꿈' : '필요할 때'})${st.replaced[r.id] ? ` → ${st.replaced[r.id]} 가 대신` : ''}${((st.partial || {})[r.id] || []).map((x) => ` → ${x.repos.join(', ')} 에서만 ${x.by} 가 대신`).join('')}`);
     if (lazy.includes('repo-tasks')) console.log(`${''.padEnd(8)} ${'repo-tasks'.padEnd(w)}  repo 별 작업별 표를 .agents/rules/repo-tasks.md 로 뺌`);
-    console.log(`\n끄기: aidure rules off <ID> · 켜기: aidure rules on <ID> · 바꾸기: packs/project/rules 에 replaces: <ID>`);
+    const offIn = readOffIn(root);
+    if (Object.keys(offIn).length) console.log(`\nrepo 별로 끈 규칙: ${Object.entries(offIn).map(([id, names]) => `${id} (${names.join(', ')})`).join(' · ')}`);
+    console.log(`\n끄기: aidure rules off <ID> [--repo <이름,…>] · 켜기: aidure rules on <ID> [--repo <이름,…>] · 바꾸기: packs/project/rules 에 replaces: <ID> (repos: <이름,…> 면 그 repo 만)`);
     console.log('AGENTS.md 줄이기: aidure rules ondemand <ID | repo-tasks> (필요할 때만 읽게) · 되돌리기: aidure rules always <ID | repo-tasks>');
     return;
   }
@@ -1677,6 +1743,9 @@ function cmdRepoRemove(rest) {
   const raw = JSON.parse(read(wsFile));
   const names = (raw.repos || []).map((r) => r.name);
   if (!names.includes(name)) fail(`workspace.json 에 없는 repo 입니다: ${name} (있는 것: ${names.join(', ') || '없음'})`);
+  // project 규칙의 repos: 에 이 repo 가 있으면 빼면 sync 가 실패한다. 바꾸기 전에 멈추고 고칠 파일을 알린다
+  const pinned = kit.projectRulesPinning(root, name);
+  if (pinned.length) fail(`${pinned.join(', ')} 가 repos: 로 ${name} 를 가리킵니다. 그 줄에서 ${name} 를 빼거나 규칙을 지운 뒤 다시 하세요`);
   const rel = kit.repoRel(raw.repos.find((r) => r.name === name));
   const dir = path.join(root, rel);
   let folder = fs.existsSync(dir) ? '그대로 둠 (지우려면 --delete)' : '없음';
@@ -1696,7 +1765,9 @@ function cmdRepoRemove(rest) {
   const en = (raw.agents || {}).enforce;
   if (en && Array.isArray(en.reviewRepos)) { en.reviewRepos = en.reviewRepos.filter((r) => r !== name); if (!en.reviewRepos.length) delete en.reviewRepos; }
   fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n');
-  const ok = runWorkspaceKit(root, ['sync', '--quiet']);
+  const offIn = readOffIn(root); // repo 별로 꺼 둔 규칙 기록에서 이 repo 를 뺀다
+  for (const id of Object.keys(offIn)) { offIn[id] = offIn[id].filter((n) => n !== name); if (!offIn[id].length) delete offIn[id]; }
+  const ok = saveRulesOff(root, offIn, 'offIn');
   // 사람이 쓴 문서에 남은 이름 (생성물 · repos/ 밖) — 고치는 건 사람 몫이라 알리기만 한다
   const left = (spawnSync('git', ['-C', root, 'grep', '-l', '-F', '-e', name, '--', '*.md', ':!repos', ':!AGENTS.md', ':!CLAUDE.md', ':!.agents', ':!.claude', ':!.codex', ':!handoffs'], { encoding: 'utf8' }).stdout || '').trim().split('\n').filter(Boolean);
   console.log(`✔ repo 뺌: ${name} · 폴더 ${folder}`);
@@ -3321,7 +3392,7 @@ async function main() {
       // 스택이 이미 정해진 repo 는 다시 감지하지 않는다. 새 킷이 더 잡는 스택(예: 인프라)이 있으면 알린다 (바꾸지는 않는다)
       try {
         const now = new Map(((kit.loadWorkspace(root) || {}).repos || []).map((r) => [r.name, r.stacks || []]));
-        const fresh = kit.detectRepos(root, { force: true, write: false }).map((d) => [d.name, (d.stacks || []).filter((id) => !(now.get(d.name) || []).includes(id))]).filter(([, l]) => l.length);
+        const fresh = kit.detectRepos(root, { force: true, write: false, languages: false }).map((d) => [d.name, (d.stacks || []).filter((id) => !(now.get(d.name) || []).includes(id))]).filter(([, l]) => l.length);
         if (fresh.length) console.log(`  새로 감지되는 스택: ${fresh.map(([n, l]) => `${n} ${l.join(', ')}`).join(' · ')}. 필요하면 aidure detect 화면에서 확인해 더한다 (일부러 뺀 것이면 무시)`);
       } catch { /* 감지는 부가 기능 */ }
       const moved = kit.migrateTypes(root);
@@ -3337,7 +3408,11 @@ async function main() {
       if (pj.type === 'enhancement' && pj.approach !== 'issue' && older(from)) console.log('  운영·고도화: 이슈마다 운영에 반영하는 운영 · 유지보수면 aidure approach issue (로드맵이 단계 대신 이슈 보드가 된다). 기능 묶음을 오픈까지 진행하는 고도화면 그대로');
       if (!((kit.loadWorkspace(root) || {}).project || {}).approach) console.log('  진행 방식: 정하지 않음 (전체처럼 동작). 최소 기능부터 스프린트로 붙이려면 aidure approach sprint, 지금 방식으로 정해 두려면 aidure approach full');
       const filled = kit.fillStackPaths(root);
-      if (filled.length) { console.log(`  모듈 경로 기록: ${filled.join(', ')}`); return process.exit(runWorkspaceKit(root, ['sync']) ? 0 : 1); }
+      if (filled.length) console.log(`  모듈 경로 기록: ${filled.join(', ')}`);
+      // 0.73: repo 언어 감지 (언어별 클린코드 규칙)
+      const langs = kit.fillLanguages(root);
+      if (langs.length) console.log(`  언어 감지: ${langs.map((x) => `${x.name} ${kit.labelLanguages(kit.loadLanguages(root), x.languages)}`).join(' · ')}. 언어별 클린 코드 규칙이 붙습니다 (한 repo 에서 빼기: aidure rules off <ID> --repo <이름>)`);
+      if (filled.length || langs.length) return process.exit(runWorkspaceKit(root, ['sync']) ? 0 : 1);
       return process.exit(0);
     }
     case 'doctor': return runWsTool('doctor.js', []);

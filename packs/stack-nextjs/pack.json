@@ -1,0 +1,14 @@
+{
+  "name": "stack-nextjs",
+  "title": "Next.js 스택",
+  "summary": "Next.js App Router 레이어 책임 · 데이터 접근 층 · 배치",
+  "description": "Next.js(App Router): page · route · Server Action 책임 · server-only 데이터 접근 층 · 배치. stack-react 와 함께 붙는다",
+  "category": "stack",
+  "layer": "frontend",
+  "stacks": [
+    "nextjs"
+  ],
+  "requires": [
+    "core"
+  ]
+}

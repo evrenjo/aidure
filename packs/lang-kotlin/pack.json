@@ -1,0 +1,13 @@
+{
+  "name": "lang-kotlin",
+  "title": "Kotlin 클린 코드",
+  "summary": "Kotlin 이름 · 함수 · 클래스 · KDoc · 관용구",
+  "description": "Kotlin 소스가 있는 repo 에: 이름 · 식 본문 · 불변 · data · sealed · KDoc · 스코프 함수 · !! 금지",
+  "category": "lang",
+  "languages": [
+    "kotlin"
+  ],
+  "requires": [
+    "core"
+  ]
+}

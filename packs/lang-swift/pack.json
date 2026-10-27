@@ -1,0 +1,13 @@
+{
+  "name": "lang-swift",
+  "title": "Swift 클린 코드",
+  "summary": "Swift 이름(API Design Guidelines) · 인자 레이블 · 타입 · DocC · 동시성 · SwiftUI",
+  "description": "Swift 소스가 있는 repo 에: 문장처럼 읽히는 이름 · 인자 레이블 · 타입 · DocC · 동시성 · SwiftUI",
+  "category": "lang",
+  "languages": [
+    "swift"
+  ],
+  "requires": [
+    "core"
+  ]
+}

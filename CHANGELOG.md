@@ -2,6 +2,18 @@
 
 `aidure upgrade` 가 올린 버전 사이의 항목을 표로 보여 준다. 배포할 때 이번 버전 항목을 맨 위에 더한다 (`## 버전` 아래 `| 구분 | 내용 |` 표, 한 줄씩 짧게).
 
+## 0.73.0
+
+| 구분 | 내용 |
+|---|---|
+| 기능 | 언어 감지(`repos[].languages`): Java · Kotlin · Python · C · C++ · Swift · Dart · TypeScript · JavaScript · Go · C# |
+| 기능 | 클린 코드 규칙: 언어 공통(`clean-code`) + 언어별(`lang-*`). 이름 · 함수 · 클래스 · 주석 · 읽히는 코드 |
+| 기능 | 레이어 책임: 컨트롤러 · 서비스 · 설정 · 컴포넌트에 private 상수 · 함수를 늘어놓지 않고 공통 로직을 정해진 위치 · 이름으로 |
+| 기능 | 새 스택 팩: FastAPI · Django · NestJS · Next.js · Android · Flutter. Spring · React 에 레이어 책임 규칙 |
+| 명령 | `aidure rules off <ID> --repo <이름>` (repo 별 끄기 · `rules.offIn`), project 규칙 머리말 `repos:` (그 repo 만 바꾸기) |
+| 문서 | 「클린 코드 규칙」 쪽: 붙는 규칙 · repo 별로 바꾸기 · 검사 도구 · 근거 |
+| 적용 | `aidure upgrade` 가 repo 언어를 감지해 채운다 |
+
 ## 0.72.0
 
 | 구분 | 내용 |

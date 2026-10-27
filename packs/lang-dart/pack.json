@@ -1,0 +1,13 @@
+{
+  "name": "lang-dart",
+  "title": "Dart 클린 코드",
+  "summary": "Dart 이름 · 함수 · 변수 · 타입 · 비동기 · 문서 주석 (Effective Dart)",
+  "description": "Dart 소스가 있는 repo 에: Effective Dart 이름 · final · const · 불변 · sealed · async · 문서 주석",
+  "category": "lang",
+  "languages": [
+    "dart"
+  ],
+  "requires": [
+    "core"
+  ]
+}

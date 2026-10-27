@@ -1,0 +1,13 @@
+{
+  "name": "lang-java",
+  "title": "Java 클린 코드",
+  "summary": "Java 이름 · 메서드 · 클래스 · Javadoc · 관용구",
+  "description": "Java 소스가 있는 repo 에: 이름 · 메서드 · record · sealed · Optional · Javadoc · 관용구",
+  "category": "lang",
+  "languages": [
+    "java"
+  ],
+  "requires": [
+    "core"
+  ]
+}

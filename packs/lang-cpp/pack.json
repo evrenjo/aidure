@@ -1,0 +1,13 @@
+{
+  "name": "lang-cpp",
+  "title": "C++ 클린 코드",
+  "summary": "C++ 이름 · 함수 · 클래스 · 소유권(RAII) · const · 오류 방식",
+  "description": "C++ 소스가 있는 repo 에: 출력은 반환값 · rule of zero · RAII · 소유권 · const · 오류 방식 하나",
+  "category": "lang",
+  "languages": [
+    "cpp"
+  ],
+  "requires": [
+    "core"
+  ]
+}
