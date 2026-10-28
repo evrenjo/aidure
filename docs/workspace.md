@@ -53,6 +53,7 @@
 | `repos[].group` | 선택, 영문·숫자·._- | 그룹 폴더. 있으면 `repos/<그룹>/<이름>`, 없으면 `repos/<이름>`. 한 단계만, 이름은 그룹이 달라도 하나만. 아래 「repo 그룹 폴더」 |
 | `repos[].stacks` | code, 자동 | 감지된 기술 스택 (`["spring","postgres"]`). repo 별 규칙이 여기서 정해진다. `aidure detect` 로 다시 감지 |
 | `repos[].stackPaths` | code, 자동 | 멀티모듈 repo 에서 스택이 쓰이는 하위 모듈 (`{"spring":["api"],"react":["client"]}`). 감지가 채우고, 한 모듈짜리 repo 에는 없다 |
+| `repos[].guides` · `guidesMode` | code · issues, 자동 · 선택 | repo 안에 원래 있던 AI 지침 목록과 따르는 방식. 아래 「repo 자체 지침」 |
 | `stackHints` | 선택 | 프로젝트 전용 감지 조건 `[{ "stack": "spring", "contains": "<사내 스타터 좌표 정규식>", "files": [선택] }]`. `aidure detect --hint` 로 추가 |
 | `repos[].mdPath` | docs, 선택 | Word·Excel 원본의 md 사본 폴더 (기획 repo 템플릿은 `md`) |
 | `team.admins` · `team.lock` | 선택 | 관리자 목록 · 팀원 설정 수정 불가(`aidure team edit deny`) |
@@ -80,6 +81,40 @@ repo 가 많으면(MSA · 화면 repo 여럿) `repos/` 아래를 그룹으로 �
 - AGENTS.md 의 repo 표에 그룹 칸이 생기고 그룹 순서로 묶인다. 경로는 표의 위치를 쓴다.
 - 그룹 이름은 그룹 없는 repo 이름과 같으면 안 된다 (`repos/<이름>` 폴더가 겹친다).
 - 그룹을 안 쓰는 워크스페이스는 생성물이 그대로다.
+
+### repo 자체 지침
+
+받은 repo 에 원래 `CLAUDE.md` · `AGENTS.md` · 룰 · 스킬이 있으면 sync 가 찾아 `repos[].guides` 에 적는다. 따르는 방식은 repo 마다 고른다.
+
+| 방식 | 값 | 동작 |
+|---|---|---|
+| repo 지침 우선 (기본) | `follow` | 에이전트가 그 repo 를 고치기 전에 지침을 읽는다. 코드 규칙 · 빌드 · 테스트 명령이 킷 규칙과 다르면 repo 지침을 따른다. 커밋 · push 승인, 비밀값 같은 안전 규칙은 킷이 우선 |
+| 킷 규칙 우선 | `kit` | 지침은 명령 · 구조를 알 때만 참고하고, 다른 점은 보고에 적는다 |
+| 무시 | `ignore` | 읽지 않는다. Claude Code 가 그 폴더의 `CLAUDE.md` · `.claude/rules` 를 스스로 불러오지 않게 막는다 |
+
+| 할 일 | 명령 |
+|---|---|
+| 목록 · 방식 보기 | `aidure repo guides` |
+| 방식 바꾸기 | `aidure repo guides <이름> follow\|kit\|ignore` (관리자) |
+| 다시 훑기 | `aidure repo guides --rescan [<이름>]`: 지침 파일이 생기거나 없어지면 sync 가 알린다 |
+| 내용을 킷 규칙으로 옮기기 | 채팅에서 import 스킬 ("repos/<이름> 의 지침 가져와"), 옮긴 뒤 `kit` 으로 |
+
+```mermaid
+flowchart LR
+  R["받은 repo<br/>CLAUDE.md · AGENTS.md · 룰 · 스킬"] --> S["sync 가 찾아 기록<br/>repos[].guides"]
+  S --> F["follow<br/>repo 지침 우선"]
+  S --> K["kit<br/>킷 규칙 우선"]
+  S --> I["ignore<br/>무시"]
+  F --> A["AGENTS.md 「repo 자체 지침」 표"]
+  K --> A
+  I --> X["Claude 설정 claudeMdExcludes"]
+```
+
+- 도구마다 읽는 방식이 달라 표로 맞춘다. Claude Code 는 그 폴더 파일을 열 때 `CLAUDE.md` · `.claude/rules` · `.claude/skills` 를 스스로 불러오지만, 워크스페이스에 `CLAUDE.md` 가 있어 repo 의 `AGENTS.md` 는 읽지 않는다. Codex 는 repo 안의 지침을 스스로 읽지 않는다.
+- repo 안의 `.claude/settings.json` · `.codex/` · `.mcp.json` 은 워크스페이스에서 실행하면 적용되지 않는다. 필요한 훅 · 권한 · MCP 는 워크스페이스 설정으로 옮긴다.
+- 무시로 둬도 repo 안의 스킬은 그 폴더를 열면 Claude Code 스킬 목록에 뜰 수 있다 (에이전트는 따르지 않는다).
+
+> 근거: Claude Code 메모리 문서 (하위 폴더 CLAUDE.md 는 필요할 때 읽음 · AGENTS.md 는 CLAUDE.md 가 없을 때만 · `claudeMdExcludes`), 스킬 문서 (하위 폴더 `.claude/skills` 는 그 폴더 파일을 열 때 읽음)
 
 ### 저장소 없는 시작
 

@@ -9,6 +9,8 @@ description: 기존 AI 작업 폴더(예전 지침 파일 · 룰 · 메모 · �
 
 ## 1. 훑기
 
+워크스페이스에 받은 repo 의 지침(`repos/<이름>/` 의 `CLAUDE.md` · `AGENTS.md` · `.claude/` 등)도 같은 순서로 옮긴다. 옮긴 뒤에는 `aidure repo guides <이름> kit` 으로 킷 규칙 우선으로 바꾸자고 제안한다 (repo 원본 파일은 그 repo 팀의 것이라 지우지 않는다).
+
 ```bash
 node packs/core/bin/import-scan.js <기존 폴더>          # 분류 보고 (읽기만)
 node packs/core/bin/import-scan.js <기존 폴더> --json   # 전체 목록

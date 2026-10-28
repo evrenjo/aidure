@@ -279,7 +279,7 @@ flowchart TD
     RS -->|"아니오"| A{"시작 도구가 정해졌나"}
     A -->|"아니오"| AG["AI 연결 방식 (5절)"]
     A -->|"예 · --claude/--codex 로 이번만 지정"| V
-    AG --> V["새 버전이 나왔으면 npm i -g 안내 (하루 한 번 확인)<br/>설치본이 워크스페이스보다 새로우면 aidure upgrade 안내<br/>repos/ 에 없는 repo 가 있으면 aidure install 안내"]
+    AG --> V["새 버전이 나왔으면 npm i -g 안내 (하루 한 번 확인)<br/>설치본이 워크스페이스보다 새로우면 「킷 새 버전을 지금 올릴까요」 (권장: 올리고 시작)<br/>관리자 아님 · 받지 않은 커밋 · 커밋 안 한 변경이면 알리기만<br/>repos/ 에 없는 repo 가 있으면 aidure install 안내"]
     V --> M["메인 모델·추론 강도 = 프로필·팀·개인 + 연결 방식<br/>Claude --model · --effort, Codex -m · -c model_reasoning_effort 로 넘김 (Codex 는 웹 검색 --search 도 기본)<br/>게이트웨이면 게이트웨이 모델 이름으로. Claude Code 에 게이트웨이 설정이 없으면 저장한 주소·키 환경변수로 연결"]
     M --> PX{"--pixel-agents 인가"}
     PX -->|"예 · pixel-agents 설치됨"| PXO["Pixel Agents 서버를 띄우고 브라우저로 열기<br/>(세션이 끝나면 함께 끔)"]
@@ -312,6 +312,7 @@ flowchart TD
     Q -->|"퇴역 모델 교체"| MG["aidure models --migrate"]
     Q -->|"팀 구성 방식"| TMO["aidure team-mode auto · fixed<br/>prefer &lt;역할&gt; &lt;도구:모델&gt;<br/>enforce name off · warn · block (팀 모드에서 이름 없는 역할 에이전트)<br/>enforce roster off · warn (첫 역할 에이전트 때 구성표 알림)<br/>enforce review off · warn · block (commit · push 전 리뷰 확인, 기본 꺼짐)<br/>enforce idle off · warn · block (대기로 오래 남은 팀원 알림)<br/>enforce status off · block (기다리며 멈출 때 상태 줄)<br/>enforce ask off · block (결정 질문을 글로 끝낼 때)<br/>enforce run off · warn · block (오래 일하는 팀원 · 위임, 기본 60분)<br/>enforce check off · warn · block (리뷰 전 검사 줄)<br/>enforce plan off · warn · block (코드 수정 전 착수 전 확인)<br/>--team 은 팀 기본값(관리자) → sync"]
     Q -->|"비밀값 (토큰)"| SEC["aidure secret set &lt;이름&gt; [--global] (숨김 입력)<br/>list · test &lt;이름&gt; · rm · import · exec -- &lt;명령&gt;<br/>→ OS 저장소 (키체인 · 자격 증명 관리자 · libsecret)"]
+    Q -->|"남은 파일 정리"| TDY["aidure tidy [--new]<br/>이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름 (읽기만)<br/>지우기는 tidy 스킬: 표 → 승인 → 지움 → 검증"]
     Q -->|"기존 폴더 가져오기"| IMP["aidure import &lt;폴더&gt;<br/>분류 · 절대경로 · 비밀값 의심 줄 (읽기만)<br/>옮기기는 import 스킬: 계획 → 승인 → 반영"]
     Q -->|"리뷰 확인"| RVW["aidure review status · mark · skip --reason &lt;사유&gt;<br/>commit · push 전 리뷰 안 된 줄 수 (훅이 알림 · 막기)<br/>켜기: aidure team-mode enforce review warn · block --team"]
     Q -->|"파이프라인 보기"| GLP["aidure gitlab pipeline [--ref 브랜치 · --mr 번호 · --id ID] [--log]<br/>최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분 (읽기만)"]
@@ -333,6 +334,7 @@ flowchart TD
     Q -->|"규칙"| RL["aidure rules (켤 규칙 고르기)<br/>aidure rules list · off &lt;ID&gt; · on &lt;ID&gt; [--repo &lt;이름&gt;]<br/>aidure rules ondemand · always &lt;ID&gt; (AGENTS.md 줄이기)"]
     RL --> RL2["끈 규칙은 AGENTS.md 에서 빠짐 → workspace.json commit · push<br/>바꾸기: packs/project/rules 에 replaces: &lt;ID&gt;"]
     Q -->|"repo 빼기"| RRM["aidure repo remove &lt;이름&gt; [--delete] (관리자)<br/>workspace.json · 리뷰 대상에서 지움 → sync<br/>이름이 남은 문서 알림 · 폴더는 --delete 때만"]
+    Q -->|"repo 지침"| RG["aidure repo guides [&lt;이름&gt; follow · kit · ignore] [--rescan]<br/>workspace.json repos[].guides · guidesMode → sync"]
     Q -->|"repo 추가"| RA["aidure repo add [주소 · 폴더 · 이름] [--group &lt;그룹&gt;]"]
     RA --> RK{"repo 종류"}
     RK --> RI["repository<br/>방식: clone · 기존 로컬 폴더 · 새로 만들기 (레거시 제외)<br/>→ git 주소 · 폴더 경로 · 이름"]
@@ -343,6 +345,7 @@ flowchart TD
     Q -->|"새로 만든 repo 를 원격에 올림"| RP["git -C repos/&lt;이름&gt; remote add origin &lt;주소&gt; → push"]
     RP --> RF["sync 가 workspace.json 에 remote 기록 (local 삭제)<br/>→ workspace.json commit · push → 팀원 git pull · aidure install"]
     Q -->|"명령 찾기"| HLP["aidure --help: 자주 쓰는 명령 · 분류 목록<br/>분류를 고르세요 (터미널) → 그 분류의 명령과 설명<br/>aidure help &lt;번호&gt; · aidure help --all · aidure &lt;명령&gt; --help"]
+    Q -->|"이 PC 워크스페이스 모두"| UPA["aidure upgrade --all [--scan &lt;폴더&gt;]<br/>목록 · 건너뛸 것 → 「옛 버전 워크스페이스를 올릴까요」 → 하나씩 upgrade<br/>끝나면 워크스페이스마다 commit · push"]
     Q -->|"킷 새 버전 반영"| UP["aidure upgrade [--add 팩]<br/>bin·팩 교체 → sync → commit · push<br/>몇 버전 뒤져도 한 번에 · 꺼진 기본 팩 · 진행 방식은 알림만"]
     Q -->|"워크스페이스 지우기"| RM["aidure remove [이름] [--force]"]
     RM --> RW{"여기가 워크스페이스 루트인가 (이름을 줬으면 목록에서 찾음)"}
@@ -384,6 +387,7 @@ flowchart TD
 | `aidure docs trace` | 기획 ID(`vars.docs.traceIds`)와 코드의 `@spec` 주석 대조: 코드에 표시 없는 ID(⚠) · 테스트에 없는 수용 기준(⚠) · 기획에 정의 없는 ID(✖). `--md` 추적표 · `--new` 새 진입 파일 중 ID 없는 것 |
 | `aidure repo add … --group <그룹>` · `aidure repo move <이름> --group <그룹>` | 그룹 폴더 `repos/<그룹>/<이름>`: 더할 때 그룹을 주거나(이미 그룹을 쓰면 화면에서 고름) 있는 repo 를 옮긴다(폴더 · `workspace.json` · 문서의 옛 경로, `--no-group` 은 빼기) (관리자) |
 | `aidure repo remove <이름>` | repo 빼기: `workspace.json` · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 `--delete` 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) (관리자) |
+| `aidure tidy` | 정리 후보 찾기 (읽기만): 이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름. 지우기는 `tidy` 스킬 (표 → 승인 → 지움 → 검증) |
 | `aidure import` | 기존 AI 작업 폴더 훑기 (읽기만): 종류별 분류 · 큰 폴더 · 문서 속 절대경로 · 비밀값 의심 줄. 옮기기는 `import` 스킬 (계획 → 승인 → 반영) |
 | `aidure review` | 리뷰 확인 (기본 꺼짐, `aidure team-mode enforce review warn\|block --team` 으로 켠다): `status` 대상 repo 마다 리뷰 안 된 줄 수 · `mark` 지금 상태를 리뷰했다고 기록 · `skip --reason` 사용자 승인 뒤 한 번 생략 |
 | `aidure gitlab pipeline` | GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · `--ref` · `--mr` · `--id` · `--log`(실패한 작업의 로그 끝부분) |

@@ -39,6 +39,7 @@
   ],
   "PostToolUse": [
     { "script": "hooks/channel-progress.js", "timeout": 10, "agents": "claude" },
+    { "script": "hooks/chat-prefs.js", "timeout": 5, "agents": "claude" },
     { "matcher": "AskUserQuestion", "script": "hooks/notify.js", "timeout": 5, "agents": "claude" },
     { "matcher": "mcp__plugin_telegram.*reply", "script": "hooks/notify.js", "timeout": 5, "agents": "claude" }
   ],

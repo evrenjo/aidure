@@ -244,7 +244,8 @@ aidure start            # 정한 에이전트로 시작 (이번만 바꾸려면 
 
 - **Claude Code**: 처음 실행할 때 이 폴더를 신뢰하겠냐고 물으면 수락한다 (그래야 규칙·훅이 적용된다).
 - **Codex**: 처음 실행할 때 이 프로젝트를 trusted 로 지정하고, `/hooks` 에서 훅을 신뢰한다.
-- 킷이 새 버전이면 `aidure start` 가 알려 준다. 리더가 `aidure upgrade` → commit · push 하면 팀원은 `git pull` 로 받는다.
+- 킷이 새 버전이면 `aidure start` 가 지금 올릴지 묻는다 (올릴 수 없는 팀원 · 받지 않은 커밋이 있으면 알리기만). 리더가 올려 commit · push 하면 팀원은 `git pull` 로 받는다.
+- `npm i -g` 로 새 버전을 받은 뒤 이 PC 의 워크스페이스를 모두 올리려면 `aidure upgrade --all` (처음 쓰는 폴더는 `--scan ~/projects`).
 
 ## 관련 문서
 

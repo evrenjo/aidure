@@ -27,6 +27,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 오래 일하는 팀원 · 위임 점검 | `aidure team-mode enforce run off\|warn\|block [--after <분>] [--team]`. 막기(기본): 일하는 팀원(Claude Code 팀 모드) · 위임 작업의 경과가 상한(기본 60분)을 넘으면 멈출 때 한 번 막고 계속할지 묻게 함 · 알림: 요청 시작 때 한 줄 · 끔. 상한은 팀 값(`--team`, 관리자) | 이 PC · 팀 |
 | 착수 전 확인 | `aidure team-mode enforce plan off\|warn\|block [--team]`. 알림(기본): 요청마다 코드 repo 첫 수정 전에 답변에 「착수 전 확인:」 이 없으면 한 번 알림, 막기: 보일 때까지 수정을 막음. 문서 · 스타일 두 줄 이하는 제외 | 이 PC · 팀 |
 | 리뷰 전 검사 | `aidure team-mode enforce check off\|warn\|block [--team]`. 막기(기본): 리뷰 위임 · 리뷰 에이전트 지시서에 「검사: <명령> 통과」 줄이 없으면 막음 (검사가 없는 변경은 「검사: 없음 (사유)」) | 이 PC · 팀 |
+| 남은 파일 정리 | 찾기 `aidure tidy [--new] [--repo <이름>] [--count] [--json]` (읽기만: 이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름). 지우기는 `tidy` 스킬 절차로 표를 보여 주고 승인 뒤에. "안 쓰는 파일 정리해줘" 같은 요청 | 읽기 |
 | 기존 AI 작업 폴더 가져오기 | 훑기 `aidure import <폴더> [--json]` (읽기만: 분류 · 절대경로 · 비밀값 의심 줄). 옮기기는 `import` 스킬 절차로 계획을 보여 주고 승인 뒤에 | 읽기 |
 | 요금제 바꾸기 | `aidure ai plan claude\|gpt <요금제>` (`--team` 은 팀 기본값). 요금제 이름은 틀리면 목록을 보여 준다 | 이 PC · 팀 |
 | 프로필 바꾸기 | `aidure models profile <rich\|standard\|lean\|team> [--team]` (이 PC 값은 팀과 같거나 낮은 것만. `team` = 이 PC 값 지우고 팀 따름. 인자 없이 실행하면 화면에서 고른다) | 이 PC · `--team` 은 팀 |
@@ -50,6 +51,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 설정 수정 권한 | `aidure team edit allow\|deny` · `aidure team admins [id…]` | 팀 |
 | repo 추가 | `aidure repo add <git 주소\|폴더\|새 이름> [--kind code\|docs\|issues\|legacy] [--group <그룹>]` (그룹이면 `repos/<그룹>/<이름>`. 이름만 주면 원격 없이 새로 만든다, 레거시 제외) | 팀 |
 | repo 그룹 폴더로 옮기기 | `aidure repo move <이름> --group <그룹>` · `--no-group` (폴더 · workspace.json · 문서의 옛 경로를 고치고 sync) | 팀 (관리자) |
+| repo 안의 기존 AI 지침 | `aidure repo guides` (보기) · `aidure repo guides <이름> follow\|kit\|ignore` (follow = repo 지침 우선, 기본 · kit = 킷 규칙 우선 · ignore = 무시) · `aidure repo guides --rescan [<이름>]` (다시 훑기). "이 repo 의 CLAUDE.md 는 무시해줘" 같은 요청 | 팀 (관리자) |
 | repo 빼기 | `aidure repo remove <이름> [--delete]` (workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알림. 폴더는 `--delete` 일 때만, 커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) | 팀 (관리자) |
 | 스택 다시 감지 | `aidure detect` · 감지 힌트 `aidure detect --hint <스택> --contains <정규식>` | 팀 |
 | 진단 | `aidure doctor` | 보기 |
@@ -86,6 +88,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ai
 | 데이터 설계 검사 | `aidure datamodel check [기획 repo]` (참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조). 작성 절차는 `datamodel` 스킬 | 보기 |
 | 팩 켜기 (upgrade 가 「꺼져 있음」 이라 알린 기본 팩 · 다른 유형의 screens · datamodel 등) | `aidure upgrade --add <팩,팩>` | 팀 |
 | 킷 새 버전 반영 | `aidure upgrade` | 팀 |
+| 이 PC 의 워크스페이스 모두 새 버전으로 | `aidure upgrade --all [--scan <폴더>] [--yes]` (목록 · 건너뛸 것을 보인 뒤 묻고 올림. 관리자 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이면 건너뜀. 채팅에서는 목록을 보여 주고 승인받은 뒤 `--yes`) | 팀 |
 
 - 역할 이름: `analyst` · `architect` · `implementer` · `tester` · `reviewer` · `documenter`, 메인 `main`, 교차 검토 `crossReview`.
 - 모델 이름은 `aidure models` 결과나 `packs/core/models.json` 의 목록에서 고른다. 없는 이름을 지어내지 않는다.

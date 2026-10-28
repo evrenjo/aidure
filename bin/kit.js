@@ -477,6 +477,81 @@ function fillLanguages(root) {
   return filled;
 }
 
+// repo 안에 이미 있는 AI 지침 (repos[].guides · guidesMode). 파일 이름이 같으면 어느 폴더에 있어도 지침이다
+const GUIDE_FILES = new Set(['CLAUDE.md', 'AGENTS.md', 'AGENTS.override.md', 'GEMINI.md', '.cursorrules', '.windsurfrules', '.clinerules', 'copilot-instructions.md']);
+// 이 폴더 안의 파일은 폴더 하나로 적는다
+const GUIDE_DIRS = ['.claude/rules', '.claude/skills', '.claude/commands', '.claude/agents', '.agents/skills', '.cursor/rules', '.github/instructions', '.clinerules'];
+// 실행 도구 설정: 워크스페이스 루트에서 실행하면 적용되지 않는다
+const GUIDE_SETTINGS = ['.claude/settings.json', '.codex/config.toml', '.codex/hooks.json', '.mcp.json'];
+const GUIDE_MODES = { follow: 'repo 지침 우선', kit: '킷 규칙 우선', ignore: '무시' };
+const GUIDE_SKIP_DIRS = new Set(['node_modules', '.git', 'build', 'dist', 'target', 'out', '.gradle', '.venv', 'venv', '__pycache__', 'Pods', '.dart_tool']);
+
+/** repo 폴더의 지침 파일 · 폴더 목록 (repo 기준 상대 경로, 폴더는 / 로 끝남). git repo 면 추적 파일만 (PC 마다 같은 기록). 폴더가 없으면 null */
+function scanGuides(dir) {
+  if (!isDir(dir)) return null;
+  let files = null;
+  if (exists(path.join(dir, '.git'))) {
+    try {
+      files = execFileSync('git', ['-c', 'core.quotePath=false', '-C', dir, 'ls-files', '-z'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).split('\0').filter(Boolean);
+    } catch { files = null; }
+  }
+  if (!files) {
+    files = [];
+    const walk = (rel, depth) => {
+      let list = [];
+      try { list = fs.readdirSync(path.join(dir, rel), { withFileTypes: true }); } catch { return; }
+      for (const e of list) {
+        const p = rel ? `${rel}/${e.name}` : e.name;
+        if (e.isDirectory()) { if (depth < 4 && !GUIDE_SKIP_DIRS.has(e.name)) walk(p, depth + 1); } else files.push(p);
+      }
+    };
+    walk('', 0);
+  }
+  const found = new Set();
+  for (const f of files) {
+    if (f.split('/').some((seg) => GUIDE_SKIP_DIRS.has(seg))) continue;
+    const marker = GUIDE_DIRS.find((d) => f.startsWith(`${d}/`) || f.includes(`/${d}/`));
+    if (marker) { const at = f.startsWith(`${marker}/`) ? 0 : f.indexOf(`/${marker}/`) + 1; found.add(`${f.slice(0, at)}${marker}/`); continue; }
+    const base = f.split('/').pop();
+    if (GUIDE_FILES.has(base) && (base !== 'copilot-instructions.md' || f.endsWith('.github/copilot-instructions.md'))) { found.add(f); continue; }
+    if (GUIDE_SETTINGS.some((s) => f === s || f.endsWith(`/${s}`))) found.add(f);
+  }
+  return [...found].sort();
+}
+const isGuideSetting = (g) => GUIDE_SETTINGS.some((s) => g === s || g.endsWith(`/${s}`));
+
+/** 지침을 아직 훑지 않은 코드 · 이슈 repo 를 훑어 repos[].guides 에 적는다. 반환: [{ name, guides }] (찾은 것만) */
+function fillGuides(root) {
+  const file = path.join(root, 'workspace.json');
+  let raw;
+  try { raw = JSON.parse(read(file)); } catch { return []; }
+  const filled = [];
+  let changed = false;
+  for (const r of raw.repos || []) {
+    if (!['code', 'issues'].includes(r.kind || 'code') || Array.isArray(r.guides)) continue;
+    const g = scanGuides(path.join(root, repoRel(r)));
+    if (!g) continue; // 아직 받지 않은 repo
+    r.guides = g;
+    changed = true;
+    if (g.length) filled.push({ name: r.name, guides: g });
+  }
+  if (changed) fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
+  return filled;
+}
+
+/** 기록한 지침 목록과 지금 폴더가 다른 repo: [{ name, added, removed }] */
+function guideChanges(root, ws) {
+  const out = [];
+  for (const r of ws.repos || []) {
+    if (!Array.isArray(r.guides)) continue;
+    const now = scanGuides(path.join(root, repoRel(r)));
+    if (!now) continue;
+    const added = now.filter((g) => !r.guides.includes(g));
+    const removed = r.guides.filter((g) => !now.includes(g));
+    if (added.length || removed.length) out.push({ name: r.name, added, removed });
+  }
+  return out;
+}
 
 /** 감지 결과 한 줄 — 없으면 빌드 파일 유무로 간접 의존 가능성을 알린다 */
 function detectLine(catalog, d, languages = []) {
@@ -813,13 +888,51 @@ function repoRulesSection(ws, rules, repoMap, catalog, extra = new Map(), langua
   return out.join('\n');
 }
 
+/** repo 안에 이미 있던 AI 지침 (repos[].guides) 과 따르는 방식 (guidesMode, 기본 follow) */
+const isGuideMode = (m) => typeof m === 'string' && Object.prototype.hasOwnProperty.call(GUIDE_MODES, m);
+function guideMode(r) { return isGuideMode(r.guidesMode) ? r.guidesMode : 'follow'; }
+function repoGuidesSection(ws) {
+  const list = ws.repos.filter((r) => Array.isArray(r.guides) && r.guides.length);
+  if (!list.length) return '';
+  const MAX = 6;
+  const show = (r, gs) => gs.slice(0, MAX).map((g) => `\`${posix(r.dir)}/${g}\``).join(' · ') + (gs.length > MAX ? ` 외 ${gs.length - MAX}개` : '');
+  const out = ['## repo 자체 지침', '',
+    'repo 안에 원래 있던 AI 지침 파일이다. 따르는 방식은 repo 마다 정한다 (`aidure repo guides <이름> follow|kit|ignore`).', '',
+    '| repo | 지침 | 방식 |', '|---|---|---|'];
+  for (const r of list) {
+    const docs = r.guides.filter((g) => !isGuideSetting(g));
+    out.push(`| **${r.name}** | ${docs.length ? show(r, docs) : '—'} | ${GUIDE_MODES[guideMode(r)]} |`);
+  }
+  const modes = new Set(list.filter((r) => r.guides.some((g) => !isGuideSetting(g))).map(guideMode));
+  out.push('');
+  if (modes.has('follow')) out.push('- **repo 지침 우선**: 그 repo 를 고치기 전에 표의 지침을 읽는다 (Codex 는 스스로 읽지 않는다). 코드 규칙 · 빌드 · 테스트 명령 · 구조가 킷 규칙과 다르면 repo 지침을 따르고, 킷 규칙은 지침에 없는 부분만 채운다. 커밋 · push · 배포 승인, 비밀값, 운영 접근 같은 워크스페이스 안전 규칙은 킷 규칙을 따른다.');
+  if (modes.has('kit')) out.push('- **킷 규칙 우선**: 지침은 빌드 · 테스트 명령과 구조를 알 때만 참고한다. 규칙이 다르면 킷 규칙을 따르고, 다른 점을 보고에 한 줄 적는다.');
+  if (modes.has('ignore')) out.push('- **무시**: 읽지 않는다. 도구가 그 폴더의 지침을 스스로 불러와도 따르지 않는다.');
+  if (list.some((r) => r.guides.some(isGuideSetting))) out.push('- repo 안의 실행 도구 설정(`.claude/settings.json` · `.codex/` · `.mcp.json`)은 워크스페이스에서 실행하면 적용되지 않는다. 필요한 훅 · 권한 · MCP 는 사용자에게 알리고 워크스페이스 설정으로 옮긴다 (import 스킬).');
+  out.push('');
+  return out.join('\n');
+}
+
+/** 무시하는 repo 의 CLAUDE.md · .claude/rules 를 Claude Code 가 불러오지 않게 (claudeMdExcludes: 절대 경로 glob) */
+function guideExcludes(ws) {
+  const out = [];
+  // 무시는 기록이 비어 있어도 막는다 (나중에 생기는 지침도)
+  for (const r of ws.repos.filter((x) => ['code', 'issues'].includes(x.kind) && guideMode(x) === 'ignore')) {
+    // 링크 repo: 절대 경로는 그대로, 상대 · 홈 경로는 PC 마다 달라 끝부분만 (생성물이 PC 마다 같게)
+    const linked = r.path ? posix(r.path).replace(/\/+$/, '') : '';
+    const bases = [`**/${posix(r.dir)}`, ...(linked ? [path.isAbsolute(r.path) ? linked : `**/${linked.replace(/^(~\/|(\.\.?\/)+)/, '')}`] : [])];
+    for (const b of [...new Set(bases)]) out.push(`${b}/CLAUDE.md`, `${b}/**/CLAUDE.md`, `${b}/.claude/CLAUDE.md`, `${b}/**/.claude/CLAUDE.md`, `${b}/CLAUDE.local.md`, `${b}/**/CLAUDE.local.md`, `${b}/.claude/rules/**`, `${b}/**/.claude/rules/**`);
+  }
+  return out;
+}
+
 function buildAgentsMd(ws, rules, skills, repoMap = {}, catalog = [], extra = new Map(), languages = []) {
   const p = ws.project;
   const parts = [`<!-- ${GEN_NOTE} -->`, '', `# ${p.title || p.name || '워크스페이스'}`, ''];
   if (p.type) parts.push(`**프로젝트 유형: ${PROJECT_TYPES[p.type] || p.type}**`, '');
   if (p.approach === 'sprint') {
     parts.push(`**진행 방식: ${APPROACHES.sprint}**`, '',
-      '- 스프린트 = 기능 단위 (기간 아님). 첫 스프린트는 끝까지 동작하는 최소 기능 하나(많아야 몇 개)만 잡는다. 나머지는 `handoffs/PLAN.md` 의 「백로그」 에 한 줄씩 적고 지금 만들지 않는다.',
+      '- 스프린트 = 기능 단위 (기간 아님). 첫 스프린트는 끝까지 동작하는 최소 기능 하나(많아야 몇 개)만 잡는다. 최소는 기능 수다: 그 기능의 완성도(오류 처리 · 사이드이펙트 · 테스트)는 줄이지 않는다. 나머지는 `handoffs/PLAN.md` 의 「백로그」 에 한 줄씩 적고 지금 만들지 않는다.',
       '- 분석 · 설계 · 화면설계 · 데이터 설계도 이번 스프린트 기능만 한다. 전체를 미리 설계하지 않고, 나중에 붙일 자리만 남긴다.',
       '- 스프린트 끝은 데모(실행 방법과 함께 돌아가는 결과를 보여 주고 확인받기) → 회고(잘 된 것 · 바꿀 것 한 줄) → 백로그에서 다음 스프린트 후보 추천. 범위를 넓히거나 백로그를 당겨 올 때는 묻는다.', '');
   } else if (p.approach === 'issue') {
@@ -835,6 +948,8 @@ function buildAgentsMd(ws, rules, skills, repoMap = {}, catalog = [], extra = ne
   if (repos) parts.push(repos);
   const perRepo = repoRulesSection(ws, rules, repoMap, catalog, extra, languages);
   if (perRepo) parts.push(perRepo);
+  const guides = repoGuidesSection(ws);
+  if (guides) parts.push(guides);
 
   const always = rules.filter((r) => r.load === 'always' && r.agents === 'all' && r.scope !== 'repo');
   for (const r of always) {
@@ -1019,6 +1134,8 @@ function generate(root) {
   if (team.main && team.main.claude) base.model = team.main.claude; // 팀 기본 메인 모델 — 개인은 aidure agent (start 때 --model)
   // 커밋·PR 에 도구 서명(Co-Authored-By · Generated with)을 넣지 않는다. false 한 값은 v2.1.281 미만이 파일째 무시하므로 빈 문자열로
   base.attribution = { commit: '', pr: '', sessionUrl: false };
+  const excludes = guideExcludes(ws);
+  if (excludes.length) base.claudeMdExcludes = excludes;
   const claudeSettings = deepMerge(base, (ws.claude && ws.claude.settings) || {});
   files.set('.claude/settings.json', JSON.stringify(claudeSettings, null, 2) + '\n');
   files.set('.codex/hooks.json', JSON.stringify({ description: GEN_NOTE, hooks: hookGroups(hooks, 'codex') }, null, 2) + '\n');
@@ -1758,8 +1875,12 @@ function fillLocalRemotes(root) {
 function cmdSync(root, { quiet, soft } = {}) {
   const moved = fillLocalRemotes(root);
   if (moved.length) console.log(`✔ 원격이 생긴 repo 를 workspace.json 에 기록했습니다: ${moved.join(', ')}. workspace.json 을 commit · push 하면 팀원이 aidure install 로 받습니다`);
+  // repo 안에 원래 있던 AI 지침: 처음 받은 repo 는 기록하고, 기록과 달라졌으면 알린다
+  const guidesFilled = fillGuides(root);
+  if (guidesFilled.length) console.log(`✔ repo 안의 AI 지침을 찾아 workspace.json 에 적었습니다: ${guidesFilled.map((x) => `${x.name} ${x.guides.length}개`).join(' · ')}. 기본은 repo 지침 우선이고, 바꾸려면 aidure repo guides <이름> kit|ignore`);
   const generated = generate(root);
   const { ws, files, errors, warnings, stats } = generated;
+  for (const c of guideChanges(root, ws)) warnings.push(`repo '${c.name}' 의 AI 지침이 기록과 다릅니다${c.added.length ? ` (새로 생김: ${c.added.join(', ')})` : ''}${c.removed.length ? ` (없어짐: ${c.removed.join(', ')})` : ''}. 맞으면 aidure repo guides --rescan ${c.name}`);
   if (errors.length) {
     errors.forEach((e) => console.error(`✖ ${e}`));
     if (soft) { console.error(`  → workspace.json 을 고친 뒤 node bin/kit.js sync`); return false; }
@@ -2405,4 +2526,4 @@ function main() {
 
 main();
 
-module.exports = { hintedCatalog, parseRepos, repoLanguages, labelLanguages, ruleRepos, projectRulesPinning, fillLanguages, loadLanguages, claudeKey, window1m, claudeWindow, SECRET_PATTERNS, secretHits, repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };
+module.exports = { scanGuides, fillGuides, guideChanges, GUIDE_MODES, isGuideMode, hintedCatalog, parseRepos, repoLanguages, labelLanguages, ruleRepos, projectRulesPinning, fillLanguages, loadLanguages, claudeKey, window1m, claudeWindow, SECRET_PATTERNS, secretHits, repoRel, repoSafe, ENFORCE_LEVELS, ENFORCE_DEFAULTS, APPROACHES, missingTypePacks, ensurePlan, roleGrades, teamOptions, teamSection, loadCatalogFor, loginPlanValues, detectPlans, vendorRooms, profileRank, profileLabel, profileNotice, countPicks, applyAccess, normalizeAccess, gatewayVendors, gatewayId, startToolOf, migrateTypes, lockState, generate, buildAgentFiles, splitModel, fillLocalRemotes, installRepos, effortOf, profileModels, fillStackPaths, setStackPaths, detectLine, addStackHint, HINT_HELP, auditModels, resolveModels, stacksLabel, stackLabel, loadLayers, LAYER_PACKS, folderState, HOSTS, inferHost, hostOf, detectRepos, loadCatalog, repoPacks, PROJECT_NAME, PROJECT_NAME_RULE, PROJECT_TYPES, TYPE_RULES, REPO_KINDS, REPOS_DIR, LOCAL_CONFIG, initWorkspace, cmdInstall, cmdSync, cmdCheck, loadWorkspace, findRoot, kitRoot, isGitUrl };

@@ -281,6 +281,108 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
     `토큰 막음 ${blocked.status === 1} · 값 안 찍고 파일:줄 ${noValue} · 가린 뒤 · 예외 표시 통과 ${passed.status === 0} · 익명 주소 변환 ${urls}`);
 }
 
+// repo 안에 원래 있던 AI 지침: sync 가 찾아 기록 → AGENTS.md 표 → 방식(follow · kit · ignore) → 무시는 claudeMdExcludes → 바뀌면 경고
+{
+  const dir = path.join(tmp, 'repo-guides');
+  const got = {};
+  run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new', '--code', 'new:app'], tmp);
+  const app = path.join(dir, 'repos', 'app');
+  const put = (rel, text = 'x\n') => { fs.mkdirSync(path.dirname(path.join(app, rel)), { recursive: true }); fs.writeFileSync(path.join(app, rel), text); };
+  put('CLAUDE.md'); put('.claude/rules/a.md'); put('.claude/skills/s/SKILL.md'); put('.claude/settings.json', '{}\n'); put('api/AGENTS.md'); put('node_modules/p/CLAUDE.md'); put('src/Main.java', 'class Main {}\n');
+  const commitApp = () => { spawnSync('git', ['-C', app, 'add', '-A', '-f', '--', '.', ':!node_modules']); spawnSync('git', ['-C', app, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'x', '--no-verify']); };
+  commitApp(); put('UNTRACKED/CLAUDE.md'); // 추적 안 한 지침은 기록하지 않는다 (PC 마다 같게)
+  const wsFile = path.join(dir, 'workspace.json');
+  const reg = () => JSON.parse(fs.readFileSync(wsFile, 'utf8')).repos.find((r) => r.name === 'app');
+  // init 때는 빈 repo 라 [] 로 기록됐다. 옛 워크스페이스처럼 기록이 없는 상태로 돌려 sync 가 채우는지 본다
+  const w0 = JSON.parse(fs.readFileSync(wsFile, 'utf8')); delete w0.repos.find((r) => r.name === 'app').guides; fs.writeFileSync(wsFile, JSON.stringify(w0, null, 2));
+  const s1 = run(process.execPath, ['bin/kit.js', 'sync'], dir);
+  const want = ['.claude/rules/', '.claude/settings.json', '.claude/skills/', 'CLAUDE.md', 'api/AGENTS.md'];
+  got['sync 가 기록 (node_modules 제외)'] = s1.ok && JSON.stringify(reg().guides) === JSON.stringify(want);
+  const agents = () => fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8');
+  got['AGENTS.md 표 · 기본 repo 지침 우선'] = /## repo 자체 지침/.test(agents()) && agents().includes('`repos/app/api/AGENTS.md`') && /\| \*\*app\*\* \|.*\| repo 지침 우선 \|/.test(agents()) && /실행 도구 설정/.test(agents()) && !/settings\.json` ·.*\| repo 지침 우선/.test(agents().split('\n').find((l) => l.startsWith('| **app**')) || '');
+  const cli = (...a) => run(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', 'guides', ...a], dir);
+  const list = cli();
+  got['aidure repo guides 목록'] = list.ok && /app\s+repo 지침 우선\s+\.claude\/rules\//.test(list.out);
+  const ig = cli('app', 'ignore');
+  const ex = (JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).claudeMdExcludes || []);
+  got['ignore → claudeMdExcludes · 표 무시'] = ig.ok && reg().guidesMode === 'ignore' && ex.includes('**/repos/app/**/CLAUDE.md') && ex.includes('**/repos/app/.claude/rules/**') && /\| 무시 \|/.test(agents());
+  const bad = cli('app', 'bogus');
+  const proto = cli('app', 'toString');
+  got['모르는 방식 거부'] = !bad.ok && /follow/.test(bad.out) && !proto.ok;
+  cli('app', 'follow');
+  got['follow 로 되돌리면 기록 · 제외 없음'] = reg().guidesMode === undefined && !('claudeMdExcludes' in JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')));
+  got['check 통과'] = run(process.execPath, ['bin/kit.js', 'check'], dir).ok;
+  fs.rmSync(path.join(app, 'UNTRACKED'), { recursive: true, force: true }); put('GEMINI.md'); commitApp();
+  const s2 = run(process.execPath, ['bin/kit.js', 'sync'], dir);
+  got['바뀌면 경고'] = /AI 지침이 기록과 다릅니다 \(새로 생김: GEMINI\.md\)/.test(s2.out);
+  cli('--rescan', 'app');
+  got['다시 훑기'] = reg().guides.includes('GEMINI.md') && !/AI 지침이 기록과/.test(run(process.execPath, ['bin/kit.js', 'sync'], dir).out);
+  // 기록이 비어 있어도 무시면 막는다 (나중에 생기는 지침)
+  const w1 = JSON.parse(fs.readFileSync(wsFile, 'utf8')); const ra = w1.repos.find((x) => x.name === 'app'); ra.guides = []; ra.guidesMode = 'ignore'; fs.writeFileSync(wsFile, JSON.stringify(w1, null, 2));
+  run(process.execPath, ['bin/kit.js', 'sync'], dir);
+  got['빈 기록 + 무시도 제외'] = (JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).claudeMdExcludes || []).includes('**/repos/app/CLAUDE.md');
+  record('repo 자체 지침 (기록 · 방식 · 무시 · 변경 경고)', Object.values(got).every(Boolean), Object.entries(got).map(([k, v]) => `${k} ${v}`).join(' · '));
+}
+
+// 정리 후보 (aidure tidy): 이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름 · 오탐 방지 (플랫폼 아이콘 · 번호만 있는 이름 · 참조되는 파일)
+{
+  const dir = path.join(tmp, 'tidy');
+  run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new', '--code', 'new:app'], tmp);
+  const app = path.join(dir, 'repos', 'app');
+  const g = (...a) => spawnSync('git', ['-C', app, '-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { encoding: 'utf8' });
+  const put = (rel, text = 'x\n') => { fs.mkdirSync(path.dirname(path.join(app, rel)), { recursive: true }); fs.writeFileSync(path.join(app, rel), text); };
+  put('img/hero-banner.png'); put('img/used-logo.png'); put('res/drawable/ic_star.png'); put('src/main.js', 'import "../img/used-logo.png"\n');
+  put('docs/old-notes.md', '# a\n'); put('docs/guide-api.md', '# b\n'); put('README.md', 'see guide-api · architecture\n');
+  put('src/main_old.js'); put('src/report.txt'); put('src/report (1).txt'); put('src/copy-button.tsx'); put('src/deep-copy.ts'); put('src/api.ts'); put('src/api_v2.ts'); put('src/lone_old.js');
+  put('docs/architecture.md', '![](./architecture.png)\n'); put('docs/architecture.png'); put('.github/ISSUE_TEMPLATE/bug.md'); put('.claude/commands/run.md');
+  g('add', '-A'); g('commit', '-qm', 'base');
+  put('src/new-thing.js');
+  const tool = (...a) => run(process.execPath, [path.join(dir, 'packs', 'core', 'bin', 'tidy.js'), ...a], dir);
+  const j = JSON.parse(tool('--repo', 'app', '--json').out || '{}');
+  const r = (j.repos || [])[0] || {};
+  const got = {
+    '안 쓰는 자료 (참조 · 플랫폼 아이콘 제외)': JSON.stringify(r.assets) === JSON.stringify(['img/hero-banner.png']),
+    '링크 없는 문서 (같은 이름 문서 속 그림은 씀 · 도구 폴더 md 제외)': JSON.stringify(r.docs) === JSON.stringify(['docs/old-notes.md']) && !(r.assets || []).includes('docs/architecture.png'),
+    '백업 이름 (원본이 있을 때만 · 코드의 판 번호 · copy 낱말은 아님)': JSON.stringify((r.backups || []).sort()) === JSON.stringify(['src/main_old.js', 'src/report (1).txt']),
+    '이번 작업 새 파일': JSON.stringify(r.newFiles) === JSON.stringify(['src/new-thing.js']),
+  };
+  const cnt = tool('--count');
+  got['한 줄 요약'] = cnt.ok && /정리 후보 4개 \(app 4\)/.test(cnt.out);
+  const nw = JSON.parse(tool('--repo', 'app', '--new', '--json').out || '{}');
+  got['--new 는 새 파일 안에서만'] = nw.total === 0 && nw.newFiles === 1;
+  got['명령 · 스킬 · 핸드오프'] = fs.existsSync(path.join(dir, '.claude', 'skills', 'tidy', 'SKILL.md')) && /tidy\.js --count/.test(fs.readFileSync(path.join(dir, '.claude', 'skills', 'handoff', 'SKILL.md'), 'utf8')) && /방향이 바뀌면 남은 파일을 정리한다/.test(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8'));
+  record('정리 후보 (aidure tidy)', Object.values(got).every(Boolean), Object.entries(got).map(([k, v]) => `${k} ${v}`).join(' · '));
+}
+
+// 이 PC 의 워크스페이스 한꺼번에 올리기 (aidure upgrade --all): 찾기 · 건너뛸 것(커밋 안 한 변경) · 올리기 · 새 설치 알림
+{
+  const home = path.join(tmp, 'upall-home');
+  const base = path.join(tmp, 'upall');
+  fs.mkdirSync(base, { recursive: true });
+  const env = { ...process.env, AIDURE_HOME: home };
+  const ver = JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf8')).version;
+  const mk = (n) => {
+    const d = path.join(base, n);
+    run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', d, '--type', 'new'], base);
+    const f = path.join(d, 'workspace.json'); const j = JSON.parse(fs.readFileSync(f, 'utf8')); j.kit.version = '0.1.0'; fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n');
+    spawnSync('git', ['-C', d, '-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '-A']); spawnSync('git', ['-C', d, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'v', '--no-verify']);
+    return d;
+  };
+  const a = mk('wsa'); const b = mk('wsb');
+  fs.appendFileSync(path.join(b, 'workspace.json'), '\n'); // 커밋 안 한 변경
+  const ai = (args, cwd = base) => { const r = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...args], { cwd, env, encoding: 'utf8', input: '', timeout: 300000 }); return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}` }; };
+  const got = {};
+  const dry = ai(['upgrade', '--all', '--scan', base]);
+  got['찾기 · 화면 없으면 --yes 요구'] = !dry.ok && /워크스페이스 2개를 찾아/.test(dry.out) && /건너뜀 wsb: 커밋 안 한 변경/.test(dry.out) && /--yes/.test(dry.out);
+  const go = ai(['upgrade', '--all', '--yes']);
+  const vOf = (d) => JSON.parse(fs.readFileSync(path.join(d, 'workspace.json'), 'utf8')).kit.version;
+  got['올림 · 건너뜀'] = go.ok && vOf(a) === ver && vOf(b) === '0.1.0' && /✔ wsa/.test(go.out) && /- wsb\s+건너뜀/.test(go.out) && /git -C ".*wsa" add -A/.test(go.out);
+  fs.writeFileSync(path.join(home, 'last-version'), '0.0.1\n');
+  const note = ai(['list']);
+  got['새 설치 첫 명령에서 한 번 알림'] = /옛 버전 워크스페이스 1개 \(wsb\)/.test(note.out) && !/옛 버전 워크스페이스/.test(ai(['list']).out);
+  record('워크스페이스 한꺼번에 올리기 (upgrade --all)', Object.values(got).every(Boolean), Object.entries(got).map(([k, v]) => `${k} ${v}`).join(' · '));
+}
+
 // 원격 없이 새로 만드는 repo — init --code new:<이름> → git init·훅·local 등록 → 팀원 install 은 대기 → origin 을 달면 sync 가 remote 로 옮김
 {
   const dir = path.join(tmp, 'local-repo');
@@ -1016,8 +1118,14 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const cleared = !local().outputStyle && local().language === 'korean';
     const bad = cli('style', 'chatty').status !== 0 && cli('language', 'jp').status !== 0;
     const wiredP = /chat-prefs/.test(claudeHooks) && !/chat-prefs/.test(codexHooks);
-    record('응답 언어 · 대화 스타일 (aidure prefs · 개인 지침 머리 · 출력 스타일 · 요청마다 한 줄)', def && styles && expert && en && mineFirst && teamFollow && cleared && bad && wiredP,
-      `기본 ${def} · 출력 스타일 파일 ${styles} · 전문가 ${expert} · 영어 ${en} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 되돌리면 킷 스타일 지움 ${cleared} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredP}`);
+    // 긴 작업 중 다시 알림 (PostToolUse): 요청 시작 뒤 도구 14번은 조용, 15번째에 한 줄, 다시 세기
+    hook('chat-prefs.js', 'selftest-prefs-long');
+    const tool = () => hook('chat-prefs.js', 'selftest-prefs-long', { hook_event_name: 'PostToolUse', tool_name: 'Bash' });
+    const quiet = Array.from({ length: 14 }, tool).every((o) => !o.trim());
+    const again = tool();
+    const longRun = quiet && /"hookEventName":"PostToolUse"/.test(again) && /한국어만/.test(again) && !tool().trim() && /chat-prefs[^\n]*/.test(claudeHooks) && (JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).hooks.PostToolUse || []).some((g) => JSON.stringify(g).includes('chat-prefs'));
+    record('응답 언어 · 대화 스타일 (aidure prefs · 개인 지침 머리 · 출력 스타일 · 요청마다 한 줄 · 긴 작업 중 다시)', def && styles && expert && en && mineFirst && teamFollow && cleared && bad && wiredP && longRun,
+      `기본 ${def} · 출력 스타일 파일 ${styles} · 전문가 ${expert} · 영어 ${en} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 되돌리면 킷 스타일 지움 ${cleared} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredP} · 긴 작업 중 다시 알림 ${longRun}`);
   }
   // 언어 감지 · 클린 코드 팩 (repos[].languages · clean-code · lang-*) · repo 별 바꾸기(repos:) · repo 별 끄기(rules.offIn · --repo) · 옛 워크스페이스 채우기
   {

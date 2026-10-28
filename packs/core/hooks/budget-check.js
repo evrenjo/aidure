@@ -14,12 +14,12 @@ run(() => {
   if (ev === 'UserPromptSubmit') {
     const late = list.filter((b) => B.over(b));
     return context(late.length
-      ? `⏰ 시간 예산 넘음: ${late.map((b) => B.line(b)).join(' | ')}. 이 요청을 진행하기 전에 계속할지 사용자에게 묻는다 (더 하기로 하면 node packs/core/bin/budget.js extend "<작업>" <시간>)`
+      ? `⏰ 시간 예산 넘음: ${late.map((b) => B.line(b)).join(' | ')}. 이 요청을 진행하기 전에 남은 일과 예상 시간을 보이고 계속할지 사용자에게 묻는다. 범위를 줄이는 것은 보기 하나로만 (더 하기로 하면 node packs/core/bin/budget.js extend "<작업>" <시간>)`
       : `⏱ 시간 예산: ${list.map((b) => B.line(b)).join(' | ')}`);
   }
   if (ev !== 'Stop' || input.stop_hook_active) return;
   const late = list.filter((b) => B.over(b) && !b.warned);
   if (!late.length) return;
   B.save(ROOT, list.map((b) => (late.includes(b) ? { ...b, warned: true } : b)));
-  block(`시간 예산을 ${B.OVER}배 넘었습니다: ${late.map((b) => B.line(b)).join(' | ')}. 사용자에게 선택지로 묻습니다: 계속(예산 늘리기 node packs/core/bin/budget.js extend "<작업>" <시간>) · 범위 줄이기 · 여기서 멈추고 정리. 끝난 작업이면 node packs/core/bin/budget.js done "<작업>".`);
+  block(`시간 예산을 ${B.OVER}배 넘었습니다: ${late.map((b) => B.line(b)).join(' | ')}. 남은 일과 예상 시간을 보이고 사용자에게 선택지로 묻습니다: 계속(권장. 예산 늘리기 node packs/core/bin/budget.js extend "<작업>" <시간>) · 여기서 멈추고 정리 · 범위 줄이기(빠지는 요구 · 남는 위험을 적는다). 끝난 작업이면 node packs/core/bin/budget.js done "<작업>".`);
 });

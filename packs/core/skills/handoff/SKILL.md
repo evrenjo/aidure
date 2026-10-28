@@ -132,6 +132,7 @@ node packs/core/bin/handoff.js topic       # 이름 후보 + 기존 기록
 node packs/core/bin/handoff.js archive     # 8주 지난 주간 기록을 archive/ 로 (지우지 않는다)
 node packs/core/bin/handoff.js index       # INDEX.md (작업 색인) 다시 만들기
 node packs/core/bin/handoff.js check       # 크기 · 흩어진 파일 검사
+node packs/core/bin/tidy.js --count --new  # 정리 후보 (이번 작업에서 방향이 바뀌어 남은 파일)
 ```
 
 - `check` 가 ✖ 를 내면 고친 뒤 다시 검사한다: 크기는 줄이고(LATEST · 오늘 섹션을 작업별 기록으로), 작업 기록은 머리와 완료 조건을 채운다. ⚠ 는 보고에 적는다.
@@ -154,6 +155,7 @@ node packs/core/bin/handoff.js check       # 크기 · 흩어진 파일 검사
 - 스냅샷: handoffs/{id}/LATEST.md · 미완 작업 {n}건 · 내 TODO {m}건
 - 로드맵: {node packs/core/bin/plan.js --short} (이번에 고친 칸이 있으면 무엇을)
 - 검사: ✔ 또는 ⚠ 내용
+- 정리 후보: {tidy.js --count --new 한 줄} (0 이 아니면 tidy 스킬로 정리할지 묻는다)
 - 작업 브랜치: {repo: 브랜치 (push 됨 | 이 PC 에만 있음)} 또는 "없음"
 - 기록 커밋: {SHA} (푸시 완료 / 실패 사유)
 - 다른 repo 미커밋·미푸시: {요약 또는 "없음"}

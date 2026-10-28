@@ -16,6 +16,7 @@
  *   aidure repo add [주소|폴더|이름] [--kind …] [--group <그룹>]   repo 를 더한다 (이름만 주면 repos/<이름> 에 원격 없이 새로 만든다, legacy 제외. --group 이면 repos/<그룹>/<이름>)
  *   aidure repo move <이름> --group <그룹>|--no-group   repo 를 그룹 폴더로 옮긴다: 폴더 · workspace.json · 문서의 경로를 고치고 sync
  *   aidure repo remove <이름> [--delete]   repo 를 뺀다: workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 --delete 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부)
+ *   aidure repo guides [<이름> follow|kit|ignore] [--rescan [<이름>]]   repo 안에 원래 있던 AI 지침(CLAUDE.md · AGENTS.md · 룰 · 스킬 등) 보기 · 따르는 방식 정하기 (follow = repo 지침 우선, 기본 · kit = 킷 규칙 우선 · ignore = 무시) · 다시 훑기
  *   aidure team [id] [--take 1,2|all]   팀 현황 (모두의 핸드오프) · 한 사람 자세히 · 그 사람 TODO 항목을 내 TODO 로 인수
  *   aidure team add|remove <id…> · members · restrict on|off   팀 명단 (workspace.json team) · 명단 밖 사람의 aidure start 막기
  *   aidure team edit allow|deny · admins [id…]   팀원 설정 수정 허용·불가 (불가면 관리자만 workspace.json·팩을 바꾼다)
@@ -54,6 +55,7 @@
  *   aidure review status · mark [--repo R] [--by "<누가>"] · skip --reason "<사유>" [--repo R]   리뷰 확인(commit · push 전에 리뷰를 거쳤나): 대상 repo 마다 리뷰 안 된 줄 수 · 지금 상태를 리뷰했다고 기록 · 한 번 생략(사용자 승인 뒤). 켜기는 team-mode enforce review
  *   aidure team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] [--team]   commit · push 전 리뷰 확인 (기본 꺼짐. Claude Code). 대상 · 기준 줄 수 · 경로는 팀 값(--team)
  *   aidure import <폴더> [--json]   기존 AI 작업 폴더 훑기 (읽기만): 지침 · 룰 · 스킬 · 메모 · 핸드오프 · 스크립트 · 큰 폴더 분류, 문서 속 절대경로, 비밀값 의심 줄(값은 가림). 옮기기는 채팅에서 import 스킬로 (계획 → 승인 → 반영)
+ *   aidure tidy [--new] [--repo <이름>] [--count] [--json]   정리 후보 찾기 (읽기만): 이번 작업 새 파일 · 안 쓰는 이미지 · 문서 · 링크 없는 문서 · 백업 이름, 코드는 프로젝트 도구 안내. 지우기는 채팅에서 tidy 스킬로 (승인 뒤)
  *   aidure team-mode enforce run off|warn|block [--after 분] [--team]   오래 일하는 팀원 · 위임 (Claude Code 팀원 · delegate.js): 경과가 상한(기본 60분, 팀 값)을 넘으면 계속할지 사용자에게 묻게 한다. block(기본) 멈출 때 한 번 막기 · warn 요청 시작 때 한 줄 · off. 같은 대상은 상한만큼 지나 다시
  *   aidure team-mode enforce check off|warn|block [--team]   리뷰 전 검사: 리뷰를 맡기는 지시서(delegate.js 리뷰 역할 · Claude 리뷰 에이전트)에 「검사: <명령> 통과」 줄이 없으면 막는다 (기본). 검사가 없는 변경은 「검사: 없음 (사유)」
  *   aidure team-mode enforce plan off|warn|block [--team]   착수 전 확인 (Claude Code): 요청마다 코드 repo 첫 수정(Edit · Write) 전에 답변에 「착수 전 확인:」 머리말이 없으면 알린다. warn(기본) 요청마다 한 번 · block 머리말을 보일 때까지 수정을 막는다. 문서 · 스타일 두 줄 이하는 제외
@@ -63,6 +65,7 @@
  *   aidure team-mode enforce name off|warn|block · roster off|warn [--team]   훅 강제 수준. name: 팀 모드(Claude Code agent teams)에서 역할 에이전트를 이름 없이 띄우면 막기(기본) · 경고 · 끄기. roster: 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄(기본) · 끄기. 이 PC 값은 팀 값보다 세게만
  *   aidure sync | check | doctor | packs   생성물 다시 만들기 · 생성물 검사 · 환경 진단 · 팩 목록
  *   aidure upgrade [--add 팩]   이 킷 버전으로 워크스페이스의 bin·팩을 갱신
+ *   aidure upgrade --all [--scan <폴더>] [--yes]   이 PC 의 워크스페이스(aidure list)를 설치된 킷 버전으로 한꺼번에 올린다. 관리자 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이 있으면 건너뛴다. --scan 은 폴더 아래 워크스페이스를 찾아 목록에 더한다
  *   aidure help [번호|명령|--all]   명령 도움말: 인자 없이 = 자주 쓰는 명령 · 분류 목록 (터미널이면 분류를 골라 보기) · 번호 = 그 분류의 명령 · --all = 전체
  */
 'use strict';
@@ -425,6 +428,97 @@ function liveRegistry() {
   const live = all.filter((w) => fs.existsSync(path.join(w.path, 'workspace.json')));
   if (live.length !== all.length) writeRegistry(live);
   return live;
+}
+
+const installedVersion = () => JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
+function wsVersion(root) {
+  try { return (JSON.parse(read(path.join(root, 'workspace.json'))).kit || {}).version || null; } catch { return null; }
+}
+
+/** 지금 올리면 안 되는 이유 (없으면 null): 관리자 아님 · 원격에 받지 않은 커밋(팀원이 먼저 올렸을 수 있다) · 커밋 안 한 변경 */
+function upgradeBlocker(root) {
+  try { if (!kit.lockState(root, kit.loadWorkspace(root)).admin) return '관리자만 올릴 수 있음 (팀원 설정 수정이 막혀 있음)'; } catch { /* 옛 킷 */ }
+  const git = (...a) => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8', timeout: 6000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
+  if (git('rev-parse', '--is-inside-work-tree').status !== 0) return null;
+  if (git('rev-parse', '--abbrev-ref', '@{u}').status === 0) {
+    git('fetch', '-q', '--no-tags');
+    const behind = git('rev-list', '--count', 'HEAD..@{u}');
+    const n = behind.status === 0 ? Number(behind.stdout.trim()) : 0;
+    if (n > 0) return `원격에 받지 않은 커밋 ${n}개: 먼저 git pull (팀원이 먼저 올렸을 수 있음)`;
+  }
+  if ((git('status', '--porcelain', '--untracked-files=no').stdout || '').trim()) return '커밋 안 한 변경이 있음: 정리한 뒤 그 폴더에서 aidure upgrade';
+  return null;
+}
+
+/** 폴더 아래 워크스페이스 찾기 (4단계까지, repos · node_modules · 숨김 폴더는 들어가지 않는다) */
+function scanWorkspaces(dir, depth = 0, out = []) {
+  if (fs.existsSync(path.join(dir, 'workspace.json')) && wsVersion(dir)) { out.push(dir); return out; }
+  if (depth >= 4) return out;
+  let list = [];
+  try { list = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
+  for (const e of list) if (e.isDirectory() && !e.name.startsWith('.') && !['node_modules', 'repos', 'Library', 'Applications'].includes(e.name)) scanWorkspaces(path.join(dir, e.name), depth + 1, out);
+  return out;
+}
+
+/** 이 PC 의 워크스페이스를 설치된 킷 버전으로 한꺼번에 올린다. 올리기 전에 목록 · 건너뛸 것을 보이고 묻는다 */
+async function cmdUpgradeAll(rest) {
+  const installed = installedVersion();
+  const si = rest.indexOf('--scan');
+  if (si >= 0) {
+    const dir = rest[si + 1];
+    if (!dir || dir.startsWith('--')) fail('사용법: aidure upgrade --all [--scan <폴더>] [--yes]');
+    const found = scanWorkspaces(path.resolve(dir));
+    for (const f of found) remember(f);
+    console.log(`${path.resolve(dir)} 아래에서 워크스페이스 ${found.length}개를 찾아 목록에 올렸습니다`);
+  }
+  const rows = liveRegistry().map((w) => ({ ...w, ver: wsVersion(w.path) })).sort((a, b) => a.name.localeCompare(b.name));
+  if (!rows.length) fail('기록된 워크스페이스가 없습니다. 워크스페이스 폴더에서 aidure 명령을 한 번 실행하거나 --scan <폴더> 로 찾으세요');
+  const behind = rows.filter((r) => r.ver && semverGt(installed, r.ver));
+  const ahead = rows.filter((r) => r.ver && semverGt(r.ver, installed));
+  const w = Math.max(...rows.map((r) => r.name.length));
+  console.log(`설치된 aidure ${installed}`);
+  for (const r of rows) console.log(`  ${r.name.padEnd(w)}  ${padTo(r.ver ? `v${r.ver}` : '?', 9)} ${behind.includes(r) ? '옛 버전' : ahead.includes(r) ? '이 PC 보다 새 버전' : '최신'}  ${r.path}`);
+  if (ahead.length) console.log(`  이 PC 보다 새 버전으로 올라간 워크스페이스가 있습니다: npm i -g ${PKG_NAME}`);
+  if (!behind.length) { console.log(`✔ 옛 버전 워크스페이스가 없습니다`); return; }
+  const checked = behind.map((r) => ({ ...r, block: upgradeBlocker(r.path) }));
+  const go = checked.filter((r) => !r.block);
+  for (const r of checked.filter((x) => x.block)) console.log(`  건너뜀 ${r.name}: ${r.block}`);
+  if (!go.length) return;
+  if (!rest.includes('--yes')) {
+    if (!process.stdin.isTTY) fail(`올릴 워크스페이스 ${go.length}개: ${go.map((r) => r.name).join(', ')}. 화면 없이 올리려면 --yes 를 붙이세요`);
+    clack();
+    const ok = ask(await choose({ message: '옛 버전 워크스페이스를 올릴까요', hint: go.map((r) => `${r.name} ${r.ver} → ${installed}`).join(' · '), initialValue: true,
+      options: [{ value: true, label: '올리기 (권장)' }, { value: false, label: '그만두기' }] }));
+    if (!ok) return;
+  }
+  const done = [];
+  for (const r of go) {
+    console.log(`\n■ ${r.name} (${r.ver} → ${installed})`);
+    const res = spawnSync(process.execPath, [path.join(KIT_ROOT, 'bin', 'aidure.js'), 'upgrade'], { cwd: r.path, stdio: 'inherit' });
+    done.push({ ...r, ok: res.status === 0 });
+  }
+  console.log('\n결과');
+  for (const r of done) console.log(`  ${r.ok ? '✔' : '✖'} ${r.name}  ${r.ok ? `${r.ver} → ${installed}` : '실패 (위 출력 확인)'}`);
+  for (const r of checked.filter((x) => x.block)) console.log(`  - ${r.name}  건너뜀: ${r.block}`);
+  const ok = done.filter((r) => r.ok);
+  if (ok.length) console.log(['\n팀에 반영하려면 워크스페이스마다 commit · push:', ...ok.map((r) => `  git -C "${r.path}" add -A && git -C "${r.path}" commit -m "chore: aidure ${installed}" && git -C "${r.path}" push`)].join('\n'));
+  if (done.some((r) => !r.ok)) process.exitCode = 1;
+}
+
+/** npm i -g 로 새 버전을 받은 뒤 첫 aidure 명령에서 한 번: 이 PC 의 옛 버전 워크스페이스 수를 알린다 */
+function noticeNewInstall(cmd) {
+  try {
+    const file = path.join(path.dirname(registryPath()), 'last-version');
+    const installed = installedVersion();
+    let last = null;
+    try { last = read(file).trim(); } catch { /* 처음 */ }
+    if (last === installed) return;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${installed}\n`);
+    if (!last || !semverGt(installed, last) || cmd === 'upgrade') return;
+    const behind = liveRegistry().filter((w) => { const v = wsVersion(w.path); return v && semverGt(installed, v); });
+    if (behind.length) console.warn(`aidure ${installed} 설치됨 (전에 ${last}). 이 PC 의 옛 버전 워크스페이스 ${behind.length}개 (${behind.map((w) => w.name).join(', ')}): 한꺼번에 올리기 aidure upgrade --all`);
+  } catch { /* 알림은 편의 기능 */ }
 }
 
 function cmdList() {
@@ -1737,7 +1831,7 @@ async function cmdRules(argv = []) {
 
 // ───────────────────────── repo add ─────────────────────────
 
-const REPO_USAGE = 'aidure repo add [<git 주소 | 폴더 | 새로 만들 이름>] [--kind code|docs|issues|legacy] [--group <그룹>] · aidure repo move <이름> --group <그룹>|--no-group · aidure repo remove <이름> [--delete]';
+const REPO_USAGE = 'aidure repo add [<git 주소 | 폴더 | 새로 만들 이름>] [--kind code|docs|issues|legacy] [--group <그룹>] · aidure repo move <이름> --group <그룹>|--no-group · aidure repo remove <이름> [--delete] · aidure repo guides [<이름> follow|kit|ignore] [--rescan]';
 
 /** 워크스페이스에 repo 를 더한다 — clone · 링크 · (이름만 주면) repos/<이름> 에 새로 만들기 → 스택 확인 → sync */
 /** repo 빼기: workspace.json repos(와 리뷰 대상 목록)에서 지우고 sync. 폴더는 --delete 일 때만, 커밋 안 한 변경 · push 안 한 커밋이 없을 때 지운다 */
@@ -1781,6 +1875,58 @@ function cmdRepoRemove(rest) {
   if (left.length) console.log(`  이 이름이 남은 문서: ${left.join(', ')} (필요하면 고치세요)`);
   console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다 (팀원 PC 의 repos/ 폴더는 그대로 남습니다)');
   if (!ok) process.exit(1);
+}
+
+/** repo 안에 원래 있던 AI 지침 보기 · 따르는 방식 정하기 · 다시 훑기 (repos[].guides · guidesMode) */
+function cmdRepoGuides(rest) {
+  const root = locateWorkspace();
+  let wsKit = {};
+  try { wsKit = require(path.join(root, 'bin', 'kit.js')); } catch { /* 없음 */ }
+  if (typeof wsKit.scanGuides !== 'function') fail('이 워크스페이스의 킷은 repo 지침을 모릅니다. aidure upgrade 후 다시 하세요');
+  const wsFile = path.join(root, 'workspace.json');
+  const raw = JSON.parse(read(wsFile));
+  const repos = (raw.repos || []).filter((r) => ['code', 'issues'].includes(r.kind || 'code'));
+  const args = rest.filter((x) => !x.startsWith('--'));
+  const modes = wsKit.GUIDE_MODES;
+  const save = () => { fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n'); return runWorkspaceKit(root, ['sync', '--quiet']); };
+  const pick = (name) => { const r = repos.find((x) => x.name === name); if (!r) fail(`코드 · 이슈 repo 가 아닙니다: ${name} (있는 것: ${repos.map((x) => x.name).join(', ') || '없음'})`); return r; };
+  if (rest.includes('--rescan')) {
+    requireAdmin(root, 'repo 지침 다시 훑기');
+    const targets = args.length ? args.map(pick) : repos;
+    const lines = [];
+    for (const r of targets) {
+      const g = wsKit.scanGuides(path.join(root, kit.repoRel(r)));
+      if (!g) { lines.push(`  ${r.name}: 폴더 없음 (aidure install 뒤 다시)`); continue; }
+      r.guides = g;
+      lines.push(`  ${r.name}: ${g.length ? g.join(', ') : '없음'}`);
+    }
+    const ok = save();
+    console.log(`✔ repo 지침을 다시 훑었습니다\n${lines.join('\n')}\n  workspace.json 이 바뀌었으면 commit · push 하면 팀에 적용됩니다`);
+    if (!ok) process.exit(1);
+    return;
+  }
+  if (args.length >= 2) {
+    const [name, mode] = args;
+    if (!wsKit.isGuideMode(mode)) fail(`방식은 ${Object.keys(modes).map((k) => `${k}(${modes[k]})`).join(' · ')} 중 하나`);
+    requireAdmin(root, 'repo 지침 방식 바꾸기');
+    const r = pick(name);
+    if (mode === 'follow') delete r.guidesMode; else r.guidesMode = mode;
+    { const g = wsKit.scanGuides(path.join(root, kit.repoRel(r))); if (g) r.guides = g; } // 방식을 바꿀 때는 늘 다시 훑는다
+    const ok = save();
+    console.log(`✔ ${name}: ${modes[mode]}${Array.isArray(r.guides) && !r.guides.length ? ' (지금은 지침 파일이 없습니다. 생기면 sync 가 알립니다)' : ''}`);
+    console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다');
+    if (!ok) process.exit(1);
+    return;
+  }
+  if (!repos.length) { console.log('코드 · 이슈 repo 가 없습니다'); return; }
+  const shown = args.length === 1 ? [pick(args[0])] : repos;
+  const w = Math.max(...shown.map((r) => r.name.length));
+  for (const r of shown) {
+    const mode = wsKit.isGuideMode(r.guidesMode) ? r.guidesMode : 'follow';
+    const g = Array.isArray(r.guides) ? (r.guides.length ? r.guides.join(', ') : '없음') : '아직 훑지 않음 (repo 를 받은 뒤 sync 가 훑는다)';
+    console.log(`${r.name.padEnd(w)}  ${modes[mode].padEnd(8)}  ${g}`);
+  }
+  console.log('\n방식: follow = repo 지침 우선 (기본) · kit = 킷 규칙 우선 · ignore = 무시. 바꾸기: aidure repo guides <이름> <방식> · 다시 훑기: aidure repo guides --rescan');
 }
 
 const GROUP_NAME = /^(?!\.{1,2}$)[A-Za-z0-9._][A-Za-z0-9._-]*$/; // bin/kit.js REPO_SEG 와 같다 ('.' · '..' · '-' 로 시작 금지)
@@ -1847,6 +1993,7 @@ function cmdRepoMove(rest) {
 async function cmdRepo(argv = []) {
   const [sub, ...rest] = argv;
   if (sub === 'remove' || sub === 'rm') return cmdRepoRemove(rest);
+  if (sub === 'guides') return cmdRepoGuides(rest);
   if (sub === 'move' || sub === 'mv') return cmdRepoMove(rest);
   if (sub !== 'add') fail(`사용법: ${REPO_USAGE}`);
   const root = locateWorkspace();
@@ -2717,13 +2864,24 @@ async function cmdStart(argv) {
     const installed = JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
     if (latest && semverGt(latest, installed)) console.warn(`⚠ aidure ${latest} 이 나왔습니다 (이 PC ${installed}). npm i -g ${PKG_NAME} → 워크스페이스에서 aidure upgrade → commit · push`);
   } catch { /* 확인 실패: 시작을 막지 않는다 */ }
-  // 킷 새 버전 알림 — 설치된 aidure 가 워크스페이스를 만든(올린) 킷보다 새로우면
+  // 킷 버전 비교: 설치된 aidure 가 이 워크스페이스보다 새로우면 올릴지 묻는다 (화면 · 올릴 수 있을 때). 아니면 알리기만
   try {
-    const installed = JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
-    const used = (JSON.parse(read(path.join(root, 'workspace.json'))).kit || {}).version;
-    const newer = (x, y) => { const a = x.split('.').map(Number), b = y.split('.').map(Number); for (let i = 0; i < 3; i++) { if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); } return false; };
-    if (used && newer(installed, used)) console.warn(`⚠ 킷 새 버전 ${installed} (이 워크스페이스 ${used}). aidure upgrade 후 commit·push 하면 팀에 반영됩니다`);
-  } catch { /* 버전 정보 없음 */ }
+    const installed = installedVersion();
+    const used = wsVersion(root);
+    if (used && semverGt(installed, used)) {
+      const block = upgradeBlocker(root);
+      if (process.stdin.isTTY && !block) {
+        clack();
+        const v = ask(await choose({ message: '킷 새 버전을 지금 올릴까요', hint: `설치 ${installed} · 이 워크스페이스 ${used}. 올리면 bin · 팩 · 생성물이 바뀌고, 끝난 뒤 commit · push 하면 팀에 반영됩니다.`, initialValue: 'up',
+          options: [{ value: 'up', label: '지금 올리고 시작 (권장)' }, { value: 'skip', label: '이번엔 그대로 시작' }] }));
+        if (v === 'up') {
+          const r = spawnSync(process.execPath, [path.join(KIT_ROOT, 'bin', 'aidure.js'), 'upgrade'], { cwd: root, stdio: 'inherit' });
+          if (r.status === 0) console.log(`✔ ${installed} 로 올렸습니다. 팀에 반영: git add -A && git commit -m "chore: aidure ${installed}" && git push`);
+          else console.warn('⚠ 업그레이드가 실패해 그대로 시작합니다 (위 출력 확인)');
+        }
+      } else console.warn(`⚠ 킷 새 버전 ${installed} (이 워크스페이스 ${used}). ${block ? `지금 올리지 않음: ${block}` : 'aidure upgrade 후 commit · push 하면 팀에 반영됩니다'}`);
+    } else if (used && semverGt(used, installed)) console.warn(`⚠ 이 워크스페이스는 킷 ${used} 로 올라가 있습니다 (이 PC ${installed}). npm i -g ${PKG_NAME}`);
+  } catch { /* 버전 정보 없음: 시작을 막지 않는다 */ }
   const agent = once || conf.agent;
   const a = AGENTS[agent];
   if (!a) fail(`알 수 없는 에이전트: ${agent}`);
@@ -3215,7 +3373,7 @@ const HELP_GROUPS = [
   ['프로젝트 설정', '유형 · 진행 방식 · repo · 스택 · 규칙 · 생성물', ['type', 'approach', 'repo', 'detect', 'rules', 'sync', 'check', 'doctor', 'packs', 'reset']],
   ['팀', '팀 현황 · 명단 · 팀 구성', ['team', 'team-mode']],
   ['팀 규칙 점검', '리뷰 확인 · 훅이 알리거나 막는 수준', ['review', 'team-mode enforce']],
-  ['진행 · 기록', '로드맵 · 핸드오프 · 현황판 · 위임 · 옛 작업 가져오기', ['plan', 'handoff', 'board', 'delegate', 'import']],
+  ['진행 · 기록', '로드맵 · 핸드오프 · 현황판 · 위임 · 옛 작업 가져오기', ['plan', 'handoff', 'board', 'delegate', 'import', 'tidy']],
   ['문서', '문서 사이트 · ID 찾기 · 화면설계서 · 데이터 설계 검사', ['docs', 'screens', 'datamodel']],
   ['알림 · 연동', '텔레그램 · 비밀값 · GitLab', ['notify', 'secret', 'gitlab']],
 ];
@@ -3324,7 +3482,7 @@ async function cmdHelp(rest) {
 }
 
 /** 상태를 바꾸는 명령: 모르는 옵션이면 실행하지 않는다 (오타 · 다른 명령의 옵션으로 엉뚱하게 돌지 않게) */
-const KNOWN_OPTS = { upgrade: ['--add'], reset: ['--yes', '--all'], install: [], setup: [] };
+const KNOWN_OPTS = { upgrade: ['--add', '--all', '--scan', '--yes'], reset: ['--yes', '--all'], install: [], setup: [] };
 
 /** Node 버전과 상관없는 aidure 명령 (고정 위치 실행 파일 + PATH). 처음 한 번만 알린다 */
 function ensureGlobalShim() {
@@ -3338,6 +3496,7 @@ function ensureGlobalShim() {
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   ensureGlobalShim();
+  noticeNewInstall(cmd);
   // 모든 하위 명령: --help · -h 면 사용법만 (start 의 「--」 뒤는 에이전트 인자라 보지 않는다)
   const own = rest.includes('--') ? rest.slice(0, rest.indexOf('--')) : rest;
   if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') return cmdHelp(rest);
@@ -3394,6 +3553,7 @@ async function main() {
     case 'sync': case 'check': return process.exit(runWorkspaceKit(locateWorkspace(), [cmd]) ? 0 : 1);
     case 'packs': return process.exit(runWorkspaceKit(kit.findRoot() || KIT_ROOT, ['packs']) ? 0 : 1);
     case 'upgrade': {
+      if (rest.includes('--all')) return cmdUpgradeAll(rest);
       const root = locateWorkspace();
       requireAdmin(root, '킷 업그레이드');
       const addAt = rest.indexOf('--add');
@@ -3441,6 +3601,7 @@ async function main() {
     case 'docs': return runWsTool('docs-site.js', rest);
     case 'delegate': return runWsTool('delegate.js', rest.length ? rest : ['list']);
     case 'board': return runWsTool('board.js', rest);
+    case 'tidy': return runWsTool('tidy.js', rest);
     case 'screens': return runWsTool('check-screens.js', rest.filter((x) => x !== 'check'), 'screens');
     case 'datamodel': return runWsTool('check-datamodel.js', rest.filter((x) => x !== 'check'), 'datamodel');
     case 'team-mode': return cmdTeamMode(rest);
