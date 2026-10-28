@@ -2,6 +2,16 @@
 
 `kedovi upgrade` 가 올린 버전 사이의 항목을 표로 보여 준다. 배포할 때 이번 버전 항목을 맨 위에 더한다 (`## 버전` 아래 `| 구분 | 내용 |` 표, 한 줄씩 짧게).
 
+## 0.76.1
+
+| 구분 | 내용 |
+|---|---|
+| 모델 | Claude `haiku` = Haiku 5.5 (2026-10-07 출시, API $0.10·$0.50, effort 지원). 설명 · 가격 · 벤치마크 갱신 |
+| 모델 | 표준 · 절약의 Claude 테스트 담당: GPT-6 Luna(Codex 위임) → Haiku 5.5 xhigh (LiveBench 같은 점수, 더 쌈, 위임 없음). 게이트웨이에서 haiku 가 4.5 면 GPT-6 Luna max |
+| 모델 | Codex 선택지에 GPT-6.1 Terra (글쓰기 · 화면 이해 · 컴퓨터 사용, 추천에는 안 씀). GPT-6 Sol 은 Codex 목록에서 빠졌다고 표시 |
+| 수정 | `npm run models:livebench`: LiveBench 데이터가 `/v1/` 로 옮겨 404 나던 것 |
+| 적용 | 별칭을 쓰므로 `kedovi upgrade` 뒤 sync 만 하면 새 추천이 들어간다 (직접 고른 모델은 그대로) |
+
 ## 0.76.0
 
 | 구분 | 내용 |

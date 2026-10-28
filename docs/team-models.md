@@ -56,8 +56,8 @@
 | 설계 문서 | Opus 5.5 (xhigh) | Sonnet 5.5 (high) | Sonnet 5.5 (medium) |
 | 구현 | Opus 5.5 (xhigh) | Opus 5.5 (high) | Sonnet 5.5 |
 | 리뷰 | GPT-6.1 Sol (Codex 위임 · high) | GPT-6.1 Sol (Codex 위임 · high) | GPT-6.1 Sol (Codex 위임 · medium) |
-| 테스트 | GPT-6.1 Sol (Codex 위임 · high) | GPT-6 Luna (Codex 위임 · max) | GPT-6 Luna (Codex 위임 · max) |
-| 문서화 | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 |
+| 테스트 | GPT-6.1 Sol (Codex 위임 · high) | Haiku 5.5 (xhigh) | Haiku 5.5 (xhigh) |
+| 문서화 | Haiku 5.5 | Haiku 5.5 | Haiku 5.5 |
 | 교차 검토 → Codex | GPT-6.1 Sol (high) | GPT-6.1 Sol (high) | GPT-6.1 Sol (medium) |
 <!-- /models:claude -->
 
@@ -88,7 +88,8 @@
 | 설계·구현은 Opus 5.5 | Fable 5.1 과 전체 점수가 같고(83.2 대 83.4) 에이전틱 코딩은 더 높다(71.7 대 66.1). 값은 40% |
 | 분석은 Opus 5.5 · GPT-6.1 Sol | 추론·데이터 분석 상위. Sonnet 5.5 · Luna 는 낮아 분석에 쓰지 않는다 |
 | Codex 코딩은 GPT-6.1 Sol (high) | Astra 와 거의 같은 점수를 1/5 비용으로. effort 는 high 가 코딩에 가장 좋다 |
-| 테스트는 Luna (max) | effort 를 올리면 점수가 크게 오르고 문항당 $0.02 |
+| Claude 테스트는 Haiku 5.5 (xhigh) | Luna max 와 점수가 같고(72.1 대 72.0, 에이전틱 코딩 51.4 대 51.2) 문항당 $0.013 으로 더 싸다. 같은 회사라 위임 없이 서브에이전트로 돈다 |
+| Codex 테스트는 Luna (max) | effort 를 올리면 점수가 크게 오르고 문항당 $0.02 |
 | 리뷰는 상대 회사 모델 | 구현과 다른 엔진이 봐야 독립 검토가 된다 |
 
 ## AI 연결 방식
@@ -101,6 +102,8 @@
 | AI 서비스 직접 | GPT 만 | Codex | 쓰지 않음 |
 | AI 서비스 직접 | 둘 다 | Claude Code | `delegate.js` 로 상대 도구에 위임 |
 | AI 게이트웨이 | 게이트웨이 모델 목록으로 정함 | Claude Code | **하위 에이전트로 바로** (GPT 를 메인으로도 가능) |
+
+게이트웨이(Bedrock · Vertex · Foundry)는 `haiku` 가 아직 Haiku 4.5 다. 그래서 표준 · 절약의 Claude 테스트 담당은 게이트웨이에서 GPT-6 Luna (max) 로 바뀐다. GPT 가 없는 게이트웨이면 Haiku 4.5 를 추론 강도 없이 쓰고 sync 가 알린다.
 
 | 구성 | 역할 모델 |
 |---|---|
@@ -178,7 +181,7 @@ flowchart LR
   subgraph CC["Claude Code 로 실행 (표준)"]
     L1["리드: Claude (opusplan)"] --> A1["분석 · 설계 · 구현<br/>서브에이전트 (Opus)"]
     L1 -->|"codex exec · 읽기"| R1["리뷰: GPT-6.1 Sol"]
-    L1 -->|"codex exec · 쓰기"| T1["테스트: Luna"]
+    L1 --> T1["테스트: 서브에이전트 (Haiku 5.5)"]
   end
   subgraph CX["Codex 로 실행 (표준)"]
     L2["리드: GPT-6.1 Sol"] --> A2["분석 · 설계 · 리뷰<br/>Codex 에이전트 (6.1 Sol)"]

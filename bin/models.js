@@ -126,6 +126,19 @@ async function fetchText(url) {
   return r.text();
 }
 
+// 문제 세트 데이터 파일 위치. 2026-10 에 사이트가 /v1/ 아래로 옮겼다 (예전 위치는 404). 새 위치부터 본다
+const DATA_DIRS = ['/v1', ''];
+let dataDir = null;
+const dataUrl = (file) => `${LIVEBENCH}${dataDir === null ? DATA_DIRS[0] : dataDir}/${file}`;
+async function fetchData(file) {
+  if (dataDir !== null) return fetchText(dataUrl(file));
+  const errs = [];
+  for (const d of DATA_DIRS) {
+    try { const t = await fetchText(`${LIVEBENCH}${d}/${file}`); dataDir = d; return t; } catch (e) { errs.push(e.message); }
+  }
+  throw new Error(errs.join(' · ')); // 새 위치의 실패 원인이 가려지지 않게 둘 다
+}
+
 /** 가장 최신 문제 세트 날짜 — 사이트 스크립트에 든 날짜 목록의 마지막 */
 async function latestRelease() {
   const html = await fetchText(`${LIVEBENCH}/`);
@@ -146,10 +159,10 @@ const parseCsv = (text) => {
 /** 사이트와 같은 계산 — 분야 = 과제 평균, 전체 = 분야 평균. 반환 [{ model, global, categories, cost }] */
 async function liveBench(release) {
   const tag = release.replace(/-/g, '_');
-  const [table, cats, cost] = await Promise.all([
-    fetchText(`${LIVEBENCH}/table_${tag}.csv`).then(parseCsv),
-    fetchText(`${LIVEBENCH}/categories_${tag}.json`).then(JSON.parse),
-    fetchText(`${LIVEBENCH}/cost_${tag}.csv`).then(parseCsv).catch(() => []),
+  const table = await fetchData(`table_${tag}.csv`).then(parseCsv); // 위치(dataDir)를 먼저 정한다
+  const [cats, cost] = await Promise.all([
+    fetchData(`categories_${tag}.json`).then(JSON.parse),
+    fetchData(`cost_${tag}.csv`).then(parseCsv).catch(() => []),
   ]);
   const costOf = Object.fromEntries(cost.map((c) => [c.model, c.cost_per_question]));
   return table.map((row) => {
@@ -176,7 +189,7 @@ function writeStrengths(cat, rows, release) {
       m.strengths = got.map((r) => ({ variant: r.model, ...Object.fromEntries(Object.entries(r.categories).map(([k, v]) => [AREAS[k] || k, Math.round(v * 10) / 10])) }));
     }
   }
-  cat.strengthsSource = { name: 'LiveBench', release, source: `${LIVEBENCH}/table_${release.replace(/-/g, '_')}.csv`, checked: new Date().toISOString().slice(0, 10) };
+  cat.strengthsSource = { name: 'LiveBench', release, source: dataUrl(`table_${release.replace(/-/g, '_')}.csv`), checked: new Date().toISOString().slice(0, 10) };
   fs.writeFileSync(CATALOG, `${JSON.stringify(cat, null, 2)}\n`);
 }
 
@@ -191,7 +204,7 @@ async function cmdLiveBench(rest) {
   const f = (x) => (x === undefined ? '-' : x.toFixed(1));
   const line = (r) => `${r.model.padEnd(40)} ${f(r.global).padStart(5)} ${f(r.categories['Agentic Coding']).padStart(7)} ${f(r.categories.Coding).padStart(6)} ${f(r.categories.Reasoning).padStart(6)} ${r.cost === undefined ? '     -' : `$${r.cost.toFixed(3)}`.padStart(7)}`;
   const head = `${'모델'.padEnd(38)} 전체  에이전틱  코딩   추론  문항당`;
-  console.log(`LiveBench ${release} (${LIVEBENCH}/table_${release.replace(/-/g, '_')}.csv)\n\n카탈로그 모델 (models.json 의 livebench 이름)\n${head}`);
+  console.log(`LiveBench ${release} (${dataUrl(`table_${release.replace(/-/g, '_')}.csv`)})\n\n카탈로그 모델 (models.json 의 livebench 이름)\n${head}`);
   for (const r of rows.filter((x) => mapped.has(x.model)).sort((a, b) => b.global - a.global)) console.log(`${line(r)}  ← ${mapped.get(r.model)}`);
   // 카탈로그에 이름이 안 걸린 Claude·GPT 모델 — 새 모델일 수 있다. 전체 점수가 카탈로그 최저보다 높은 것만
   const floor = Math.min(...rows.filter((x) => mapped.has(x.model)).map((x) => x.global));

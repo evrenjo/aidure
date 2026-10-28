@@ -72,22 +72,26 @@
 5. `npm test` 통과 → `package.json` version 올림 (추천 변경 = patch, 형식 변경 = minor) → 커밋·push
 6. 워크스페이스는 `kedovi upgrade` 로 받는다. 팀이 직접 고른 값은 그대로 두고, 퇴역 모델만 sync 가 경고한다 (`kedovi models --migrate`)
 
-## 근거 (2026-10-01)
+## 근거 (2026-10-28)
 
 | 모델 | 벤더 권장 용도 | API 가격 (1M 토큰, 입력·출력) | 요금제 |
 |---|---|---|---|
 | Claude Fable 5.1 | 긴 조사·원인 분석, 어려운 문제(max) | $10 · $50 | Pro·Max·Team·Enterprise. Pro·표준 좌석은 첫 요청부터 사용량 크레딧, Max·프리미엄 좌석은 주간 한도 50% 까지 포함 |
 | Claude Opus 5.5 | 버그 수정(high), 설계(xhigh). Claude Code `default` 별칭 | $4 · $20 | Pro 이상 |
 | Claude Sonnet 5.5 | 일상 코딩 | $2 · $10 | Pro 이상 |
-| Claude Haiku 4.5 | 빠르고 단순한 작업, 읽기 전용 탐색 | $1 · $5 | Pro 이상 |
+| Claude Haiku 5.5 | 대량 · 반복 작업(요약 · 분류 · 압축), Opus · Sonnet 곁의 범위 좁은 서브에이전트. 복잡한 에이전틱 코딩은 Sonnet · Opus | $0.10 · $0.50 (100K 넘는 프롬프트 $0.50 · $2.50) | Pro 이상 |
 | GPT-6 Astra | 가장 까다로운 전 과정 작업 | $10 · $50 | Plus·Pro·Business·Enterprise |
 | GPT-6.1 Sol | 계획이 필요한 까다로운 에이전트 작업 ("여기서 시작") | $2 · $10 | Plus 이상 |
+| GPT-6.1 Terra | 글쓰기, 이미지 · 화면 이해, 컴퓨터 사용 (Codex CLI 0.159 이상) | $1 · $5 | 요금제별 안내 없음 |
 | GPT-6 Luna | 빠르고 범위가 좁은 반복 작업, 가벼운 서브에이전트 | $0.10 · $0.50 | Free·Go 포함 |
 
 - 없는 모델: `gpt-6-mini` 는 없다(OpenAI 는 `gpt-5.4-mini` 의 대체로 Luna 를 안내). `o4-mini` 는 ChatGPT 에서 빠진 옛 모델.
-- 퇴역(2026-10-01 확인): Sonnet 4.5(`claude-sonnet-4-5-20250929`)는 2026-09-30 퇴역 예고, 2026-11-30 종료, 대체 Sonnet 5.5. GPT-5.5 는 2026-10-14 에 ChatGPT·Codex(ChatGPT 로그인)에서 빠지고 API 에는 남는다(OpenAI 안내 대체 gpt-6-sol, Free·Go 는 gpt-6-luna). GPT-5.3 Codex Spark 는 2026-09-14 Codex 에서 빠졌다. `gpt-5.2` · `gpt-5.3-codex` 는 날짜 없이 "Codex(ChatGPT 로그인)에서 이미 지원 중단"(2026-10-08 확인, 공식 대체 안내 없음 → 킷 기본 코딩 모델 gpt-6.1-sol).
-- Haiku 4.5 고정 스냅샷(`claude-haiku-4-5-20251001`)은 퇴역 공지가 아니라 "2026-10-15 전에는 퇴역하지 않음" 약속이다. 그래서 `retired` 에 두지 않는다(2026-10-01 에 뺌). 실제 공지가 나오면 그때 넣는다. 별칭 `haiku` 는 최신 Haiku 를 따라간다.
-- LiveBench(2026-06-25 문제 세트)에 2026-10-01 기준 카탈로그 밖의 새 Claude·GPT 모델은 없다.
+- 퇴역(2026-10-01 확인): Sonnet 4.5(`claude-sonnet-4-5-20250929`)는 2026-09-30 퇴역 예고, 2026-11-30 종료, 대체 Sonnet 5.5. GPT-5.5 는 2026-10-14 에 ChatGPT·Codex(ChatGPT 로그인)에서 빠지고 API 에는 남는다(그때 OpenAI 안내 대체 gpt-6-sol, Free·Go 는 gpt-6-luna. gpt-6-sol 은 지금 Codex 목록에서도 빠졌으니 gpt-6.1-sol 로). GPT-5.3 Codex Spark 는 2026-09-14 Codex 에서 빠졌다. `gpt-5.2` · `gpt-5.3-codex` 는 날짜 없이 "Codex(ChatGPT 로그인)에서 이미 지원 중단"(2026-10-08 확인, 공식 대체 안내 없음 → 킷 기본 코딩 모델 gpt-6.1-sol).
+- Haiku 5.5 는 2026-10-07 출시. Claude Code 별칭 `haiku` 가 Anthropic API 에서 Haiku 5.5 로 연결된다(Claude Code 2.1.293 이상, effort 지원 · 기본 medium, 사고를 끌 수 없음). Bedrock · Vertex · Foundry 는 아직 Haiku 4.5.
+- GPT-6.1 Terra 는 2026-10-28 에 Codex 모델 목록 · API 가격표에 올라 있다(OpenAI 발표문은 못 찾음, `codex exec -m gpt-6.1-terra` 실행 확인). LiveBench 측정이 없어 역할 추천에는 쓰지 않고 선택지로만 둔다. GPT-6 Sol 은 Codex 모델 목록에서 빠졌다(API 가격표에는 남고 `codex exec -m gpt-6-sol` 도 아직 돈다, 퇴역 공지 없음 → `retired` 에 넣지 않음). Terra 는 `bench` · `strengths` 가 없어 자동 팀 구성의 모델 메뉴에도 나오지 않는다.
+- Haiku 4.5 고정 스냅샷(`claude-haiku-4-5-20251001`)은 2026-10-28 에도 Active 다(모델 퇴역 페이지, 퇴역 공지 없음). 그래서 `retired` 에 두지 않는다. 실제 공지가 나오면 그때 넣는다. 별칭 `haiku` 는 최신 Haiku 를 따라간다.
+- 게이트웨이(Bedrock · Vertex · Foundry)에서는 `haiku` 가 아직 Haiku 4.5 로 이어진다. 그래서 테스트 역할에 `gateway` 대체(`below: 5.5` 면 GPT-6 Luna max)를 두었다. GPT 를 못 쓰는 게이트웨이면 Haiku 4.5 를 추론 강도 없이 쓰고 sync 가 경고한다. 테스트 모델을 haiku 가 아닌 다른 모델로 직접 고른 팀 · PC 에는 적용하지 않는다. 별칭 연결 게이트웨이(`ANTHROPIC_DEFAULT_HAIKU_MODEL` 로 잇는 방식)는 실제 버전을 모르므로 바꾸지 않는다.
+- LiveBench(2026-06-25 문제 세트) 2026-10-28 확인: 카탈로그 밖 새 모델은 Haiku 5.5 xhigh 뿐이라 넣었다. 데이터 파일은 2026-10 에 `/v1/` 아래로 옮겨졌다(`bin/models.js` 가 새 위치부터 본다).
 - effort: Claude `low`~`max`, Codex `low`~`max`(모델에 따라 `ultra`). 2026-09-30 Codex 0.159 에서 Sol·6.1 Sol·Luna·Astra 모두 `max` 실행 확인.
 
 > 출처: 각 모델의 `sources` (`packs/core/models.json`)
@@ -96,7 +100,7 @@
 
 LiveBench 2026-06-25 문제 세트 (독립 측정, 전체 / 에이전틱 코딩 / 문항당 비용):
 Fable 5.1 max 83.4 / 66.1 / $1.01 · Opus 5.5 max 83.2 / 71.7 / $0.67 · Astra max 82.2 / 57.3 / $0.60 · Opus 5.5 xhigh 82.1 / 65.4 / $0.20 ·
-6.1 Sol max 81.6 / 54.5 / $0.12 · 6.1 Sol xhigh 81.1 / 56.8 / $0.08 · Sonnet 5.5 xhigh 77.8 / 39.3 / $0.11 · Luna max 72.0 / 51.2 / $0.02
+6.1 Sol max 81.6 / 54.5 / $0.12 · 6.1 Sol xhigh 81.1 / 56.8 / $0.08 · Sonnet 5.5 xhigh 77.8 / 39.3 / $0.11 · Haiku 5.5 xhigh 72.1 / 51.4 / $0.013 · Luna max 72.0 / 51.2 / $0.02
 
 | 판단 | 근거 |
 |---|---|
@@ -105,6 +109,7 @@ Fable 5.1 max 83.4 / 66.1 / $1.01 · Opus 5.5 max 83.2 / 71.7 / $0.67 · Astra m
 | Codex 코딩 역할은 GPT-6.1 Sol high | 벤더 DeepSWE v1.1 high 75.2% > xhigh·max 71.9%, LiveBench 에이전틱 코딩 xhigh 56.8 > max 54.5 (high 는 LiveBench 측정 없음) |
 | Codex 설계(최고)만 Astra xhigh | LiveBench 전체 82.2 로 6.1 Sol(81.6)보다 조금 높지만 비용 5배. 추론 비중이 큰 설계에만 |
 | 분석은 Opus 5.5 · GPT-6.1 Sol (Sonnet·Luna 아님) | LiveBench 추론·데이터 분석: 6.1 Sol xhigh 91.6·82.2($0.08), Opus xhigh 90.7·79.8($0.20), Sonnet 5.5 xhigh 86.8·78.6($0.11), Luna max 81.8·73.4. 벤더의 "탐색은 저렴한 모델" 권고는 가벼운 파일 탐색 이야기라 이 킷의 분석 역할(근거와 함께 넓게 조사)에는 맞지 않는다 |
+| Claude 테스트를 Luna(Codex 위임) → Haiku 5.5 xhigh (표준 · 절약) | LiveBench 전체 72.1 ≈ Luna 72.0, 에이전틱 코딩 51.4 ≈ 51.2, 문항당 $0.013 < $0.02. 같은 회사라 위임 없이 서브에이전트로 돈다. Anthropic 도 Opus · Sonnet 곁의 서브에이전트 용도로 안내 |
 | Luna 는 테스트 max | 벤더 DeepSWE low 2.4% · high 59.3% · max 66.6%, LiveBench max 문항당 $0.02 |
 
 > 출처: 수치와 출처는 `models.json` 의 `bench`

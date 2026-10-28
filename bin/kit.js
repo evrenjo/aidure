@@ -1201,13 +1201,15 @@ function profileModels(cat, name, grades = {}) {
     const table = { ...pf[tool] };
     for (const [role, g] of Object.entries(grades)) if (!table[role] && ((pf.grades || {})[tool] || {})[g]) table[role] = pf.grades[tool][g];
     for (const [role, v] of Object.entries(table)) {
-      const { model, effort, tool: via, fallback } = typeof v === 'string' ? { model: v } : v || {};
+      const { model, effort, tool: via, fallback, gateway } = typeof v === 'string' ? { model: v } : v || {};
       const runs = role === 'crossReview' ? OTHER_TOOL[tool] : tool;
       const node = role === 'main' || role === 'crossReview' ? out[role] : (out.roles[role] = out.roles[role] || {});
       // 역할을 상대 도구로 위임하면 "<도구>:<모델>" 로 적는다 (그 세션 도구 칸에). fallback = 상대 도구가 없는 PC 에서 대신 쓸 같은 도구 모델
       if (model) node[runs] = via && via !== runs && role !== 'main' && role !== 'crossReview' ? `${via}:${model}` : model;
       if (effort) node.effort = { ...(node.effort || {}), [runs]: effort };
       if (fallback) node.fallback = { ...(node.fallback || {}), [runs]: fallback };
+      // 게이트웨이에서 별칭이 옛 버전(below 미만)으로 이어질 때 대신 쓸 모델 (예: Bedrock 의 haiku = Haiku 4.5)
+      if (gateway && gateway.model) node.gatewayAlt = { ...(node.gatewayAlt || {}), [runs]: { ...gateway, of: model } }; // of: 직접 고른 모델에는 적용하지 않는다
     }
   }
   return out;
@@ -1472,6 +1474,21 @@ function applyAccess(models, access, warnings = []) {
         v = gpt ? `codex:${gpt}` : '';
         const e = effortOf(m, 'codex');
         if (e) m.effort = { ...(typeof m.effort === 'object' ? m.effort : {}), [T]: e };
+      }
+      // 게이트웨이가 별칭을 옛 버전으로 잇으면 대체 모델로 (그 회사를 못 쓰면 별칭 그대로, 옛 모델이 모르는 effort 는 뺀다)
+      const alt = gw && (m.gatewayAlt || {})[T];
+      if (alt && !splitModel(v, T).delegated && splitModel(v, T).model === alt.of) {
+        const hit = gatewayId(gw, T, splitModel(v, T).model);
+        const ver = hit && !gw.aliases ? (claudeKey(hit) || '').match(/-(\d+)(?:-(\d+))?$/) : null;
+        const older = ver && `${ver[1]}.${ver[2] || 0}`.localeCompare(String(alt.below || ''), undefined, { numeric: true }) < 0;
+        if (older && alt.tool && has(alt.tool) && access.compose === 'mix') {
+          v = `${alt.tool}:${alt.model}`;
+          m.effort = { ...(typeof m.effort === 'object' ? m.effort : {}), [T]: alt.effort };
+          if (!alt.effort) delete m.effort[T];
+        } else if (older) {
+          warnings.push(`${name}(${T}): 게이트웨이의 ${hit} 는 ${alt.below} 보다 옛 버전입니다. 추론 강도 없이 씁니다 (바꾸려면 kedovi models)`);
+          if (m.effort && typeof m.effort === 'object') { m.effort = { ...m.effort }; delete m.effort[T]; }
+        }
       }
       const sp = splitModel(v, T);
       if (sp.delegated) {

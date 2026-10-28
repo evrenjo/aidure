@@ -831,7 +831,8 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const apply = (a) => kitLib.applyAccess(base, kitLib.normalizeAccess(a));
   const got = [];
   const cOnly = apply({ connection: 'direct', vendors: ['claude'] });
-  const claudeOnly = cOnly.roles.reviewer.claude === 'opus' && cOnly.roles.tester.claude === 'sonnet' && !cOnly.crossReview.codex;
+  // 리뷰는 Codex 위임 → 같은 회사 대체(opus). 테스트는 처음부터 Claude 모델(haiku)이라 그대로
+  const claudeOnly = cOnly.roles.reviewer.claude === 'opus' && cOnly.roles.tester.claude === 'haiku' && !cOnly.crossReview.codex;
   const xOnly = apply({ connection: 'direct', vendors: ['codex'] });
   const gptOnly = xOnly.roles.implementer.codex === 'gpt-6.1-sol' && kitLib.startToolOf(kitLib.normalizeAccess({ connection: 'direct', vendors: ['codex'] })) === 'codex';
   const single = Object.values(apply({ compose: 'single' }).roles).every((m) => !m.claude && !m.codex);
@@ -846,7 +847,18 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     && kitLib.gatewayVendors(['us.anthropic.claude-sonnet-5-5-v1:0', 'openai.gpt-6-luna']).join() === 'claude,codex';
   const gv = apply({ connection: 'gateway', gateway: gw, main: 'codex', compose: 'vendor' });
   const gptMain = gv.main.claude === 'codex/gpt-6.1-sol' && Object.values(gv.roles).every((m) => /^codex\/gpt/.test(m.claude));
-  got.push(`Claude 만 ${claudeOnly}`, `GPT 만 ${gptOnly}`, `단일 모델 ${single}`, `게이트웨이 하위 에이전트 ${native}`, `1M 창 [1m] ${win}`, `게이트웨이 GPT 메인 ${gptMain}`);
+  // 게이트웨이의 haiku 가 5.5 보다 옛 버전이면 테스트는 대체 모델(GPT-6 Luna max). 5.5 가 있으면 haiku xhigh, GPT 를 못 쓰면 haiku 를 추론 강도 없이 + 경고
+  const effortOf = (m, t) => (typeof (m || {}).effort === 'string' ? m.effort : ((m || {}).effort || {})[t]);
+  const gwNew = apply({ connection: 'gateway', gateway: { ...gw, models: [...gw.models, 'claude/claude-haiku-5-5'] } });
+  const gwWarn = [];
+  const gwClaude = kitLib.applyAccess(base, kitLib.normalizeAccess({ connection: 'gateway', gateway: { models: ['claude/claude-opus-5-5', 'claude/claude-sonnet-5-5', 'claude/claude-haiku-4-5'], aliases: false } }), gwWarn);
+  const oldHaiku = g.roles.tester.claude === 'codex/gpt-6-luna' && effortOf(g.roles.tester, 'claude') === 'max'
+    && /claude-haiku-5-5/.test(gwNew.roles.tester.claude) && effortOf(gwNew.roles.tester, 'claude') === 'xhigh'
+    && gwClaude.roles.tester.claude === 'claude/claude-haiku-4-5' && !effortOf(gwClaude.roles.tester, 'claude') && gwWarn.some((w) => /tester\(claude\).*옛 버전/.test(w))
+    && cOnly.roles.tester.claude === 'haiku' && effortOf(cOnly.roles.tester, 'claude') === 'xhigh'
+    // 직접 고른 테스트 모델(sonnet)에는 대체를 적용하지 않는다
+    && (() => { const picked = JSON.parse(JSON.stringify(base)); picked.roles.tester.claude = 'sonnet'; const w = []; const r = kitLib.applyAccess(picked, kitLib.normalizeAccess({ connection: 'gateway', gateway: { ...gw, models: ['claude/claude-opus-4-8', 'claude/claude-sonnet-4-6', 'claude/claude-haiku-4-5', 'codex/gpt-6-luna'] } }), w); return r.roles.tester.claude === 'claude/claude-sonnet-4-6' && !w.some((x) => /tester\(claude\).*옛 버전/.test(x)); })();
+  got.push(`Claude 만 ${claudeOnly}`, `GPT 만 ${gptOnly}`, `단일 모델 ${single}`, `게이트웨이 하위 에이전트 ${native}`, `1M 창 [1m] ${win}`, `게이트웨이 GPT 메인 ${gptMain}`, `게이트웨이 옛 Haiku 대체 ${oldHaiku}`);
   // kedovi ai — 화면 없이. 조회가 실패해도 저장하고, 키 값은 어디에도 없다
   const dir = path.join(tmp, 'ai-ws');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new'], tmp);
@@ -866,7 +878,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   try { show = JSON.parse(shown.stdout); } catch { /* 실패 */ }
   const cmds = d3 && show.compose === 'single' && Object.values(show.roles || {}).every((v) => v === '메인과 같게') && kedovi('ai', 'main', 'gpt').status === 0 && kedovi('ai', 'nope').status !== 0;
   got.push(`kedovi ai direct ${direct}`, `gateway 저장 ${gwSaved}`, `키 값 저장 안 함 ${leaked.length === 0}`, `compose · show · main ${cmds}`);
-  record('AI 연결 방식 (쓰는 AI · 구성 · 게이트웨이 · kedovi ai)', claudeOnly && gptOnly && single && native && win && gptMain && direct && gwSaved && leaked.length === 0 && cmds, got.join(' · '));
+  record('AI 연결 방식 (쓰는 AI · 구성 · 게이트웨이 · kedovi ai)', claudeOnly && gptOnly && single && native && win && gptMain && oldHaiku && direct && gwSaved && leaked.length === 0 && cmds, got.join(' · '));
 }
 
 // 역할 에이전트 상한 — Claude 훅이 한 요청의 개수를 세고 넘으면 막는다. Codex 훅에는 넣지 않고 config.toml 동시 상한으로

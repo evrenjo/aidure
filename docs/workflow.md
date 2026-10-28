@@ -204,8 +204,8 @@ Codex 는 역할 파일(`.codex/agents`)을 하위 에이전트에 적용하지 
 | 설계 문서 | Opus 5.5 (xhigh) | Sonnet 5.5 (high) | Sonnet 5.5 (medium) |
 | 구현 | Opus 5.5 (xhigh) | Opus 5.5 (high) | Sonnet 5.5 |
 | 리뷰 | GPT-6.1 Sol (Codex 위임 · high) | GPT-6.1 Sol (Codex 위임 · high) | GPT-6.1 Sol (Codex 위임 · medium) |
-| 테스트 | GPT-6.1 Sol (Codex 위임 · high) | GPT-6 Luna (Codex 위임 · max) | GPT-6 Luna (Codex 위임 · max) |
-| 문서화 | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 |
+| 테스트 | GPT-6.1 Sol (Codex 위임 · high) | Haiku 5.5 (xhigh) | Haiku 5.5 (xhigh) |
+| 문서화 | Haiku 5.5 | Haiku 5.5 | Haiku 5.5 |
 | 교차 검토 → Codex | GPT-6.1 Sol (high) | GPT-6.1 Sol (high) | GPT-6.1 Sol (medium) |
 <!-- /models:claude -->
 
