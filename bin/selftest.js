@@ -23,16 +23,16 @@ const KIT = path.resolve(__dirname, '..');
   process.env[`GIT_CONFIG_VALUE_${n}`] = 'false';
   process.env.GIT_CONFIG_COUNT = String(n + 1);
 }
-// 알림 격리: 테스트가 띄우는 훅 · 도구가 이 PC 의 실제 텔레그램 봇(~/.config/aidure/telegram.env)으로 보내지 않게 한다.
+// 알림 격리: 테스트가 띄우는 훅 · 도구가 이 PC 의 실제 텔레그램 봇(~/.config/kedovi/telegram.env)으로 보내지 않게 한다.
 // 빈 설정 폴더 · 봇 변수 지우기 · 텔레그램 주소를 닫힌 로컬 포트로 (실수로 보내도 밖으로 나가지 않는다)
 // 금지 낱말 목록은 이 PC 의 실제 설정 폴더에서 읽는다 (아래에서 설정 폴더를 임시 폴더로 바꾸기 전에 기억)
-const REAL_CONFIG_DIR = process.env.AIDURE_CONFIG_DIR || path.join(require('os').homedir(), '.config', 'aidure');
-const notifyHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'aidure-selftest-config-'));
-process.env.AIDURE_CONFIG_DIR = notifyHome;
-delete process.env.CLAUDE_CODE_BRIDGE_SESSION_ID; delete process.env.AIDURE_CHANNEL; delete process.env.AIDURE_DELEGATED; process.env.AIDURE_REMOTE_CONTROL = '0'; // 리모트 컨트롤 세션에서 돌려도 같게 (세션 파일을 읽지 않는다)
-process.env.AIDURE_TELEGRAM_API = 'http://127.0.0.1:9';
-process.env.AIDURE_IDLE_SECONDS = '100000'; // PC 앞이면 알림을 건너뛰므로, 테스트는 자리에 없는 것으로
-for (const k of ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'TELEGRAM_TEAM_BOT_TOKEN', 'AIDURE_CHANNEL']) delete process.env[k];
+const REAL_CONFIG_DIR = process.env.KEDOVI_CONFIG_DIR || path.join(require('os').homedir(), '.config', 'kedovi');
+const notifyHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'kedovi-selftest-config-'));
+process.env.KEDOVI_CONFIG_DIR = notifyHome;
+delete process.env.CLAUDE_CODE_BRIDGE_SESSION_ID; delete process.env.KEDOVI_CHANNEL; delete process.env.KEDOVI_DELEGATED; process.env.KEDOVI_REMOTE_CONTROL = '0'; // 리모트 컨트롤 세션에서 돌려도 같게 (세션 파일을 읽지 않는다)
+process.env.KEDOVI_TELEGRAM_API = 'http://127.0.0.1:9';
+process.env.KEDOVI_IDLE_SECONDS = '100000'; // PC 앞이면 알림을 건너뛰므로, 테스트는 자리에 없는 것으로
+for (const k of ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'TELEGRAM_TEAM_BOT_TOKEN', 'KEDOVI_CHANNEL']) delete process.env[k];
 const results = [];
 const record = (name, ok, detail = '') => results.push({ name, ok, detail });
 
@@ -59,7 +59,7 @@ for (const t of walk(path.join(KIT, 'packs'), (p) => p.endsWith('.test.js'))) {
 }
 
 // 2. 워크스페이스 생성 → check → 죽은 참조
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-selftest-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-selftest-'));
 const legacy = path.join(tmp, 'legacy-src');
 fs.mkdirSync(path.join(legacy, 'src'), { recursive: true });
 fs.writeFileSync(path.join(legacy, 'src', 'PGM01.cbl'), '       IDENTIFICATION DIVISION.\n       PROGRAM-ID. PGM01.\n');
@@ -196,7 +196,7 @@ for (const c of cases) {
     run(process.execPath, ['bin/kit.js', 'sync'], dir);
     const res3 = kitLib.resolveModels(dir, kitLib.loadWorkspace(dir));
     const hookLean = (run(process.execPath, ['packs/core/hooks/model-profile.js'], dir).out || '').trim();
-    const leanOk = res3.limits.parallel === 1 && res3.limits.total === 3 && /^🎚 모델 프로필: 이 PC 절약 \(팀 표준 대신\) · 되돌리기 aidure models profile team · 상한 동시 1 · 모두 3 \(팀 2 · 5\)$/.test(hookLean);
+    const leanOk = res3.limits.parallel === 1 && res3.limits.total === 3 && /^🎚 모델 프로필: 이 PC 절약 \(팀 표준 대신\) · 되돌리기 kedovi models profile team · 상한 동시 1 · 모두 3 \(팀 2 · 5\)$/.test(hookLean);
     if (localRaw === null) fs.rmSync(localFile); else fs.writeFileSync(localFile, localRaw);
     run(process.execPath, ['bin/kit.js', 'sync'], dir);
     const hookNone = (run(process.execPath, ['packs/core/hooks/model-profile.js'], dir).out || '').trim();
@@ -226,25 +226,25 @@ for (const c of cases) {
   }
 }
 
-// aidure list · remove <이름> — 워크스페이스에서 한 번 쓰면 목록에 오르고, 어디서든 이름으로 지운다 (목록은 임시 AIDURE_HOME)
+// kedovi list · remove <이름> — 워크스페이스에서 한 번 쓰면 목록에 오르고, 어디서든 이름으로 지운다 (목록은 임시 KEDOVI_HOME)
 {
-  const aidure = (args, cwd) => {
-    const r = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...args], { cwd, encoding: 'utf8', env: { ...process.env, AIDURE_HOME: path.join(tmp, 'aidure-home') }, stdin: 'ignore' });
+  const kedovi = (args, cwd) => {
+    const r = spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...args], { cwd, encoding: 'utf8', env: { ...process.env, KEDOVI_HOME: path.join(tmp, 'kedovi-home') }, stdin: 'ignore' });
     return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}`.trim() };
   };
   const ws = path.join(tmp, 'operation');
-  aidure(['check'], ws);
-  const listed = aidure(['list'], tmp);
-  const removed = aidure(['remove', 'operation', '--confirm', 'operation'], os.tmpdir());
-  const after = aidure(['list'], tmp);
+  kedovi(['check'], ws);
+  const listed = kedovi(['list'], tmp);
+  const removed = kedovi(['remove', 'operation', '--confirm', 'operation'], os.tmpdir());
+  const after = kedovi(['list'], tmp);
   const giGone = !fs.existsSync(path.join(ws, '.gitignore')); // 킷이 만든 줄뿐이던 .gitignore 는 파일째 사라진다
   const ok = listed.out.includes(ws) && removed.ok && !fs.existsSync(path.join(ws, 'workspace.json')) && !after.out.includes(ws) && giGone;
-  record('aidure list · remove <이름>', ok, ok ? '' : `${lastLine(listed.out)} | ${lastLine(removed.out)} | ${lastLine(after.out)} | gitignore 제거 ${giGone}`);
+  record('kedovi list · remove <이름>', ok, ok ? '' : `${lastLine(listed.out)} | ${lastLine(removed.out)} | ${lastLine(after.out)} | gitignore 제거 ${giGone}`);
 }
 
 // 3. 금지 문자열
-// 목록은 repo 에 두지 않는다 (목록 자체가 숨길 이름을 드러낸다): 환경변수 AIDURE_BANNED(a|b) 또는 이 PC 의 ~/.config/aidure/banned.txt (한 줄에 하나)
-const bannedSrc = process.env.AIDURE_BANNED || (() => { try { return fs.readFileSync(path.join(REAL_CONFIG_DIR, 'banned.txt'), 'utf8'); } catch { return ''; } })();
+// 목록은 repo 에 두지 않는다 (목록 자체가 숨길 이름을 드러낸다): 환경변수 KEDOVI_BANNED(a|b) 또는 이 PC 의 ~/.config/kedovi/banned.txt (한 줄에 하나)
+const bannedSrc = process.env.KEDOVI_BANNED || (() => { try { return fs.readFileSync(path.join(REAL_CONFIG_DIR, 'banned.txt'), 'utf8'); } catch { return ''; } })();
 // + repo 안의 banned.local.txt (git 제외, 직접 적는 목록). # 으로 시작하는 줄은 주석
 const localBanned = (() => { try { return fs.readFileSync(path.join(KIT, 'banned.local.txt'), 'utf8'); } catch { return ''; } })();
 const banned = [...new Set(`${bannedSrc}\n${localBanned}`.split(/[|\r\n]+/).map((x) => x.trim().toLowerCase()).filter((x) => x && !x.startsWith('#')))];
@@ -258,7 +258,7 @@ for (const f of textFiles) {
     for (const b of banned) if (/^[\x00-\x7f]+$/.test(b) ? new RegExp(`\\b${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(low) : low.includes(b)) hits.push(`${path.relative(KIT, f)}:${i + 1} (${b})`);
   });
 }
-record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ? hits.slice(0, 5).join(', ') : banned.length ? `${banned.length}개 낱말` : '목록 없음 (AIDURE_BANNED · ~/.config/aidure/banned.txt)');
+record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ? hits.slice(0, 5).join(', ') : banned.length ? `${banned.length}개 낱말` : '목록 없음 (KEDOVI_BANNED · ~/.config/kedovi/banned.txt)');
 
 // 워크스페이스 커밋 훅의 비밀값 검사 · 공개 여부 주소 변환
 {
@@ -300,9 +300,9 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   got['sync 가 기록 (node_modules 제외)'] = s1.ok && JSON.stringify(reg().guides) === JSON.stringify(want);
   const agents = () => fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8');
   got['AGENTS.md 표 · 기본 repo 지침 우선'] = /## repo 자체 지침/.test(agents()) && agents().includes('`repos/app/api/AGENTS.md`') && /\| \*\*app\*\* \|.*\| repo 지침 우선 \|/.test(agents()) && /실행 도구 설정/.test(agents()) && !/settings\.json` ·.*\| repo 지침 우선/.test(agents().split('\n').find((l) => l.startsWith('| **app**')) || '');
-  const cli = (...a) => run(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', 'guides', ...a], dir);
+  const cli = (...a) => run(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'repo', 'guides', ...a], dir);
   const list = cli();
-  got['aidure repo guides 목록'] = list.ok && /app\s+repo 지침 우선\s+\.claude\/rules\//.test(list.out);
+  got['kedovi repo guides 목록'] = list.ok && /app\s+repo 지침 우선\s+\.claude\/rules\//.test(list.out);
   const ig = cli('app', 'ignore');
   const ex = (JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).claudeMdExcludes || []);
   got['ignore → claudeMdExcludes · 표 무시'] = ig.ok && reg().guidesMode === 'ignore' && ex.includes('**/repos/app/**/CLAUDE.md') && ex.includes('**/repos/app/.claude/rules/**') && /\| 무시 \|/.test(agents());
@@ -328,7 +328,7 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   record('repo 자체 지침 (기록 · 방식 · 무시 · 변경 경고)', Object.values(got).every(Boolean), Object.entries(got).map(([k, v]) => `${k} ${v}`).join(' · '));
 }
 
-// 정리 후보 (aidure tidy): 이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름 · 오탐 방지 (플랫폼 아이콘 · 번호만 있는 이름 · 참조되는 파일)
+// 정리 후보 (kedovi tidy): 이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름 · 오탐 방지 (플랫폼 아이콘 · 번호만 있는 이름 · 참조되는 파일)
 {
   const dir = path.join(tmp, 'tidy');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new', '--code', 'new:app'], tmp);
@@ -355,15 +355,15 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   const nw = JSON.parse(tool('--repo', 'app', '--new', '--json').out || '{}');
   got['--new 는 새 파일 안에서만'] = nw.total === 0 && nw.newFiles === 1;
   got['명령 · 스킬 · 핸드오프'] = fs.existsSync(path.join(dir, '.claude', 'skills', 'tidy', 'SKILL.md')) && /tidy\.js --count/.test(fs.readFileSync(path.join(dir, '.claude', 'skills', 'handoff', 'SKILL.md'), 'utf8')) && /방향이 바뀌면 남은 파일을 정리한다/.test(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8'));
-  record('정리 후보 (aidure tidy)', Object.values(got).every(Boolean), Object.entries(got).map(([k, v]) => `${k} ${v}`).join(' · '));
+  record('정리 후보 (kedovi tidy)', Object.values(got).every(Boolean), Object.entries(got).map(([k, v]) => `${k} ${v}`).join(' · '));
 }
 
-// 이 PC 의 워크스페이스 한꺼번에 올리기 (aidure upgrade --all): 찾기 · 건너뛸 것(커밋 안 한 변경) · 올리기 · 새 설치 알림
+// 이 PC 의 워크스페이스 한꺼번에 올리기 (kedovi upgrade --all): 찾기 · 건너뛸 것(커밋 안 한 변경) · 올리기 · 새 설치 알림
 {
   const home = path.join(tmp, 'upall-home');
   const base = path.join(tmp, 'upall');
   fs.mkdirSync(base, { recursive: true });
-  const env = { ...process.env, AIDURE_HOME: home };
+  const env = { ...process.env, KEDOVI_HOME: home };
   const ver = JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf8')).version;
   const mk = (n) => {
     const d = path.join(base, n);
@@ -374,7 +374,7 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   };
   const a = mk('wsa'); const b = mk('wsb');
   fs.appendFileSync(path.join(b, 'workspace.json'), '\n'); // 커밋 안 한 변경
-  const ai = (args, cwd = base) => { const r = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...args], { cwd, env, encoding: 'utf8', input: '', timeout: 300000 }); return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}` }; };
+  const ai = (args, cwd = base) => { const r = spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...args], { cwd, env, encoding: 'utf8', input: '', timeout: 300000 }); return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}` }; };
   const got = {};
   const dry = ai(['upgrade', '--all', '--scan', base]);
   got['찾기 · 화면 없으면 --yes 요구'] = !dry.ok && /워크스페이스 2개를 찾아/.test(dry.out) && /건너뜀 wsb: 커밋 안 한 변경/.test(dry.out) && /--yes/.test(dry.out);
@@ -461,7 +461,7 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
     r['대상 밖 repo'] = !gate('git commit -am z', app);
     fs.writeFileSync(wsFile, wsRaw);
     const st = tool('status').out;
-    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'team-mode', 'enforce', 'review', ...a], { cwd: dir, encoding: 'utf8' });
+    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'team-mode', 'enforce', 'review', ...a], { cwd: dir, encoding: 'utf8' });
     const on = cli('warn', '--repos', 'app', '--min-lines', '10', '--team');
     const saved = (JSON.parse(fs.readFileSync(wsFile, 'utf8')).agents || {}).enforce || {};
     r['상태 · 명령'] = /리뷰 확인  꺼짐/.test(st) && on.status === 0 && saved.reviewBeforePush === 'warn' && saved.reviewMinLines === 10 && saved.reviewRepos[0] === 'app' && cli('warn', '--repos', 'nope', '--team').status !== 0 && cli('warn', '--min-lines', '3').status !== 0;
@@ -471,7 +471,7 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   }
 }
 
-// 보완 3건: 결정 질문을 글로 끝내면 한 번 막기 · 기존 폴더 훑기(aidure import) · 기획 repo 없음 경고 끄기
+// 보완 3건: 결정 질문을 글로 끝내면 한 번 막기 · 기존 폴더 훑기(kedovi import) · 기획 repo 없음 경고 끄기
 {
   const dw = path.join(tmp, 'extras-ws');
   spawnSync(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dw, '--type', 'new'], { cwd: tmp, encoding: 'utf8' });
@@ -489,7 +489,7 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   e['다음 요청은 다시 봄'] = /"decision":"block"/.test(hook('Stop', { last_assistant_message: asked }));
   const wsFile = path.join(dw, 'workspace.json');
   const wsRaw = fs.readFileSync(wsFile, 'utf8');
-  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { cwd: dw, encoding: 'utf8', env: { ...process.env, HOME: env.HOME } });
+  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...a], { cwd: dw, encoding: 'utf8', env: { ...process.env, HOME: env.HOME } });
   e['끄기 · 명령'] = cli('team-mode', 'enforce', 'ask', 'warn').status !== 0 && cli('team-mode', 'enforce', 'ask', 'off', '--team').status === 0 && !hook('Stop', { last_assistant_message: asked }) && /결정 질문을 글로 끝낼 때  끔/.test(cli('team-mode').stdout);
   fs.writeFileSync(wsFile, wsRaw);
   const hooks = JSON.parse(fs.readFileSync(path.join(dw, '.claude', 'settings.json'), 'utf8')).hooks || {};
@@ -556,7 +556,7 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   say(['u', '오타 고쳐줘']);
   p['문서 두 줄 이하 · repo 밖 제외'] = !edit(path.join(dw, 'repos', 'app', 'README.md'), 2) && !edit(path.join(dw, 'handoffs', 'note.js'));
   p['문서도 세 줄 이상이면 알림'] = /additionalContext/.test(edit(path.join(dw, 'repos', 'app', 'README.md'), 3));
-  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'team-mode', 'enforce', 'plan', ...a], { cwd: dw, encoding: 'utf8', env: { ...process.env, HOME: env.HOME } });
+  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'team-mode', 'enforce', 'plan', ...a], { cwd: dw, encoding: 'utf8', env: { ...process.env, HOME: env.HOME } });
   cli('block', '--team');
   hook('UserPromptSubmit');
   const blocked = [edit(code), edit(code)];
@@ -615,12 +615,12 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   const brief = spawnSync(process.execPath, [path.join(lead, 'packs', 'core', 'hooks', 'handoff-brief.js')], { cwd: lead, encoding: 'utf8', input: '{}' }).stdout.trim();
   const briefOk = brief.split('\n').length === 1 && /lead 마지막 핸드오프 .* 미완 작업 0건 · 내 TODO 1건/.test(brief);
   got.push(`세션 시작 한 줄 ${briefOk}`);
-  // 팀 명단 — 명단 추가 · 제한 켜기 → 명단 밖 id 는 aidure start 가 멈춤, 팀 현황에 미합류 · 명단에 없음
-  const aidure = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { cwd: lead, encoding: 'utf8', env: { ...process.env, AIDURE_HOME: path.join(tmp, 'team-home') } });
-  aidure('team', 'add', 'lead', 'ghost'); aidure('team', 'restrict', 'on');
+  // 팀 명단 — 명단 추가 · 제한 켜기 → 명단 밖 id 는 kedovi start 가 멈춤, 팀 현황에 미합류 · 명단에 없음
+  const kedovi = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...a], { cwd: lead, encoding: 'utf8', env: { ...process.env, KEDOVI_HOME: path.join(tmp, 'team-home') } });
+  kedovi('team', 'add', 'lead', 'ghost'); kedovi('team', 'restrict', 'on');
   fs.writeFileSync(path.join(lead, '.agents', 'local.json'), JSON.stringify({ agent: 'claude', args: [] }));
   g(lead, 'lead', 'config', 'user.name', 'outsider');
-  const blocked = aidure('start', '--claude');
+  const blocked = kedovi('start', '--claude');
   g(lead, 'lead', 'config', 'user.name', 'lead');
   const roster = js('--no-fetch');
   const st = (id) => (roster.people.find((x) => x.id === id) || {});
@@ -702,7 +702,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
 
 // 화면 문구에 장식용 대시(—)를 쓰지 않는다 — 킷 코드의 문자열 안 " — " (주석·테스트 제외)
 {
-  const files = [...['aidure.js', 'kit.js', 'models.js', 'docs.js'].map((f) => path.join(KIT, 'bin', f)),
+  const files = [...['kedovi.js', 'kit.js', 'models.js', 'docs.js'].map((f) => path.join(KIT, 'bin', f)),
     ...walk(path.join(KIT, 'packs'), (p) => /\/(bin|hooks|lib)\/[^/]+\.js$/.test(p) && !p.endsWith('.test.js'))];
   const hits = [];
   for (const f of files) {
@@ -801,29 +801,29 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
 {
   const dir = path.join(tmp, 'noui-ws');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new'], tmp);
-  const aidure = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { cwd: dir, encoding: 'utf8', input: '', env: { ...process.env, AIDURE_HOME: path.join(tmp, 'noui-home') } });
-  const p1 = aidure('models', 'profile', 'lean').status === 0;
-  const p2 = aidure('models', 'set', 'reviewer', 'claude', 'codex:gpt-6.1-sol', '--effort', 'high').status === 0;
+  const kedovi = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...a], { cwd: dir, encoding: 'utf8', input: '', env: { ...process.env, KEDOVI_HOME: path.join(tmp, 'noui-home') } });
+  const p1 = kedovi('models', 'profile', 'lean').status === 0;
+  const p2 = kedovi('models', 'set', 'reviewer', 'claude', 'codex:gpt-6.1-sol', '--effort', 'high').status === 0;
   const local = JSON.parse(fs.readFileSync(path.join(dir, '.agents', 'local.json'), 'utf8'));
   const saved = local.agents.profile === 'lean' && local.agents.roles.reviewer.claude === 'codex:gpt-6.1-sol';
-  const higher = aidure('models', 'profile', 'rich');
+  const higher = kedovi('models', 'profile', 'rich');
   const p3 = higher.status !== 0 && /팀 프로필\(표준\)과 같거나 낮은 것만/.test(higher.stderr + higher.stdout); // 팀(표준)보다 높은 프로필은 거부
-  const p4 = aidure('models', 'allow-higher', 'on').status === 0 && aidure('models', 'profile', 'rich').status === 0; // 팀이 허용하면 된다
-  const p5 = aidure('agent', '--codex').status === 0 && aidure('agent', '--codex', '--profile', 'lean').status !== 0; // 프로필은 aidure models profile 로만
+  const p4 = kedovi('models', 'allow-higher', 'on').status === 0 && kedovi('models', 'profile', 'rich').status === 0; // 팀이 허용하면 된다
+  const p5 = kedovi('agent', '--codex').status === 0 && kedovi('agent', '--codex', '--profile', 'lean').status !== 0; // 프로필은 kedovi models profile 로만
   const after = JSON.parse(fs.readFileSync(path.join(dir, '.agents', 'local.json'), 'utf8'));
   const agentOk = after.agent === 'codex' && after.agents.profile === 'rich';
   // 되돌리기: team · - · 팀(호환) 모두 이 PC 값을 지운다
   const localProfile = () => JSON.parse(fs.readFileSync(path.join(dir, '.agents', 'local.json'), 'utf8')).agents.profile;
-  const cleared = aidure('models', 'profile', 'team').status === 0 && localProfile() === undefined
-    && aidure('models', 'profile', 'lean').status === 0 && localProfile() === 'lean' && aidure('models', 'profile', '-').status === 0 && localProfile() === undefined
-    && aidure('models', 'profile', 'lean').status === 0 && aidure('models', 'profile', '팀').status === 0 && localProfile() === undefined
-    && aidure('models', 'profile').status !== 0; // 비대화형에서 인자 없음 = 사용법
-  const bad = aidure('models', 'set', 'main', 'claude', 'codex:gpt-6.1-sol').status !== 0;
-  const skill = fs.existsSync(path.join(dir, '.agents', 'skills', 'aidure', 'SKILL.md')) || fs.existsSync(path.join(dir, '.claude', 'skills', 'aidure', 'SKILL.md'));
-  record('화면 없이 설정 바꾸기 (models · agent · aidure 스킬)', p1 && p2 && saved && p3 && p4 && p5 && agentOk && cleared && bad && skill, `프로필·역할 ${p1 && p2 && saved} · 높은 프로필 거부 ${p3} · 허용 ${p4} · 메인 에이전트 ${p5 && agentOk} · 되돌리기 team · - · 팀 ${cleared} · 메인 위임 거부 ${bad} · 스킬 ${skill}`);
+  const cleared = kedovi('models', 'profile', 'team').status === 0 && localProfile() === undefined
+    && kedovi('models', 'profile', 'lean').status === 0 && localProfile() === 'lean' && kedovi('models', 'profile', '-').status === 0 && localProfile() === undefined
+    && kedovi('models', 'profile', 'lean').status === 0 && kedovi('models', 'profile', '팀').status === 0 && localProfile() === undefined
+    && kedovi('models', 'profile').status !== 0; // 비대화형에서 인자 없음 = 사용법
+  const bad = kedovi('models', 'set', 'main', 'claude', 'codex:gpt-6.1-sol').status !== 0;
+  const skill = fs.existsSync(path.join(dir, '.agents', 'skills', 'kedovi', 'SKILL.md')) || fs.existsSync(path.join(dir, '.claude', 'skills', 'kedovi', 'SKILL.md'));
+  record('화면 없이 설정 바꾸기 (models · agent · kedovi 스킬)', p1 && p2 && saved && p3 && p4 && p5 && agentOk && cleared && bad && skill, `프로필·역할 ${p1 && p2 && saved} · 높은 프로필 거부 ${p3} · 허용 ${p4} · 메인 에이전트 ${p5 && agentOk} · 되돌리기 team · - · 팀 ${cleared} · 메인 위임 거부 ${bad} · 스킬 ${skill}`);
 }
 
-// AI 연결 방식 — 쓰는 AI · 구성 · 게이트웨이에 따라 역할 모델이 바뀐다. aidure ai 는 키 값을 저장하지 않는다
+// AI 연결 방식 — 쓰는 AI · 구성 · 게이트웨이에 따라 역할 모델이 바뀐다. kedovi ai 는 키 값을 저장하지 않는다
 {
   const kitLib = require('./kit.js');
   const cat = JSON.parse(fs.readFileSync(path.join(KIT, 'packs', 'core', 'models.json'), 'utf8'));
@@ -847,26 +847,26 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const gv = apply({ connection: 'gateway', gateway: gw, main: 'codex', compose: 'vendor' });
   const gptMain = gv.main.claude === 'codex/gpt-6.1-sol' && Object.values(gv.roles).every((m) => /^codex\/gpt/.test(m.claude));
   got.push(`Claude 만 ${claudeOnly}`, `GPT 만 ${gptOnly}`, `단일 모델 ${single}`, `게이트웨이 하위 에이전트 ${native}`, `1M 창 [1m] ${win}`, `게이트웨이 GPT 메인 ${gptMain}`);
-  // aidure ai — 화면 없이. 조회가 실패해도 저장하고, 키 값은 어디에도 없다
+  // kedovi ai — 화면 없이. 조회가 실패해도 저장하고, 키 값은 어디에도 없다
   const dir = path.join(tmp, 'ai-ws');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', dir, '--type', 'new'], tmp);
-  const secret = 'aidure-selftest-secret-7f3a'; // gitleaks:allow (시험용 가짜 값)
-  const aidure = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { cwd: dir, encoding: 'utf8', input: '', env: { ...process.env, AIDURE_HOME: path.join(tmp, 'ai-home'), SELFTEST_GW_KEY: secret } });
-  const d1 = aidure('ai', 'direct', 'claude').status === 0;
+  const secret = 'kedovi-selftest-secret-7f3a'; // gitleaks:allow (시험용 가짜 값)
+  const kedovi = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...a], { cwd: dir, encoding: 'utf8', input: '', env: { ...process.env, KEDOVI_HOME: path.join(tmp, 'ai-home'), SELFTEST_GW_KEY: secret } });
+  const d1 = kedovi('ai', 'direct', 'claude').status === 0;
   const local1 = JSON.parse(fs.readFileSync(path.join(dir, '.agents', 'local.json'), 'utf8'));
   const reviewer1 = fs.readFileSync(path.join(dir, '.claude', 'agents', 'reviewer.md'), 'utf8');
   const direct = d1 && local1.agent === 'claude' && local1.agents.access.vendors.join() === 'claude' && /model: opus/.test(reviewer1);
-  const d2 = aidure('ai', 'gateway', '--url', 'http://127.0.0.1:9/v1', '--key-env', 'SELFTEST_GW_KEY').status === 0;
+  const d2 = kedovi('ai', 'gateway', '--url', 'http://127.0.0.1:9/v1', '--key-env', 'SELFTEST_GW_KEY').status === 0;
   const local2 = JSON.parse(fs.readFileSync(path.join(dir, '.agents', 'local.json'), 'utf8'));
   const gwSaved = d2 && local2.agents.access.connection === 'gateway' && local2.agents.access.gateway.url === 'http://127.0.0.1:9' && local2.agents.access.gateway.keyEnv === 'SELFTEST_GW_KEY';
   const leaked = walk(dir, (f) => !f.includes(`${path.sep}.git${path.sep}`) && !f.includes(`${path.sep}repos${path.sep}`)).filter((f) => { try { return fs.readFileSync(f, 'utf8').includes(secret); } catch { return false; } });
-  const d3 = aidure('ai', 'compose', 'single').status === 0;
-  const shown = aidure('ai', 'show');
+  const d3 = kedovi('ai', 'compose', 'single').status === 0;
+  const shown = kedovi('ai', 'show');
   let show = {};
   try { show = JSON.parse(shown.stdout); } catch { /* 실패 */ }
-  const cmds = d3 && show.compose === 'single' && Object.values(show.roles || {}).every((v) => v === '메인과 같게') && aidure('ai', 'main', 'gpt').status === 0 && aidure('ai', 'nope').status !== 0;
-  got.push(`aidure ai direct ${direct}`, `gateway 저장 ${gwSaved}`, `키 값 저장 안 함 ${leaked.length === 0}`, `compose · show · main ${cmds}`);
-  record('AI 연결 방식 (쓰는 AI · 구성 · 게이트웨이 · aidure ai)', claudeOnly && gptOnly && single && native && win && gptMain && direct && gwSaved && leaked.length === 0 && cmds, got.join(' · '));
+  const cmds = d3 && show.compose === 'single' && Object.values(show.roles || {}).every((v) => v === '메인과 같게') && kedovi('ai', 'main', 'gpt').status === 0 && kedovi('ai', 'nope').status !== 0;
+  got.push(`kedovi ai direct ${direct}`, `gateway 저장 ${gwSaved}`, `키 값 저장 안 함 ${leaked.length === 0}`, `compose · show · main ${cmds}`);
+  record('AI 연결 방식 (쓰는 AI · 구성 · 게이트웨이 · kedovi ai)', claudeOnly && gptOnly && single && native && win && gptMain && direct && gwSaved && leaked.length === 0 && cmds, got.join(' · '));
 }
 
 // 역할 에이전트 상한 — Claude 훅이 한 요청의 개수를 세고 넘으면 막는다. Codex 훅에는 넣지 않고 config.toml 동시 상한으로
@@ -940,7 +940,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   { const w = JSON.parse(wsRaw); w.agents = { ...(w.agents || {}), enforce: { teammateName: 'off', rosterAnnounce: 'off' } }; fs.writeFileSync(wsFile, JSON.stringify(w, null, 2)); } if (localRaw) fs.writeFileSync(localFile, localRaw); else fs.rmSync(localFile, { force: true });
   const offOk = !hook({ subagent_type: 'implementer' });
   fs.writeFileSync(wsFile, wsRaw);
-  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'team-mode', ...a], { cwd: dir, encoding: 'utf8', env: { ...process.env, HOME: home } });
+  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'team-mode', ...a], { cwd: dir, encoding: 'utf8', env: { ...process.env, HOME: home } });
   const refused = cli('enforce', 'name', 'warn').status !== 0 && /세게만/.test(cli('enforce', 'name', 'warn').stderr + cli('enforce', 'name', 'warn').stdout);
   const shown = /이름 없는 역할 에이전트 \(팀 모드\)  막기/.test(cli().stdout) && /첫 역할 에이전트 때 구성표 알림  알림/.test(cli().stdout) && cli('enforce', 'roster', 'block').status !== 0;
   const settings = fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8');
@@ -1086,10 +1086,10 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const wired = /task-check/.test(claudeHooks) && /task-focus/.test(claudeHooks) && /task-check/.test(codexHooks) && !/task-focus/.test(codexHooks);
   got.push(`id ${!!id}`, `미완이면 막음 ${blocked}`, `세션당 한 번 ${once}`, `루프 방지 ${loopSafe}`, `요청마다 주입 ${focused}`, `같으면 한 줄 ${compact}`, `손대지 않은 세션 조용 ${untouchedQuiet}`, `[~] 제외 ${waitingQuiet}`, `다 끝나면 조용 ${doneQuiet}`, `check 경고 ${warned}`, `훅 연결(Claude 둘 · Codex Stop 만) ${wired}`);
   record('작업 완료 조건 (Stop 훅 · 요청마다 주입 · check)', !!id && blocked && once && loopSafe && focused && compact && untouchedQuiet && waitingQuiet && doneQuiet && warned && wired, got.join(' · '));
-  // 답변 첫 줄 시각 (UserPromptSubmit): 기본 켜짐 · 팀 값 · 이 PC 값이 먼저 · aidure timestamp · Claude 에만
+  // 답변 첫 줄 시각 (UserPromptSubmit): 기본 켜짐 · 팀 값 · 이 PC 값이 먼저 · kedovi timestamp · Claude 에만
   {
     const ts = () => hook('prompt-time.js', 'selftest-time-1');
-    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'timestamp', ...a], { cwd: dir, encoding: 'utf8' });
+    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'timestamp', ...a], { cwd: dir, encoding: 'utf8' });
     const wsFile = path.join(dir, 'workspace.json');
     const wsBefore = fs.readFileSync(wsFile, 'utf8');
     const on = /^⏱ 요청 받은 시각 \d{4}-\d\d-\d\d \d\d:\d\d:\d\d\. /.test(ts());
@@ -1100,19 +1100,19 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     fs.writeFileSync(wsFile, wsBefore);
     const bad = cli('maybe').status !== 0;
     const wiredTs = /prompt-time/.test(claudeHooks) && !/prompt-time/.test(codexHooks);
-    record('답변 첫 줄 시각 (요청마다 주입 · aidure timestamp)', on && off && mineFirst && teamFollow && bad && wiredTs, `기본 켜짐 ${on} · 끄기 ${off} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredTs}`);
+    record('답변 첫 줄 시각 (요청마다 주입 · kedovi timestamp)', on && off && mineFirst && teamFollow && bad && wiredTs, `기본 켜짐 ${on} · 끄기 ${off} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredTs}`);
   }
-  // 응답 언어 · 대화 스타일 (aidure prefs): 기본(팀 문서 언어 · 일반) · 이 PC 값 먼저 · 팀 값 · 개인 지침 머리 · settings.local.json · 출력 스타일 · 요청마다 한 줄(Claude 만)
+  // 응답 언어 · 대화 스타일 (kedovi prefs): 기본(팀 문서 언어 · 일반) · 이 PC 값 먼저 · 팀 값 · 개인 지침 머리 · settings.local.json · 출력 스타일 · 요청마다 한 줄(Claude 만)
   {
-    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'prefs', ...a], { cwd: dir, encoding: 'utf8' });
+    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'prefs', ...a], { cwd: dir, encoding: 'utf8' });
     const line = () => hook('chat-prefs.js', 'selftest-prefs-1');
     const local = () => JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.local.json'), 'utf8'));
     const head = (f) => fs.readFileSync(path.join(dir, f), 'utf8');
     const wsFile = path.join(dir, 'workspace.json');
     const wsBefore = fs.readFileSync(wsFile, 'utf8');
     const def = /^응답: 한국어만/.test(line()) && /스타일 일반/.test(line()) && local().language === 'korean' && !local().outputStyle && /## 응답 언어 · 대화 스타일 \(한국어 · 일반/.test(head('CLAUDE.local.md'));
-    const styles = fs.existsSync(path.join(dir, '.claude', 'output-styles', 'aidure-expert.md')) && /keep-coding-instructions: true/.test(head('.claude/output-styles/aidure-learn.md'));
-    const expert = cli('style', 'expert').status === 0 && local().outputStyle === 'aidure-expert' && /스타일 전문가/.test(line()) && /현업에서 쓰는 이름/.test(head('CLAUDE.local.md'));
+    const styles = fs.existsSync(path.join(dir, '.claude', 'output-styles', 'kedovi-expert.md')) && /keep-coding-instructions: true/.test(head('.claude/output-styles/kedovi-learn.md'));
+    const expert = cli('style', 'expert').status === 0 && local().outputStyle === 'kedovi-expert' && /스타일 전문가/.test(line()) && /현업에서 쓰는 이름/.test(head('CLAUDE.local.md'));
     const en = cli('language', 'en').status === 0 && local().language === 'english' && /^Reply in English/.test(line()) && /응답 언어: English/.test(head('AGENTS.override.md').split('\n').slice(0, 6).join('\n'));
     fs.writeFileSync(wsFile, JSON.stringify({ ...JSON.parse(wsBefore), chat: { language: 'ko', style: 'learn' } }));
     const mineFirst = cli('language', 'en').status === 0 && /^Reply in English/.test(line());
@@ -1128,7 +1128,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const quiet = Array.from({ length: 14 }, tool).every((o) => !o.trim());
     const again = tool();
     const longRun = quiet && /"hookEventName":"PostToolUse"/.test(again) && /한국어만/.test(again) && !tool().trim() && /chat-prefs[^\n]*/.test(claudeHooks) && (JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).hooks.PostToolUse || []).some((g) => JSON.stringify(g).includes('chat-prefs'));
-    record('응답 언어 · 대화 스타일 (aidure prefs · 개인 지침 머리 · 출력 스타일 · 요청마다 한 줄 · 긴 작업 중 다시)', def && styles && expert && en && mineFirst && teamFollow && cleared && bad && wiredP && longRun,
+    record('응답 언어 · 대화 스타일 (kedovi prefs · 개인 지침 머리 · 출력 스타일 · 요청마다 한 줄 · 긴 작업 중 다시)', def && styles && expert && en && mineFirst && teamFollow && cleared && bad && wiredP && longRun,
       `기본 ${def} · 출력 스타일 파일 ${styles} · 전문가 ${expert} · 영어 ${en} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 되돌리면 킷 스타일 지움 ${cleared} · 잘못된 값 ${bad} · 훅 연결(Claude · Codex) ${wiredP} · 긴 작업 중 다시 알림 ${longRun}`);
   }
   // 언어 감지 · 클린 코드 팩 (repos[].languages · clean-code · lang-*) · repo 별 바꾸기(repos:) · repo 별 끄기(rules.offIn · --repo) · 옛 워크스페이스 채우기
@@ -1187,12 +1187,12 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     fs.rmSync(path.join(lw, 'packs', 'project', 'rules', 'my-py2.md'));
     fs.writeFileSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'), '---\ntitle: 우리 Python\nload: always\nreplaces: lang-python--10-python\nrepos: ml\n---\n\n## x\n');
     sync();
-    const listed = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'rules', 'list'], { cwd: lw, encoding: 'utf8' }).stdout;
+    const listed = spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'rules', 'list'], { cwd: lw, encoding: 'utf8' }).stdout;
     const partialShown = /켜짐\s+lang-python--10-python .*ml 에서만 project--my-py 가 대신/.test(listed);
-    const removePinned = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', 'remove', 'ml'], { cwd: lw, encoding: 'utf8' }).status !== 0 && repoOf('ml').name === 'ml';
+    const removePinned = spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'repo', 'remove', 'ml'], { cwd: lw, encoding: 'utf8' }).status !== 0 && repoOf('ml').name === 'ml';
     fs.rmSync(path.join(lw, 'packs', 'project', 'rules', 'my-py.md'));
     spawnSync('git', ['-C', lw, 'config', 'user.name', 't']);
-    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'rules', ...a], { cwd: lw, encoding: 'utf8' });
+    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'rules', ...a], { cwd: lw, encoding: 'utf8' });
     const onTypo = cli('on', 'lang-java--10-java', '--repo', 'apii').status !== 0;
     const offOne = cli('off', 'lang-java--10-java', '--repo=api').status === 0 && JSON.stringify((wsOf().rules || {}).offIn) === '{"lang-java--10-java":["api"]}' && !/lang-java--10-java/.test(rowOf('api'));
     const onAgain = cli('on', 'lang-java--10-java', '--repo', 'api').status === 0 && !(wsOf().rules || {}).offIn && /lang-java--10-java/.test(rowOf('api'))
@@ -1207,7 +1207,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const upgraded = /"api","languages":\["java"\]/.test(filled) && JSON.stringify(repoOf('ml').languages) === '["python"]' && JSON.stringify(repoOf('empty').languages) === '["python"]' && repoOf('one').languages === false;
     const checked = sync().ok && run(process.execPath, ['bin/kit.js', 'check'], lw).ok && !/lang-python|clean-code/.test(rowOf('one')); // false = 건너뛴 repo: 언어 규칙 없음
     cli('off', 'lang-python--10-python', '--repo', 'ml');
-    const removeCleans = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', 'remove', 'ml'], { cwd: lw, encoding: 'utf8' }).status === 0 && !(wsOf().rules || {}).offIn;
+    const removeCleans = spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'repo', 'remove', 'ml'], { cwd: lw, encoding: 'utf8' }).status === 0 && !(wsOf().rules || {}).offIn;
     record('언어 감지 · 클린 코드 팩 (repo 별 규칙 · repos: 바꾸기 · --repo 끄기 · 옛 워크스페이스)', detected && attached && tsRepo && flutterOk && oneFile && fullPartialRefused && yamlListRefused && bracketOk && overlapRefused && staleCleared && notInBody && replacedOne && badRepo && strayRefused && claudeRefused && partialShown && removePinned && offOne && onAgain && wholeRefused && upgraded && checked && removeCleans,
       `TS repo 에 clean-code · Next.js ${tsRepo} · Flutter 에 Android 팩 안 붙음 · 플랫폼 폴더(ios · windows) 제외 ${flutterOk} · 파일 하나 repo · 빈 repo 는 [] ${oneFile} · 전체 + 일부 대체 거부 ${fullPartialRefused} · 여러 줄 repos: 거부 ${yamlListRefused} · repos: [a] ${bracketOk} · 같은 repo 두 번 바꾸기 거부 ${overlapRefused} · 없어진 규칙 기록 지우기 · 다른 하위 명령 --repo 거부 ${staleCleared} · 감지(Pods 제외 · 깊은 패키지) ${detected} · 안 걸리는 repo 바꾸기 거부 ${strayRefused} · Claude 전용 repos: 거부 ${claudeRefused} · 일부 대체 표시 ${partialShown} · repos: 가 가리키면 repo 빼기 거부 ${removePinned} · repo 빼면 offIn 정리 ${removeCleans} · 감지 ${detected} · repo 표 ${attached} · 본문 아님 ${notInBody} · repos: 한 repo 만 바꿈 ${replacedOne} · 없는 repo 거부 ${badRepo} · --repo 끄기 ${offOne} · 다시 켜기 ${onAgain} · 전체 규칙 · 없는 repo 거부 ${wholeRefused} · 옛 워크스페이스 채우기 ${upgraded} · check ${checked}`);
   }
@@ -1251,10 +1251,10 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const line = /오래 일하는 중입니다: 위임 implementer → codex\(75분\)/.test(ti('UserPromptSubmit'));
     const first = ti('Stop');
     const stop = /"decision":"block"/.test(first) && /계속할지/.test(first) && !ti('Stop');
-    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'team-mode', 'enforce', ...a], { cwd: dir, encoding: 'utf8' });
+    const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'team-mode', 'enforce', ...a], { cwd: dir, encoding: 'utf8' });
     const wsBefore = fs.readFileSync(path.join(dir, 'workspace.json'), 'utf8');
     fs.rmSync(path.join(sd, 'longrun.json'), { force: true });
-    const cmd = cli('run', 'off', '--team').status === 0 && !ti('Stop') && cli('run', 'block', '--after', '90').status !== 0 && cli('run', 'block', '--after', '90', '--team').status === 0 && !ti('Stop') && /90분 넘으면/.test(spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'team-mode'], { cwd: dir, encoding: 'utf8' }).stdout);
+    const cmd = cli('run', 'off', '--team').status === 0 && !ti('Stop') && cli('run', 'block', '--after', '90').status !== 0 && cli('run', 'block', '--after', '90', '--team').status === 0 && !ti('Stop') && /90분 넘으면/.test(spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'team-mode'], { cwd: dir, encoding: 'utf8' }).stdout);
     fs.rmSync(jobDir, { recursive: true, force: true });
     // 리뷰 에이전트 지시문
     const ab = (prompt) => spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'hooks', 'agent-budget.js'), '--agent=claude'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ session_id: 'selftest-check-1', hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'reviewer', name: 'reviewer', prompt } }), env: { ...process.env, CLAUDE_PROJECT_DIR: dir } }).stdout;
@@ -1267,7 +1267,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   }
   // repo 빼기: workspace.json 에서 지움 · 변경이 있으면 폴더를 지우지 않음 · --delete 로 폴더 지움 · 없는 이름 거부
   {
-    const am = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', ...a], { cwd: dir, encoding: 'utf8' });
+    const am = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'repo', ...a], { cwd: dir, encoding: 'utf8' });
     const wsFile = path.join(dir, 'workspace.json');
     const wsBefore = fs.readFileSync(wsFile, 'utf8');
     const added = am('add', 'rm-probe', '--kind', 'code').status === 0 && fs.existsSync(path.join(dir, 'repos', 'rm-probe'));
@@ -1279,19 +1279,19 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const unknown = am('remove', 'no-such').status !== 0;
     fs.writeFileSync(wsFile, wsBefore);
     spawnSync(process.execPath, [path.join(dir, 'bin', 'kit.js'), 'sync', '--quiet'], { cwd: dir });
-    record('repo 빼기 (aidure repo remove)', added && refused && removed && unknown, `더하기 ${added} · 변경 있으면 거부 ${refused} · 목록 · 폴더 지움 ${removed} · 없는 이름 거부 ${unknown}`);
+    record('repo 빼기 (kedovi repo remove)', added && refused && removed && unknown, `더하기 ${added} · 변경 있으면 거부 ${refused} · 목록 · 폴더 지움 ${removed} · 없는 이름 거부 ${unknown}`);
   }
   // 하위 명령 --help 는 사용법만 (upgrade 가 실제로 돌지 않게) · 상태를 바꾸는 명령의 모르는 옵션은 실행하지 않음 · 기획 repo 도 이름만 주면 새로 만듦
   {
-    const ak = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { cwd: dir, encoding: 'utf8' });
+    const ak = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...a], { cwd: dir, encoding: 'utf8' });
     const wsFile = path.join(dir, 'workspace.json');
     const before = fs.readFileSync(wsFile, 'utf8');
     const h = ak('upgrade', '--help');
-    const help = h.status === 0 && /^\s*aidure upgrade \[--add 팩\]/.test(h.stdout) && !/aidure init /.test(h.stdout) && fs.readFileSync(wsFile, 'utf8') === before && /aidure repo move/.test(ak('repo', '-h').stdout);
+    const help = h.status === 0 && /^\s*kedovi upgrade \[--add 팩\]/.test(h.stdout) && !/kedovi init /.test(h.stdout) && fs.readFileSync(wsFile, 'utf8') === before && /kedovi repo move/.test(ak('repo', '-h').stdout);
     const bad = ak('upgrade', '--hlp');
     const unknown = bad.status !== 0 && /모르는 옵션 --hlp/.test(bad.stdout + bad.stderr) && fs.readFileSync(wsFile, 'utf8') === before;
     const nd = ak('repo', 'add', 'new-plans', '--kind', 'docs');
-    const newDocs = nd.status === 0 && fs.existsSync(path.join(dir, 'repos', 'new-plans', '.git')) && /aidure init-docs repos\/new-plans/.test(nd.stdout) && ak('repo', 'add', 'new-legacy', '--kind', 'legacy').status !== 0;
+    const newDocs = nd.status === 0 && fs.existsSync(path.join(dir, 'repos', 'new-plans', '.git')) && /kedovi init-docs repos\/new-plans/.test(nd.stdout) && ak('repo', 'add', 'new-legacy', '--kind', 'legacy').status !== 0;
     ak('repo', 'remove', 'new-plans', '--delete');
     fs.writeFileSync(wsFile, before);
     spawnSync(process.execPath, [path.join(dir, 'bin', 'kit.js'), 'sync', '--quiet'], { cwd: dir });
@@ -1299,7 +1299,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   }
   // repo 그룹 폴더: repos/<그룹>/<이름> (add --group · AGENTS.md 표 · doctor · check-refs · docs build · move · 검증), 그룹 없으면 생성물 그대로
   {
-    const am = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'repo', ...a], { cwd: dir, encoding: 'utf8' });
+    const am = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'repo', ...a], { cwd: dir, encoding: 'utf8' });
     const kitSync = () => spawnSync(process.execPath, [path.join(dir, 'bin', 'kit.js'), 'sync', '--quiet'], { cwd: dir, encoding: 'utf8' });
     const wsFile = path.join(dir, 'workspace.json');
     const wsBefore = fs.readFileSync(wsFile, 'utf8');
@@ -1352,19 +1352,19 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     record('repo 그룹 폴더 (repos/<그룹>/<이름>)', added && table && doctorOk && dup && badGroup && refs && siteOk && moved && ungroup && misplaced && same,
       `add --group ${added} · AGENTS.md 표 ${table} · doctor ${doctorOk} · 같은 이름 거부 ${dup} · 2단계 거부 ${badGroup} · clone 전 참조 ${refs} · 문서 사이트 ${siteOk} · move ${moved} · 그룹 빼기 ${ungroup} · 옛 위치 진단 ${misplaced} · 그룹 없으면 그대로 ${same}`);
   }
-  // 위임받아 도는 세션(AIDURE_DELEGATED=1)에서는 워크스페이스 훅이 아무것도 하지 않는다 (자기 위임 작업 정리 알림 · 핸드오프 점검이 끼어들지 않게)
+  // 위임받아 도는 세션(KEDOVI_DELEGATED=1)에서는 워크스페이스 훅이 아무것도 하지 않는다 (자기 위임 작업 정리 알림 · 핸드오프 점검이 끼어들지 않게)
   {
     fs.writeFileSync(topic, body(false));
     started('selftest-task-7', Date.now() - 60000);
-    const env = { ...process.env, CLAUDE_PROJECT_DIR: dir, AIDURE_DELEGATED: '1' };
+    const env = { ...process.env, CLAUDE_PROJECT_DIR: dir, KEDOVI_DELEGATED: '1' };
     const quiet = !spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'hooks', 'task-check.js'), '--agent=codex'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ session_id: 'selftest-task-7', hook_event_name: 'Stop' }), env }).stdout;
     const normal = /"decision":"block"/.test(hook('task-check.js', 'selftest-task-7'));
     record('위임 세션에서는 훅이 조용', quiet && normal, `위임 세션 조용 ${quiet} · 보통 세션 막음 ${normal}`);
     fs.writeFileSync(topic, body(true));
   }
-  // 텔레그램 채널 세션(AIDURE_CHANNEL=1): 시작 때 양쪽에 같은 내용을 남기라고 알리고, 선택지 창은 막는다 (텔레그램에서는 창에 답할 수 없다). 아니면 조용
+  // 텔레그램 채널 세션(KEDOVI_CHANNEL=1): 시작 때 양쪽에 같은 내용을 남기라고 알리고, 선택지 창은 막는다 (텔레그램에서는 창에 답할 수 없다). 아니면 조용
   {
-    const env = (on) => ({ ...process.env, CLAUDE_PROJECT_DIR: dir, ...(on ? { AIDURE_CHANNEL: '1' } : {}) });
+    const env = (on) => ({ ...process.env, CLAUDE_PROJECT_DIR: dir, ...(on ? { KEDOVI_CHANNEL: '1' } : {}) });
     const runHook = (name, input, on, extra) => spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'hooks', name), '--agent=claude'], { cwd: dir, encoding: 'utf8', input: JSON.stringify(input), env: { ...env(on), ...extra } }).stdout;
     const brief = runHook('channel-mode.js', { hook_event_name: 'SessionStart' }, true);
     const quiet = !runHook('channel-mode.js', { hook_event_name: 'SessionStart' }, false);
@@ -1429,7 +1429,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const diffOk = !diff.ok && /settings\.json \(내용 차이\)/.test(diff.out);
     record('생성물 비교 (JSON 키 순서 무관)', orderOk && diffOk, `순서만 다름 통과 ${orderOk} · 내용 차이 거부 ${diffOk}`);
   }
-  // rules.onDemand — 상시 규칙을 필요할 때만 읽게 해 AGENTS.md 를 줄인다 (aidure rules ondemand)
+  // rules.onDemand — 상시 규칙을 필요할 때만 읽게 해 AGENTS.md 를 줄인다 (kedovi rules ondemand)
   {
     const kitLib = require(path.join(dir, 'bin', 'kit.js'));
     const target = (kitLib.generate(dir).allRules || []).find((r) => r.load === 'always' && !r.required && r.scope !== 'repo' && r.agents === 'all');
@@ -1489,7 +1489,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   fs.writeFileSync(path.join(home, '.claude.json'), JSON.stringify({ oauthAccount: { organizationType: 'claude_max', organizationRateLimitTier: 'default_claude_max_20x' } }));
   fs.writeFileSync(path.join(home, '.codex', 'auth.json'), JSON.stringify({ auth_mode: 'chatgpt', tokens: { id_token: jwt({ 'https://api.openai.com/auth': { chatgpt_plan_type: 'plus' } }) } }));
   const env = { ...process.env, HOME: home, USERPROFILE: home };
-  const am = (...a) => { const r = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { cwd: dir, encoding: 'utf8', env }); return { ok: r.status === 0, out: `${r.stdout}${r.stderr}` }; };
+  const am = (...a) => { const r = spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...a], { cwd: dir, encoding: 'utf8', env }); return { ok: r.status === 0, out: `${r.stdout}${r.stderr}` }; };
   const kitLib2 = require(path.join(KIT, 'bin', 'kit.js'));
   const cat2 = kitLib2.loadCatalogFor(dir, JSON.parse(fs.readFileSync(wsFile, 'utf8'))).cat;
   const det = kitLib2.detectPlans(cat2, kitLib2.loginPlanValues(home));
@@ -1538,29 +1538,29 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   fs.rmSync(file);
   const up1 = run(process.execPath, ['bin/kit.js', 'upgrade', '--from', KIT], dir);
   const remade = up1.ok && fs.existsSync(file);
-  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/<!-- aidure:preset[^\n]*\n/, '').replace('| 착수 |', '| 킥오프 |'));
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/<!-- kedovi:preset[^\n]*\n/, '').replace('| 착수 |', '| 킥오프 |'));
   run(process.execPath, ['bin/kit.js', 'upgrade', '--from', KIT], dir);
   const kept = fs.readFileSync(file, 'utf8').includes('| 킥오프 |');
   got.push(`init 이 분석·설계 기본 단계 ${made}`, `브리핑 한 줄 · 흐름도 ${briefOk}`, `완료 보고 블록 ${blockOk}`, `JSON ${!!json && json.total === 5}`, `handoff check 경고 ${warned}`, `upgrade 가 없으면 만듦 ${remade}`, `있으면 그대로 ${kept}`);
-  record('로드맵 (PLAN.md · aidure plan · 브리핑 · upgrade)', made && briefOk && blockOk && !!json && json.total === 5 && warned && remade && kept, got.join(' · '));
+  record('로드맵 (PLAN.md · kedovi plan · 브리핑 · upgrade)', made && briefOk && blockOk && !!json && json.total === 5 && warned && remade && kept, got.join(' · '));
 }
 
-// 채팅에서도 모든 기능을: aidure 도움말의 명령(aidure <명령> [<하위 명령>])이 aidure 스킬 표에 모두 있어야 한다 (화면 전용 · 실행하지 않는 것도 「실행하지 않는 것」 에 적혀 있어야 한다)
+// 채팅에서도 모든 기능을: kedovi 도움말의 명령(kedovi <명령> [<하위 명령>])이 kedovi 스킬 표에 모두 있어야 한다 (화면 전용 · 실행하지 않는 것도 「실행하지 않는 것」 에 적혀 있어야 한다)
 {
-  const help = fs.readFileSync(path.join(KIT, 'bin', 'aidure.js'), 'utf8').split('\n').filter((l) => /^ \*   aidure /.test(l));
-  const skill = fs.readFileSync(path.join(KIT, 'packs', 'core', 'skills', 'aidure', 'SKILL.md'), 'utf8');
-  const cmds = [...new Set(help.flatMap((l) => [...l.matchAll(/aidure ([a-z][a-z-]*)(?: ([a-z][a-z-]+))?/g)].map((m) => (m[2] && !['init', 'check'].includes(m[1]) ? `aidure ${m[1]} ${m[2]}` : `aidure ${m[1]}`))))];
+  const help = fs.readFileSync(path.join(KIT, 'bin', 'kedovi.js'), 'utf8').split('\n').filter((l) => /^ \*   kedovi /.test(l));
+  const skill = fs.readFileSync(path.join(KIT, 'packs', 'core', 'skills', 'kedovi', 'SKILL.md'), 'utf8');
+  const cmds = [...new Set(help.flatMap((l) => [...l.matchAll(/kedovi ([a-z][a-z-]*)(?: ([a-z][a-z-]+))?/g)].map((m) => (m[2] && !['init', 'check'].includes(m[1]) ? `kedovi ${m[1]} ${m[2]}` : `kedovi ${m[1]}`))))];
   const missing = cmds.filter((c) => !skill.includes(`\`${c}`) && !skill.includes(`${c}\``) && !skill.includes(`${c} `));
-  record('채팅에서도 모든 기능 (aidure 도움말 ↔ aidure 스킬)', missing.length === 0, missing.length ? `스킬에 없음: ${missing.join(' · ')}` : `명령 ${cmds.length}개`);
-  // aidure --help 는 분류 요약만, aidure help <번호> 가 그 분류의 명령: 도움말 머리의 명령은 모두 분류에 들어가야 한다
-  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), ...a], { encoding: 'utf8', input: '' });
+  record('채팅에서도 모든 기능 (kedovi 도움말 ↔ kedovi 스킬)', missing.length === 0, missing.length ? `스킬에 없음: ${missing.join(' · ')}` : `명령 ${cmds.length}개`);
+  // kedovi --help 는 분류 요약만, kedovi help <번호> 가 그 분류의 명령: 도움말 머리의 명령은 모두 분류에 들어가야 한다
+  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), ...a], { encoding: 'utf8', input: '' });
   const all = cli('help', '--all').stdout;
-  const head = fs.readFileSync(path.join(KIT, 'bin', 'aidure.js'), 'utf8').split('\n');
-  const loose = head.slice(0, head.indexOf(' */')).filter((l) => /^ \*   aidure /.test(l)).map((l) => l.replace(/^ \*   /, '').split(/\s{3,}/)[0].trim()).filter((u) => !all.includes(u.slice(0, 40)));
+  const head = fs.readFileSync(path.join(KIT, 'bin', 'kedovi.js'), 'utf8').split('\n');
+  const loose = head.slice(0, head.indexOf(' */')).filter((l) => /^ \*   kedovi /.test(l)).map((l) => l.replace(/^ \*   /, '').split(/\s{3,}/)[0].trim()).filter((u) => !all.includes(u.slice(0, 40)));
   const short = cli('--help');
   const unknown = cli('no-such-command');
-  const ok = !loose.length && short.status === 0 && /분류별 명령/.test(short.stdout) && short.stdout.split('\n').length < 30 && /aidure docs show/.test(cli('help', '7').stdout) && /aidure start -c/.test(cli('start', '--help').stdout) && unknown.status === 1 && /모르는 명령/.test(unknown.stderr);
-  record('도움말 분류 (aidure --help · help <번호> · <명령> --help)', ok, loose.length ? `분류에 없음: ${loose.join(' · ')}` : `요약 ${short.stdout.split('\n').length}줄 · 모르는 명령 exit ${unknown.status}`);
+  const ok = !loose.length && short.status === 0 && /분류별 명령/.test(short.stdout) && short.stdout.split('\n').length < 30 && /kedovi docs show/.test(cli('help', '7').stdout) && /kedovi start -c/.test(cli('start', '--help').stdout) && unknown.status === 1 && /모르는 명령/.test(unknown.stderr);
+  record('도움말 분류 (kedovi --help · help <번호> · <명령> --help)', ok, loose.length ? `분류에 없음: ${loose.join(' · ')}` : `요약 ${short.stdout.split('\n').length}줄 · 모르는 명령 exit ${unknown.status}`);
 }
 
 // 진행 방식 — 신규는 스프린트(반복 단계 · AGENTS.md 안내), 분석·설계는 전체. 바꾸면 기본 단계 그대로인 로드맵만 새 뼈대로, 없으면(옛 워크스페이스) 안내 없이 전체처럼
@@ -1576,7 +1576,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const setAp = (v) => { const w = JSON.parse(fs.readFileSync(wsFile, 'utf8')); if (v) w.project.approach = v; else delete w.project.approach; fs.writeFileSync(wsFile, JSON.stringify(w, null, 2)); return run(process.execPath, ['bin/kit.js', 'sync'], dir); };
   const inc = JSON.parse(fs.readFileSync(wsFile, 'utf8')).project.approach === 'sprint' && /\*\*진행 방식: MVP · 스프린트/.test(agents()) && /「백로그」/.test(agents()) && stages() === [P.IDEA_STAGE, ...P.PRESETS.sprint.stages].join('|'); // 신규는 아이디어 · 전체 그림부터
   const full = /\*\*진행 방식: 워터폴 · 전체/.test(fs.readFileSync(path.join(tmp, 'plan-ws', 'AGENTS.md'), 'utf8'));
-  // 스프린트 끝 날짜가 지났는데 데모 전이면 aidure plan check 가 ⚠
+  // 스프린트 끝 날짜가 지났는데 데모 전이면 kedovi plan check 가 ⚠
   const keep = fs.readFileSync(file, 'utf8');
   fs.writeFileSync(file, keep.replace(/끝: <[^>]*>/, '끝: 2020-01-01'));
   const overdue = /이번 스프린트 끝 날짜\(2020-01-01\)가 지났는데 데모 전/.test(spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'bin', 'plan.js'), 'check'], { cwd: dir, encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir } }).stdout);
@@ -1599,7 +1599,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
 }
 
 // K-4 이슈형 · 유형 바꾸기 — 운영·고도화 + 이슈형 = 이슈 보드 로드맵 · AGENTS.md 안내, 고친 단계형 로드맵을 이슈형으로 바꾸면 앞에 보드(전 로드맵은 아래),
-// aidure type 은 유형 팩 교체 · 현행 repo 를 개발 repo 로 · 로드맵 새 뼈대(지난 로드맵은 아래), 옛 운영·고도화 기본 단계는 upgrade 가 그대로 둔다
+// kedovi type 은 유형 팩 교체 · 현행 repo 를 개발 repo 로 · 로드맵 새 뼈대(지난 로드맵은 아래), 옛 운영·고도화 기본 단계는 upgrade 가 그대로 둔다
 {
   const P = require(path.join(KIT, 'packs', 'core', 'lib', 'plan.js'));
   const kitLib = require(path.join(KIT, 'bin', 'kit.js'));
@@ -1610,15 +1610,15 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', sm, '--name', 'ksm', '--type', 'enhancement', '--approach', 'issue', '--code', src], tmp);
   const smPlan = P.parse(fs.readFileSync(path.join(sm, 'handoffs', 'PLAN.md'), 'utf8'));
   const board = !!smPlan && smPlan.mode === 'issue' && /\*\*진행 방식: 이슈형/.test(fs.readFileSync(path.join(sm, 'AGENTS.md'), 'utf8'));
-  const aidureBin = path.join(KIT, 'bin', 'aidure.js');
+  const kedoviBin = path.join(KIT, 'bin', 'kedovi.js');
   const env = { ...process.env, CLAUDE_PROJECT_DIR: undefined };
-  const runAidure = (dir, args) => spawnSync(process.execPath, [aidureBin, ...args], { cwd: dir, encoding: 'utf8', input: '', env });
+  const runKedovi = (dir, args) => spawnSync(process.execPath, [kedoviBin, ...args], { cwd: dir, encoding: 'utf8', input: '', env });
   // 고친 스프린트 로드맵 → 이슈형
   const enh = path.join(tmp, 'k4-enh');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', enh, '--name', 'kenh', '--type', 'enhancement', '--code', src], tmp);
   const ef = path.join(enh, 'handoffs', 'PLAN.md');
-  fs.writeFileSync(ef, fs.readFileSync(ef, 'utf8').replace(/<!-- aidure:preset.*\n/, '').replace('| 1 | 스프린트 계획 | ▶ | | |', '| 1 | 스프린트 계획 | ✔ | 2026-10-01 | 2026-10-02 |'));
-  const sw = runAidure(enh, ['approach', 'issue']);
+  fs.writeFileSync(ef, fs.readFileSync(ef, 'utf8').replace(/<!-- kedovi:preset.*\n/, '').replace('| 1 | 스프린트 계획 | ▶ | | |', '| 1 | 스프린트 계획 | ✔ | 2026-10-01 | 2026-10-02 |'));
+  const sw = runKedovi(enh, ['approach', 'issue']);
   const et = fs.readFileSync(ef, 'utf8');
   const switched = sw.status === 0 && P.parse(et).mode === 'issue' && /## 이슈형으로 바꾸기 전 로드맵/.test(et) && /\| 1 \| 스프린트 계획 \| ✔ \| 2026-10-01/.test(et);
   // 옛 운영·고도화 기본 단계(반복형) 그대로면 upgrade(ensurePlan)는 바꾸지 않는다
@@ -1630,7 +1630,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const isp = path.join(tmp, 'k4-isp');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', isp, '--name', 'kisp', '--type', 'consulting', '--legacy', src], tmp);
   const legacyName = JSON.parse(fs.readFileSync(path.join(isp, 'workspace.json'), 'utf8')).repos[0].name;
-  const ty = runAidure(isp, ['type', 'enhancement', '--code', legacyName, '--approach', 'full']);
+  const ty = runKedovi(isp, ['type', 'enhancement', '--code', legacyName, '--approach', 'full']);
   const iw = JSON.parse(fs.readFileSync(path.join(isp, 'workspace.json'), 'utf8'));
   const it = fs.readFileSync(path.join(isp, 'handoffs', 'PLAN.md'), 'utf8');
   const typed = ty.status === 0 && iw.project.type === 'enhancement' && iw.project.approach === 'full' && iw.repos[0].kind === 'code' && iw.packs.includes('enhancement') && !iw.packs.includes('consulting')
@@ -1638,31 +1638,31 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   record('이슈형 · 유형 바꾸기 (K-4)', board && switched && oldKept && typed, `이슈형 보드 · 안내 ${board} · 고친 로드맵 → 이슈형(전 로드맵 남김) ${switched} · 옛 운영·고도화 단계 그대로 ${oldKept} · 분석·설계 → 고도화(팩 · 개발 repo · 새 로드맵 · check) ${typed}${ty.status ? ` · ${ty.stderr.trim()}` : ''}${sw.status ? ` · ${sw.stderr.trim()}` : ''}`);
 }
 
-// Node 버전과 상관없는 aidure 명령 — 고정 위치 실행 파일(~/.local/bin/aidure)이 설치한 aidure 이 없어지면 nvm 의 다른 버전에서 찾고,
+// Node 버전과 상관없는 kedovi 명령 — 고정 위치 실행 파일(~/.local/bin/kedovi)이 설치한 kedovi 이 없어지면 nvm 의 다른 버전에서 찾고,
 // zsh 설정에 PATH 한 줄을 한 번만 넣는다. 킷 repo 에서 직접 실행하면 하지 않는다. Windows .cmd 본문도 만든다
 {
   const G = require(path.join(KIT, 'bin', 'global-shim.js'));
   const home = path.join(tmp, 'shim-home');
-  const nvmKit = path.join(home, '.nvm', 'versions', 'node', 'v24.1.0', 'lib', 'node_modules', 'aidure', 'bin');
+  const nvmKit = path.join(home, '.nvm', 'versions', 'node', 'v24.1.0', 'lib', 'node_modules', 'kedovi', 'bin');
   fs.mkdirSync(nvmKit, { recursive: true });
-  fs.writeFileSync(path.join(nvmKit, 'aidure.js'), "console.log('nvm-kit', process.argv.slice(2).join(' '))\n");
+  fs.writeFileSync(path.join(nvmKit, 'kedovi.js'), "console.log('nvm-kit', process.argv.slice(2).join(' '))\n");
   fs.mkdirSync(path.join(home, '.nvm', 'versions', 'node', 'v24.1.0', 'bin'), { recursive: true });
   fs.symlinkSync(process.execPath, path.join(home, '.nvm', 'versions', 'node', 'v24.1.0', 'bin', 'node'));
   const env = { SHELL: '/bin/zsh', PATH: '/usr/bin:/bin' };
-  const gone = path.join(home, 'old', 'node_modules', 'aidure', 'bin', 'aidure.js'); // 지운 Node 버전의 aidure
+  const gone = path.join(home, 'old', 'node_modules', 'kedovi', 'bin', 'kedovi.js'); // 지운 Node 버전의 kedovi
   const r1 = G.ensure({ kit: gone, node: '/nope/node', home, env, platform: process.platform === 'linux' ? 'linux' : 'darwin' });
   const r2 = G.ensure({ kit: gone, node: '/nope/node', home, env, platform: process.platform === 'linux' ? 'linux' : 'darwin' });
   const rc = fs.readFileSync(path.join(home, '.zshrc'), 'utf8');
   const once = r1.pathAdded.length === 1 && r2.pathAdded.length === 0 && rc.split(G.MARK).length === 2 && /export PATH="\$HOME\/\.local\/bin:\$PATH"/.test(rc);
   const run = process.platform === 'win32' ? { stdout: 'nvm-kit a b' } : spawnSync(r1.file, ['a', 'b'], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } });
   const found = /nvm-kit a b/.test(run.stdout || '');
-  const dev = G.ensure({ kit: path.join(KIT, 'bin', 'aidure.js'), home: path.join(tmp, 'shim-dev'), env }) === null && !fs.existsSync(path.join(tmp, 'shim-dev'));
-  const cmd = G.cmdBody({ kit: 'C:\\n\\node_modules\\aidure\\bin\\aidure.js', node: 'C:\\n\\node.exe', pkg: 'aidure' });
+  const dev = G.ensure({ kit: path.join(KIT, 'bin', 'kedovi.js'), home: path.join(tmp, 'shim-dev'), env }) === null && !fs.existsSync(path.join(tmp, 'shim-dev'));
+  const cmd = G.cmdBody({ kit: 'C:\\n\\node_modules\\kedovi\\bin\\kedovi.js', node: 'C:\\n\\node.exe', pkg: 'kedovi' });
   const winOk = /%NVM_HOME%\\v\*/.test(cmd) && /npm root -g/.test(cmd) && /"%N%" "%K%" %\*/.test(cmd) && !/[가-힣]/.test(cmd);
-  record('Node 버전과 상관없는 aidure 명령', once && found && dev && winOk, `PATH 한 줄 한 번 ${once} · 지운 버전 대신 nvm 의 다른 버전 aidure 실행 ${found} · 킷 repo 실행은 안 함 ${dev} · Windows .cmd ${winOk}${found ? '' : ` · ${(run.stderr || '').trim()}`}`);
+  record('Node 버전과 상관없는 kedovi 명령', once && found && dev && winOk, `PATH 한 줄 한 번 ${once} · 지운 버전 대신 nvm 의 다른 버전 kedovi 실행 ${found} · 킷 repo 실행은 안 함 ${dev} · Windows .cmd ${winOk}${found ? '' : ` · ${(run.stderr || '').trim()}`}`);
 }
 
-// 워크스페이스 현황판 — aidure board 가 .agents/board/ 에 현황 · 기록 쪽을 만들고(gitignore), 문서 사이트와 같은 틀이다
+// 워크스페이스 현황판 — kedovi board 가 .agents/board/ 에 현황 · 기록 쪽을 만들고(gitignore), 문서 사이트와 같은 틀이다
 {
   const dir = path.join(tmp, 'plan-ws');
   fs.mkdirSync(path.join(dir, 'handoffs', 'kim', 'topics'), { recursive: true });
@@ -1674,7 +1674,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const made = r.status === 0 && /현황판<\/h1>/.test(index) && /로드맵 완료 0\/5/.test(index) && /금요일 배포/.test(index) && /<a href="handoffs\/kim\/LATEST.html">kim<\/a>/.test(index);
   const chrome = /<nav class="side"[^>]*>.*kim \(나\)/s.test(index) && /<aside class="toc">/.test(index) && b('handoffs/kim/LATEST.html').includes('현황판 시험') && /설정 요약/.test(b('설정.html'));
   const ignored = fs.readFileSync(path.join(dir, '.gitignore'), 'utf8').includes('.agents/board/');
-  record('워크스페이스 현황판 (aidure board)', made && chrome && ignored, `현황 · 로드맵 · 공지 · 팀 ${made} · 메뉴 · 목차 · 기록 · 설정 ${chrome} · gitignore ${ignored}${r.status ? ` · ${r.stderr.slice(-200)}` : ''}`);
+  record('워크스페이스 현황판 (kedovi board)', made && chrome && ignored, `현황 · 로드맵 · 공지 · 팀 ${made} · 메뉴 · 목차 · 기록 · 설정 ${chrome} · gitignore ${ignored}${r.status ? ` · ${r.stderr.slice(-200)}` : ''}`);
 }
 
 // 핸드오프 기록 — 크기 검사 · 작업 색인 · 찾기(다른 사람 기록 포함) · 보관
@@ -1721,7 +1721,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     [...errors.slice(0, 4), ...(stale.length ? [`표가 다름: ${stale.join(', ')} — node bin/models.js doc`] : []), ...warnings.map((w) => `⚠ ${w}`)].join(' | ') || '오류 없음');
 }
 
-// 변경 기록 — 지금 버전 항목이 CHANGELOG.md 에 있어야 한다 (aidure upgrade 가 버전 사이 항목을 보여 준다). 패키지에 들어가야 다른 PC 에도 보인다
+// 변경 기록 — 지금 버전 항목이 CHANGELOG.md 에 있어야 한다 (kedovi upgrade 가 버전 사이 항목을 보여 준다). 패키지에 들어가야 다른 PC 에도 보인다
 {
   const ver = JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf8')).version;
   const pkgFiles = JSON.parse(fs.readFileSync(path.join(KIT, 'package.json'), 'utf8')).files || [];
@@ -1737,7 +1737,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const ws = path.join(tmp, 'plan-flow');
   run(process.execPath, [path.join(KIT, 'bin', 'kit.js'), 'init', ws, '--type', 'new', '--code', 'new:app'], tmp);
   const docs = path.join(ws, 'repos', 'plans');
-  const nd = spawnSync(process.execPath, [path.join(KIT, 'bin', 'aidure.js'), 'init-docs', docs], { cwd: ws, encoding: 'utf8' });
+  const nd = spawnSync(process.execPath, [path.join(KIT, 'bin', 'kedovi.js'), 'init-docs', docs], { cwd: ws, encoding: 'utf8' });
   const has = (f) => fs.existsSync(path.join(docs, f));
   const skeleton = nd.status === 0 && ['README.md', 'docs-site.json', '00-overview/overview.md', '00-overview/idea.md', '10-system/architecture.md', '20-features/requirements.md', '20-features/_template.md', '30-screens/README.md', '30-screens/_template.html', '30-screens/prototype/README.md', '40-data/_template.md', '45-api/README.md', '90-decisions/_template.md', '90-decisions/open-questions.md'].every(has)
     && !['01-requirements', '02-screens', '05-decisions', '06-data'].some(has);
@@ -1820,9 +1820,9 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   record('언어 ↔ 언어 팩 (stacks.json languages · pack.json languages)', !bad.length, bad.join(' | '));
 }
 
-// 업무 흐름 문서 — 선택 화면의 질문 문구와 aidure 명령이 docs/workflow.md 에 모두 있어야 한다 (화면을 고치면 문서도 같이)
+// 업무 흐름 문서 — 선택 화면의 질문 문구와 kedovi 명령이 docs/workflow.md 에 모두 있어야 한다 (화면을 고치면 문서도 같이)
 {
-  const src = fs.readFileSync(path.join(KIT, 'bin', 'aidure.js'), 'utf8');
+  const src = fs.readFileSync(path.join(KIT, 'bin', 'kedovi.js'), 'utf8');
   const doc = fs.readFileSync(path.join(KIT, 'docs', 'workflow.md'), 'utf8').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   const asked = new Set();
   // message: 바로 뒤의 문구만 — '…' · `…${x}…` · 조건 ? '…' : '…'
@@ -1830,8 +1830,8 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     for (const q of [m[1], m[3], m[4]]) if (q && /[가-힣]/.test(q)) asked.add(q);
     if (m[2]) m[2].split(/\$\{[^}]*\}/).map((x) => x.trim()).filter((x) => /[가-힣]/.test(x)).forEach((x) => asked.add(x));
   }
-  const cmds = [...src.matchAll(/^ \*   aidure ([a-z-]+)/gm)].map((x) => `aidure ${x[1]}`);
-  const extra = (src.match(/^ \*   aidure sync \| check \| doctor \| packs/m) ? ['aidure sync', 'aidure check', 'aidure doctor', 'aidure packs'] : []);
+  const cmds = [...src.matchAll(/^ \*   kedovi ([a-z-]+)/gm)].map((x) => `kedovi ${x[1]}`);
+  const extra = (src.match(/^ \*   kedovi sync \| check \| doctor \| packs/m) ? ['kedovi sync', 'kedovi check', 'kedovi doctor', 'kedovi packs'] : []);
   const missing = [...[...asked].filter((q) => !doc.includes(q)), ...[...cmds, ...extra].filter((c) => !doc.includes(c))];
   record('업무 흐름 문서(docs/workflow.md)가 화면·명령과 맞음', missing.length === 0, missing.length ? `없음: ${missing.slice(0, 6).join(' | ')}` : `질문 ${asked.size} · 명령 ${cmds.length + extra.length}`);
 }
@@ -1847,7 +1847,7 @@ fs.rmSync(tmp, { recursive: true, force: true });
 
 // 알림 격리 확인: 테스트 중 띄운 도구가 이 PC 의 실제 봇 설정을 읽지 않는다
 {
-  const probe = spawnSync(process.execPath, ['-e', `const n = require(${JSON.stringify(path.join(KIT, 'packs', 'core', 'lib', 'notify.js'))}); process.stdout.write(JSON.stringify({ keys: Object.keys(n.readSecrets()), api: process.env.AIDURE_TELEGRAM_API }))`], { encoding: 'utf8' });
+  const probe = spawnSync(process.execPath, ['-e', `const n = require(${JSON.stringify(path.join(KIT, 'packs', 'core', 'lib', 'notify.js'))}); process.stdout.write(JSON.stringify({ keys: Object.keys(n.readSecrets()), api: process.env.KEDOVI_TELEGRAM_API }))`], { encoding: 'utf8' });
   let r = {};
   try { r = JSON.parse(probe.stdout); } catch { /* 실패로 남는다 */ }
   record('테스트 알림 격리 (실제 텔레그램으로 안 보냄)', Array.isArray(r.keys) && !r.keys.length && /127\.0\.0\.1/.test(r.api || ''), `설정 키 ${(r.keys || ['?']).length}개 · 주소 ${r.api}`);

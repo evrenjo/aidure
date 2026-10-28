@@ -1,4 +1,4 @@
-// 기획 문서를 ID 단위로 읽기 · 사용처 찾기 · 코드 대조 · 문서 점검. 사용: aidure docs show · refs · trace · build/check 의 「문서 점검」 경고
+// 기획 문서를 ID 단위로 읽기 · 사용처 찾기 · 코드 대조 · 문서 점검. 사용: kedovi docs show · refs · trace · build/check 의 「문서 점검」 경고
 /*
  * 큰 문서를 통째로 읽지 않고 ID 하나의 정의만 꺼내고(show), 그 ID 가 나오는 곳을 도구가 찾는다(refs).
  *   정의 = 그 ID 로 시작하는 제목의 절 · 첫 칸이 그 ID 인 표 행(표 머리와 함께) · **ID** 로 시작하는 문단 · 화면설계서 장(<section id="ID">)
@@ -293,7 +293,7 @@ function sourceLines(text) {
   return out;
 }
 /**
- * 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거: …」 인용구로 옮긴다 (aidure docs refs-quote).
+ * 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거: …」 인용구로 옮긴다 (kedovi docs refs-quote).
  * 괄호 안에 파일:줄이 하나라도 있으면 그 괄호를 통째로 옮긴다. 코드 블록 · 인용구 · 제목 줄은 건드리지 않는다.
  * @returns { text, moved: 옮긴 괄호 수 }
  */

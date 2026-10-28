@@ -1,5 +1,5 @@
-/* 화면설계서(스토리보드) 공통 양식: 한 장 = 가로 문서 한 쪽 (aidure screens 팩).
-   색: 포인트 --accent · 강조(마커 호버) --hl. 프리셋은 <body data-theme="blue|teal|orange|rose"> (aidure docs build 가 vars.screens.theme 로 단다), 없으면 indigo */
+/* 화면설계서(스토리보드) 공통 양식: 한 장 = 가로 문서 한 쪽 (kedovi screens 팩).
+   색: 포인트 --accent · 강조(마커 호버) --hl. 프리셋은 <body data-theme="blue|teal|orange|rose"> (kedovi docs build 가 vars.screens.theme 로 단다), 없으면 indigo */
 :root {
   --accent: #4f46e5;
   --accent-ink: #ffffff;

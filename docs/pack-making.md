@@ -6,18 +6,18 @@
 
 | 하고 싶은 것 | 방법 | 저장 |
 |---|---|---|
-| 킷 규칙 끄기 | `aidure rules` (켤 규칙 고르기) 또는 `aidure rules off <ID>` | `workspace.json` 의 `rules.off` (팀 공유) |
-| 스택 · 언어 규칙을 일부 repo 에서만 끄기 | `aidure rules off <ID> --repo <이름,…>` (켜기는 `on`) | `workspace.json` 의 `rules.offIn` (팀 공유) |
-| 상시 규칙을 필요할 때만 | `aidure rules ondemand <ID>` (`repo-tasks` = repo 별 작업별 표) | `workspace.json` 의 `rules.onDemand` (팀 공유) |
+| 킷 규칙 끄기 | `kedovi rules` (켤 규칙 고르기) 또는 `kedovi rules off <ID>` | `workspace.json` 의 `rules.off` (팀 공유) |
+| 스택 · 언어 규칙을 일부 repo 에서만 끄기 | `kedovi rules off <ID> --repo <이름,…>` (켜기는 `on`) | `workspace.json` 의 `rules.offIn` (팀 공유) |
+| 상시 규칙을 필요할 때만 | `kedovi rules ondemand <ID>` (`repo-tasks` = repo 별 작업별 표) | `workspace.json` 의 `rules.onDemand` (팀 공유) |
 | 킷 규칙을 우리 방식으로 바꾸기 | `packs/project/rules/<이름>.md` 머리말에 `replaces: <ID>` | 그 규칙 대신 들어가고, 원래 규칙이 걸리던 repo 에 똑같이 걸린다 |
 | repo 마다 다른 규칙 (예: 이 repo 만 다른 Java 규칙) | 머리말에 `replaces: <ID>` + `repos: <이름,…>` | 적은 repo 에서만 바꾸고 나머지 repo 는 킷 규칙 그대로. `replaces` 없이 `repos:` 만 쓰면 그 repo 에만 더해진다 |
 | 우리 규칙·스킬 더하기 | `packs/project/rules/*.md` · `packs/project/skills/<이름>/SKILL.md` | 워크스페이스 repo (팀 공유) |
-| 스택 규칙을 repo 에서 빼기 | `aidure detect` 에서 그 repo 스택을 고치거나 건너뛰기 | `workspace.json` 의 `repos[].stacks` |
-| 언어 규칙을 repo 에서 빼기 | `aidure rules off lang-<언어>--10-<언어> --repo <이름>` 또는 `aidure detect` 에서 그 repo 를 건너뛴다 (`repos[].languages: false`). 감지 결과를 손으로 지우면 다음 감지 때 되살아난다 | `workspace.json` 의 `rules.offIn` |
+| 스택 규칙을 repo 에서 빼기 | `kedovi detect` 에서 그 repo 스택을 고치거나 건너뛰기 | `workspace.json` 의 `repos[].stacks` |
+| 언어 규칙을 repo 에서 빼기 | `kedovi rules off lang-<언어>--10-<언어> --repo <이름>` 또는 `kedovi detect` 에서 그 repo 를 건너뛴다 (`repos[].languages: false`). 감지 결과를 손으로 지우면 다음 감지 때 되살아난다 | `workspace.json` 의 `rules.offIn` |
 | 협업 도구 규칙 빼기 | `workspace.json` 에서 그 repo 의 `host` 를 `none` | `workspace.json` |
 | 나만 쓰는 지침 | `.agents/local.md` | 이 PC 만 |
 
-- 규칙 ID 는 `팩--파일이름` 이다 (예: `stack-spring--50-logging`). 목록은 `aidure rules list` 나 [팩 종류](packs.md).
+- 규칙 ID 는 `팩--파일이름` 이다 (예: `stack-spring--50-logging`). 목록은 `kedovi rules list` 나 [팩 종류](packs.md).
 - **필수 규칙**(근거·검증 · 보안·안전 · 보안 상세)은 킷의 전제라 끄거나 바꿀 수 없다.
 - 바꾸기 예:
 
@@ -57,11 +57,11 @@ when: 주문·결제 코드를 고치거나 관련 문서를 쓸 때
 - "확정" 은 결제 완료 뒤 상태다. "접수" 와 섞어 쓰지 않는다.
 ```
 
-2. `aidure sync` (또는 `node bin/kit.js sync`). AGENTS.md 에 반영된다.
+2. `kedovi sync` (또는 `node bin/kit.js sync`). AGENTS.md 에 반영된다.
 3. commit · push 하면 팀원도 받는다.
 
 - `load: always` 는 AGENTS.md 본문에 늘 들어가 예산(32KB)을 쓴다. 대부분은 `on-demand` 와 `when` 으로 둔다.
-- 워크스페이스 설정 수정이 막혀 있으면(`aidure team edit deny`) 관리자만 만들 수 있다.
+- 워크스페이스 설정 수정이 막혀 있으면(`kedovi team edit deny`) 관리자만 만들 수 있다.
 
 ## 팩 작성 규격
 
@@ -215,7 +215,7 @@ grade: high                  # high | standard | low. 프로필에 이 역할이
 
 ### 비밀값 (`pack.json` 의 `secrets`)
 
-팩의 도구가 토큰을 쓰면 이름 · 용도 · 필요 권한을 선언한다. 값은 사람마다 달라 워크스페이스에 두지 않고, 각자 `aidure secret set <이름>` 으로 OS 저장소에 넣는다.
+팩의 도구가 토큰을 쓰면 이름 · 용도 · 필요 권한을 선언한다. 값은 사람마다 달라 워크스페이스에 두지 않고, 각자 `kedovi secret set <이름>` 으로 OS 저장소에 넣는다.
 
 ```json
 "secrets": [
@@ -227,8 +227,8 @@ grade: high                  # high | standard | low. 프로필에 이 역할이
 |---|---|
 | `name` | 대문자 · 숫자 · `_`. 같은 이름의 환경변수가 있으면 그것이 먼저다 |
 | `scope` | `project`(기본, 프로젝트마다 다른 값) · `global`(이 PC 의 모든 프로젝트 공통) |
-| `optional` | `true` 면 없어도 `aidure doctor` 가 경고하지 않는다 (켤 때만 쓰는 기능) |
-| `purpose` · `needs` | 무엇에 쓰는지 · 필요한 권한 (GitLab 토큰 범위 등). `aidure secret list` · doctor 가 보인다 |
+| `optional` | `true` 면 없어도 `kedovi doctor` 가 경고하지 않는다 (켤 때만 쓰는 기능) |
+| `purpose` · `needs` | 무엇에 쓰는지 · 필요한 권한 (GitLab 토큰 범위 등). `kedovi secret list` · doctor 가 보인다 |
 | `test` | 확인 방법: `gitlab` (토큰 이름 · 권한 · 만료) · `telegram` (봇 이름) · `npm` (계정) |
 
 - 도구는 `packs/core/lib/secrets.js` 의 `get(이름, { root })` 하나로 읽는다 (환경변수 > 프로젝트 > 전역 > 옛 파일). 돌려받은 `label` 로 어디서 읽었는지 알릴 수 있고, 값은 어떤 출력에도 찍지 않는다.

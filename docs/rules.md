@@ -28,14 +28,14 @@ AGENTS.md 가 거의 커지지 않는다.
 
 **멀티모듈 repo**: 한 repo 에 `api/`(Spring)·`client/`(React) 처럼 모듈을 나눠 두면 스택마다 모듈을 기록한다 (빌드 파일이 있는 가장 가까운 폴더 기준, 깊이 4까지).
 표에 `Spring (api/) · React (client/)`, 규칙마다 `` : `api/` `` 가 붙어 에이전트는 고치는 모듈의 규칙만 읽는다.
-이 기능 전에 만든 워크스페이스는 `aidure upgrade` 가 모듈 경로를 채운다.
+이 기능 전에 만든 워크스페이스는 `kedovi upgrade` 가 모듈 경로를 채운다.
 
 **간접 의존**: 사내 라이브러리(예: 사내 스타터)가 프레임워크를 전이 의존으로 끌어오면 빌드 파일에 프레임워크 이름이 없다.
 Spring 은 빌드 파일 외에 Spring Boot 설정 파일(`application[-프로필].properties·yml` 의 최상위 `spring` 키)과 소스의 `@SpringBootApplication` 으로도 잡는다.
 그래도 못 잡으면 감지 결과에 "빌드 파일은 있습니다" 가 나온다. 그 라이브러리 좌표를 힌트로 한 번 적어 두면 팀 전원의 다음 감지부터 자동이다.
 
 ```bash
-aidure detect --hint spring --contains 'com\.example\.platform:platform-starter'   # workspace.json stackHints 에 저장 → 다시 감지 → sync
+kedovi detect --hint spring --contains 'com\.example\.platform:platform-starter'   # workspace.json stackHints 에 저장 → 다시 감지 → sync
 ```
 
 감지하는 스택은 80종이다 ([팩 종류](packs.md)의 스택 목록).
@@ -61,7 +61,7 @@ aidure detect --hint spring --contains 'com\.example\.platform:platform-starter'
 
 ### 규칙 사용 · 해제 · 변경
 
-킷이 넣는 규칙이 팀에 맞지 않으면 `aidure rules` 로 끄고(`workspace.json` 의 `rules.off`), 우리 방식으로 바꾸려면 `packs/project/rules/` 에 `replaces: <규칙 ID>` 를 적은 규칙을 둔다. 근거·안전·보안 규칙은 필수라 끌 수 없다. AGENTS.md 가 커지면 끄지 않고 `aidure rules ondemand <ID>` 로 필요할 때만 읽게 할 수 있다. 모든 팩과 규칙 목록은 [팩 종류](packs.md), 만드는 방법은 [팩 제작](pack-making.md).
+킷이 넣는 규칙이 팀에 맞지 않으면 `kedovi rules` 로 끄고(`workspace.json` 의 `rules.off`), 우리 방식으로 바꾸려면 `packs/project/rules/` 에 `replaces: <규칙 ID>` 를 적은 규칙을 둔다. 근거·안전·보안 규칙은 필수라 끌 수 없다. AGENTS.md 가 커지면 끄지 않고 `kedovi rules ondemand <ID>` 로 필요할 때만 읽게 할 수 있다. 모든 팩과 규칙 목록은 [팩 종류](packs.md), 만드는 방법은 [팩 제작](pack-making.md).
 
 
 ## 기본 작업 방식
@@ -78,7 +78,7 @@ aidure detect --hint spring --contains 'com\.example\.platform:platform-starter'
 | 규모 판단 | 「과하다 · 이 규모엔 필요 없다 · 충분하다」 는 기록된 수치(사용자 · 동시 접속 · 하루 데이터 건수 · 증가량 · 보존 기간 · 응답 목표)로만 말한다. 정본은 기획 repo 의 규모 문서(`00-overview/scale.md`). 수치가 없으면 먼저 묻고 남긴다. 서버뿐 아니라 코드 · 요구사항 · 기능 · 화면도 같다 |
 | 규모가 달라질 때 | 개발 · 시험 · 운영에서 본 실제 수치가 기록과 다르면 바로 알리고, 그 수치를 전제로 한 결정(결정 기록의 「전제한 규모」)을 찾아 다시 볼지 묻는다 |
 | MVP · 스프린트 | 줄이는 것은 기능 수. 그 기능의 완성도(오류 처리 · 사이드이펙트 · 테스트)는 줄이지 않는다 |
-| 남은 파일 | 방향을 바꾸거나 고쳐서 필요 없어진 파일은 이어서 작업하기 전에 표로 보이고 지울지 묻는다 (`tidy` 스킬 · `aidure tidy`). 핸드오프 · 단계 완료 보고에 정리 후보 개수가 나온다 |
+| 남은 파일 | 방향을 바꾸거나 고쳐서 필요 없어진 파일은 이어서 작업하기 전에 표로 보이고 지울지 묻는다 (`tidy` 스킬 · `kedovi tidy`). 핸드오프 · 단계 완료 보고에 정리 후보 개수가 나온다 |
 
 ## AI 도구 서명 제외
 
@@ -95,7 +95,7 @@ aidure detect --hint spring --contains 'com\.example\.platform:platform-starter'
 
 두 도구 모두 **신뢰(trust)한 폴더에서만** 프로젝트 설정·훅을 적용한다.
 
-- Claude Code: 처음 `aidure start` 때 폴더 신뢰 확인을 수락
+- Claude Code: 처음 `kedovi start` 때 폴더 신뢰 확인을 수락
 - Codex: 프로젝트를 trusted 로 지정하고 `/hooks` 에서 훅 신뢰 (훅이 바뀌면 다시)
 
 `path` 로 링크한 repo(워크스페이스 밖 폴더)는 Claude Code 가 신뢰 후에만 읽는다. 가능하면 `remote` 로 등록한다.

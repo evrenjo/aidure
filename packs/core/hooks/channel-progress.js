@@ -8,7 +8,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-if (process.env.AIDURE_CHANNEL !== '1') {
+if (process.env.KEDOVI_CHANNEL !== '1') {
   let level = null;
   try { level = (JSON.parse(fs.readFileSync(path.join(process.env.CLAUDE_PROJECT_DIR || process.cwd(), '.agents', 'local.json'), 'utf8')).notify || {}).level; } catch { /* 없음 */ }
   if (!['all', 'progress'].includes(level)) process.exit(0);

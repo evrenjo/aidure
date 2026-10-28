@@ -1,72 +1,72 @@
 #!/usr/bin/env node
 /**
- * aidure — AI 협업 워크스페이스 명령 (전역 설치: npm i -g aidure)
+ * kedovi — AI 협업 워크스페이스 명령 (전역 설치: npm i -g kedovi)
  *
- *   aidure init [프로젝트명]    선택 화면으로 새 워크스페이스를 만든다 (clone 한 repo 안이면 그 자리에, 아니면 ./<이름> 에)
- *   aidure init-docs [폴더]     기획자 repo 뼈대를 만든다
- *   aidure install              repos/ clone + git 훅 + 생성 + 이 워크스페이스의 메인 에이전트 선택
- *   aidure start [--claude|--codex] [--no-brief] [--no-channel] [--pixel-agents] [-- 에이전트 인자]   설정한 에이전트로 작업 시작. 첫 메시지로 브리핑(마지막 핸드오프 · 미완 작업 · TODO · 공지)
- *   aidure start -c | -r [세션 ID]   지난 대화 이어서: -c 마지막 대화 · -r <ID> 그 세션(/exit 때 나온 ID) · -r 목록에서 고르기 (Claude · Codex 같은 옵션)
- *   aidure agent                연결 방식·내 모델 프로필을 다시 고른다 (시작 도구는 연결 방식으로 정해진다)
- *   aidure ai [show | direct <claude,codex> | plan claude|gpt <요금제> | gateway [--url <주소> --key-env <변수>] | refresh | compose mix|vendor|single | main claude|codex] [--team]
+ *   kedovi init [프로젝트명]    선택 화면으로 새 워크스페이스를 만든다 (clone 한 repo 안이면 그 자리에, 아니면 ./<이름> 에)
+ *   kedovi init-docs [폴더]     기획자 repo 뼈대를 만든다
+ *   kedovi install              repos/ clone + git 훅 + 생성 + 이 워크스페이스의 메인 에이전트 선택
+ *   kedovi start [--claude|--codex] [--no-brief] [--no-channel] [--pixel-agents] [-- 에이전트 인자]   설정한 에이전트로 작업 시작. 첫 메시지로 브리핑(마지막 핸드오프 · 미완 작업 · TODO · 공지)
+ *   kedovi start -c | -r [세션 ID]   지난 대화 이어서: -c 마지막 대화 · -r <ID> 그 세션(/exit 때 나온 ID) · -r 목록에서 고르기 (Claude · Codex 같은 옵션)
+ *   kedovi agent                연결 방식·내 모델 프로필을 다시 고른다 (시작 도구는 연결 방식으로 정해진다)
+ *   kedovi ai [show | direct <claude,codex> | plan claude|gpt <요금제> | gateway [--url <주소> --key-env <변수>] | refresh | compose mix|vendor|single | main claude|codex] [--team]
  *                              AI 연결 방식 (서비스 직접 · 게이트웨이) · 쓰는 AI · 역할 구성
- *   aidure detect               코드 repo 의 기술 스택을 다시 감지하고 고친다 (repo 별 규칙이 바뀐다)
- *   aidure rules [list | off <ID…> | on <ID…>] [--repo <이름,…>]   킷이 넣은 규칙을 켜고 끈다 (필수 규칙 제외, --repo 는 그 repo 만). 바꾸기는 project 팩의 replaces (repos: 면 그 repo 만)
- *   aidure rules ondemand|always <ID…|repo-tasks>   상시 규칙을 필요할 때만 읽게 (AGENTS.md 를 줄인다) · 되돌리기
- *   aidure repo add [주소|폴더|이름] [--kind …] [--group <그룹>]   repo 를 더한다 (이름만 주면 repos/<이름> 에 원격 없이 새로 만든다, legacy 제외. --group 이면 repos/<그룹>/<이름>)
- *   aidure repo move <이름> --group <그룹>|--no-group   repo 를 그룹 폴더로 옮긴다: 폴더 · workspace.json · 문서의 경로를 고치고 sync
- *   aidure repo remove <이름> [--delete]   repo 를 뺀다: workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 --delete 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부)
- *   aidure repo guides [<이름> follow|kit|ignore] [--rescan [<이름>]]   repo 안에 원래 있던 AI 지침(CLAUDE.md · AGENTS.md · 룰 · 스킬 등) 보기 · 따르는 방식 정하기 (follow = repo 지침 우선, 기본 · kit = 킷 규칙 우선 · ignore = 무시) · 다시 훑기
- *   aidure team [id] [--take 1,2|all]   팀 현황 (모두의 핸드오프) · 한 사람 자세히 · 그 사람 TODO 항목을 내 TODO 로 인수
- *   aidure team add|remove <id…> · members · restrict on|off   팀 명단 (workspace.json team) · 명단 밖 사람의 aidure start 막기
- *   aidure team edit allow|deny · admins [id…]   팀원 설정 수정 허용·불가 (불가면 관리자만 workspace.json·팩을 바꾼다)
- *   aidure detect --hint <스택> --contains <정규식>   사내 라이브러리를 거쳐 쓰는 스택의 감지 힌트를 더한다
- *   aidure models [--migrate | --json]   모델 프로필·역할별·교차 검토 모델을 바꾼다 (화면 없이 실행하면 표, --json 은 JSON) / 퇴역 모델을 대체 모델로 일괄 교체
- *   aidure models profile <이름> [--team] · set <역할> <도구> <모델> [--team] [--effort e]   화면 없이 (AI 가 대신 실행). 내 프로필은 팀보다 낮은 것만
- *   aidure models allow-higher on|off   팀원이 팀보다 높은 프로필을 고를 수 있게 (팀, 관리자)
- *   aidure agent --claude|--codex [--args "<인자>"]   화면 없이 메인 에이전트
- *   aidure list                 이 PC 에서 만들거나 쓴 워크스페이스 목록
- *   aidure reset [항목,… | --all] [--yes]   이 PC 의 개인 설정을 처음 상태로 (이 PC 설정 · 텔레그램 채널 · 임시 기록 · 개인 지침 · 토큰 중 고른다). 팀 설정 · repos 는 그대로
- *   aidure remove [이름] [--force]   워크스페이스를 비운다: 그 루트에서 실행하거나 이름으로 (aidure list). repos/ 포함
- *   aidure notify setup         알림 설정 화면: 개인 봇 · 자동 알림 · 양방향 대화 · 질문 방식 · 진행 현황 · 팀 방 · 시험 발송을 한 곳에서
- *   aidure notify [status]      텔레그램 알림 상태
- *   aidure notify my level all|decisions|progress|off · away on|off · remote done|quiet|send · desk <초>|off · voice on|off|scope|name|test · setup [--new] · on [--min <초>] · off · reset · test   개인 알림 (이 PC). 봇 토큰은 숨김 입력
- *   aidure notify my channel on [--new]|off|status   양방향 텔레그램 (기본 꺼짐, 프로젝트마다 전용 봇 · Claude Code). 켜면 aidure start 가 --channels 를 붙인다
- *   aidure notify team setup [--new] · chat <그룹방 ID|off> · announce "<내용>" · test   팀 방 알림 (chat 은 팀 설정)
- *   aidure handoff find <티켓·기능> [--all] [--id <id>] · check · index · archive [--weeks N] · organize   핸드오프 기록 찾기·검사·보관
- *   aidure plan [--short | --json | --stage <번호>] · init · check   로드맵(handoffs/PLAN.md): 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음
- *   aidure docs build [repo|폴더] [--out docs-site] [--force] [--no-source] · check [repo|폴더]   문서 사이트: 기획 repo 의 md · 화면설계서 장 → docs-site/ (가이드와 같은 화면 틀 · 근거 색인 ids.json · 묶음은 docs-site.json) · 어긋남 검사 · 문서 점검 경고
- *   aidure docs show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs]   기획 문서를 ID 단위로: 정의 부분만 출력 · 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄)
- *   aidure docs refs-quote <md 파일…> [--dry]   본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다
- *   aidure docs trace [--ids FN] [--all] [--strict] [--md] [--new]   기획 ID 와 코드의 @spec 주석 대조: 코드에 없는 ID · 테스트에 없는 수용 기준 · 기획에 정의 없는 ID. --md 추적표 · --new 새 진입 파일 중 ID 없는 것 (커밋 전)
- *   aidure docs pages [on|off] [repo|폴더]   문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태 (원격에 맞는 CI 파일 · .gitignore 의 /docs-site/)
- *   aidure docs serve [repo|폴더] [--port 8000] [--open]   docs-site/ 를 이 PC 에서 웹 주소로 보기 (전체 인쇄 · 새로고침 없는 이동까지. Ctrl+C 로 끝)
- *   aidure delegate list · status [<id>] · watch [<id>]   다른 도구에 맡긴 작업(위임: Claude Code ↔ Codex 리뷰 등): 목록 · 지금 진행 현황 · 상대 에이전트가 읽고 실행하는 것을 줄마다 보기 (id 를 빼면 마지막 실행 중 작업)
- *   aidure board [--no-open] [--no-fetch]   워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽 (.agents/board/, 이 PC 만 · 보기 전용)
- *   aidure screens check [repo|폴더]   화면설계서 검사: 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락 (screens 팩)
- *   aidure datamodel check [repo|폴더]   데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
- *   aidure secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>   비밀값(토큰): OS 저장소(키체인 · 자격 증명 관리자 · libsecret)에 프로젝트별 · 전역으로. 값은 숨김 입력, 어디에도 출력하지 않는다
- *   aidure gitlab pipeline [--repo R] [--ref 브랜치 | --mr 번호 | --id ID] [--limit N] [--log [줄 수]] [--json]   GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분. MR 은 머지 커밋의 파이프라인도 찾는다
- *   aidure prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup   응답 언어 · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). 이 PC 값이 팀 값보다 먼저. 인자 없이 = 지금 값
- *   aidure timestamp [on|off|team] [--team]   답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss) 표시 (Claude Code, 기본 켜짐). 이 PC 값이 팀 값보다 먼저, team = 이 PC 값 지우기. 인자 없이 = 지금 값
- *   aidure type [유형] [--approach a] [--code 이름,…]   유형 바꾸기: 분석·설계 → 구축 · 고도화 등. 유형 팩 · 현행 repo 중 고칠 것(개발 repo 로) · 진행 방식 · 로드맵 새 뼈대 (관리자)
- *   aidure approach [sprint|full|issue]   진행 방식: MVP · 스프린트(최소 기능부터, 스프린트마다 데모하며 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수, 이슈 보드). 바꾸면 로드맵도 맞춘다 (관리자)
- *   aidure team-mode [auto|fixed] · prefer <역할> <claude|codex>:<모델>|- · [--team]   팀 구성: 자동(리더가 작업마다 역할·모델, 요금제 여유도 반영) · 고정(프로필대로), 역할별 선호 모델. --team 은 팀 기본값(관리자)
- *   aidure review status · mark [--repo R] [--by "<누가>"] · skip --reason "<사유>" [--repo R]   리뷰 확인(commit · push 전에 리뷰를 거쳤나): 대상 repo 마다 리뷰 안 된 줄 수 · 지금 상태를 리뷰했다고 기록 · 한 번 생략(사용자 승인 뒤). 켜기는 team-mode enforce review
- *   aidure team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] [--team]   commit · push 전 리뷰 확인 (기본 꺼짐. Claude Code). 대상 · 기준 줄 수 · 경로는 팀 값(--team)
- *   aidure import <폴더> [--json]   기존 AI 작업 폴더 훑기 (읽기만): 지침 · 룰 · 스킬 · 메모 · 핸드오프 · 스크립트 · 큰 폴더 분류, 문서 속 절대경로, 비밀값 의심 줄(값은 가림). 옮기기는 채팅에서 import 스킬로 (계획 → 승인 → 반영)
- *   aidure tidy [--new] [--repo <이름>] [--count] [--json]   정리 후보 찾기 (읽기만): 이번 작업 새 파일 · 안 쓰는 이미지 · 문서 · 링크 없는 문서 · 백업 이름, 코드는 프로젝트 도구 안내. 지우기는 채팅에서 tidy 스킬로 (승인 뒤)
- *   aidure team-mode enforce run off|warn|block [--after 분] [--team]   오래 일하는 팀원 · 위임 (Claude Code 팀원 · delegate.js): 경과가 상한(기본 60분, 팀 값)을 넘으면 계속할지 사용자에게 묻게 한다. block(기본) 멈출 때 한 번 막기 · warn 요청 시작 때 한 줄 · off. 같은 대상은 상한만큼 지나 다시
- *   aidure team-mode enforce check off|warn|block [--team]   리뷰 전 검사: 리뷰를 맡기는 지시서(delegate.js 리뷰 역할 · Claude 리뷰 에이전트)에 「검사: <명령> 통과」 줄이 없으면 막는다 (기본). 검사가 없는 변경은 「검사: 없음 (사유)」
- *   aidure team-mode enforce plan off|warn|block [--team]   착수 전 확인 (Claude Code): 요청마다 코드 repo 첫 수정(Edit · Write) 전에 답변에 「착수 전 확인:」 머리말이 없으면 알린다. warn(기본) 요청마다 한 번 · block 머리말을 보일 때까지 수정을 막는다. 문서 · 스타일 두 줄 이하는 제외
- *   aidure team-mode enforce ask off|block [--team]   결정 질문 점검 (Claude Code): 결정 질문(번호 선택지 2개 이상)을 질문 창 없이 글로 끝내면 한 번 막고 질문 창으로 다시 묻게 한다 (기본). 자리 비움 세션은 제외
- *   aidure team-mode enforce status off|block [--team]   상태 줄 점검 (Claude Code): 팀원(일하는 중 · 대기)이나 리더의 백그라운드 작업이 남은 채 멈추는데 답변에 「지금 도는 것: … · 예상 종료: … · 사용자가 할 일: …」 줄이 없으면 한 번 막는다 (기본)
- *   aidure team-mode enforce idle off|warn|block [--after 분] [--remind 분] [--team]   대기 팀원 점검 (Claude Code agent teams): 일을 마치고 대기로 오래 남은 팀원을 리더에게 알린다. block(기본) 멈출 때 한 번 막기 · warn 요청 시작 때 한 줄 · off. 대기 상한(기본 10분) · 다시 알리는 간격(기본 30분)은 팀 값(--team)
- *   aidure team-mode enforce name off|warn|block · roster off|warn [--team]   훅 강제 수준. name: 팀 모드(Claude Code agent teams)에서 역할 에이전트를 이름 없이 띄우면 막기(기본) · 경고 · 끄기. roster: 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄(기본) · 끄기. 이 PC 값은 팀 값보다 세게만
- *   aidure sync | check | doctor | packs   생성물 다시 만들기 · 생성물 검사 · 환경 진단 · 팩 목록
- *   aidure upgrade [--add 팩]   이 킷 버전으로 워크스페이스의 bin·팩을 갱신
- *   aidure upgrade --all [--scan <폴더>] [--yes]   이 PC 의 워크스페이스(aidure list)를 설치된 킷 버전으로 한꺼번에 올린다. 관리자 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이 있으면 건너뛴다. --scan 은 폴더 아래 워크스페이스를 찾아 목록에 더한다
- *   aidure help [번호|명령|--all]   명령 도움말: 인자 없이 = 자주 쓰는 명령 · 분류 목록 (터미널이면 분류를 골라 보기) · 번호 = 그 분류의 명령 · --all = 전체
+ *   kedovi detect               코드 repo 의 기술 스택을 다시 감지하고 고친다 (repo 별 규칙이 바뀐다)
+ *   kedovi rules [list | off <ID…> | on <ID…>] [--repo <이름,…>]   킷이 넣은 규칙을 켜고 끈다 (필수 규칙 제외, --repo 는 그 repo 만). 바꾸기는 project 팩의 replaces (repos: 면 그 repo 만)
+ *   kedovi rules ondemand|always <ID…|repo-tasks>   상시 규칙을 필요할 때만 읽게 (AGENTS.md 를 줄인다) · 되돌리기
+ *   kedovi repo add [주소|폴더|이름] [--kind …] [--group <그룹>]   repo 를 더한다 (이름만 주면 repos/<이름> 에 원격 없이 새로 만든다, legacy 제외. --group 이면 repos/<그룹>/<이름>)
+ *   kedovi repo move <이름> --group <그룹>|--no-group   repo 를 그룹 폴더로 옮긴다: 폴더 · workspace.json · 문서의 경로를 고치고 sync
+ *   kedovi repo remove <이름> [--delete]   repo 를 뺀다: workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 --delete 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부)
+ *   kedovi repo guides [<이름> follow|kit|ignore] [--rescan [<이름>]]   repo 안에 원래 있던 AI 지침(CLAUDE.md · AGENTS.md · 룰 · 스킬 등) 보기 · 따르는 방식 정하기 (follow = repo 지침 우선, 기본 · kit = 킷 규칙 우선 · ignore = 무시) · 다시 훑기
+ *   kedovi team [id] [--take 1,2|all]   팀 현황 (모두의 핸드오프) · 한 사람 자세히 · 그 사람 TODO 항목을 내 TODO 로 인수
+ *   kedovi team add|remove <id…> · members · restrict on|off   팀 명단 (workspace.json team) · 명단 밖 사람의 kedovi start 막기
+ *   kedovi team edit allow|deny · admins [id…]   팀원 설정 수정 허용·불가 (불가면 관리자만 workspace.json·팩을 바꾼다)
+ *   kedovi detect --hint <스택> --contains <정규식>   사내 라이브러리를 거쳐 쓰는 스택의 감지 힌트를 더한다
+ *   kedovi models [--migrate | --json]   모델 프로필·역할별·교차 검토 모델을 바꾼다 (화면 없이 실행하면 표, --json 은 JSON) / 퇴역 모델을 대체 모델로 일괄 교체
+ *   kedovi models profile <이름> [--team] · set <역할> <도구> <모델> [--team] [--effort e]   화면 없이 (AI 가 대신 실행). 내 프로필은 팀보다 낮은 것만
+ *   kedovi models allow-higher on|off   팀원이 팀보다 높은 프로필을 고를 수 있게 (팀, 관리자)
+ *   kedovi agent --claude|--codex [--args "<인자>"]   화면 없이 메인 에이전트
+ *   kedovi list                 이 PC 에서 만들거나 쓴 워크스페이스 목록
+ *   kedovi reset [항목,… | --all] [--yes]   이 PC 의 개인 설정을 처음 상태로 (이 PC 설정 · 텔레그램 채널 · 임시 기록 · 개인 지침 · 토큰 중 고른다). 팀 설정 · repos 는 그대로
+ *   kedovi remove [이름] [--force]   워크스페이스를 비운다: 그 루트에서 실행하거나 이름으로 (kedovi list). repos/ 포함
+ *   kedovi notify setup         알림 설정 화면: 개인 봇 · 자동 알림 · 양방향 대화 · 질문 방식 · 진행 현황 · 팀 방 · 시험 발송을 한 곳에서
+ *   kedovi notify [status]      텔레그램 알림 상태
+ *   kedovi notify my level all|decisions|progress|off · away on|off · remote done|quiet|send · desk <초>|off · voice on|off|scope|name|test · setup [--new] · on [--min <초>] · off · reset · test   개인 알림 (이 PC). 봇 토큰은 숨김 입력
+ *   kedovi notify my channel on [--new]|off|status   양방향 텔레그램 (기본 꺼짐, 프로젝트마다 전용 봇 · Claude Code). 켜면 kedovi start 가 --channels 를 붙인다
+ *   kedovi notify team setup [--new] · chat <그룹방 ID|off> · announce "<내용>" · test   팀 방 알림 (chat 은 팀 설정)
+ *   kedovi handoff find <티켓·기능> [--all] [--id <id>] · check · index · archive [--weeks N] · organize   핸드오프 기록 찾기·검사·보관
+ *   kedovi plan [--short | --json | --stage <번호>] · init · check   로드맵(handoffs/PLAN.md): 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음
+ *   kedovi docs build [repo|폴더] [--out docs-site] [--force] [--no-source] · check [repo|폴더]   문서 사이트: 기획 repo 의 md · 화면설계서 장 → docs-site/ (가이드와 같은 화면 틀 · 근거 색인 ids.json · 묶음은 docs-site.json) · 어긋남 검사 · 문서 점검 경고
+ *   kedovi docs show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs]   기획 문서를 ID 단위로: 정의 부분만 출력 · 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄)
+ *   kedovi docs refs-quote <md 파일…> [--dry]   본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다
+ *   kedovi docs trace [--ids FN] [--all] [--strict] [--md] [--new]   기획 ID 와 코드의 @spec 주석 대조: 코드에 없는 ID · 테스트에 없는 수용 기준 · 기획에 정의 없는 ID. --md 추적표 · --new 새 진입 파일 중 ID 없는 것 (커밋 전)
+ *   kedovi docs pages [on|off] [repo|폴더]   문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태 (원격에 맞는 CI 파일 · .gitignore 의 /docs-site/)
+ *   kedovi docs serve [repo|폴더] [--port 8000] [--open]   docs-site/ 를 이 PC 에서 웹 주소로 보기 (전체 인쇄 · 새로고침 없는 이동까지. Ctrl+C 로 끝)
+ *   kedovi delegate list · status [<id>] · watch [<id>]   다른 도구에 맡긴 작업(위임: Claude Code ↔ Codex 리뷰 등): 목록 · 지금 진행 현황 · 상대 에이전트가 읽고 실행하는 것을 줄마다 보기 (id 를 빼면 마지막 실행 중 작업)
+ *   kedovi board [--no-open] [--no-fetch]   워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽 (.agents/board/, 이 PC 만 · 보기 전용)
+ *   kedovi screens check [repo|폴더]   화면설계서 검사: 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락 (screens 팩)
+ *   kedovi datamodel check [repo|폴더]   데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
+ *   kedovi secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>   비밀값(토큰): OS 저장소(키체인 · 자격 증명 관리자 · libsecret)에 프로젝트별 · 전역으로. 값은 숨김 입력, 어디에도 출력하지 않는다
+ *   kedovi gitlab pipeline [--repo R] [--ref 브랜치 | --mr 번호 | --id ID] [--limit N] [--log [줄 수]] [--json]   GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분. MR 은 머지 커밋의 파이프라인도 찾는다
+ *   kedovi prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup   응답 언어 · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). 이 PC 값이 팀 값보다 먼저. 인자 없이 = 지금 값
+ *   kedovi timestamp [on|off|team] [--team]   답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss) 표시 (Claude Code, 기본 켜짐). 이 PC 값이 팀 값보다 먼저, team = 이 PC 값 지우기. 인자 없이 = 지금 값
+ *   kedovi type [유형] [--approach a] [--code 이름,…]   유형 바꾸기: 분석·설계 → 구축 · 고도화 등. 유형 팩 · 현행 repo 중 고칠 것(개발 repo 로) · 진행 방식 · 로드맵 새 뼈대 (관리자)
+ *   kedovi approach [sprint|full|issue]   진행 방식: MVP · 스프린트(최소 기능부터, 스프린트마다 데모하며 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수, 이슈 보드). 바꾸면 로드맵도 맞춘다 (관리자)
+ *   kedovi team-mode [auto|fixed] · prefer <역할> <claude|codex>:<모델>|- · [--team]   팀 구성: 자동(리더가 작업마다 역할·모델, 요금제 여유도 반영) · 고정(프로필대로), 역할별 선호 모델. --team 은 팀 기본값(관리자)
+ *   kedovi review status · mark [--repo R] [--by "<누가>"] · skip --reason "<사유>" [--repo R]   리뷰 확인(commit · push 전에 리뷰를 거쳤나): 대상 repo 마다 리뷰 안 된 줄 수 · 지금 상태를 리뷰했다고 기록 · 한 번 생략(사용자 승인 뒤). 켜기는 team-mode enforce review
+ *   kedovi team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] [--team]   commit · push 전 리뷰 확인 (기본 꺼짐. Claude Code). 대상 · 기준 줄 수 · 경로는 팀 값(--team)
+ *   kedovi import <폴더> [--json]   기존 AI 작업 폴더 훑기 (읽기만): 지침 · 룰 · 스킬 · 메모 · 핸드오프 · 스크립트 · 큰 폴더 분류, 문서 속 절대경로, 비밀값 의심 줄(값은 가림). 옮기기는 채팅에서 import 스킬로 (계획 → 승인 → 반영)
+ *   kedovi tidy [--new] [--repo <이름>] [--count] [--json]   정리 후보 찾기 (읽기만): 이번 작업 새 파일 · 안 쓰는 이미지 · 문서 · 링크 없는 문서 · 백업 이름, 코드는 프로젝트 도구 안내. 지우기는 채팅에서 tidy 스킬로 (승인 뒤)
+ *   kedovi team-mode enforce run off|warn|block [--after 분] [--team]   오래 일하는 팀원 · 위임 (Claude Code 팀원 · delegate.js): 경과가 상한(기본 60분, 팀 값)을 넘으면 계속할지 사용자에게 묻게 한다. block(기본) 멈출 때 한 번 막기 · warn 요청 시작 때 한 줄 · off. 같은 대상은 상한만큼 지나 다시
+ *   kedovi team-mode enforce check off|warn|block [--team]   리뷰 전 검사: 리뷰를 맡기는 지시서(delegate.js 리뷰 역할 · Claude 리뷰 에이전트)에 「검사: <명령> 통과」 줄이 없으면 막는다 (기본). 검사가 없는 변경은 「검사: 없음 (사유)」
+ *   kedovi team-mode enforce plan off|warn|block [--team]   착수 전 확인 (Claude Code): 요청마다 코드 repo 첫 수정(Edit · Write) 전에 답변에 「착수 전 확인:」 머리말이 없으면 알린다. warn(기본) 요청마다 한 번 · block 머리말을 보일 때까지 수정을 막는다. 문서 · 스타일 두 줄 이하는 제외
+ *   kedovi team-mode enforce ask off|block [--team]   결정 질문 점검 (Claude Code): 결정 질문(번호 선택지 2개 이상)을 질문 창 없이 글로 끝내면 한 번 막고 질문 창으로 다시 묻게 한다 (기본). 자리 비움 세션은 제외
+ *   kedovi team-mode enforce status off|block [--team]   상태 줄 점검 (Claude Code): 팀원(일하는 중 · 대기)이나 리더의 백그라운드 작업이 남은 채 멈추는데 답변에 「지금 도는 것: … · 예상 종료: … · 사용자가 할 일: …」 줄이 없으면 한 번 막는다 (기본)
+ *   kedovi team-mode enforce idle off|warn|block [--after 분] [--remind 분] [--team]   대기 팀원 점검 (Claude Code agent teams): 일을 마치고 대기로 오래 남은 팀원을 리더에게 알린다. block(기본) 멈출 때 한 번 막기 · warn 요청 시작 때 한 줄 · off. 대기 상한(기본 10분) · 다시 알리는 간격(기본 30분)은 팀 값(--team)
+ *   kedovi team-mode enforce name off|warn|block · roster off|warn [--team]   훅 강제 수준. name: 팀 모드(Claude Code agent teams)에서 역할 에이전트를 이름 없이 띄우면 막기(기본) · 경고 · 끄기. roster: 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄(기본) · 끄기. 이 PC 값은 팀 값보다 세게만
+ *   kedovi sync | check | doctor | packs   생성물 다시 만들기 · 생성물 검사 · 환경 진단 · 팩 목록
+ *   kedovi upgrade [--add 팩]   이 킷 버전으로 워크스페이스의 bin·팩을 갱신
+ *   kedovi upgrade --all [--scan <폴더>] [--yes]   이 PC 의 워크스페이스(kedovi list)를 설치된 킷 버전으로 한꺼번에 올린다. 관리자 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이 있으면 건너뛴다. --scan 은 폴더 아래 워크스페이스를 찾아 목록에 더한다
+ *   kedovi help [번호|명령|--all]   명령 도움말: 인자 없이 = 자주 쓰는 명령 · 분류 목록 (터미널이면 분류를 골라 보기) · 번호 = 그 분류의 명령 · --all = 전체
  */
 'use strict';
 
@@ -79,7 +79,7 @@ const gateway = require('./gateway.js');
 let p;
 const clack = () => (p = p || require('@clack/prompts'));
 
-const BACK = Symbol('aidure:back');
+const BACK = Symbol('kedovi:back');
 
 /** Ctrl+C 로 끝낼 때 덧붙일 안내 — 워크스페이스를 만든 뒤에는 무엇이 남았는지 알린다 */
 let abortNote = '';
@@ -256,7 +256,7 @@ async function chooseArgs(agent, current) {
     const options = [...presets, { value: '__custom', label: '직접 입력', hint: current && !known ? `지금: ${current}` : '목록에 없는 옵션을 적는다' }];
     const picked = await choose({
       message: `${AGENTS[agent].command} 에 항상 붙일 인자`,
-      hint: 'aidure start 가 실행할 때마다 붙입니다. 이 PC 전용.',
+      hint: 'kedovi start 가 실행할 때마다 붙입니다. 이 PC 전용.',
       options, initialValue: known ? current : '__custom',
     });
     const v = picked !== '__custom' ? picked : await input({
@@ -332,7 +332,7 @@ function locateWorkspace() {
     .map((e) => path.join(here, e.name));
   if (kids.length === 1) return remember(kids[0]);
   if (kids.length > 1) fail(`워크스페이스가 여러 개입니다. 그 폴더로 이동해서 실행하세요:\n  ${kids.join('\n  ')}`);
-  fail('워크스페이스(workspace.json)를 찾지 못했습니다. aidure init 으로 만들거나 그 폴더에서 실행하세요');
+  fail('워크스페이스(workspace.json)를 찾지 못했습니다. kedovi init 으로 만들거나 그 폴더에서 실행하세요');
 }
 
 const localConfigPath = (root) => path.join(root, kit.LOCAL_CONFIG);
@@ -345,17 +345,17 @@ function writeLocal(root, data) {
   fs.writeFileSync(f, JSON.stringify({ ...readLocal(root), ...data }, null, 2) + '\n');
 }
 
-// 이 PC 의 워크스페이스 목록 — aidure list · aidure remove <이름> 이 쓴다. 킷을 쓸 때마다 채워진다 (git 과 무관한 개인 기록)
-// ───────── 배포된 최신 버전 확인 (aidure start) ─────────
-const PKG_NAME = (() => { try { return JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).name; } catch { return 'aidure'; } })();
+// 이 PC 의 워크스페이스 목록 — kedovi list · kedovi remove <이름> 이 쓴다. 킷을 쓸 때마다 채워진다 (git 과 무관한 개인 기록)
+// ───────── 배포된 최신 버전 확인 (kedovi start) ─────────
+const PKG_NAME = (() => { try { return JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).name; } catch { return 'kedovi'; } })();
 const semverGt = (x, y) => { const a = String(x).split('.').map((n) => parseInt(n, 10) || 0), b = String(y).split('.').map((n) => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i]; return false; };
 /**
  * 레지스트리의 dist-tags.latest. ~/.npmrc 의 (scope)registry 와 그 주소의 _authToken 을 읽어 직접 묻는다 (npm 을 띄우지 않아 빠르다).
- * 결과는 ~/.aidure/update-check.json 에 두고 하루 한 번만 묻는다. 2초 안에 답이 없거나 실패하면 null. AIDURE_NO_UPDATE_CHECK=1 이면 묻지 않는다
+ * 결과는 ~/.kedovi/update-check.json 에 두고 하루 한 번만 묻는다. 2초 안에 답이 없거나 실패하면 null. KEDOVI_NO_UPDATE_CHECK=1 이면 묻지 않는다
  */
 async function latestPublished() {
-  if (process.env.AIDURE_NO_UPDATE_CHECK) return null;
-  const home = process.env.AIDURE_HOME || path.join(require('os').homedir(), '.aidure');
+  if (process.env.KEDOVI_NO_UPDATE_CHECK) return null;
+  const home = process.env.KEDOVI_HOME || path.join(require('os').homedir(), '.kedovi');
   const cacheFile = path.join(home, 'update-check.json');
   let cache = {};
   try { cache = JSON.parse(read(cacheFile)); } catch { /* 처음 */ }
@@ -380,7 +380,7 @@ async function latestPublished() {
   return latest;
 }
 
-const registryPath = () => path.join(process.env.AIDURE_HOME || path.join(require('os').homedir(), '.aidure'), 'workspaces.json');
+const registryPath = () => path.join(process.env.KEDOVI_HOME || path.join(require('os').homedir(), '.kedovi'), 'workspaces.json');
 function readRegistry() {
   try { return JSON.parse(read(registryPath())).workspaces || []; } catch { return []; }
 }
@@ -403,16 +403,16 @@ function remember(root) {
   return root;
 }
 /**
- * 이 PC 의 aidure 을 가리키는 실행 파일 (.agents/bin/aidure, git 제외). 에이전트 셸은 로그인 셸 환경을 새로 읽어
- * aidure 이 PATH 에 없을 수 있다 (nvm 등). aidure 스킬은 aidure 이 없으면 이것을 쓴다
+ * 이 PC 의 kedovi 을 가리키는 실행 파일 (.agents/bin/kedovi, git 제외). 에이전트 셸은 로그인 셸 환경을 새로 읽어
+ * kedovi 이 PATH 에 없을 수 있다 (nvm 등). kedovi 스킬은 kedovi 이 없으면 이것을 쓴다
  */
 function writeShim(root) {
   try {
     const dir = path.join(root, '.agents', 'bin');
-    const target = path.join(KIT_ROOT, 'bin', 'aidure.js');
+    const target = path.join(KIT_ROOT, 'bin', 'kedovi.js');
     const files = process.platform === 'win32'
-      ? [['aidure.cmd', `@echo off\r\n"${process.execPath}" "${target}" %*\r\n`]]
-      : [['aidure', `#!/bin/sh\n# 이 PC 의 aidure (aidure 명령이 만든다, git 제외)\nexec "${process.execPath}" "${target}" "$@"\n`]];
+      ? [['kedovi.cmd', `@echo off\r\n"${process.execPath}" "${target}" %*\r\n`]]
+      : [['kedovi', `#!/bin/sh\n# 이 PC 의 kedovi (kedovi 명령이 만든다, git 제외)\nexec "${process.execPath}" "${target}" "$@"\n`]];
     for (const [name, body] of files) {
       const f = path.join(dir, name);
       if (fs.existsSync(f) && read(f) === body) continue;
@@ -446,7 +446,7 @@ function upgradeBlocker(root) {
     const n = behind.status === 0 ? Number(behind.stdout.trim()) : 0;
     if (n > 0) return `원격에 받지 않은 커밋 ${n}개: 먼저 git pull (팀원이 먼저 올렸을 수 있음)`;
   }
-  if ((git('status', '--porcelain', '--untracked-files=no').stdout || '').trim()) return '커밋 안 한 변경이 있음: 정리한 뒤 그 폴더에서 aidure upgrade';
+  if ((git('status', '--porcelain', '--untracked-files=no').stdout || '').trim()) return '커밋 안 한 변경이 있음: 정리한 뒤 그 폴더에서 kedovi upgrade';
   return null;
 }
 
@@ -466,17 +466,17 @@ async function cmdUpgradeAll(rest) {
   const si = rest.indexOf('--scan');
   if (si >= 0) {
     const dir = rest[si + 1];
-    if (!dir || dir.startsWith('--')) fail('사용법: aidure upgrade --all [--scan <폴더>] [--yes]');
+    if (!dir || dir.startsWith('--')) fail('사용법: kedovi upgrade --all [--scan <폴더>] [--yes]');
     const found = scanWorkspaces(path.resolve(dir));
     for (const f of found) remember(f);
     console.log(`${path.resolve(dir)} 아래에서 워크스페이스 ${found.length}개를 찾아 목록에 올렸습니다`);
   }
   const rows = liveRegistry().map((w) => ({ ...w, ver: wsVersion(w.path) })).sort((a, b) => a.name.localeCompare(b.name));
-  if (!rows.length) fail('기록된 워크스페이스가 없습니다. 워크스페이스 폴더에서 aidure 명령을 한 번 실행하거나 --scan <폴더> 로 찾으세요');
+  if (!rows.length) fail('기록된 워크스페이스가 없습니다. 워크스페이스 폴더에서 kedovi 명령을 한 번 실행하거나 --scan <폴더> 로 찾으세요');
   const behind = rows.filter((r) => r.ver && semverGt(installed, r.ver));
   const ahead = rows.filter((r) => r.ver && semverGt(r.ver, installed));
   const w = Math.max(...rows.map((r) => r.name.length));
-  console.log(`설치된 aidure ${installed}`);
+  console.log(`설치된 kedovi ${installed}`);
   for (const r of rows) console.log(`  ${r.name.padEnd(w)}  ${padTo(r.ver ? `v${r.ver}` : '?', 9)} ${behind.includes(r) ? '옛 버전' : ahead.includes(r) ? '이 PC 보다 새 버전' : '최신'}  ${r.path}`);
   if (ahead.length) console.log(`  이 PC 보다 새 버전으로 올라간 워크스페이스가 있습니다: npm i -g ${PKG_NAME}`);
   if (!behind.length) { console.log(`✔ 옛 버전 워크스페이스가 없습니다`); return; }
@@ -494,18 +494,18 @@ async function cmdUpgradeAll(rest) {
   const done = [];
   for (const r of go) {
     console.log(`\n■ ${r.name} (${r.ver} → ${installed})`);
-    const res = spawnSync(process.execPath, [path.join(KIT_ROOT, 'bin', 'aidure.js'), 'upgrade'], { cwd: r.path, stdio: 'inherit' });
+    const res = spawnSync(process.execPath, [path.join(KIT_ROOT, 'bin', 'kedovi.js'), 'upgrade'], { cwd: r.path, stdio: 'inherit' });
     done.push({ ...r, ok: res.status === 0 });
   }
   console.log('\n결과');
   for (const r of done) console.log(`  ${r.ok ? '✔' : '✖'} ${r.name}  ${r.ok ? `${r.ver} → ${installed}` : '실패 (위 출력 확인)'}`);
   for (const r of checked.filter((x) => x.block)) console.log(`  - ${r.name}  건너뜀: ${r.block}`);
   const ok = done.filter((r) => r.ok);
-  if (ok.length) console.log(['\n팀에 반영하려면 워크스페이스마다 commit · push:', ...ok.map((r) => `  git -C "${r.path}" add -A && git -C "${r.path}" commit -m "chore: aidure ${installed}" && git -C "${r.path}" push`)].join('\n'));
+  if (ok.length) console.log(['\n팀에 반영하려면 워크스페이스마다 commit · push:', ...ok.map((r) => `  git -C "${r.path}" add -A && git -C "${r.path}" commit -m "chore: kedovi ${installed}" && git -C "${r.path}" push`)].join('\n'));
   if (done.some((r) => !r.ok)) process.exitCode = 1;
 }
 
-/** npm i -g 로 새 버전을 받은 뒤 첫 aidure 명령에서 한 번: 이 PC 의 옛 버전 워크스페이스 수를 알린다 */
+/** npm i -g 로 새 버전을 받은 뒤 첫 kedovi 명령에서 한 번: 이 PC 의 옛 버전 워크스페이스 수를 알린다 */
 function noticeNewInstall(cmd) {
   try {
     const file = path.join(path.dirname(registryPath()), 'last-version');
@@ -517,13 +517,13 @@ function noticeNewInstall(cmd) {
     fs.writeFileSync(file, `${installed}\n`);
     if (!last || !semverGt(installed, last) || cmd === 'upgrade') return;
     const behind = liveRegistry().filter((w) => { const v = wsVersion(w.path); return v && semverGt(installed, v); });
-    if (behind.length) console.warn(`aidure ${installed} 설치됨 (전에 ${last}). 이 PC 의 옛 버전 워크스페이스 ${behind.length}개 (${behind.map((w) => w.name).join(', ')}): 한꺼번에 올리기 aidure upgrade --all`);
+    if (behind.length) console.warn(`kedovi ${installed} 설치됨 (전에 ${last}). 이 PC 의 옛 버전 워크스페이스 ${behind.length}개 (${behind.map((w) => w.name).join(', ')}): 한꺼번에 올리기 kedovi upgrade --all`);
   } catch { /* 알림은 편의 기능 */ }
 }
 
 function cmdList() {
   const live = liveRegistry();
-  if (!live.length) return console.log('기록된 워크스페이스가 없습니다. aidure init 으로 만들거나, 기존 워크스페이스 폴더에서 aidure 명령을 한 번 실행하면 목록에 오릅니다');
+  if (!live.length) return console.log('기록된 워크스페이스가 없습니다. kedovi init 으로 만들거나, 기존 워크스페이스 폴더에서 kedovi 명령을 한 번 실행하면 목록에 오릅니다');
   const w = Math.max(...live.map((x) => x.name.length));
   for (const x of live.sort((a, b) => a.name.localeCompare(b.name))) {
     let ver = '';
@@ -609,7 +609,7 @@ async function trustGateway(root, gw) {
   const same = (x) => x && x.url === gw.url && (x.keyEnv || null) === gw.keyEnv;
   if (same((local.access || {}).gateway) || same(local.gatewayTrust)) return true;
   const what = `주소 ${gw.url} · 키 환경변수 ${gw.keyEnv}`;
-  if (!process.stdin.isTTY) { console.warn(`⚠ 팀 설정의 게이트웨이(${what})를 이 PC 에서 아직 승인하지 않아 키를 보내지 않습니다. 터미널에서 aidure start 로 한 번 승인하세요`); return false; }
+  if (!process.stdin.isTTY) { console.warn(`⚠ 팀 설정의 게이트웨이(${what})를 이 PC 에서 아직 승인하지 않아 키를 보내지 않습니다. 터미널에서 kedovi start 로 한 번 승인하세요`); return false; }
   const ok = await clack().confirm({ message: `팀 설정(workspace.json)의 게이트웨이로 키를 보낼까요? ${what} (처음 보는 주소면 아니오)`, initialValue: false });
   if (ok !== true) return false;
   writeLocal(root, { agents: { ...local, gatewayTrust: { url: gw.url, keyEnv: gw.keyEnv } } });
@@ -628,12 +628,12 @@ async function fetchGatewayModels(g, { quiet = false } = {}) {
 function gatewayNote(models) {
   const g = gateway.groupModels(models);
   const row = (name, list) => (list.length ? `${padTo(name, 8)}${list.map((m) => m.split('/').pop()).join(' · ')}` : null);
-  return [row('Claude', g.claude), row('GPT', g.gpt), row('기타', g.other), g.other.length ? '\n기타 모델은 추천 대상이 아닙니다. 쓰려면 aidure models set 으로 직접 지정합니다.' : null].filter(Boolean).join('\n');
+  return [row('Claude', g.claude), row('GPT', g.gpt), row('기타', g.other), g.other.length ? '\n기타 모델은 추천 대상이 아닙니다. 쓰려면 kedovi models set 으로 직접 지정합니다.' : null].filter(Boolean).join('\n');
 }
 
 /**
  * 쓰는 AI 고르기 — 한 화면: Claude 만 · GPT 만 · Claude + GPT · AI 게이트웨이 → [게이트웨이: 주소 확인 · 모델 조회 · 메인 모델 회사].
- * 역할 구성은 자동(두 회사 = 섞기, 한 회사 = 한 회사 모델만, 단일 모델은 aidure ai compose single 로 이미 골랐으면 유지).
+ * 역할 구성은 자동(두 회사 = 섞기, 한 회사 = 한 회사 모델만, 단일 모델은 kedovi ai compose single 로 이미 골랐으면 유지).
  * 이 PC(.agents/local.json agents.access)에 저장한다. 반환: 정규화한 access · BACK(첫 질문에서 Esc)
  */
 async function chooseAccess(root) {
@@ -686,7 +686,7 @@ async function chooseAccess(root) {
       }
       const models = await fetchGatewayModels(g);
       if (models) p.note(gatewayNote(models), `게이트웨이 모델 ${models.length}개`);
-      else p.log.warn('모델 목록을 받지 못했습니다. 킷 기본 모델 이름으로 진행합니다. 나중에 aidure ai refresh 로 다시 조회하세요.');
+      else p.log.warn('모델 목록을 받지 못했습니다. 킷 기본 모델 이름으로 진행합니다. 나중에 kedovi ai refresh 로 다시 조회하세요.');
       return { g, models: models || [] };
     }, set: (v) => { st.g = v.g; st.models = v.models; st.vendors = kit.gatewayVendors(v.models); } },
     // 게이트웨이 + 두 회사: 메인 모델 회사
@@ -708,7 +708,7 @@ async function chooseAccess(root) {
     steps[k].set(v);
     k++;
   }
-  st.compose = st.compose === 'single' ? 'single' : both() ? 'mix' : 'vendor'; // 역할 구성은 자동. 단일 모델은 aidure ai compose single
+  st.compose = st.compose === 'single' ? 'single' : both() ? 'mix' : 'vendor'; // 역할 구성은 자동. 단일 모델은 kedovi ai compose single
   const access = { connection: st.connection, compose: st.compose };
   if (st.connection === 'gateway') { access.main = st.main; if (st.g) access.gateway = gateway.toSaved(st.g, st.models); } else access.vendors = st.vendors;
   saveAccess(root, 'local', access);
@@ -743,7 +743,7 @@ async function chooseProfile(root, tool, scope, current, { roles = true, message
   let teamName = cat.defaultProfile;
   try { teamName = (JSON.parse(read(path.join(root, 'workspace.json'))).agents || {}).profile || teamName; } catch { /* 없음 */ }
   if (roles) p.note(profileTable(cat, tool, listRoles(root), accessOf(root)), `${AGENTS[tool].label} 로 실행할 때의 추천 모델 (${accessSummary(accessOf(root))})`);
-  // 이 PC 프로필은 팀보다 낮은 것만 (요금제 제약). 높은 것은 팀이 허용(aidure models allow-higher on)했을 때만
+  // 이 PC 프로필은 팀보다 낮은 것만 (요금제 제약). 높은 것은 팀이 허용(kedovi models allow-higher on)했을 때만
   const allowed = (n) => scope === 'team' || profileAllowed(root, cat, n);
   const options = [
     ...(scope === 'local' ? [{ value: '', label: `팀 기본 따름 (${(pfs[teamName] || {}).label || teamName})` }] : []),
@@ -754,7 +754,7 @@ async function chooseProfile(root, tool, scope, current, { roles = true, message
     message: message || (scope === 'team' ? '팀 기본 모델 프로필' : '내 모델 프로필'),
     hint: hint || (scope === 'team'
       ? '역할(설계·구현·리뷰·테스트·문서)을 어떤 모델로 쓸지 정합니다. 팀이 같이 쓰고, 요금제가 다른 사람은 install 때 따로 고릅니다. 위 표는 이 PC 의 연결 방식 기준이고, 팀원마다 자기 연결 방식에 맞게 바뀝니다.'
-      : '이 PC 에서만 쓰는 값입니다. 요금제가 팀보다 빠듯하면 낮추세요. 팀보다 높은 프로필은 팀이 허용(aidure models allow-higher on)했을 때만 고를 수 있습니다.'),
+      : '이 PC 에서만 쓰는 값입니다. 요금제가 팀보다 빠듯하면 낮추세요. 팀보다 높은 프로필은 팀이 허용(kedovi models allow-higher on)했을 때만 고를 수 있습니다.'),
     options, initialValue: current !== undefined && current !== null ? current : (scope === 'team' ? teamName : ''),
   });
 }
@@ -861,9 +861,9 @@ async function chooseAgent(root, { force, askArgs = true, profileScope = 'local'
   if (cur.agent && !force) return cur;
   clack();
   const installed = Object.fromEntries(Object.keys(AGENTS).map((k) => [k, hasCommand(AGENTS[k].command)]));
-  // 연결 방식 → 시작 도구는 킷이 정한다 (게이트웨이·Claude 있음 = Claude Code, GPT 만 = Codex). 바꾸려면 aidure agent --codex|--claude
+  // 연결 방식 → 시작 도구는 킷이 정한다 (게이트웨이·Claude 있음 = Claude Code, GPT 만 = Codex). 바꾸려면 kedovi agent --codex|--claude
   const cat = modelCatalog(root);
-  // 프로필은 init 에서만 묻는다 (팀 기본 프로필, workspace.json). install·agent 는 팀 값을 따르고, 이 PC 프로필은 aidure models profile 로만 둔다
+  // 프로필은 init 에서만 묻는다 (팀 기본 프로필, workspace.json). install·agent 는 팀 값을 따르고, 이 PC 프로필은 kedovi models profile 로만 둔다
   const scope = 'team';
   const current = () => undefined;
   let access; let agent; let args; let rolesPicked = false;
@@ -892,7 +892,7 @@ async function chooseAgent(root, { force, askArgs = true, profileScope = 'local'
     const fromProfile = (base.main || {})[agent] || '';
     const picks = readPicks(root, scope);
     const v = await chooseModel(cat, agent, {
-      message: '메인(리드) 모델', hint: '대화하는 메인 에이전트의 모델입니다. 역할 에이전트는 프로필대로 둡니다. 나중에 aidure models 로 바꿉니다.',
+      message: '메인(리드) 모델', hint: '대화하는 메인 에이전트의 모델입니다. 역할 에이전트는 프로필대로 둡니다. 나중에 kedovi models 로 바꿉니다.',
       current: ((picks.main || {})[agent]) || '', blankLabel: '프로필대로', blankHint: fromProfile ? modelLabel(cat, agent, fromProfile) : '도구 기본',
     });
     if (v === BACK) return BACK;
@@ -989,7 +989,7 @@ const TYPE_FLOW = {
     code: { message: '프로젝트 repository 주소', hint: '운영 중인 기존 시스템의 소스코드 repo 입니다. 원격 없이 로컬에만 있으면 기존 로컬 폴더. 1개 이상 필요합니다.', required: true }, docs: '개선 요구사항·업무 문서 repo', legacy: null },
   consulting: { hint: '구축 전에 현행을 분석하고 설계 문서를 만든다 (ISP · ISMP · 제안)',
     guide: ['근거: 현행 자료 · 인터뷰. 결과물은 문서이고 코드는 고치지 않는다',
-      '넣는 것: 산출물(문서) repo (aidure init-docs 로 뼈대) · 현행 소스 (선택, 읽기 전용)',
+      '넣는 것: 산출물(문서) repo (kedovi init-docs 로 뼈대) · 현행 소스 (선택, 읽기 전용)',
       'AI 가 하는 일: 근거 달린 현행 분석 · 요구사항 정의서 (ID · 수용 기준) · 목표 모델 · 이행 계획',
       '다음: 이 산출물 repo 를 구축 워크스페이스의 기획 repo 로 등록하면 요구사항 ID 가 그대로 이어진다'],
     code: null, docs: '산출물(문서) repo',
@@ -1052,7 +1052,7 @@ const methodOf = (e) => (String(e).startsWith(NEW_PREFIX) ? 'new' : kit.isGitUrl
  * repo 하나 받기 — 방식(clone · 기존 폴더 · 새로 만들기)을 먼저 고르고 값을 넣는다. 반환: 목록 값 · BACK · SKIP(없음)
  * Esc: 값 입력에서는 방식 선택으로, 방식 선택에서는 BACK
  */
-const SKIP = Symbol('aidure:skip');
+const SKIP = Symbol('kedovi:skip');
 async function askRepo({ message, hint, allowNew, taken = [], skippable = false, method, draft = '' }) {
   for (;;) {
     const options = [...Object.entries(REPO_METHODS).filter(([k]) => allowNew || k !== 'new').map(([value, m]) => ({ value, label: m.label })),
@@ -1154,7 +1154,7 @@ function takeFrom(a, fl) {
 async function cmdInit(argv) {
   if (!process.stdin.isTTY) fail('대화형 화면은 터미널에서만 됩니다. 스크립트에서는 node <킷>/bin/kit.js init <폴더> --type … 를 쓰세요');
   clack();
-  p.intro(' aidure init ');
+  p.intro(' kedovi init ');
   p.log.info('순서: 프로젝트명 → 시작 유형 → repo 주소 (유형에 따라 2~3개) → 확인 → 생성 → 스택 확인 → 규칙 확인 → 쓰는 AI → 모델 프로필 → 실행 인자 → 워크스페이스 repo 원격 · 커밋·push. Esc 는 이전 질문');
   const cwd = process.cwd();
   const usable = (d) => ['missing', 'empty', 'fresh-repo'].includes(kit.folderState(d));
@@ -1179,7 +1179,7 @@ async function cmdInit(argv) {
         if (!kit.PROJECT_NAME.test(v)) return kit.PROJECT_NAME_RULE;
         const dir = targetOf(v);
         const st = kit.folderState(dir);
-        if (st === 'workspace') return `${dir} 는 이미 워크스페이스입니다 (aidure remove 로 비우거나 다른 이름)`;
+        if (st === 'workspace') return `${dir} 는 이미 워크스페이스입니다 (kedovi remove 로 비우거나 다른 이름)`;
         if (!usable(dir)) return `${dir} 에 다른 파일이 있습니다. 빈 폴더나, README 만 있는 막 만든 repo 에서 만드세요`;
         return undefined;
       },
@@ -1191,14 +1191,14 @@ async function cmdInit(argv) {
     }), set: (v) => { a.type = v; } },
     // 신규 구축: 아이디어 · 전체 그림 다음에 MVP 부터 하나씩(스프린트)인지, 전체 설계 뒤 구축(워터폴)인지
     { when: () => a.type === 'new', run: async () => choose({
-      message: '개발 방식', hint: '두 방식 모두 아이디어 · 전체 그림(무엇을 왜 만드는지 대화)부터 시작합니다. 나중에 aidure approach 로 바꿉니다.',
+      message: '개발 방식', hint: '두 방식 모두 아이디어 · 전체 그림(무엇을 왜 만드는지 대화)부터 시작합니다. 나중에 kedovi approach 로 바꿉니다.',
       initialValue: ['sprint', 'full'].includes(a.approach) ? a.approach : kit.TYPE_RULES.new.approach, // 운영·고도화에서 고른 이슈형이 남아 있으면 기본값
       options: [{ value: 'sprint', label: 'MVP · 스프린트 (권장)', hint: '끝까지 동작하는 최소 기능부터, 스프린트마다 데모하며 하나씩 붙인다' },
         { value: 'full', label: '워터폴 · 전체', hint: '요구사항 → 설계 → 구현 → 테스트 → 배포를 한 번에' }],
     }), set: (v) => { a.approach = v; } },
     // 운영·고도화: 이슈마다 운영 반영(운영 · 유지보수)인지, 기능 묶음을 오픈까지 진행(고도화)인지 → 로드맵 모양이 다르다
     { when: () => a.type === 'enhancement', run: async () => choose({
-      message: '진행 방식', hint: '운영 · 유지보수는 이슈마다 운영에 반영하므로 이슈형, 기능 묶음을 요구사항부터 오픈까지 진행하는 고도화는 스프린트 또는 전체입니다. 나중에 aidure approach 로 바꿉니다.',
+      message: '진행 방식', hint: '운영 · 유지보수는 이슈마다 운영에 반영하므로 이슈형, 기능 묶음을 요구사항부터 오픈까지 진행하는 고도화는 스프린트 또는 전체입니다. 나중에 kedovi approach 로 바꿉니다.',
       initialValue: a.approach || kit.TYPE_RULES.enhancement.approach,
       options: [{ value: 'issue', label: '이슈형 (운영 · 유지보수)', hint: '단계 대신 이슈 보드: 이슈마다 접수 · 분석 · 수정 · 검증 · 운영 반영' },
         { value: 'sprint', label: 'MVP · 스프린트 (고도화)', hint: '기능 단위로 데모하며 하나씩' },
@@ -1216,10 +1216,10 @@ async function cmdInit(argv) {
       message: flow().code.message, hint: flow().code.hint, required: flow().code.required, allowNew: !!flow().code.allowNew, initial: a.code, others: othersOf('code'),
     }), set: (v) => { a.code = v; } },
     { run: async () => collectAddresses({
-      message: '기획 repository 주소', hint: '요구사항의 근거가 되는 문서 repo 입니다. 분석 워크스페이스의 산출물 repo 가 로컬에만 있으면 기존 로컬 폴더 (뼈대는 aidure init-docs).', required: false, allowNew: true, initial: a.docs, others: othersOf('docs'),
+      message: '기획 repository 주소', hint: '요구사항의 근거가 되는 문서 repo 입니다. 분석 워크스페이스의 산출물 repo 가 로컬에만 있으면 기존 로컬 폴더 (뼈대는 kedovi init-docs).', required: false, allowNew: true, initial: a.docs, others: othersOf('docs'),
     }), set: (v) => { a.docs = v; } },
     { when: () => a.docs.length > 0, run: async () => yesNo({
-      message: '기획 문서 사이트를 Pages 로 올릴까요?', hint: '기획 repo 의 docs-site/ 를 GitLab · GitHub Pages 로 공개합니다. 서버에 Pages · 러너가 있어야 합니다 (GitHub 비공개 repo 는 유료). 나중에 aidure docs pages on | off 로 바꿀 수 있습니다.',
+      message: '기획 문서 사이트를 Pages 로 올릴까요?', hint: '기획 repo 의 docs-site/ 를 GitLab · GitHub Pages 로 공개합니다. 서버에 Pages · 러너가 있어야 합니다 (GitHub 비공개 repo 는 유료). 나중에 kedovi docs pages on | off 로 바꿀 수 있습니다.',
       initialValue: a.pages,
     }), set: (v) => { a.pages = v === true; } },
     { run: async () => collectAddresses({
@@ -1274,7 +1274,7 @@ async function cmdInit(argv) {
       ...(a.from ? [`이어 받음 ${a.from}`] : []),
       `규칙   core${typePack ? `, ${typePack} (유형)` : ''} + repo 마다 스택·협업 도구 규칙`,
       ...(rs.length ? rs.map((r) => `repos/${r.name.padEnd(16)} ${padTo(kit.REPO_KINDS[r.kind], 14)} ${padTo(r.host ? kit.HOSTS[r.host] : '', 7)} ← ${r.remote || r.path || '새로 만듦 (원격 없음, git init)'}`) : ['repo   (없음: 나중에 workspace.json 에 추가)']),
-      ...(a.docs.length ? [`Pages  ${a.pages ? '켬: 기획 repo 에 원격에 맞는 CI 파일을 두고 docs-site/ 를 커밋한다' : '끔 (나중에 aidure docs pages on)'}`] : []),
+      ...(a.docs.length ? [`Pages  ${a.pages ? '켬: 기획 repo 에 원격에 맞는 CI 파일을 두고 docs-site/ 를 커밋한다' : '끔 (나중에 kedovi docs pages on)'}`] : []),
       '스택은 repo 를 받은 뒤 감지한다. 역할·브랜치는 workspace.json 에서 고친다',
     ];
   };
@@ -1311,7 +1311,7 @@ async function cmdInit(argv) {
   finally { Object.assign(console, orig); }
   remember(dir);
   p.log.success(res.ok ? '생성 완료' : '생성은 했지만 확인할 것이 있습니다');
-  if (res.approach) p.log.info(`진행 방식: ${kit.APPROACHES[res.approach]}. 바꾸기: aidure approach ${Object.keys(kit.APPROACHES).filter((k) => k !== res.approach).join(' | ')}`);
+  if (res.approach) p.log.info(`진행 방식: ${kit.APPROACHES[res.approach]}. 바꾸기: kedovi approach ${Object.keys(kit.APPROACHES).filter((k) => k !== res.approach).join(' | ')}`);
   if (a.pages) {
     const tool = path.join(dir, 'packs', 'core', 'bin', 'docs-site.js');
     const r = fs.existsSync(tool) ? spawnSync(process.execPath, [tool, 'pages', 'on'], { cwd: dir, encoding: 'utf8' }) : null;
@@ -1324,19 +1324,19 @@ async function cmdInit(argv) {
   if (failed().length) {
     const first = repoStatus(dir, res.repos || []);
     if (first) p.note(first.text, first.title);
-    const again = await yesNo({ message: `받지 못한 repo ${failed().length}개를 지금 다시 받을까요?`, hint: 'git clone 을 그대로 실행합니다. 인증을 물으면 입력하세요. 아니오면 나중에 aidure install.', initialValue: true });
+    const again = await yesNo({ message: `받지 못한 repo ${failed().length}개를 지금 다시 받을까요?`, hint: 'git clone 을 그대로 실행합니다. 인증을 물으면 입력하세요. 아니오면 나중에 kedovi install.', initialValue: true });
     if (again === true) {
       for (const r of failed()) {
         p.log.step(`git clone ${r.remote}`);
         const c = spawnSync('git', ['clone', ...(r.branch ? ['-b', r.branch] : []), '--', r.remote, path.join(dir, r.dir)], { stdio: 'inherit' });
         const x = (res.repos || []).find((y) => y.name === r.name);
         if (c.status === 0 && x) Object.assign(x, { state: 'cloned', note: r.remote });
-        if (c.status !== 0) p.log.warn(`${r.name}: 받지 못했습니다. 주소 · 권한을 확인한 뒤 aidure install`);
+        if (c.status !== 0) p.log.warn(`${r.name}: 받지 못했습니다. 주소 · 권한을 확인한 뒤 kedovi install`);
       }
       runWorkspaceKit(dir, ['sync', '--quiet']); // 받은 repo 의 스택 감지 · 훅
     }
   }
-  abortNote = `워크스페이스는 만들어졌습니다 (${dir}). 스택은 감지 결과대로 저장돼 있으니 aidure detect 로 고치고, 에이전트는 aidure agent 로 고르세요`;
+  abortNote = `워크스페이스는 만들어졌습니다 (${dir}). 스택은 감지 결과대로 저장돼 있으니 kedovi detect 로 고치고, 에이전트는 kedovi agent 로 고르세요`;
   // 만든 뒤의 질문(스택 → 규칙 확인 → 에이전트)도 Esc 로 이전 화면에 돌아간다. 첫 화면에서 Esc 는 취소 (워크스페이스는 남는다)
   const preCount = steps.filter((s, i) => runnable(i)).length;
   const total = preCount + postSteps(dir);
@@ -1354,15 +1354,15 @@ async function cmdInit(argv) {
   };
   const after = [
     { n: 1, run: () => reviewStacks(dir, { force: true }) },
-    { n: 2, run: async () => { // 규칙 확인 (선택) — 킷이 넣은 규칙 중 우리 팀에 안 맞는 것을 끈다. 나중에 aidure rules
+    { n: 2, run: async () => { // 규칙 확인 (선택) — 킷이 넣은 규칙 중 우리 팀에 안 맞는 것을 끈다. 나중에 kedovi rules
       for (;;) {
-        const look = await yesNo({ message: '킷이 넣은 규칙을 지금 확인할까요?', hint: '팀에 맞지 않는 규칙을 끌 수 있습니다. 나중에 aidure rules 로도 됩니다.', initialValue: false });
+        const look = await yesNo({ message: '킷이 넣은 규칙을 지금 확인할까요?', hint: '팀에 맞지 않는 규칙을 끌 수 있습니다. 나중에 kedovi rules 로도 됩니다.', initialValue: false });
         if (look === BACK || clack().isCancel(look)) return BACK;
         if (look !== true) return true;
         if ((await chooseRules(dir)) !== BACK) return true; // 규칙 화면에서 Esc 면 이 질문으로
       }
     } },
-    // 쓰는 AI · 팀 기본 프로필 · 메인 모델 · 이 PC 의 실행 인자 (3 · 4 · 5 · 6). 만든 사람이 바로 aidure start 하므로 인자도 여기서 받는다
+    // 쓰는 AI · 팀 기본 프로필 · 메인 모델 · 이 PC 의 실행 인자 (3 · 4 · 5 · 6). 만든 사람이 바로 kedovi start 하므로 인자도 여기서 받는다
     { n: 3, run: () => chooseAgent(dir, { force: true, askArgs: true, profileScope: 'team', progress: { at: preCount + 3, total } }) },
     // 워크스페이스 repo 원격 — 여기까지 해야 팀원이 clone 할 수 있다
     ...(remoteOf() ? [] : [{ n: 7, run: async () => {
@@ -1413,22 +1413,22 @@ async function cmdInit(argv) {
   if (leadId) {
     const f = path.join(dir, 'handoffs', leadId, 'TODO.md');
     if (!fs.existsSync(f)) { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, `# TODO (${leadId})\n`); }
-    // 만든 사람이 관리자 — 팀원 설정 수정을 막을 때(aidure team edit deny) 이 사람만 설정을 바꾼다
+    // 만든 사람이 관리자 — 팀원 설정 수정을 막을 때(kedovi team edit deny) 이 사람만 설정을 바꾼다
     const wsFile = path.join(dir, 'workspace.json');
     const raw = JSON.parse(read(wsFile));
     if (!(raw.team && (raw.team.admins || []).length)) { raw.team = { ...(raw.team || {}), admins: [leadId] }; fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n'); }
   }
-  // repo 별 상태: clone 실패 · 빠진 repo 는 질문 화면들 뒤로 밀려 안 보이므로 끝에 다시 보인다 (다시 받기 = aidure install, sync 는 받지 않는다)
+  // repo 별 상태: clone 실패 · 빠진 repo 는 질문 화면들 뒤로 밀려 안 보이므로 끝에 다시 보인다 (다시 받기 = kedovi install, sync 는 받지 않는다)
   const repoNote = repoStatus(dir, res.repos || []);
   if (repoNote) p.note(repoNote.text, repoNote.title);
   const rel = path.relative(process.cwd(), dir);
   const hasRemote = remoteOf();
   p.note(pushed
-    ? '팀원: 이 repo 를 clone 한 뒤 aidure install · aidure start'
+    ? '팀원: 이 repo 를 clone 한 뒤 kedovi install · kedovi start'
     : hasRemote
-      ? `아직 push 하지 않았습니다. 준비되면:\ngit add -A && git commit -m "chore: init workspace" && git push -u origin HEAD\n→ 팀원은 clone 한 뒤 aidure install · aidure start`
+      ? `아직 push 하지 않았습니다. 준비되면:\ngit add -A && git commit -m "chore: init workspace" && git push -u origin HEAD\n→ 팀원은 clone 한 뒤 kedovi install · kedovi start`
       : `원격이 없습니다. GitLab·GitHub 에 빈 repo 를 만든 뒤:\ngit remote add origin <주소> && git add -A && git commit -m "chore: init workspace" && git push -u origin HEAD`, '공유하기');
-  p.outro(`다음: ${rel ? `cd ${rel} && ` : ''}aidure start`);
+  p.outro(`다음: ${rel ? `cd ${rel} && ` : ''}kedovi start`);
 }
 
 /** init 끝 화면의 repo 상태 표 — 받은 결과와 지금 repos/ 를 맞춰 본다. 반환 { title, text } */
@@ -1453,7 +1453,7 @@ function repoStatus(dir, results) {
   return {
     title: bad.length ? `repo ${rows.length}개 중 ${bad.length}개 받지 못함` : `repo ${rows.length}개`,
     text: [...shown.map(line), ...(okCount ? [`✓ 나머지 ${okCount}개 받음`] : []),
-      ...(bad.length ? ['', '인증 · 주소를 고친 뒤 워크스페이스에서 aidure install (빠진 repo 만 받는다. aidure sync 는 받지 않는다)'] : [])].join('\n'),
+      ...(bad.length ? ['', '인증 · 주소를 고친 뒤 워크스페이스에서 kedovi install (빠진 repo 만 받는다. kedovi sync 는 받지 않는다)'] : [])].join('\n'),
   };
 }
 
@@ -1504,7 +1504,7 @@ async function reviewStacks(root, { force = false, only = null } = {}) {
     if (d) kit.setStackPaths(r, d.evidence);
     else if (r.stackPaths) kit.setStackPaths(r, Object.entries(r.stackPaths).map(([id, modules]) => ({ id, modules })));
     // 언어는 고르지 않고 감지대로 다시 쓴다 (스택을 손으로 고쳤으면 그 스택 기준으로 플랫폼 폴더를 빼고 다시 센다).
-    // 언어 규칙을 빼려면 aidure rules off <ID> --repo (감지와 상관없이 남는다)
+    // 언어 규칙을 빼려면 kedovi rules off <ID> --repo (감지와 상관없이 남는다)
     const setLangs = (l) => { r.languages = l || []; }; // 빈 결과도 기록한다 (빈 repo 는 upgrade · detect 때 다시 감지)
     if (skipped.has(r.name)) r.languages = false; // 건너뛴 repo: 언어 규칙 없음 (upgrade 가 다시 채우지 않는다)
     else if (d && d.languages && JSON.stringify([...(r.stacks || [])].sort()) === JSON.stringify([...(d.stacks || [])].sort())) setLangs(d.languages);
@@ -1606,14 +1606,14 @@ function cmdTeamAdmin(root, [sub, ...ids]) {
   const raw = JSON.parse(read(file));
   const team = raw.team || {};
   team.members = team.members || [];
-  if (sub !== 'members' && !(sub === 'admins' && !ids.length)) requireAdmin(root, `aidure team ${sub}`);
+  if (sub !== 'members' && !(sub === 'admins' && !ids.length)) requireAdmin(root, `kedovi team ${sub}`);
   if (sub === 'edit') {
     // 팀원 설정 수정 허용·불가. deny 면 관리자만 workspace.json·팩·생성물을 바꾸고, 팀원은 자기 handoffs/ 와 로드맵(handoffs/PLAN.md)만 커밋한다
     const v = ids[0];
-    if (!['allow', 'deny'].includes(v)) fail('사용법: aidure team edit allow|deny');
+    if (!['allow', 'deny'].includes(v)) fail('사용법: kedovi team edit allow|deny');
     const me = memberId(root);
     team.admins = team.admins && team.admins.length ? team.admins : me ? [me] : [];
-    if (v === 'deny' && !team.admins.length) fail('관리자가 없습니다. 먼저 git config user.name 을 설정하거나 aidure team admins <id…>');
+    if (v === 'deny' && !team.admins.length) fail('관리자가 없습니다. 먼저 git config user.name 을 설정하거나 kedovi team admins <id…>');
     team.lock = v === 'deny';
     raw.team = team;
     fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
@@ -1632,16 +1632,16 @@ function cmdTeamAdmin(root, [sub, ...ids]) {
     return;
   }
   if (sub === 'members') {
-    console.log(team.members.length ? `팀 명단 (${team.members.length}명): ${team.members.join(', ')}${team.restrict ? '\n명단 제한: 켜짐. 명단 밖 사람은 aidure start 가 멈춘다' : ''}` : '팀 명단이 비어 있습니다. aidure team add <id> (id = 그 사람 워크스페이스의 git user.name)');
+    console.log(team.members.length ? `팀 명단 (${team.members.length}명): ${team.members.join(', ')}${team.restrict ? '\n명단 제한: 켜짐. 명단 밖 사람은 kedovi start 가 멈춘다' : ''}` : '팀 명단이 비어 있습니다. kedovi team add <id> (id = 그 사람 워크스페이스의 git user.name)');
     return;
   }
   if (sub === 'restrict') {
     const on = ids[0];
-    if (!['on', 'off'].includes(on)) fail('사용법: aidure team restrict on|off');
-    if (on === 'on' && !team.members.length) fail('명단이 비어 있습니다. 먼저 aidure team add <id…>');
+    if (!['on', 'off'].includes(on)) fail('사용법: kedovi team restrict on|off');
+    if (on === 'on' && !team.members.length) fail('명단이 비어 있습니다. 먼저 kedovi team add <id…>');
     team.restrict = on === 'on';
   } else {
-    if (!ids.length) fail(`사용법: aidure team ${sub} <id…>`);
+    if (!ids.length) fail(`사용법: kedovi team ${sub} <id…>`);
     for (const id of ids) {
       if (sub === 'add' && !team.members.includes(id)) team.members.push(id);
       if (sub === 'remove') team.members = team.members.filter((x) => x !== id);
@@ -1657,11 +1657,11 @@ function cmdTeamAdmin(root, [sub, ...ids]) {
 /** 합류 기록 — install 때 묻고, 예면 handoffs/<id>/TODO.md 를 만들어 워크스페이스 repo 에 push. 팀 현황에 바로 보인다 */
 async function joinTeam(root) {
   const me = memberId(root);
-  if (!me) { p.log.warn('워크스페이스의 git user.name 이 없어 팀 합류 기록을 남기지 못했습니다. git config user.name <id> 후 aidure install'); return; }
+  if (!me) { p.log.warn('워크스페이스의 git user.name 이 없어 팀 합류 기록을 남기지 못했습니다. git config user.name <id> 후 kedovi install'); return; }
   const git = (...a) => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8' });
   const team = teamOf(root);
   if ((team.members || []).length && !team.members.includes(me)) {
-    p.log.warn(`${me} 은(는) 팀 명단에 없습니다. 리더에게 명단 추가(aidure team add ${me})를 요청하세요${team.restrict ? ' (명단 제한이 켜져 있어 그 전에는 aidure start 가 멈춥니다)' : ''}`);
+    p.log.warn(`${me} 은(는) 팀 명단에 없습니다. 리더에게 명단 추가(kedovi team add ${me})를 요청하세요${team.restrict ? ' (명단 제한이 켜져 있어 그 전에는 kedovi start 가 멈춥니다)' : ''}`);
   }
   const rel = `handoffs/${me}/TODO.md`;
   git('fetch', '-q');
@@ -1669,7 +1669,7 @@ async function joinTeam(root) {
   const listed = up ? git('-c', 'core.quotepath=false', 'ls-tree', '-r', '--name-only', up, '--', `handoffs/${me}/`).stdout.trim() : '';
   if (listed) return; // 이미 합류 기록이 원격에 있다
   if (!up) { p.log.info('워크스페이스 repo 에 원격이 없어 팀 합류 기록은 건너뜁니다'); return; }
-  const yes = await yesNo({ message: '팀에 합류 기록을 올릴까요?', hint: `handoffs/${me}/ 를 만들어 워크스페이스 repo 에 push 합니다. 팀 현황(aidure team)에 바로 보입니다.` });
+  const yes = await yesNo({ message: '팀에 합류 기록을 올릴까요?', hint: `handoffs/${me}/ 를 만들어 워크스페이스 repo 에 push 합니다. 팀 현황(kedovi team)에 바로 보입니다.` });
   if (yes === BACK || clack().isCancel(yes) || !yes) { p.log.info('합류 기록을 올리지 않았습니다. 첫 핸드오프를 push 하면 팀 현황에 보입니다'); return; }
   const file = path.join(root, rel);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -1684,7 +1684,7 @@ async function joinTeam(root) {
 
 // ───────────────────────── 규칙 켜고 끄기 ─────────────────────────
 
-const RULES_USAGE = 'aidure rules [list | off <ID…> [--repo <이름,…>] | on <ID…> [--repo <이름,…>] | ondemand <ID…|repo-tasks> | always <ID…|repo-tasks>]';
+const RULES_USAGE = 'kedovi rules [list | off <ID…> [--repo <이름,…>] | on <ID…> [--repo <이름,…>] | ondemand <ID…|repo-tasks> | always <ID…|repo-tasks>]';
 const ruleMark = (r, st) => (r.required ? '필수' : st.replaced[r.id] ? '대체됨' : st.off.includes(r.id) ? '꺼짐' : '켜짐');
 
 /** workspace.json rules 의 한 칸을 쓴다 (off · onDemand = 목록, offIn = { 규칙 ID: [repo…] }). 비면 지운다. sync: false 면 sync 하지 않는다 */
@@ -1713,7 +1713,7 @@ async function chooseRules(root) {
     `필수 (끌 수 없음): ${fixed.map((r) => r.title).join(' · ') || '없음'}`,
     ...(swapped.length ? [`project 규칙으로 대체됨: ${swapped.map((r) => `${r.id} → ${st.replaced[r.id]}`).join(' · ')}`] : []),
     ...(Object.keys(st.partial || {}).length ? [`일부 repo 에서만 대체됨: ${Object.entries(st.partial).map(([id, xs]) => `${id} (${xs.map((x) => x.repos.join(', ')).join(' · ')})`).join(' · ')}`] : []),
-    ...(Object.keys(offIn).length ? [`repo 별로 꺼짐 (여기서 켜도 그대로, 되돌리기: aidure rules on <ID> --repo <이름>): ${Object.entries(offIn).map(([id, n]) => `${id} (${n.join(', ')})`).join(' · ')}`] : []),
+    ...(Object.keys(offIn).length ? [`repo 별로 꺼짐 (여기서 켜도 그대로, 되돌리기: kedovi rules on <ID> --repo <이름>): ${Object.entries(offIn).map(([id, n]) => `${id} (${n.join(', ')})`).join(' · ')}`] : []),
     '우리 방식으로 바꾸려면 packs/project/rules/<이름>.md 에 replaces: <규칙 ID> 를 적는다',
   ].join('\n'), '규칙');
   const options = all.filter((r) => !r.required && !st.replaced[r.id] && r.pack !== 'project')
@@ -1758,11 +1758,11 @@ async function cmdRules(argv = []) {
         if (!offIn[id].length) delete offIn[id];
         continue;
       }
-      if (!r) fail(`없는 규칙입니다: ${id} (aidure rules list 로 확인)`);
+      if (!r) fail(`없는 규칙입니다: ${id} (kedovi rules list 로 확인)`);
       if (r.required) fail(`${id}(${r.title}) 는 필수 규칙이라 끌 수 없습니다`);
-      if (r.scope !== 'repo') fail(`${id} 는 워크스페이스 전체 규칙이라 repo 별로 끌 수 없습니다 (--repo 없이 aidure rules off ${id})`);
-      if (r.agents !== 'all') fail(`${id} 는 Claude 전용 규칙이라 repo 별로 끌 수 없습니다 (--repo 없이 aidure rules off ${id})`);
-      if (st.off.includes(id)) fail(`${id} 는 ${st.replaced[id] ? `${st.replaced[id]} 로 대체돼` : '워크스페이스 전체에서 꺼져'} 있습니다. repo 별로 바꿀 것이 없습니다${st.replaced[id] ? '' : ` (전체 켜기: aidure rules on ${id})`}`);
+      if (r.scope !== 'repo') fail(`${id} 는 워크스페이스 전체 규칙이라 repo 별로 끌 수 없습니다 (--repo 없이 kedovi rules off ${id})`);
+      if (r.agents !== 'all') fail(`${id} 는 Claude 전용 규칙이라 repo 별로 끌 수 없습니다 (--repo 없이 kedovi rules off ${id})`);
+      if (st.off.includes(id)) fail(`${id} 는 ${st.replaced[id] ? `${st.replaced[id]} 로 대체돼` : '워크스페이스 전체에서 꺼져'} 있습니다. repo 별로 바꿀 것이 없습니다${st.replaced[id] ? '' : ` (전체 켜기: kedovi rules on ${id})`}`);
       const applies = kit.ruleRepos(r, g.repoMap || {});
       const stray = onlyRepos.filter((n) => !applies.includes(n));
       if (sub === 'off' && stray.length) fail(`${id} 는 ${stray.join(', ')} 에 걸리지 않는 규칙입니다 (걸리는 repo: ${applies.join(', ') || '없음'})`);
@@ -1780,7 +1780,7 @@ async function cmdRules(argv = []) {
     const off = new Set(st.off.filter((id) => !st.replaced[id]));
     for (const id of ids) {
       const r = all.find((x) => x.id === id);
-      if (!r) fail(`없는 규칙입니다: ${id} (aidure rules list 로 확인)`);
+      if (!r) fail(`없는 규칙입니다: ${id} (kedovi rules list 로 확인)`);
       if (r.required) fail(`${id}(${r.title}) 는 필수 규칙이라 끌 수 없습니다`);
       if (sub === 'off') off.add(id); else off.delete(id);
     }
@@ -1801,7 +1801,7 @@ async function cmdRules(argv = []) {
     for (const id of ids) {
       if (id !== 'repo-tasks') {
         const r = all.find((x) => x.id === id);
-        if (!r) fail(`없는 규칙입니다: ${id} (aidure rules list 로 확인)`);
+        if (!r) fail(`없는 규칙입니다: ${id} (kedovi rules list 로 확인)`);
         if (r.required) fail(`${id}(${r.title}) 는 필수 규칙이라 상시로 둡니다`);
         if (sub === 'ondemand' && r.load !== 'always' && !lazy.has(id)) fail(`${id} 는 이미 필요할 때 읽는 규칙입니다`);
       }
@@ -1818,20 +1818,20 @@ async function cmdRules(argv = []) {
     if (lazy.includes('repo-tasks')) console.log(`${''.padEnd(8)} ${'repo-tasks'.padEnd(w)}  repo 별 작업별 표를 .agents/rules/repo-tasks.md 로 뺌`);
     const offIn = readOffIn(root);
     if (Object.keys(offIn).length) console.log(`\nrepo 별로 끈 규칙: ${Object.entries(offIn).map(([id, names]) => `${id} (${names.join(', ')})`).join(' · ')}`);
-    console.log(`\n끄기: aidure rules off <ID> [--repo <이름,…>] · 켜기: aidure rules on <ID> [--repo <이름,…>] · 바꾸기: packs/project/rules 에 replaces: <ID> (repos: <이름,…> 면 그 repo 만)`);
-    console.log('AGENTS.md 줄이기: aidure rules ondemand <ID | repo-tasks> (필요할 때만 읽게) · 되돌리기: aidure rules always <ID | repo-tasks>');
+    console.log(`\n끄기: kedovi rules off <ID> [--repo <이름,…>] · 켜기: kedovi rules on <ID> [--repo <이름,…>] · 바꾸기: packs/project/rules 에 replaces: <ID> (repos: <이름,…> 면 그 repo 만)`);
+    console.log('AGENTS.md 줄이기: kedovi rules ondemand <ID | repo-tasks> (필요할 때만 읽게) · 되돌리기: kedovi rules always <ID | repo-tasks>');
     return;
   }
   requireAdmin(root, '규칙 켜고 끄기');
   clack();
-  p.intro(' aidure rules ');
+  p.intro(' kedovi rules ');
   await chooseRules(root);
   p.outro('완료');
 }
 
 // ───────────────────────── repo add ─────────────────────────
 
-const REPO_USAGE = 'aidure repo add [<git 주소 | 폴더 | 새로 만들 이름>] [--kind code|docs|issues|legacy] [--group <그룹>] · aidure repo move <이름> --group <그룹>|--no-group · aidure repo remove <이름> [--delete] · aidure repo guides [<이름> follow|kit|ignore] [--rescan]';
+const REPO_USAGE = 'kedovi repo add [<git 주소 | 폴더 | 새로 만들 이름>] [--kind code|docs|issues|legacy] [--group <그룹>] · kedovi repo move <이름> --group <그룹>|--no-group · kedovi repo remove <이름> [--delete] · kedovi repo guides [<이름> follow|kit|ignore] [--rescan]';
 
 /** 워크스페이스에 repo 를 더한다 — clone · 링크 · (이름만 주면) repos/<이름> 에 새로 만들기 → 스택 확인 → sync */
 /** repo 빼기: workspace.json repos(와 리뷰 대상 목록)에서 지우고 sync. 폴더는 --delete 일 때만, 커밋 안 한 변경 · push 안 한 커밋이 없을 때 지운다 */
@@ -1882,7 +1882,7 @@ function cmdRepoGuides(rest) {
   const root = locateWorkspace();
   let wsKit = {};
   try { wsKit = require(path.join(root, 'bin', 'kit.js')); } catch { /* 없음 */ }
-  if (typeof wsKit.scanGuides !== 'function') fail('이 워크스페이스의 킷은 repo 지침을 모릅니다. aidure upgrade 후 다시 하세요');
+  if (typeof wsKit.scanGuides !== 'function') fail('이 워크스페이스의 킷은 repo 지침을 모릅니다. kedovi upgrade 후 다시 하세요');
   const wsFile = path.join(root, 'workspace.json');
   const raw = JSON.parse(read(wsFile));
   const repos = (raw.repos || []).filter((r) => ['code', 'issues'].includes(r.kind || 'code'));
@@ -1896,7 +1896,7 @@ function cmdRepoGuides(rest) {
     const lines = [];
     for (const r of targets) {
       const g = wsKit.scanGuides(path.join(root, kit.repoRel(r)));
-      if (!g) { lines.push(`  ${r.name}: 폴더 없음 (aidure install 뒤 다시)`); continue; }
+      if (!g) { lines.push(`  ${r.name}: 폴더 없음 (kedovi install 뒤 다시)`); continue; }
       r.guides = g;
       lines.push(`  ${r.name}: ${g.length ? g.join(', ') : '없음'}`);
     }
@@ -1926,7 +1926,7 @@ function cmdRepoGuides(rest) {
     const g = Array.isArray(r.guides) ? (r.guides.length ? r.guides.join(', ') : '없음') : '아직 훑지 않음 (repo 를 받은 뒤 sync 가 훑는다)';
     console.log(`${r.name.padEnd(w)}  ${modes[mode].padEnd(8)}  ${g}`);
   }
-  console.log('\n방식: follow = repo 지침 우선 (기본) · kit = 킷 규칙 우선 · ignore = 무시. 바꾸기: aidure repo guides <이름> <방식> · 다시 훑기: aidure repo guides --rescan');
+  console.log('\n방식: follow = repo 지침 우선 (기본) · kit = 킷 규칙 우선 · ignore = 무시. 바꾸기: kedovi repo guides <이름> <방식> · 다시 훑기: kedovi repo guides --rescan');
 }
 
 const GROUP_NAME = /^(?!\.{1,2}$)[A-Za-z0-9._][A-Za-z0-9._-]*$/; // bin/kit.js REPO_SEG 와 같다 ('.' · '..' · '-' 로 시작 금지)
@@ -1935,7 +1935,7 @@ const NEW_GROUP = Symbol('new-group');
 function requireGroups(root) {
   let ok = false;
   try { ok = typeof require(path.join(root, 'bin', 'kit.js')).repoRel === 'function'; } catch { /* 없음 */ }
-  if (!ok) fail('이 워크스페이스의 킷은 그룹 폴더(--group)를 모릅니다. aidure upgrade 후 다시 하세요');
+  if (!ok) fail('이 워크스페이스의 킷은 그룹 폴더(--group)를 모릅니다. kedovi upgrade 후 다시 하세요');
 }
 
 /** repo 를 그룹 폴더로 옮긴다: 폴더 이동 → workspace.json group → 사람이 쓴 문서의 경로 → sync */
@@ -1958,7 +1958,7 @@ function cmdRepoMove(rest) {
   const to = kit.repoRel({ ...repo, group });
   const src = path.join(root, from), dst = path.join(root, to);
   if (fs.existsSync(dst)) fail(`${to} 가 이미 있습니다. 비우거나 다른 그룹을 고르세요`);
-  let folder = '없음 (aidure install 때 새 위치로 받습니다)';
+  let folder = '없음 (kedovi install 때 새 위치로 받습니다)';
   let isLink = false;
   try { isLink = fs.lstatSync(src).isSymbolicLink(); } catch { /* 없음 */ }
   if (isLink) { fs.unlinkSync(src); folder = '링크 지움 (sync 뒤 install 이 새 위치에 다시 링크)'; }
@@ -1985,7 +1985,7 @@ function cmdRepoMove(rest) {
   const ok = runWorkspaceKit(root, isLink ? ['install'] : ['sync', '--quiet']);
   console.log(`✔ repo 옮김: ${from} → ${to} · 폴더 ${folder}`);
   if (fixed.length) console.log(`  문서 경로 고침: ${fixed.join(', ')}`);
-  console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다 (팀원 PC 는 aidure repo move 를 같이 하거나, 옛 폴더를 지우고 aidure install)');
+  console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다 (팀원 PC 는 kedovi repo move 를 같이 하거나, 옛 폴더를 지우고 kedovi install)');
   console.log('  열려 있는 IDE · 터미널은 새 경로로 다시 엽니다');
   if (!ok) process.exit(1);
 }
@@ -2008,7 +2008,7 @@ async function cmdRepo(argv = []) {
   if (gi >= 0 && (!group || group.startsWith('--'))) fail(`--group 뒤에 그룹 이름을 주세요. 사용법: ${REPO_USAGE}`);
   let value = rest.filter((x, i) => !x.startsWith('--') && (ki < 0 || i !== ki + 1) && (gi < 0 || i !== gi + 1))[0] || null;
   const tty = process.stdin.isTTY;
-  if (tty) { clack(); p.intro(' aidure repo add '); }
+  if (tty) { clack(); p.intro(' kedovi repo add '); }
   if (!kind) {
     kind = tty ? ask(await choose({ message: 'repo 종류', hint: '종류에 따라 에이전트가 쓰는 방식이 다릅니다 (코드 = 고침, 기획·레거시 = 읽기 전용, 이슈 = 문서 작성).', initialValue: 'code',
       options: Object.entries(kit.REPO_KINDS).map(([k, label]) => ({ value: k, label })) })) : 'code';
@@ -2043,7 +2043,7 @@ async function cmdRepo(argv = []) {
   if (repo.local) {
     const ver = (raw.kit || {}).version || '0.0.0';
     const [a, b] = ver.split('.').map(Number);
-    if (a === 0 && b < 14) fail(`이 워크스페이스(킷 ${ver})는 원격 없는 repo 를 모릅니다. aidure upgrade 후 다시 하세요`);
+    if (a === 0 && b < 14) fail(`이 워크스페이스(킷 ${ver})는 원격 없는 repo 를 모릅니다. kedovi upgrade 후 다시 하세요`);
     if (!NEW_NAME.test(repo.name)) fail(`이름은 영문·숫자·._- 만: ${repo.name}`);
   }
   if ((kind === 'code' || kind === 'issues') && repo.remote) {
@@ -2064,10 +2064,10 @@ async function cmdRepo(argv = []) {
     spawnSync('git', ['init', '-q', dir]);
   }
   const ok = runWorkspaceKit(root, ['install']);
-  if (tty && kind === 'code' && (await reviewStacks(root, { force: true, only: repo.name })) === BACK) p.log.info('스택은 감지 결과대로 두었습니다. aidure detect 로 고칠 수 있습니다');
+  if (tty && kind === 'code' && (await reviewStacks(root, { force: true, only: repo.name })) === BACK) p.log.info('스택은 감지 결과대로 두었습니다. kedovi detect 로 고칠 수 있습니다');
   const lines = [`${kit.repoRel(repo)} (${kit.REPO_KINDS[kind]}) ← ${repo.remote || repo.path || '새로 만듦 (원격 없음)'}`,
-    'workspace.json 이 바뀌었습니다. commit · push 하면 팀원이 aidure install 로 받습니다.'];
-  if (repo.local && kind === 'docs') lines.push(`기획 repo 뼈대(폴더 · 견본)가 필요하면: aidure init-docs ${kit.repoRel(repo)}`);
+    'workspace.json 이 바뀌었습니다. commit · push 하면 팀원이 kedovi install 로 받습니다.'];
+  if (repo.local && kind === 'docs') lines.push(`기획 repo 뼈대(폴더 · 견본)가 필요하면: kedovi init-docs ${kit.repoRel(repo)}`);
   if (repo.local) lines.push(`원격 저장소를 만든 뒤: git -C ${kit.repoRel(repo)} remote add origin <주소> && git -C ${kit.repoRel(repo)} push -u origin HEAD`,
     '그다음 sync(세션 시작 때 자동)가 workspace.json 에 주소를 채웁니다. 그 workspace.json 을 commit · push 하세요.');
   if (tty) { p.note(lines.join('\n'), '추가함'); p.outro(ok ? '완료' : '확인할 것이 있습니다'); } else console.log(lines.join('\n'));
@@ -2079,7 +2079,7 @@ async function cmdDetect(argv = []) {
   // 힌트 추가는 화면 없이 엔진에 넘긴다 — 추가 후 다시 감지해 결과를 보여 준다
   requireAdmin(root, '스택 감지·수정');
   if (argv.includes('--hint')) process.exit(runWorkspaceKit(root, ['detect', ...argv]) ? 0 : 1);
-  if (process.stdin.isTTY) { clack(); p.intro(' aidure detect '); if ((await reviewStacks(root, { force: true })) === BACK) return p.cancel('취소했습니다'); return p.outro('완료: AGENTS.md 의 repo 별 작업 규칙이 갱신됐습니다'); }
+  if (process.stdin.isTTY) { clack(); p.intro(' kedovi detect '); if ((await reviewStacks(root, { force: true })) === BACK) return p.cancel('취소했습니다'); return p.outro('완료: AGENTS.md 의 repo 별 작업 규칙이 갱신됐습니다'); }
   process.exit(runWorkspaceKit(root, ['detect', '--force']) ? 0 : 1);
 }
 
@@ -2110,9 +2110,9 @@ function migrateModels(root) {
 
 /**
  * 화면 없이 모델 바꾸기 (AI 가 대신 실행할 때) — 반환: 처리했으면 true
- *   aidure models profile [rich|standard|lean|team] [--team]         프로필 (team = 이 PC 값 지우고 팀 기본 따름, 호환: - · 팀). 이 PC 값은 팀보다 낮은 것만. 인자 없이 실행하면 화면에서 고른다
- *   aidure models set <main|crossReview|역할> <claude|codex> <모델|-> [--team] [--effort <e>]   모델 (- = 직접 지정 지우기, 위임은 codex:<모델>)
- *   aidure models allow-higher on|off                                 팀원이 팀보다 높은 프로필을 둘 수 있게 (workspace.json agents.allowHigherProfile, 관리자)
+ *   kedovi models profile [rich|standard|lean|team] [--team]         프로필 (team = 이 PC 값 지우고 팀 기본 따름, 호환: - · 팀). 이 PC 값은 팀보다 낮은 것만. 인자 없이 실행하면 화면에서 고른다
+ *   kedovi models set <main|crossReview|역할> <claude|codex> <모델|-> [--team] [--effort <e>]   모델 (- = 직접 지정 지우기, 위임은 codex:<모델>)
+ *   kedovi models allow-higher on|off                                 팀원이 팀보다 높은 프로필을 둘 수 있게 (workspace.json agents.allowHigherProfile, 관리자)
  */
 async function modelsCommand(root, argv) {
   const [sub, ...rest] = argv;
@@ -2126,7 +2126,7 @@ async function modelsCommand(root, argv) {
         options: [{ value: 'off', label: '아니오 (팀과 같거나 낮은 것만)' }, { value: 'on', label: '예 (높은 프로필도 허용)' }], initialValue: profile.allowHigher ? 'on' : 'off' });
       if (onOff === BACK) return true;
     }
-    if (!['on', 'off'].includes(onOff)) fail('사용법: aidure models allow-higher on|off (인자 없이 실행하면 화면에서 고른다)');
+    if (!['on', 'off'].includes(onOff)) fail('사용법: kedovi models allow-higher on|off (인자 없이 실행하면 화면에서 고른다)');
     rest[0] = onOff;
     requireAdmin(root, '팀 프로필 허용 범위 변경');
     const wsFile = path.join(root, 'workspace.json');
@@ -2158,17 +2158,17 @@ async function modelsCommand(root, argv) {
       if (picked === BACK || clack().isCancel(picked)) return true;
       v = picked === '' ? 'team' : picked;
     }
-    if (!v || (!pfs.includes(v) && !(CLEAR.includes(v) && !team))) fail(`사용법: aidure models profile [${pfs.join('|')}${team ? '' : '|team'}] [--team]  (인자 없이 실행하면 화면에서 고른다. team = 이 PC 값 지우고 팀 따름)`);
+    if (!v || (!pfs.includes(v) && !(CLEAR.includes(v) && !team))) fail(`사용법: kedovi models profile [${pfs.join('|')}${team ? '' : '|team'}] [--team]  (인자 없이 실행하면 화면에서 고른다. team = 이 PC 값 지우고 팀 따름)`);
     const clear = CLEAR.includes(v);
     if (!team && !clear && !profileAllowed(root, cat, v)) {
       const { profile } = kit.resolveModels(root, kit.loadWorkspace(root));
-      fail(`이 PC 프로필은 팀 프로필(${kit.profileLabel(cat, profile.team)})과 같거나 낮은 것만 됩니다. 팀 값을 올리려면 aidure models profile ${v} --team, 팀원에게 높은 프로필을 허용하려면 aidure models allow-higher on (관리자)`);
+      fail(`이 PC 프로필은 팀 프로필(${kit.profileLabel(cat, profile.team)})과 같거나 낮은 것만 됩니다. 팀 값을 올리려면 kedovi models profile ${v} --team, 팀원에게 높은 프로필을 허용하려면 kedovi models allow-higher on (관리자)`);
     }
     saveProfile(root, team ? 'team' : 'local', clear ? '' : v);
   } else {
     const [role, tool, model] = args;
     const roles = listRoles(root).map((r) => r.name);
-    if (!role || !['main', 'crossReview', ...roles].includes(role) || !AGENTS[tool] || model === undefined) fail(`사용법: aidure models set <main|crossReview|${roles.join('|')}> <claude|codex> <모델|-> [--team] [--effort <e>]`);
+    if (!role || !['main', 'crossReview', ...roles].includes(role) || !AGENTS[tool] || model === undefined) fail(`사용법: kedovi models set <main|crossReview|${roles.join('|')}> <claude|codex> <모델|-> [--team] [--effort <e>]`);
     if (role === 'main' && kit.splitModel(model, tool).delegated) fail('메인은 실행 도구의 모델이어야 합니다 (위임 불가)');
     const agents = JSON.parse(JSON.stringify(readPicks(root, team ? 'team' : 'local')));
     let node = agents;
@@ -2187,7 +2187,7 @@ async function modelsCommand(root, argv) {
   return true;
 }
 
-const AI_USAGE = 'aidure ai [show | direct <claude,gpt> | plan claude|gpt <요금제> | gateway [--url <주소> --key-env <변수>] | refresh | compose mix|vendor|single | main claude|gpt] [--team]';
+const AI_USAGE = 'kedovi ai [show | direct <claude,gpt> | plan claude|gpt <요금제> | gateway [--url <주소> --key-env <변수>] | refresh | compose mix|vendor|single | main claude|gpt] [--team]';
 const ROOM_TEXT = { tight: '빠듯', ample: '넉넉', metered: '종량' };
 
 /** 이 PC 의 시작 도구가 연결 방식과 안 맞으면 맞춘다 (직접 연결인데 그 회사를 안 쓰는 경우). 반환: 바꾼 도구 · null */
@@ -2217,7 +2217,7 @@ function showAccess(root) {
   }, null, 2));
   // 정하지 않았는데 이 PC 의 Claude Code · Codex 가 게이트웨이로 이어져 있으면: 실제 연결과 저장값이 다르다
   const found = a.set ? [] : gateway.detect();
-  if (found.length) console.warn(`⚠ 연결 방식을 정하지 않아 서비스 직접으로 봅니다. 이 PC 는 게이트웨이 ${found[0].url} 로 이어져 있습니다 (${found[0].source}). 맞추기: aidure ai gateway`);
+  if (found.length) console.warn(`⚠ 연결 방식을 정하지 않아 서비스 직접으로 봅니다. 이 PC 는 게이트웨이 ${found[0].url} 로 이어져 있습니다 (${found[0].source}). 맞추기: kedovi ai gateway`);
 }
 
 async function cmdAi(argv = []) {
@@ -2234,7 +2234,7 @@ async function cmdAi(argv = []) {
       runWorkspaceKit(root, ['sync', '--quiet']);
       p.log.success(`저장: ${accessSummary(a)} (이 PC 전용)`);
       if (moved) p.log.info(`시작 도구를 ${AGENTS[moved].label} 로 바꿨습니다`);
-      return p.outro('역할 모델 표는 aidure models 로 봅니다');
+      return p.outro('역할 모델 표는 kedovi models 로 봅니다');
     }
     return showAccess(root);
   }
@@ -2245,7 +2245,7 @@ async function cmdAi(argv = []) {
     const v = ({ claude: 'claude', anthropic: 'claude', gpt: 'codex', openai: 'codex', codex: 'codex', chatgpt: 'codex' })[String(arg || '').toLowerCase()];
     const id = args[2];
     const list = ((kit.loadCatalogFor(root, kit.loadWorkspace(root)).cat.plans || {})[v]) || [];
-    if (!v || !list.some((x) => x.id === id)) fail(`사용법: aidure ai plan claude|gpt <요금제> [--team]. ${v ? `${v === 'codex' ? 'ChatGPT' : 'Claude'} 요금제: ${list.map((x) => `${x.id}(${x.label} · ${ROOM_TEXT[x.room]})`).join(', ')}` : ''}`);
+    if (!v || !list.some((x) => x.id === id)) fail(`사용법: kedovi ai plan claude|gpt <요금제> [--team]. ${v ? `${v === 'codex' ? 'ChatGPT' : 'Claude'} 요금제: ${list.map((x) => `${x.id}(${x.label} · ${ROOM_TEXT[x.room]})`).join(', ')}` : ''}`);
     if (team) { const f = path.join(root, 'workspace.json'); const w = JSON.parse(read(f)); w.agents = { ...(w.agents || {}), plans: { ...((w.agents || {}).plans || {}), [v]: id } }; fs.writeFileSync(f, `${JSON.stringify(w, null, 2)}\n`); }
     else { const a = readLocal(root).agents || {}; writeLocal(root, { agents: { ...a, plans: { ...(a.plans || {}), [v]: id } } }); }
     runWorkspaceKit(root, ['sync', '--quiet']);
@@ -2259,7 +2259,7 @@ async function cmdAi(argv = []) {
   const vendorId = (x) => ({ claude: 'claude', anthropic: 'claude', gpt: 'codex', openai: 'codex', codex: 'codex' })[String(x).toLowerCase()];
   if (sub === 'direct') {
     const vendors = [...new Set(String(arg || '').split(',').map(vendorId))];
-    if (!vendors.length || vendors.includes(undefined)) fail(`사용법: aidure ai direct <claude|gpt|claude,gpt>`);
+    if (!vendors.length || vendors.includes(undefined)) fail(`사용법: kedovi ai direct <claude|gpt|claude,gpt>`);
     Object.assign(next, { connection: 'direct', vendors });
     delete next.gateway; delete next.main;
   } else if (sub === 'gateway' || sub === 'refresh') {
@@ -2273,26 +2273,26 @@ async function cmdAi(argv = []) {
       g = { url, source: '직접 입력', keyName, key: keyName ? process.env[keyName] || (same && same.keyName === keyName ? same.key : null) : null, aliases: !!(same && same.aliases) };
     } else {
       const saved = sub === 'refresh' ? (raw.gateway || accessOf(root).gateway) : null;
-      if (sub === 'refresh' && !saved) fail('게이트웨이 설정이 없습니다. aidure ai gateway 로 먼저 정하세요');
+      if (sub === 'refresh' && !saved) fail('게이트웨이 설정이 없습니다. kedovi ai gateway 로 먼저 정하세요');
       const found = gateway.detect();
       g = saved ? found.find((x) => x.url === saved.url) || { url: saved.url, source: saved.source || '저장된 설정', keyName: saved.keyEnv || null, key: saved.keyEnv ? process.env[saved.keyEnv] || null : null, aliases: !!saved.aliases } : found[0];
-      if (!g) fail('이 PC 에서 게이트웨이 설정을 찾지 못했습니다. aidure ai gateway --url <주소> --key-env <키가 든 환경변수 이름>');
+      if (!g) fail('이 PC 에서 게이트웨이 설정을 찾지 못했습니다. kedovi ai gateway --url <주소> --key-env <키가 든 환경변수 이름>');
       if (saved && !found.includes(g) && g.key && !(await trustGateway(root, { url: g.url, keyEnv: g.keyName }))) g = { ...g, key: null };
     }
     if (g.key && !gateway.safeUrl(g.url)) { console.warn(`⚠ 게이트웨이 주소가 https 가 아니라 키 없이 조회합니다: ${g.url}`); g = { ...g, key: null }; }
     const r = await gateway.listModels(g.url, g.key);
-    if (!r.ok) console.warn(`⚠ 모델 목록 조회 실패 (${r.error}). 킷 기본 모델 이름으로 진행합니다. 나중에 aidure ai refresh`);
+    if (!r.ok) console.warn(`⚠ 모델 목록 조회 실패 (${r.error}). 킷 기본 모델 이름으로 진행합니다. 나중에 kedovi ai refresh`);
     next.connection = 'gateway';
     next.gateway = gateway.toSaved(g, r.ok ? r.models : ((raw.gateway || {}).models || []));
     delete next.vendors;
     if (r.ok) console.log(`✔ 게이트웨이 ${g.url}: 모델 ${r.models.length}개\n${gatewayNote(r.models)}`);
   } else if (sub === 'compose') {
-    if (!['mix', 'vendor', 'single'].includes(arg)) fail('사용법: aidure ai compose mix|vendor|single (섞기 · 한 회사만 · 단일 모델)');
+    if (!['mix', 'vendor', 'single'].includes(arg)) fail('사용법: kedovi ai compose mix|vendor|single (섞기 · 한 회사만 · 단일 모델)');
     next.compose = arg;
   } else if (sub === 'main') {
     const v = vendorId(arg);
-    if (!v) fail('사용법: aidure ai main claude|gpt (게이트웨이에서 Claude Code 메인 모델 회사)');
-    if (kit.normalizeAccess(next).connection !== 'gateway' && v === 'codex') fail('GPT 메인을 Claude Code 로 돌리는 것은 게이트웨이에서만 됩니다. GPT 만 쓰면 aidure ai direct gpt (Codex 로 시작)');
+    if (!v) fail('사용법: kedovi ai main claude|gpt (게이트웨이에서 Claude Code 메인 모델 회사)');
+    if (kit.normalizeAccess(next).connection !== 'gateway' && v === 'codex') fail('GPT 메인을 Claude Code 로 돌리는 것은 게이트웨이에서만 됩니다. GPT 만 쓰면 kedovi ai direct gpt (Codex 로 시작)');
     next.main = v;
   } else fail(`사용법: ${AI_USAGE}`);
   saveAccess(root, scope, next);
@@ -2303,7 +2303,7 @@ async function cmdAi(argv = []) {
   showAccess(root);
 }
 
-/** 팀 구성 옵션 — 모드 · 역할별 선호 모델. 팀(workspace.json agents, --team) · 이 PC(.agents/local.json agents). 요금제는 aidure ai (plan) */
+/** 팀 구성 옵션 — 모드 · 역할별 선호 모델. 팀(workspace.json agents, --team) · 이 PC(.agents/local.json agents). 요금제는 kedovi ai (plan) */
 /** 진행 방식 (workspace.json project.approach): 스프린트 · 전체 · 이슈형. 바꾸면 sync 하고, 로드맵이 기본 단계 그대로면 새 뼈대로 (이슈형이면 고친 로드맵에도 이슈 보드를 끼운다) */
 function cmdApproach(argv) {
   const root = locateWorkspace();
@@ -2312,12 +2312,12 @@ function cmdApproach(argv) {
   const want = argv[0];
   if (!want) {
     console.log(`진행 방식: ${cur ? kit.APPROACHES[cur] || cur : '정하지 않음 (전체처럼 동작)'}`);
-    for (const [k, v] of Object.entries(kit.APPROACHES)) console.log(`  aidure approach ${k.padEnd(12)} ${v}`);
+    for (const [k, v] of Object.entries(kit.APPROACHES)) console.log(`  kedovi approach ${k.padEnd(12)} ${v}`);
     return;
   }
-  if (!kit.APPROACHES[want]) fail(`사용법: aidure approach [${Object.keys(kit.APPROACHES).join('|')}]`);
+  if (!kit.APPROACHES[want]) fail(`사용법: kedovi approach [${Object.keys(kit.APPROACHES).join('|')}]`);
   const wsKit = read(path.join(root, 'bin', 'kit.js'));
-  if (!wsKit.includes('APPROACHES') || (want === 'issue' && !/issue: '이슈형/.test(wsKit))) fail('이 워크스페이스의 킷이 이 진행 방식을 모릅니다. aidure upgrade 를 먼저 하세요');
+  if (!wsKit.includes('APPROACHES') || (want === 'issue' && !/issue: '이슈형/.test(wsKit))) fail('이 워크스페이스의 킷이 이 진행 방식을 모릅니다. kedovi upgrade 를 먼저 하세요');
   requireAdmin(root, '진행 방식 변경');
   const w = JSON.parse(read(wsFile));
   w.project = { ...(w.project || {}), approach: want };
@@ -2341,16 +2341,16 @@ async function cmdType(argv) {
   const want = argv.find((x, i) => !x.startsWith('--') && !['--approach', '--code'].includes(argv[i - 1]));
   if (!want) {
     console.log(`유형: ${kit.PROJECT_TYPES[cur] || cur || '정하지 않음'}`);
-    for (const [k, v] of Object.entries(kit.PROJECT_TYPES)) console.log(`  aidure type ${k.padEnd(14)} ${v}`);
+    for (const [k, v] of Object.entries(kit.PROJECT_TYPES)) console.log(`  kedovi type ${k.padEnd(14)} ${v}`);
     console.log('  옵션: --approach sprint|full|issue · --code <현행 repo 이름,…> (개발 repo 로 바꿀 것)');
     return;
   }
-  if (!kit.PROJECT_TYPES[want]) fail(`사용법: aidure type [${Object.keys(kit.PROJECT_TYPES).join('|')}] [--approach ${Object.keys(kit.APPROACHES).join('|')}] [--code <이름,…>]`);
+  if (!kit.PROJECT_TYPES[want]) fail(`사용법: kedovi type [${Object.keys(kit.PROJECT_TYPES).join('|')}] [--approach ${Object.keys(kit.APPROACHES).join('|')}] [--code <이름,…>]`);
   if (want === cur) { console.log(`이미 ${kit.PROJECT_TYPES[cur]} 입니다`); return; }
-  if (!/issue: '이슈형/.test(read(path.join(root, 'bin', 'kit.js')))) fail('이 워크스페이스의 킷이 오래됐습니다. aidure upgrade 를 먼저 하세요');
+  if (!/issue: '이슈형/.test(read(path.join(root, 'bin', 'kit.js')))) fail('이 워크스페이스의 킷이 오래됐습니다. kedovi upgrade 를 먼저 하세요');
   requireAdmin(root, '유형 변경');
   const tty = process.stdin.isTTY;
-  if (tty) { clack(); p.intro(' aidure type '); }
+  if (tty) { clack(); p.intro(' kedovi type '); }
   const rule = kit.TYPE_RULES[want];
   // 필수 repo: 개발 repo 가 필요한 유형인데 없으면 현행(레거시) repo 중 고칠 것을 개발 repo 로
   const repos = w.repos || [];
@@ -2368,7 +2368,7 @@ async function cmdType(argv) {
   let approach = opt('approach');
   if (approach && !kit.APPROACHES[approach]) fail(`--approach 는 ${Object.keys(kit.APPROACHES).join(' | ')} 중 하나`);
   if (!approach && tty) {
-    const v = await choose({ message: '진행 방식', hint: '로드맵 모양이 정해집니다. 나중에 aidure approach 로 바꿉니다.', initialValue: rule.approach,
+    const v = await choose({ message: '진행 방식', hint: '로드맵 모양이 정해집니다. 나중에 kedovi approach 로 바꿉니다.', initialValue: rule.approach,
       options: Object.entries(kit.APPROACHES).map(([value, label]) => ({ value, label })) });
     if (v === BACK || clack().isCancel(v)) { p.cancel('취소했습니다'); process.exit(0); }
     approach = v;
@@ -2394,7 +2394,7 @@ async function cmdType(argv) {
     if (P.IDEA_STAGE) fs.writeFileSync(planFile, read(planFile).replace(`| 1 | ${P.IDEA_STAGE} | ▶ | | |`, `| 1 | ${P.IDEA_STAGE} | ✔ 건너뜀 (분석·설계 산출물) | | |`).replace(/\| 2 \| ([^|]+) \| ○ \|/, '| 2 | $1 | ▶ |'));
   }
   if (old && fs.existsSync(planFile)) {
-    const body = old.split('\n').filter((l) => !/^#\s/.test(l) && !l.includes('<!-- aidure:preset')).map((l) => l.replace(/^##\s/, '### '));
+    const body = old.split('\n').filter((l) => !/^#\s/.test(l) && !l.includes('<!-- kedovi:preset')).map((l) => l.replace(/^##\s/, '### '));
     fs.writeFileSync(planFile, `${read(planFile).trimEnd()}\n\n## 지난 로드맵 (${kit.PROJECT_TYPES[cur] || cur}, ~${new Date().toISOString().slice(0, 10)}. 읽지 않는다)\n\n${body.join('\n').trim()}\n`);
   }
   const lines = [`✔ 유형: ${kit.PROJECT_TYPES[cur] || cur} → ${kit.PROJECT_TYPES[want]} · 진행 방식 ${kit.APPROACHES[approach].split(' (')[0]}`,
@@ -2402,9 +2402,9 @@ async function cmdType(argv) {
     ...(toCode.length ? [`  개발 repo 로: ${toCode.join(', ')}`] : []),
     `  로드맵: handoffs/PLAN.md 새 뼈대${old ? ' (지난 로드맵은 아래 「지난 로드맵」 절에 남김)' : ''}`];
   const has = (k) => repos.some((r) => r.kind === k);
-  if (toCode.length) lines.push('  개발 repo 로 바꾼 repo 의 스택 확인: aidure detect');
-  if (rule.requires.includes('code') && !has('code')) lines.push('  ⚠ 개발 repo 가 없습니다. aidure repo add 로 더하거나 aidure type 을 다시 해 현행 repo 를 고르세요');
-  if (rule.requires.includes('legacy') && !has('legacy')) lines.push('  ⚠ 이 유형은 레거시(AS-IS) repo 가 필요합니다. aidure repo add --kind legacy');
+  if (toCode.length) lines.push('  개발 repo 로 바꾼 repo 의 스택 확인: kedovi detect');
+  if (rule.requires.includes('code') && !has('code')) lines.push('  ⚠ 개발 repo 가 없습니다. kedovi repo add 로 더하거나 kedovi type 을 다시 해 현행 repo 를 고르세요');
+  if (rule.requires.includes('legacy') && !has('legacy')) lines.push('  ⚠ 이 유형은 레거시(AS-IS) repo 가 필요합니다. kedovi repo add --kind legacy');
   lines.push('  workspace.json · handoffs/PLAN.md 를 commit · push 하면 팀에 적용됩니다');
   if (tty) p.outro(lines.join('\n')); else console.log(lines.join('\n'));
 }
@@ -2422,11 +2422,11 @@ function cmdTimestamp(argv) {
     const m = val(readLocal(root));
     const now = m !== undefined ? m : t !== undefined ? t : true;
     console.log(`답변 첫 줄 시각 표시 (Claude Code): ${now ? '켜짐' : '꺼짐'}  (이 PC ${word(m)} · 팀 ${word(t)} · 기본 켜짐)`);
-    console.log('  바꾸기: aidure timestamp on|off · 팀 기본값: --team (관리자) · 이 PC 값 지우기: aidure timestamp team');
+    console.log('  바꾸기: kedovi timestamp on|off · 팀 기본값: --team (관리자) · 이 PC 값 지우기: kedovi timestamp team');
   };
   if (!want) return show();
-  if (!['on', 'off', 'team'].includes(want) || (want === 'team' && team)) fail('사용법: aidure timestamp [on|off] [--team] · team (이 PC 값을 지워 팀 값을 따름)');
-  if (!fs.existsSync(path.join(root, 'packs', 'core', 'hooks', 'prompt-time.js'))) fail('이 워크스페이스의 킷이 시각 표시를 모릅니다. aidure upgrade 를 먼저 하세요');
+  if (!['on', 'off', 'team'].includes(want) || (want === 'team' && team)) fail('사용법: kedovi timestamp [on|off] [--team] · team (이 PC 값을 지워 팀 값을 따름)');
+  if (!fs.existsSync(path.join(root, 'packs', 'core', 'hooks', 'prompt-time.js'))) fail('이 워크스페이스의 킷이 시각 표시를 모릅니다. kedovi upgrade 를 먼저 하세요');
   if (team) {
     requireAdmin(root, '시각 표시 팀 기본값 변경');
     const w = JSON.parse(read(wsFile));
@@ -2441,7 +2441,7 @@ function cmdTimestamp(argv) {
   show();
 }
 
-// ───────── 응답 언어 · 대화 스타일 (aidure prefs) ─────────
+// ───────── 응답 언어 · 대화 스타일 (kedovi prefs) ─────────
 const chatPrefs = require(path.join(KIT_ROOT, 'packs', 'core', 'lib', 'chatprefs.js'));
 const MERMAID_PLUGIN = { id: 'claude-mermaid@claude-mermaid', marketplace: 'veelenga/claude-mermaid', repo: 'https://github.com/veelenga/claude-mermaid' };
 
@@ -2474,8 +2474,8 @@ function showPrefs(root) {
   console.log(`응답 언어: ${L(r.language)} (${where[r.from.language]})  · 이 PC ${L(r.local.language)} · 팀 ${L(r.team.language)}`);
   console.log(`대화 스타일: ${S(r.style)} (${where[r.from.style]})  · 이 PC ${S(r.local.style)} · 팀 ${S(r.team.style)}`);
   const m = mermaidInstalled();
-  console.log(`그림 미리보기(claude-mermaid): ${m === null ? '확인 못 함 (Claude Code 없음)' : m ? '설치됨: 세션에 mermaid_preview 가 있으면 브라우저로 띄움' : '없음: 텍스트 그림으로 (설치: aidure prefs mermaid install)'}`);
-  console.log('  바꾸기: aidure prefs language ko|en · aidure prefs style learn|normal|expert · 이 PC 값 지우기: team · 팀 기본값: --team (관리자)');
+  console.log(`그림 미리보기(claude-mermaid): ${m === null ? '확인 못 함 (Claude Code 없음)' : m ? '설치됨: 세션에 mermaid_preview 가 있으면 브라우저로 띄움' : '없음: 텍스트 그림으로 (설치: kedovi prefs mermaid install)'}`);
+  console.log('  바꾸기: kedovi prefs language ko|en · kedovi prefs style learn|normal|expert · 이 PC 값 지우기: team · 팀 기본값: --team (관리자)');
 }
 
 /** 저장 → sync. key = language | style, value = 값 | 'team'(이 PC 값 지우기) */
@@ -2497,34 +2497,34 @@ function savePref(root, key, value, team) {
 async function choosePrefs(root, { onlyMissing = false } = {}) {
   const r = chatPrefs.resolve(root);
   if (!onlyMissing || !r.local.language) {
-    const v = ask(await choose({ message: '응답 언어', hint: 'AI 가 답하는 언어입니다. 진행 알림 · 중간 설명 · 결과 보고까지 이 언어로 씁니다. 나중에 aidure prefs language 로 바꿉니다.', initialValue: r.language,
+    const v = ask(await choose({ message: '응답 언어', hint: 'AI 가 답하는 언어입니다. 진행 알림 · 중간 설명 · 결과 보고까지 이 언어로 씁니다. 나중에 kedovi prefs language 로 바꿉니다.', initialValue: r.language,
       options: Object.entries(chatPrefs.LANGUAGES).map(([value, x]) => ({ value, label: x.label })) }));
     savePref(root, 'language', v, false);
   }
   if (!onlyMissing || !r.local.style) {
-    const v = ask(await choose({ message: '대화 스타일', hint: '설명을 얼마나 자세히 할지 정합니다. 나중에 aidure prefs style 로 바꿉니다.', initialValue: r.style,
+    const v = ask(await choose({ message: '대화 스타일', hint: '설명을 얼마나 자세히 할지 정합니다. 나중에 kedovi prefs style 로 바꿉니다.', initialValue: r.style,
       options: Object.entries(chatPrefs.STYLES).map(([value, x]) => ({ value, label: x.label, hint: x.hint })) }));
     savePref(root, 'style', v, false);
   }
   const conf = readLocal(root);
   if (conf.agent === 'claude' && !conf.mermaidAsked && mermaidInstalled() === false) {
-    const yes = ask(await yesNo({ message: '그림을 브라우저로 띄우는 claude-mermaid 플러그인을 설치할까요?', hint: `커뮤니티 플러그인(${MERMAID_PLUGIN.repo})입니다. 없으면 터미널에 텍스트 그림으로 그립니다. 나중에 aidure prefs mermaid install.`, initialValue: false }));
+    const yes = ask(await yesNo({ message: '그림을 브라우저로 띄우는 claude-mermaid 플러그인을 설치할까요?', hint: `커뮤니티 플러그인(${MERMAID_PLUGIN.repo})입니다. 없으면 터미널에 텍스트 그림으로 그립니다. 나중에 kedovi prefs mermaid install.`, initialValue: false }));
     writeLocal(root, { mermaidAsked: true });
     if (yes && installMermaid()) p.log.success('claude-mermaid 를 설치했습니다. 새 세션부터 적용됩니다');
   }
   runWorkspaceKit(root, ['sync', '--quiet']);
 }
 
-/** aidure prefs [language|style <값|team> [--team] | mermaid [install] | setup] */
+/** kedovi prefs [language|style <값|team> [--team] | mermaid [install] | setup] */
 async function cmdPrefs(argv) {
   const root = locateWorkspace();
   const team = argv.includes('--team');
   const [what, want] = argv.filter((a) => a !== '--team');
-  if (!fs.existsSync(path.join(root, 'packs', 'core', 'lib', 'chatprefs.js'))) fail('이 워크스페이스의 킷이 응답 언어 · 대화 스타일을 모릅니다. aidure upgrade 를 먼저 하세요');
-  const usage = '사용법: aidure prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup';
+  if (!fs.existsSync(path.join(root, 'packs', 'core', 'lib', 'chatprefs.js'))) fail('이 워크스페이스의 킷이 응답 언어 · 대화 스타일을 모릅니다. kedovi upgrade 를 먼저 하세요');
+  const usage = '사용법: kedovi prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup';
   if (!what) return showPrefs(root);
   if (what === 'setup') {
-    if (!process.stdin.isTTY) fail('setup 은 터미널에서만 됩니다. 채팅에서는 aidure prefs language · style');
+    if (!process.stdin.isTTY) fail('setup 은 터미널에서만 됩니다. 채팅에서는 kedovi prefs language · style');
     clack();
     await choosePrefs(root);
     p.outro('저장했습니다. 언어 줄은 다음 요청부터, 출력 스타일은 새 세션부터 적용됩니다');
@@ -2534,7 +2534,7 @@ async function cmdPrefs(argv) {
     if (want === 'install') { if (!installMermaid()) fail('claude-mermaid 설치에 실패했습니다. Claude Code 안에서 /plugin marketplace add veelenga/claude-mermaid → /plugin install claude-mermaid@claude-mermaid'); console.log('✔ claude-mermaid 를 설치했습니다. 새 세션부터 적용됩니다'); return; }
     if (want) fail(usage);
     const m = mermaidInstalled();
-    console.log(m ? '✔ claude-mermaid 설치됨' : m === false ? '없음: aidure prefs mermaid install' : '확인 못 함 (Claude Code 없음)');
+    console.log(m ? '✔ claude-mermaid 설치됨' : m === false ? '없음: kedovi prefs mermaid install' : '확인 못 함 (Claude Code 없음)');
     console.log(`  ${MERMAID_PLUGIN.repo} (커뮤니티 플러그인). 세션에 mermaid_preview 도구가 있으면 그림을 브라우저로 띄우고, 없으면 텍스트 그림으로 그립니다`);
     return;
   }
@@ -2564,16 +2564,16 @@ function cmdTeamMode(argv) {
     const en = kit.resolveModels(root, w);
     const EN = { off: '끔', warn: '알림', block: '막기' };
     const enLine = (k) => `${EN[en.enforce[k]]}${en.enforce[k] !== en.teamEnforce[k] ? ` (팀 ${EN[en.teamEnforce[k]]} 보다 세게 한 이 PC 값)` : ''}`;
-    console.log(`  이름 없는 역할 에이전트 (팀 모드)  ${enLine('teammateName')} · 바꾸기: aidure team-mode enforce name off|warn|block [--team]`);
-    console.log(`  첫 역할 에이전트 때 구성표 알림  ${enLine('rosterAnnounce')} · 바꾸기: aidure team-mode enforce roster off|warn [--team]`);
-    console.log(`  commit · push 전 리뷰 확인  ${enLine('reviewBeforePush')} · 대상 ${en.review.repos.join(', ')} · 기준 ${en.review.minLines}줄${en.review.paths.length ? ` · 경로 ${en.review.paths.join(', ')}` : ''} · 바꾸기: aidure team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] [--team] · 상태: aidure review status`);
-    console.log(`  대기로 오래 남은 팀원 (팀 모드)  ${enLine('idleTeammates')} · 대기 ${en.idle.after}분 넘으면 · 같은 팀원은 ${en.idle.remind}분 뒤 다시 · 바꾸기: aidure team-mode enforce idle off|warn|block [--after 분] [--remind 분] [--team]`);
-    console.log(`  기다리며 멈출 때 상태 줄  ${enLine('waitStatus')} · 팀원 · 백그라운드 작업이 남았는데 답변에 「지금 도는 것:」 줄이 없으면 · 바꾸기: aidure team-mode enforce status off|block [--team]`);
-    console.log(`  결정 질문을 글로 끝낼 때  ${enLine('decisionAsk')} · 질문 창 없이 번호 선택지로 물으면 한 번 막고 질문 창으로 · 바꾸기: aidure team-mode enforce ask off|block [--team]`);
-    console.log(`  오래 일하는 팀원 · 위임  ${enLine('longRunning')} · ${en.longRun.after}분 넘으면 계속할지 묻게 · 바꾸기: aidure team-mode enforce run off|warn|block [--after 분] [--team]`);
-    console.log(`  착수 전 확인  ${enLine('planFirst')} · 요청마다 코드 repo 첫 수정 전에 답변에 「착수 전 확인:」 이 없으면 · 바꾸기: aidure team-mode enforce plan off|warn|block [--team]`);
-    console.log(`  리뷰 전 검사  ${enLine('checkBeforeReview')} · 리뷰를 맡기는 지시서에 「검사: <명령> 통과」 줄이 없으면 · 바꾸기: aidure team-mode enforce check off|warn|block [--team]`);
-    console.log('  요금제 바꾸기: aidure ai (화면) · aidure ai plan claude|gpt <요금제>');
+    console.log(`  이름 없는 역할 에이전트 (팀 모드)  ${enLine('teammateName')} · 바꾸기: kedovi team-mode enforce name off|warn|block [--team]`);
+    console.log(`  첫 역할 에이전트 때 구성표 알림  ${enLine('rosterAnnounce')} · 바꾸기: kedovi team-mode enforce roster off|warn [--team]`);
+    console.log(`  commit · push 전 리뷰 확인  ${enLine('reviewBeforePush')} · 대상 ${en.review.repos.join(', ')} · 기준 ${en.review.minLines}줄${en.review.paths.length ? ` · 경로 ${en.review.paths.join(', ')}` : ''} · 바꾸기: kedovi team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] [--team] · 상태: kedovi review status`);
+    console.log(`  대기로 오래 남은 팀원 (팀 모드)  ${enLine('idleTeammates')} · 대기 ${en.idle.after}분 넘으면 · 같은 팀원은 ${en.idle.remind}분 뒤 다시 · 바꾸기: kedovi team-mode enforce idle off|warn|block [--after 분] [--remind 분] [--team]`);
+    console.log(`  기다리며 멈출 때 상태 줄  ${enLine('waitStatus')} · 팀원 · 백그라운드 작업이 남았는데 답변에 「지금 도는 것:」 줄이 없으면 · 바꾸기: kedovi team-mode enforce status off|block [--team]`);
+    console.log(`  결정 질문을 글로 끝낼 때  ${enLine('decisionAsk')} · 질문 창 없이 번호 선택지로 물으면 한 번 막고 질문 창으로 · 바꾸기: kedovi team-mode enforce ask off|block [--team]`);
+    console.log(`  오래 일하는 팀원 · 위임  ${enLine('longRunning')} · ${en.longRun.after}분 넘으면 계속할지 묻게 · 바꾸기: kedovi team-mode enforce run off|warn|block [--after 분] [--team]`);
+    console.log(`  착수 전 확인  ${enLine('planFirst')} · 요청마다 코드 repo 첫 수정 전에 답변에 「착수 전 확인:」 이 없으면 · 바꾸기: kedovi team-mode enforce plan off|warn|block [--team]`);
+    console.log(`  리뷰 전 검사  ${enLine('checkBeforeReview')} · 리뷰를 맡기는 지시서에 「검사: <명령> 통과」 줄이 없으면 · 바꾸기: kedovi team-mode enforce check off|warn|block [--team]`);
+    console.log('  요금제 바꾸기: kedovi ai (화면) · kedovi ai plan claude|gpt <요금제>');
     console.log('  자세히: CLAUDE.local.md · AGENTS.override.md 의 「팀 구성」 (역할 목록 · 쓸 수 있는 모델)');
   };
   if (!args.length) return show();
@@ -2586,15 +2586,15 @@ function cmdTeamMode(argv) {
   const [cmd, a1, a2] = args;
   if (cmd === 'auto' || cmd === 'fixed') edit((x) => ({ ...x, mode: cmd }));
   else if (cmd === 'prefer') {
-    if (!a1 || !a2 || (a2 !== '-' && !/^(claude|codex):\S+$/.test(a2))) fail('사용법: aidure team-mode prefer <역할> <claude|codex>:<모델> [--team]  (지우기: prefer <역할> -)');
+    if (!a1 || !a2 || (a2 !== '-' && !/^(claude|codex):\S+$/.test(a2))) fail('사용법: kedovi team-mode prefer <역할> <claude|codex>:<모델> [--team]  (지우기: prefer <역할> -)');
     edit((x) => { const pr = { ...(x.prefer || {}) }; if (a2 === '-') delete pr[a1]; else pr[a1] = a2; const y = { ...x, prefer: pr }; if (!Object.keys(pr).length) delete y.prefer; return y; });
   } else if (cmd === 'enforce') {
     const key = { name: 'teammateName', roster: 'rosterAnnounce', review: 'reviewBeforePush', idle: 'idleTeammates', status: 'waitStatus', ask: 'decisionAsk', run: 'longRunning', check: 'checkBeforeReview', plan: 'planFirst' }[a1];
-    if ((a1 === 'status' || a1 === 'ask') && a2 === 'warn') fail(`사용법: aidure team-mode enforce ${a1} off|block [--team]  (멈출 때 한 번 막거나 끈다)`);
+    if ((a1 === 'status' || a1 === 'ask') && a2 === 'warn') fail(`사용법: kedovi team-mode enforce ${a1} off|block [--team]  (멈출 때 한 번 막거나 끈다)`);
     const lv = (v) => kit.ENFORCE_LEVELS.indexOf(v);
-    if (!key || lv(a2) < 0 || lv(a2) > lv(kit.ENFORCE_DEFAULTS[key].max)) fail('사용법: aidure team-mode enforce name off|warn|block · roster off|warn · review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] · idle off|warn|block [--after 분] [--remind 분] · status off|block · ask off|block · run off|warn|block [--after 분] · check off|warn|block · plan off|warn|block [--team]  (name: 팀 모드에서 이름 없는 역할 에이전트 · roster: 첫 역할 에이전트 때 구성표 알림 · review: commit · push 전 리뷰 확인 · idle: 대기로 오래 남은 팀원 알림 · status: 남은 것이 있는 채 멈출 때 상태 줄 · ask: 결정 질문을 글로 끝낼 때 · run: 오래 일하는 팀원 · 위임 · check: 리뷰 전 검사 · plan: 코드 수정 전 착수 전 확인)');
+    if (!key || lv(a2) < 0 || lv(a2) > lv(kit.ENFORCE_DEFAULTS[key].max)) fail('사용법: kedovi team-mode enforce name off|warn|block · roster off|warn · review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] · idle off|warn|block [--after 분] [--remind 분] · status off|block · ask off|block · run off|warn|block [--after 분] · check off|warn|block · plan off|warn|block [--team]  (name: 팀 모드에서 이름 없는 역할 에이전트 · roster: 첫 역할 에이전트 때 구성표 알림 · review: commit · push 전 리뷰 확인 · idle: 대기로 오래 남은 팀원 알림 · status: 남은 것이 있는 채 멈출 때 상태 줄 · ask: 결정 질문을 글로 끝낼 때 · run: 오래 일하는 팀원 · 위임 · check: 리뷰 전 검사 · plan: 코드 수정 전 착수 전 확인)');
     const teamNow = kit.resolveModels(root, JSON.parse(read(wsFile))).teamEnforce[key];
-    if (!team && lv(a2) < lv(teamNow)) fail(`이 PC 값은 팀 값(${teamNow})보다 세게만 둘 수 있습니다. 팀 값을 바꾸려면 관리자가 aidure team-mode enforce ${a1} ${a2} --team`);
+    if (!team && lv(a2) < lv(teamNow)) fail(`이 PC 값은 팀 값(${teamNow})보다 세게만 둘 수 있습니다. 팀 값을 바꾸려면 관리자가 kedovi team-mode enforce ${a1} ${a2} --team`);
     // 리뷰 확인의 대상 · 기준은 팀 값만
     const extra = {};
     if (a1 === 'review') {
@@ -2623,7 +2623,7 @@ function cmdTeamMode(argv) {
       extra.runMinutes = n;
     }
     edit((x) => ({ ...x, enforce: { ...(x.enforce || {}), [key]: a2, ...extra } }));
-  } else fail('사용법: aidure team-mode [auto|fixed] · prefer <역할> <claude|codex>:<모델>|- · enforce name off|warn|block · enforce roster off|warn · enforce review off|warn|block · enforce idle off|warn|block · enforce status off|block · enforce ask off|block · enforce run off|warn|block · enforce check off|warn|block · enforce plan off|warn|block · [--team]');
+  } else fail('사용법: kedovi team-mode [auto|fixed] · prefer <역할> <claude|codex>:<모델>|- · enforce name off|warn|block · enforce roster off|warn · enforce review off|warn|block · enforce idle off|warn|block · enforce status off|block · enforce ask off|block · enforce run off|warn|block · enforce check off|warn|block · enforce plan off|warn|block · [--team]');
   runWorkspaceKit(root, ['sync', '--quiet']);
   console.log(`✔ ${team ? '팀 기본값(workspace.json. commit·push 하면 팀 적용)' : '이 PC(.agents/local.json)'} 에 저장했습니다`);
   show();
@@ -2644,8 +2644,8 @@ function modelRows(root, cat, roles) {
   const VENDOR = { claude: 'Claude', codex: 'GPT' };
   const cell = (t, node, local, team, blank) => modelLabel(cat, t, node && node[t], blank) + effortTag(t, node) + src(local, team, t);
   return [
-    `팀 구성: ${opts.mode === 'auto' ? '자동 (리더가 작업마다 역할·모델 선택, 아래는 기본값)' : '고정 (아래 모델대로)'} · 요금제 ${(() => { const r = kit.vendorRooms(kit.loadCatalogFor(root, ws).cat, kit.normalizeAccess({ ...((ws.agents || {}).access || {}), ...(localAgents.access || {}) }), opts.plans); return ['claude', 'codex'].filter((v) => r[v].room).map((v) => `${VENDOR[v]} ${r[v].label}(${ROOM_TEXT[r[v].room]})`).join(' · ') || '모름'; })()}${Object.keys(opts.prefer).length ? ` · 선호 ${Object.entries(opts.prefer).map(([k, v]) => `${k}=${v}`).join(', ')}` : ''}  (aidure team-mode)`,
-    ...(profile && profile.team ? [`성향(프로필): 팀 ${pfLabel(profile.team)}${profile.local ? ` · 이 PC ${pfLabel(profile.local)} (팀 대신)` : ''}${profile.blocked ? ` · 이 PC 값 ${pfLabel(profile.blocked)} 은 팀보다 높아 적용하지 않음 (aidure models profile team 으로 지우기)` : ''}${profile.allowHigher ? ' · 팀원의 높은 프로필 허용' : ''}`,
+    `팀 구성: ${opts.mode === 'auto' ? '자동 (리더가 작업마다 역할·모델 선택, 아래는 기본값)' : '고정 (아래 모델대로)'} · 요금제 ${(() => { const r = kit.vendorRooms(kit.loadCatalogFor(root, ws).cat, kit.normalizeAccess({ ...((ws.agents || {}).access || {}), ...(localAgents.access || {}) }), opts.plans); return ['claude', 'codex'].filter((v) => r[v].room).map((v) => `${VENDOR[v]} ${r[v].label}(${ROOM_TEXT[r[v].room]})`).join(' · ') || '모름'; })()}${Object.keys(opts.prefer).length ? ` · 선호 ${Object.entries(opts.prefer).map(([k, v]) => `${k}=${v}`).join(', ')}` : ''}  (kedovi team-mode)`,
+    ...(profile && profile.team ? [`성향(프로필): 팀 ${pfLabel(profile.team)}${profile.local ? ` · 이 PC ${pfLabel(profile.local)} (팀 대신)` : ''}${profile.blocked ? ` · 이 PC 값 ${pfLabel(profile.blocked)} 은 팀보다 높아 적용하지 않음 (kedovi models profile team 으로 지우기)` : ''}${profile.allowHigher ? ' · 팀원의 높은 프로필 허용' : ''}`,
       `상한: 동시 ${limits.parallel} · 모두 ${limits.total}${limits.parallel !== teamLimits.parallel || limits.total !== teamLimits.total ? ` (팀 ${teamLimits.parallel} · ${teamLimits.total})` : ''}`] : []),
     '',
     `${padTo('역할', 12)}${padTo('등급', 10)}${padTo('Claude Code', 33)}Codex`,
@@ -2672,7 +2672,7 @@ async function cmdModels(argv = []) {
   }
   if (!process.stdin.isTTY) { console.log(modelRows(root, modelCatalog(root), listRoles(root)).join('\n')); return; }
   clack();
-  p.intro(' aidure models ');
+  p.intro(' kedovi models ');
   const cat = modelCatalog(root);
   const roles = listRoles(root);
   const wsFile = path.join(root, 'workspace.json');
@@ -2684,7 +2684,7 @@ async function cmdModels(argv = []) {
       options: [...(cat.profiles ? [{ value: 'profile', label: '프로필 바꾸기', hint: '예산에 맞춰 메인·역할 모델을 한 번에' }] : []),
         { value: 'roles', label: '역할별로 한 번에 고르기', hint: '메인·역할·교차 검토 모델을 차례로' },
         ...roles.map((r) => ({ value: `role:${r.name}`, label: `${r.title || r.name} 에이전트`, hint: r.description.slice(0, 50) })),
-        { value: 'main', label: '메인 모델 (팀 기본값)', hint: '개인 메인 모델은 aidure agent' },
+        { value: 'main', label: '메인 모델 (팀 기본값)', hint: '개인 메인 모델은 kedovi agent' },
         { value: 'cross', label: '교차 검토 모델', hint: '다른 도구에게 검토를 맡길 때' },
         { value: 'done', label: '끝내기' }],
     });
@@ -2791,7 +2791,7 @@ function initDocsRepo(dst) {
     }
   };
   walk(src, dst);
-  // Pages CI 는 core 팩의 견본 하나가 정본이다. 새 repo 는 원격을 모르므로 GitLab · GitHub 둘 다 두고, aidure docs pages on 이 원격에 맞는 것만 남긴다.
+  // Pages CI 는 core 팩의 견본 하나가 정본이다. 새 repo 는 원격을 모르므로 GitLab · GitHub 둘 다 두고, kedovi docs pages on 이 원격에 맞는 것만 남긴다.
   // docs-site/ 를 커밋하기 전에는 어느 쪽도 돌지 않는다
   const ci = path.join(KIT_ROOT, 'packs', 'core', 'assets', 'pages');
   if (fs.existsSync(path.join(ci, 'gitlab-ci.yml'))) fs.copyFileSync(path.join(ci, 'gitlab-ci.yml'), path.join(dst, '.gitlab-ci.yml'));
@@ -2834,7 +2834,7 @@ async function cmdInstall() {
     await choosePrefs(root, { onlyMissing: true });
     await joinTeam(root);
     const cur = readLocal(root);
-    p.outro(`메인 에이전트: ${AGENTS[cur.agent].label}${cur.args && cur.args.length ? ` (${cur.args.join(' ')})` : ''}: 바꾸려면 aidure agent`);
+    p.outro(`메인 에이전트: ${AGENTS[cur.agent].label}${cur.args && cur.args.length ? ` (${cur.args.join(' ')})` : ''}: 바꾸려면 kedovi agent`);
   }
   process.exit(ok ? 0 : 1);
 }
@@ -2846,7 +2846,7 @@ async function cmdStart(argv) {
   if (team.restrict && (team.members || []).length) {
     const me = memberId(root);
     if (!me) fail('이 워크스페이스는 팀 명단에 있는 사람만 시작합니다. 먼저 git config user.name <id> 를 설정하세요');
-    if (!team.members.includes(me)) fail(`${me} 은(는) 이 워크스페이스 팀 명단에 없습니다. 리더에게 명단 추가(aidure team add ${me})를 요청하세요 (명단: ${team.members.join(', ')})`);
+    if (!team.members.includes(me)) fail(`${me} 은(는) 이 워크스페이스 팀 명단에 없습니다. 리더에게 명단 추가(kedovi team add ${me})를 요청하세요 (명단: ${team.members.join(', ')})`);
   }
   const dash = argv.indexOf('--');
   const extra = dash >= 0 ? argv.slice(dash + 1) : [];
@@ -2858,16 +2858,16 @@ async function cmdStart(argv) {
   let conf = readLocal(root);
   const once = flags.includes('--codex') ? 'codex' : flags.includes('--claude') ? 'claude' : null;
   if (!once && !conf.agent) {
-    if (!process.stdin.isTTY) fail('메인 에이전트가 정해지지 않았습니다. aidure install 또는 aidure start --claude|--codex');
+    if (!process.stdin.isTTY) fail('메인 에이전트가 정해지지 않았습니다. kedovi install 또는 kedovi start --claude|--codex');
     conf = ask(await chooseAgent(root, { force: true }));
   }
   // 배포된 새 버전 알림 — npm 레지스트리의 최신 버전이 이 PC 설치본보다 새로우면 (하루 한 번 · 2초 · 실패하면 조용히)
   try {
     const latest = await latestPublished();
     const installed = JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
-    if (latest && semverGt(latest, installed)) console.warn(`⚠ aidure ${latest} 이 나왔습니다 (이 PC ${installed}). npm i -g ${PKG_NAME} → 워크스페이스에서 aidure upgrade → commit · push`);
+    if (latest && semverGt(latest, installed)) console.warn(`⚠ kedovi ${latest} 이 나왔습니다 (이 PC ${installed}). npm i -g ${PKG_NAME} → 워크스페이스에서 kedovi upgrade → commit · push`);
   } catch { /* 확인 실패: 시작을 막지 않는다 */ }
-  // 킷 버전 비교: 설치된 aidure 가 이 워크스페이스보다 새로우면 올릴지 묻는다 (화면 · 올릴 수 있을 때). 아니면 알리기만
+  // 킷 버전 비교: 설치된 kedovi 가 이 워크스페이스보다 새로우면 올릴지 묻는다 (화면 · 올릴 수 있을 때). 아니면 알리기만
   try {
     const installed = installedVersion();
     const used = wsVersion(root);
@@ -2878,11 +2878,11 @@ async function cmdStart(argv) {
         const v = ask(await choose({ message: '킷 새 버전을 지금 올릴까요', hint: `설치 ${installed} · 이 워크스페이스 ${used}. 올리면 bin · 팩 · 생성물이 바뀌고, 끝난 뒤 commit · push 하면 팀에 반영됩니다.`, initialValue: 'up',
           options: [{ value: 'up', label: '지금 올리고 시작 (권장)' }, { value: 'skip', label: '이번엔 그대로 시작' }] }));
         if (v === 'up') {
-          const r = spawnSync(process.execPath, [path.join(KIT_ROOT, 'bin', 'aidure.js'), 'upgrade'], { cwd: root, stdio: 'inherit' });
-          if (r.status === 0) console.log(`✔ ${installed} 로 올렸습니다. 팀에 반영: git add -A && git commit -m "chore: aidure ${installed}" && git push`);
+          const r = spawnSync(process.execPath, [path.join(KIT_ROOT, 'bin', 'kedovi.js'), 'upgrade'], { cwd: root, stdio: 'inherit' });
+          if (r.status === 0) console.log(`✔ ${installed} 로 올렸습니다. 팀에 반영: git add -A && git commit -m "chore: kedovi ${installed}" && git push`);
           else console.warn('⚠ 업그레이드가 실패해 그대로 시작합니다 (위 출력 확인)');
         }
-      } else console.warn(`⚠ 킷 새 버전 ${installed} (이 워크스페이스 ${used}). ${block ? `지금 올리지 않음: ${block}` : 'aidure upgrade 후 commit · push 하면 팀에 반영됩니다'}`);
+      } else console.warn(`⚠ 킷 새 버전 ${installed} (이 워크스페이스 ${used}). ${block ? `지금 올리지 않음: ${block}` : 'kedovi upgrade 후 commit · push 하면 팀에 반영됩니다'}`);
     } else if (used && semverGt(used, installed)) console.warn(`⚠ 이 워크스페이스는 킷 ${used} 로 올라가 있습니다 (이 PC ${installed}). npm i -g ${PKG_NAME}`);
   } catch { /* 버전 정보 없음: 시작을 막지 않는다 */ }
   const agent = once || conf.agent;
@@ -2896,12 +2896,12 @@ async function cmdStart(argv) {
     const absent = ws.repos.filter((r) => !fs.existsSync(path.join(root, r.dir)));
     const waiting = absent.filter((r) => r.local && !r.remote && !r.path).map((r) => r.name); // 다른 팀원이 새로 만들어 아직 원격이 없다
     const missing = absent.filter((r) => !waiting.includes(r.name)).map((r) => r.name);
-    if (missing.length) console.warn(`⚠ repos/ 에 없는 repo: ${missing.join(', ')}. aidure install`);
-    if (waiting.length) console.warn(`… 아직 원격이 없는 repo: ${waiting.join(', ')}. 만든 사람이 push 하면 git pull → aidure install`);
+    if (missing.length) console.warn(`⚠ repos/ 에 없는 repo: ${missing.join(', ')}. kedovi install`);
+    if (waiting.length) console.warn(`… 아직 원격이 없는 repo: ${waiting.join(', ')}. 만든 사람이 push 하면 git pull → kedovi install`);
   } catch { /* workspace.json 문제는 에이전트 훅이 알린다 */ }
 
   // 메인 모델 = 프로필·팀·개인 설정을 합친 값. 전역 설정(ANTHROPIC_MODEL 등)이 워크스페이스 설정보다 앞서므로 항상 넘긴다
-  // run = 연결 방식(aidure ai)을 반영한 값: 게이트웨이면 게이트웨이 모델 이름, GPT 메인(게이트웨이 + Claude Code)도 여기서
+  // run = 연결 방식(kedovi ai)을 반영한 값: 게이트웨이면 게이트웨이 모델 이름, GPT 메인(게이트웨이 + Claude Code)도 여기서
   let personalModel;
   let mainEffort = null;
   try {
@@ -2920,11 +2920,11 @@ async function cmdStart(argv) {
     const ready = gateway.detect().some((x) => x.url === gw.url && (agent === 'claude' ? !x.source.startsWith('Codex') : x.source.startsWith('Codex')));
     if (!ready && agent === 'claude') {
       if (gw.keyEnv && process.env[gw.keyEnv]) { if (await trustGateway(root, gw)) { env.ANTHROPIC_BASE_URL = gw.url; env.ANTHROPIC_AUTH_TOKEN = process.env[gw.keyEnv]; } }
-      else console.warn(`⚠ Claude Code 가 게이트웨이(${gw.url})로 설정돼 있지 않습니다. 키가 든 환경변수를 정하세요: aidure ai gateway --url ${gw.url} --key-env <변수>`);
+      else console.warn(`⚠ Claude Code 가 게이트웨이(${gw.url})로 설정돼 있지 않습니다. 키가 든 환경변수를 정하세요: kedovi ai gateway --url ${gw.url} --key-env <변수>`);
     }
     if (!ready && agent === 'codex') console.warn(`⚠ Codex 설정(~/.codex/config.toml)에 게이트웨이 model_provider 가 없습니다. 게이트웨이 안내대로 Codex 를 설정하세요`);
   } else if (access.connection === 'direct' && !access.vendors.includes(agent)) {
-    console.warn(`⚠ 이 PC 설정은 ${agent === 'claude' ? 'Claude' : 'GPT'} 를 쓰지 않는다고 돼 있습니다 (aidure ai show). 이번만 이 도구로 시작합니다`);
+    console.warn(`⚠ 이 PC 설정은 ${agent === 'claude' ? 'Claude' : 'GPT'} 를 쓰지 않는다고 돼 있습니다 (kedovi ai show). 이번만 이 도구로 시작합니다`);
   }
   const effortArgs = !mainEffort || extra.some((x) => x === '--effort' || /model_reasoning_effort/.test(x)) ? []
     : agent === 'claude' ? ['--effort', mainEffort] : ['-c', `model_reasoning_effort="${mainEffort}"`];
@@ -2940,9 +2940,9 @@ async function cmdStart(argv) {
   const searchArgs = agent === 'codex' && webSearch && ![...(conf.args || []), ...extra].includes('--search') ? ['--search'] : [];
   const args = [...(agent === 'codex' ? resumeArgs : []), ...searchArgs, ...(personalModel && !extra.some((x) => x === a.modelFlag || x === '--model' || x === '-m') ? [a.modelFlag, personalModel] : []), ...effortArgs,
     ...(once && once !== conf.agent ? [] : conf.args || []), ...(agent === 'claude' ? resumeArgs : []), ...extra, ...(brief ? [brief] : [])];
-  // 양방향 텔레그램 채널 — 이 PC 에서 켰고(aidure notify my channel on) Claude Code 로 시작할 때만. 준비가 안 됐으면 알리고 빼고 시작한다
+  // 양방향 텔레그램 채널 — 이 PC 에서 켰고(kedovi notify my channel on) Claude Code 로 시작할 때만. 준비가 안 됐으면 알리고 빼고 시작한다
   if (agent === 'claude' && (conf.notify || {}).channel === true && !flags.includes('--no-channel') && !extra.includes('--channels')) {
-    let check = { ready: false, problems: ['이 워크스페이스에 채널 도구가 없다 (aidure upgrade)'] };
+    let check = { ready: false, problems: ['이 워크스페이스에 채널 도구가 없다 (kedovi upgrade)'] };
     let plugin = 'telegram@claude-plugins-official';
     try {
       const nl = require(path.join(root, 'packs', 'core', 'lib', 'notify.js'));
@@ -2951,10 +2951,10 @@ async function cmdStart(argv) {
       const shim = check.ready && nl.channelShim ? nl.channelShim(root, findCli('bun')) : null;
       if (shim) env.PATH = [shim, ...String(env.PATH || '').split(path.delimiter).filter((d) => d && d !== shim)].join(path.delimiter);
     } catch { /* 옛 워크스페이스 */ }
-    if (check.ready) { args.splice(agent === 'codex' ? resumeArgs.length : 0, 0, '--channels', `plugin:${plugin}`); env.AIDURE_CHANNEL = '1'; }
+    if (check.ready) { args.splice(agent === 'codex' ? resumeArgs.length : 0, 0, '--channels', `plugin:${plugin}`); env.KEDOVI_CHANNEL = '1'; }
     else {
       delete env.TELEGRAM_STATE_DIR;
-      console.warn(`⚠ 텔레그램 채널 없이 시작합니다: ${check.problems.join(' · ')}. aidure notify my channel status`);
+      console.warn(`⚠ 텔레그램 채널 없이 시작합니다: ${check.problems.join(' · ')}. kedovi notify my channel status`);
     }
   }
   const office = flags.includes('--pixel-agents') ? startPixelAgents(root, agent) : null;
@@ -2973,7 +2973,7 @@ function startPixelAgents(root, agent) {
   const cli = findCli('pixel-agents');
   if (!cli) { console.warn('⚠ pixel-agents 가 설치돼 있지 않아 화면 없이 시작합니다. 설치: npm i -g pixel-agents'); return null; }
   if (agent !== 'claude') console.warn('⚠ Pixel Agents 는 Claude Code 세션만 보여 줍니다. Codex 세션은 화면에 나오지 않습니다');
-  const log = path.join(require('os').tmpdir(), `aidure-pixel-agents-${process.pid}.log`);
+  const log = path.join(require('os').tmpdir(), `kedovi-pixel-agents-${process.pid}.log`);
   let child;
   try {
     const fd = fs.openSync(log, 'w');
@@ -3046,13 +3046,13 @@ const RESET_ITEMS = [
   { value: 'channel', label: '텔레그램 채널', hint: '이 프로젝트 봇 상태 폴더 · 플러그인 설치(local)' },
   { value: 'state', label: '세션 임시 기록', hint: '위임 작업 결과 · 훅 상태 (워크스페이스 밖 임시 폴더)' },
   { value: 'guide', label: '개인 지침', hint: '.agents/local.md (직접 쓴 내용이 지워진다)' },
-  { value: 'secrets', label: '텔레그램 토큰', hint: '~/.config/aidure/telegram.env (이 PC 의 모든 워크스페이스 공통)' },
+  { value: 'secrets', label: '텔레그램 토큰', hint: '~/.config/kedovi/telegram.env (이 PC 의 모든 워크스페이스 공통)' },
 ];
-const RESET_USAGE = `aidure reset [${RESET_ITEMS.map((x) => x.value).join(',')} | --all] [--yes]`;
+const RESET_USAGE = `kedovi reset [${RESET_ITEMS.map((x) => x.value).join(',')} | --all] [--yes]`;
 
 /**
- * 이 PC 의 개인 설정을 처음(aidure install 직후) 상태로 되돌린다. 팀 설정(workspace.json · 팩) · repos/ · 핸드오프는 건드리지 않는다.
- * 워크스페이스를 통째로 지우는 것은 aidure remove
+ * 이 PC 의 개인 설정을 처음(kedovi install 직후) 상태로 되돌린다. 팀 설정(workspace.json · 팩) · repos/ · 핸드오프는 건드리지 않는다.
+ * 워크스페이스를 통째로 지우는 것은 kedovi remove
  */
 async function cmdReset(argv) {
   const root = locateWorkspace();
@@ -3062,7 +3062,7 @@ async function cmdReset(argv) {
   if (bad.length) fail(`모르는 항목: ${bad.join(', ')}. 사용법: ${RESET_USAGE}`);
   let pick = given;
   const tty = process.stdin.isTTY;
-  if (tty) { clack(); p.intro(' aidure reset '); }
+  if (tty) { clack(); p.intro(' kedovi reset '); }
   if (!pick.length) {
     if (!tty) fail(`사용법: ${RESET_USAGE}`);
     pick = ask(await chooseMany({ message: '무엇을 초기화할까요?', hint: '이 PC 의 개인 설정만 처음 상태로 되돌립니다. 팀 설정(workspace.json · 팩) · repos/ · 핸드오프는 그대로.', options: RESET_ITEMS, initialValues: ['local', 'channel', 'state'] }));
@@ -3085,7 +3085,7 @@ async function cmdReset(argv) {
   if (pick.includes('guide')) { fs.rmSync(path.join(root, '.agents', 'local.md'), { force: true }); done.push('개인 지침'); }
   if (pick.includes('local')) { fs.rmSync(localConfigPath(root), { force: true }); done.push('이 PC 설정'); }
   runWorkspaceKit(root, ['sync', '--quiet']); // 개인 지침 · 에이전트 파일 · 편집 금지 설정을 다시 만든다
-  const msg = `초기화했습니다: ${done.join(' · ')}.${pick.includes('local') ? ' 다음 aidure start 때 연결 방식 · 메인 에이전트를 다시 묻습니다' : ''}`;
+  const msg = `초기화했습니다: ${done.join(' · ')}.${pick.includes('local') ? ' 다음 kedovi start 때 연결 방식 · 메인 에이전트를 다시 묻습니다' : ''}`;
   if (tty) p.outro(msg); else console.log(`✔ ${msg}`);
 }
 
@@ -3097,12 +3097,12 @@ async function cmdRemove(argv) {
   let root;
   if (target) {
     const hits = liveRegistry().filter((w) => w.name === target || path.basename(w.path) === target);
-    if (!hits.length) fail(`목록에 ${target} 워크스페이스가 없습니다. aidure list 로 확인하거나, 그 폴더에서 aidure remove`);
-    if (hits.length > 1) fail(`${target} 이름의 워크스페이스가 여러 개입니다. 지울 폴더로 이동해서 aidure remove:\n  ${hits.map((w) => w.path).join('\n  ')}`);
+    if (!hits.length) fail(`목록에 ${target} 워크스페이스가 없습니다. kedovi list 로 확인하거나, 그 폴더에서 kedovi remove`);
+    if (hits.length > 1) fail(`${target} 이름의 워크스페이스가 여러 개입니다. 지울 폴더로 이동해서 kedovi remove:\n  ${hits.map((w) => w.path).join('\n  ')}`);
     root = hits[0].path;
   } else {
     root = kit.findRoot();
-    if (!root) fail('여기는 킷으로 만든 워크스페이스가 아닙니다. 지우려면 그 워크스페이스 루트에서 aidure remove, 또는 어디서든 aidure remove <이름> (이름은 aidure list 로 확인)');
+    if (!root) fail('여기는 킷으로 만든 워크스페이스가 아닙니다. 지우려면 그 워크스페이스 루트에서 kedovi remove, 또는 어디서든 kedovi remove <이름> (이름은 kedovi list 로 확인)');
   }
   const name = workspaceName(root);
   let ws;
@@ -3127,7 +3127,7 @@ async function cmdRemove(argv) {
   else rows.push('  워크스페이스 자체  저장 안 된 작업 없음');
 
   console.log(`지울 워크스페이스: ${root}  (.git·README·LICENSE 는 남기고 .gitignore 는 킷이 넣은 줄만 걷어 낸다)\n${rows.join('\n')}`);
-  if (blocked && !force) fail('저장 안 된 작업이 있어 멈췄습니다. 커밋·push 하거나, 버려도 되면 aidure remove --force');
+  if (blocked && !force) fail('저장 안 된 작업이 있어 멈췄습니다. 커밋·push 하거나, 버려도 되면 kedovi remove --force');
 
   if (process.stdin.isTTY && !confirmName) {
     clack();
@@ -3137,7 +3137,7 @@ async function cmdRemove(argv) {
     if (confirmName !== name && confirmName !== path.basename(root)) fail(`비대화형에서는 --confirm ${name} 이 필요합니다`);
   }
 
-  // clone 해 온 repo 의 뼈대(.git·README·LICENSE·.gitignore)는 남긴다 — 그 자리에서 바로 aidure init 을 다시 할 수 있게
+  // clone 해 온 repo 의 뼈대(.git·README·LICENSE·.gitignore)는 남긴다 — 그 자리에서 바로 kedovi init 을 다시 할 수 있게
   const keep = /^(\.git|\.gitignore|\.gitattributes|readme(\.[a-z]+)?|license(\.[a-z]+)?|changelog(\.[a-z]+)?)$/i;
   for (const e of fs.readdirSync(root)) if (!keep.test(e)) fs.rmSync(path.join(root, e), { recursive: true, force: true });
   // .gitignore: 킷이 넣은 줄(생성 블록 · 템플릿 기본 줄)만 걷어 낸다. 남는 줄이 없으면 파일도 지운다 (clone 직후 상태로)
@@ -3151,7 +3151,7 @@ async function cmdRemove(argv) {
     else fs.rmSync(gi, { force: true });
   }
   writeRegistry(readRegistry().filter((w) => w.path !== root));
-  console.log(`✔ 비웠습니다: ${root}\n  다시 만들려면 이 폴더에서 aidure init`);
+  console.log(`✔ 비웠습니다: ${root}\n  다시 만들려면 이 폴더에서 kedovi init`);
 }
 
 // ───────────────────────── 워크스페이스 도구 ─────────────────────────
@@ -3160,40 +3160,40 @@ async function cmdRemove(argv) {
 function runWsTool(file, args, pack = 'core') {
   const root = locateWorkspace();
   const tool = path.join(root, 'packs', pack, 'bin', file);
-  if (!fs.existsSync(tool)) fail(pack !== 'core' && !fs.existsSync(path.join(root, 'packs', pack)) ? `이 워크스페이스에는 ${pack} 팩이 없습니다. 켜기: aidure upgrade --add ${pack}` : `이 워크스페이스에는 ${file} 도구가 없습니다. aidure upgrade 후 다시 하세요`);
+  if (!fs.existsSync(tool)) fail(pack !== 'core' && !fs.existsSync(path.join(root, 'packs', pack)) ? `이 워크스페이스에는 ${pack} 팩이 없습니다. 켜기: kedovi upgrade --add ${pack}` : `이 워크스페이스에는 ${file} 도구가 없습니다. kedovi upgrade 후 다시 하세요`);
   const version = JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
-  const r = spawnSync(process.execPath, [tool, ...args], { cwd: root, stdio: 'inherit', env: { ...process.env, AIDURE_VERSION: version } });
+  const r = spawnSync(process.execPath, [tool, ...args], { cwd: root, stdio: 'inherit', env: { ...process.env, KEDOVI_VERSION: version } });
   return process.exit(r.status == null ? 1 : r.status);
 }
 
 const NOTIFY_USAGE = `사용법
-  aidure notify setup                   설정 화면 (아래 항목을 골라서 바꾼다)
-  aidure notify                         지금 설정
-  aidure notify my setup [--new]        개인 봇 연결 (봇에게 먼저 아무 말이나 보낸다. 토큰은 숨김 입력, --new 는 봇 바꾸기)
-  aidure notify my level all|decisions|progress|off   알림 수준 (전체 · 결과와 결정 · 진행 현황 · 끄기)
-  aidure notify my away on|off          자리 비움 (결정을 텔레그램 버튼 질문으로, 버튼 · 번호 · 글로 답)
-  aidure notify my remote done|quiet|send   리모트 컨트롤(Claude 앱) 연결 중 텔레그램: 작업 끝만(기본) · 쉼 · 모두
-  aidure notify my desk <초>|off        PC 앞이면 끝남 · 위임 끝 · 음성 생략 (이 안에 키보드 · 마우스를 만졌을 때, 기본 120초 · macOS)
-  aidure notify my voice on|off · scope both|decisions|done|all · name <목소리> · test   음성 알림 (결정 질문 · 끝남 보고를 읽어 보냄)
-  aidure notify my on [--min <초>] · off · reset · test
-  aidure notify my channel on [--new]|off|status   양방향 대화 (기본 꺼짐. 이 프로젝트 전용 봇 → Claude Code 세션. 봇 토큰은 숨김 입력)
-  aidure notify my channel ask dialog|text   질문 방식: 선택지 창(기본) · 텔레그램 버튼 질문(= 자리 비움)
-  aidure notify my channel progress <분|off>   입력 없이 오래 작업하면 진행 현황 (기본 5분)
-  aidure notify team setup [--new]      팀 봇 연결 (관리자에게 받은 토큰을 숨김 입력에)
-  aidure notify team chat <그룹방 ID|off>   팀 방 지정 (팀 설정: commit · push)
-  aidure notify team announce "<내용>" · test`;
+  kedovi notify setup                   설정 화면 (아래 항목을 골라서 바꾼다)
+  kedovi notify                         지금 설정
+  kedovi notify my setup [--new]        개인 봇 연결 (봇에게 먼저 아무 말이나 보낸다. 토큰은 숨김 입력, --new 는 봇 바꾸기)
+  kedovi notify my level all|decisions|progress|off   알림 수준 (전체 · 결과와 결정 · 진행 현황 · 끄기)
+  kedovi notify my away on|off          자리 비움 (결정을 텔레그램 버튼 질문으로, 버튼 · 번호 · 글로 답)
+  kedovi notify my remote done|quiet|send   리모트 컨트롤(Claude 앱) 연결 중 텔레그램: 작업 끝만(기본) · 쉼 · 모두
+  kedovi notify my desk <초>|off        PC 앞이면 끝남 · 위임 끝 · 음성 생략 (이 안에 키보드 · 마우스를 만졌을 때, 기본 120초 · macOS)
+  kedovi notify my voice on|off · scope both|decisions|done|all · name <목소리> · test   음성 알림 (결정 질문 · 끝남 보고를 읽어 보냄)
+  kedovi notify my on [--min <초>] · off · reset · test
+  kedovi notify my channel on [--new]|off|status   양방향 대화 (기본 꺼짐. 이 프로젝트 전용 봇 → Claude Code 세션. 봇 토큰은 숨김 입력)
+  kedovi notify my channel ask dialog|text   질문 방식: 선택지 창(기본) · 텔레그램 버튼 질문(= 자리 비움)
+  kedovi notify my channel progress <분|off>   입력 없이 오래 작업하면 진행 현황 (기본 5분)
+  kedovi notify team setup [--new]      팀 봇 연결 (관리자에게 받은 토큰을 숨김 입력에)
+  kedovi notify team chat <그룹방 ID|off>   팀 방 지정 (팀 설정: commit · push)
+  kedovi notify team announce "<내용>" · test`;
 
 /** 알림 설정 화면 — 현재 값을 보여 주고 항목을 골라 바꾼다. 실제 변경은 워크스페이스의 notify.js 가 한다 (명령과 같은 동작) */
 async function cmdNotifySetup() {
   const root = locateWorkspace();
   const tool = path.join(root, 'packs', 'core', 'bin', 'notify.js');
   const libFile = path.join(root, 'packs', 'core', 'lib', 'notify.js');
-  if (!fs.existsSync(tool) || !fs.existsSync(libFile)) fail('이 워크스페이스에는 알림 도구가 없습니다. aidure upgrade 후 다시 하세요');
+  if (!fs.existsSync(tool) || !fs.existsSync(libFile)) fail('이 워크스페이스에는 알림 도구가 없습니다. kedovi upgrade 후 다시 하세요');
   const version = JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
   // input 을 주면 표준 입력으로 넘긴다 (봇 토큰: 인자로 넘기면 프로세스 목록에 보인다)
-  const runTool = (args, input) => spawnSync(process.execPath, [tool, ...args], { cwd: root, stdio: input == null ? 'inherit' : ['pipe', 'inherit', 'inherit'], input: input == null ? undefined : `${input}\n`, env: { ...process.env, AIDURE_VERSION: version } }).status === 0;
+  const runTool = (args, input) => spawnSync(process.execPath, [tool, ...args], { cwd: root, stdio: input == null ? 'inherit' : ['pipe', 'inherit', 'inherit'], input: input == null ? undefined : `${input}\n`, env: { ...process.env, KEDOVI_VERSION: version } }).status === 0;
   clack();
-  p.intro(' aidure notify setup ');
+  p.intro(' kedovi notify setup ');
   for (;;) {
     delete require.cache[require.resolve(libFile)];
     const nl = require(libFile);
@@ -3304,7 +3304,7 @@ async function cmdNotifySetup() {
   p.outro('완료');
 }
 
-/** aidure notify my|team <명령> → notify.js 인자. 옛 꼴(setup --team · team-chat …)도 그대로 받는다 */
+/** kedovi notify my|team <명령> → notify.js 인자. 옛 꼴(setup --team · team-chat …)도 그대로 받는다 */
 function notifyArgs(rest) {
   const [scope, sub, ...more] = rest;
   if (!scope) return ['status'];
@@ -3343,7 +3343,7 @@ function upgradeSummary(root, from) {
   let to = '';
   try { to = (JSON.parse(read(path.join(root, 'workspace.json'))).kit || {}).version; } catch { return; }
   const line = '─'.repeat(60);
-  console.log(`\n${line}\n aidure ${from && from !== to ? `${from} → ${to}` : `${to} (이미 이 버전)`}\n${line}`);
+  console.log(`\n${line}\n kedovi ${from && from !== to ? `${from} → ${to}` : `${to} (이미 이 버전)`}\n${line}`);
   const notes = changelog().filter((c) => (!from || verGt(c.version, from)) && !verGt(c.version, to));
   for (const c of notes) {
     console.log(`\n ${c.version}`);
@@ -3353,17 +3353,17 @@ function upgradeSummary(root, from) {
   // 바뀐 파일 — 워크스페이스 git 기준으로 묶어서
   const st = spawnSync('git', ['-C', root, 'status', '--porcelain', '--untracked-files=all'], { encoding: 'utf8' }).stdout || '';
   const rows = st.split('\n').filter((l) => l.length > 3);
-  // 생성 사이트(aidure docs build 의 docs-site/)를 아직 커밋한 적이 없으면 git add -A 에 섞이지 않게 따로 안내한다
+  // 생성 사이트(kedovi docs build 의 docs-site/)를 아직 커밋한 적이 없으면 git add -A 에 섞이지 않게 따로 안내한다
   const site = rows.filter((l) => /^(docs-site|html)\//.test(l.slice(3)));
   const newSite = site.length > 0 && site.every((l) => l.startsWith('??'));
   const files = rows.filter((l) => !(newSite && site.includes(l))).map((l) => l.slice(3));
-  if (newSite) console.log(`\n 생성 사이트 docs-site/ ${site.length}개는 아직 커밋한 적이 없습니다. Pages 로 올릴 때만 커밋한다 (켜기: aidure docs pages on, 안 올리면: aidure docs pages off)`);
+  if (newSite) console.log(`\n 생성 사이트 docs-site/ ${site.length}개는 아직 커밋한 적이 없습니다. Pages 로 올릴 때만 커밋한다 (켜기: kedovi docs pages on, 안 올리면: kedovi docs pages off)`);
   if (files.length) {
     const group = (f) => (f.startsWith('packs/') ? `packs/${f.split('/')[1]}` : f.startsWith('bin/') ? 'bin/' : /^(AGENTS|CLAUDE)\.md$|^\.(claude|codex|agents|githooks)\//.test(f) ? '생성물' : f);
     const counts = {};
     for (const f of files) counts[group(f)] = (counts[group(f)] || 0) + 1;
     console.log(`\n 바뀐 파일 ${files.length}개: ${Object.entries(counts).map(([k, n]) => (n > 1 ? `${k} ${n}` : k)).join(' · ')}`);
-    console.log(`\n 다음: git add -A${newSite ? " -- . ':!html'" : ''} && git commit -m "chore: aidure ${to}" && git push  (팀원은 git pull)`);
+    console.log(`\n 다음: git add -A${newSite ? " -- . ':!html'" : ''} && git commit -m "chore: kedovi ${to}" && git push  (팀원은 git pull)`);
   } else console.log('\n 바뀐 파일 없음');
 }
 
@@ -3382,16 +3382,16 @@ const HELP_GROUPS = [
 ];
 const HELP_COMMON = [['init', '새 워크스페이스 만들기'], ['install', '받은 워크스페이스 준비 (repos clone · 훅)'], ['start', '작업 시작'], ['upgrade', '킷 새 버전 반영'], ['doctor', '환경 점검']];
 
-/** 도움말 머리(이 파일 첫 주석)의 명령: { use: 「aidure …」 사용법, desc: 설명, words, group: HELP_GROUPS 번호(없으면 -1) } */
+/** 도움말 머리(이 파일 첫 주석)의 명령: { use: 「kedovi …」 사용법, desc: 설명, words, group: HELP_GROUPS 번호(없으면 -1) } */
 function helpEntries() {
   const lines = read(__filename).split('\n');
   const head = lines.slice(2, lines.indexOf(' */')).map((l) => l.replace(/^ \* ?/, ''));
   const out = [];
   for (const l of head) {
-    const m = /^\s{0,4}aidure ([a-z].*)$/.exec(l);
+    const m = /^\s{0,4}kedovi ([a-z].*)$/.exec(l);
     if (m) {
       const [use, ...d] = m[1].split(/\s{3,}/);
-      out.push({ use: `aidure ${use.trim()}`, desc: d.join(' ').trim() });
+      out.push({ use: `kedovi ${use.trim()}`, desc: d.join(' ').trim() });
     } else if (/^\s{5,}\S/.test(l) && out.length) out[out.length - 1].desc = `${out[out.length - 1].desc} ${l.trim()}`.trim();
   }
   return out.map((e) => {
@@ -3424,9 +3424,9 @@ function fmtEntry(e) {
   return [...wrapText(e.use, w - 2, '  ').map((l) => styleText('cyan', l)), ...(e.desc ? wrapText(e.desc, w - 6, '      ') : [])].join('\n');
 }
 
-/** 「aidure <명령> --help」: 그 명령의 줄만 (「aidure sync | check」 처럼 묶인 줄도) */
+/** 「kedovi <명령> --help」: 그 명령의 줄만 (「kedovi sync | check」 처럼 묶인 줄도) */
 function usageOf(cmd) {
-  const re = new RegExp(`^aidure (?:[a-z-]+ \\| )*${cmd.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`);
+  const re = new RegExp(`^kedovi (?:[a-z-]+ \\| )*${cmd.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`);
   return helpEntries().filter((e) => re.test(e.use)).map(fmtEntry).join('\n\n');
 }
 
@@ -3439,22 +3439,22 @@ function helpGroup(i, entries = helpEntries()) {
 function helpOverview({ menu = false } = {}) {
   const { styleText } = require('util');
   const ver = JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).version;
-  const out = [`${styleText('bold', 'aidure')} ${ver}  AI 협업 워크스페이스 명령`, '', styleText('bold', '자주 쓰는 명령')];
+  const out = [`${styleText('bold', 'kedovi')} ${ver}  AI 협업 워크스페이스 명령`, '', styleText('bold', '자주 쓰는 명령')];
   const c1 = Math.max(...HELP_COMMON.map(([c]) => width(c))) + 10;
-  for (const [c, d] of HELP_COMMON) out.push(`  ${styleText('cyan', padTo(`aidure ${c}`, c1))}${d}`);
+  for (const [c, d] of HELP_COMMON) out.push(`  ${styleText('cyan', padTo(`kedovi ${c}`, c1))}${d}`);
   if (!menu) {
-    out.push('', `${styleText('bold', '분류별 명령')}  ${styleText('gray', 'aidure help <번호>')}`);
+    out.push('', `${styleText('bold', '분류별 명령')}  ${styleText('gray', 'kedovi help <번호>')}`);
     const c2 = Math.max(...HELP_GROUPS.map(([t]) => width(t))) + 3;
     HELP_GROUPS.forEach(([t, , keys], i) => {
       const [first, ...more] = wrapText(keys.join(' · '), helpCols() - c2 - 7, '');
       out.push(`  ${i + 1}  ${padTo(t, c2)}${styleText('gray', first)}`, ...more.map((l) => `${' '.repeat(c2 + 5)}${styleText('gray', l)}`));
     });
-    out.push('', styleText('gray', '자세히: aidure help <번호|명령> · aidure <명령> --help · 전체: aidure help --all'));
+    out.push('', styleText('gray', '자세히: kedovi help <번호|명령> · kedovi <명령> --help · 전체: kedovi help --all'));
   }
   return out.join('\n');
 }
 
-/** aidure help [번호|분류|명령|--all]. 인자 없이 터미널이면 분류를 골라 들어가는 화면 */
+/** kedovi help [번호|분류|명령|--all]. 인자 없이 터미널이면 분류를 골라 들어가는 화면 */
 async function cmdHelp(rest) {
   const entries = helpEntries();
   const arg = rest.find((x) => !x.startsWith('-'));
@@ -3474,7 +3474,7 @@ async function cmdHelp(rest) {
   for (;;) {
     const v = await choose({
       message: '분류를 고르세요',
-      hint: '명령 하나만: aidure <명령> --help',
+      hint: '명령 하나만: kedovi <명령> --help',
       initialValue: last,
       options: [...HELP_GROUPS.map(([t, sub], i) => ({ value: i, label: `${i + 1}. ${t}`, hint: sub })), { value: 'all', label: '전체 보기', hint: '모든 분류를 한 번에' }, { value: 'quit', label: '끝내기' }],
     });
@@ -3487,11 +3487,11 @@ async function cmdHelp(rest) {
 /** 상태를 바꾸는 명령: 모르는 옵션이면 실행하지 않는다 (오타 · 다른 명령의 옵션으로 엉뚱하게 돌지 않게) */
 const KNOWN_OPTS = { upgrade: ['--add', '--all', '--scan', '--yes'], reset: ['--yes', '--all'], install: [], setup: [] };
 
-/** Node 버전과 상관없는 aidure 명령 (고정 위치 실행 파일 + PATH). 처음 한 번만 알린다 */
+/** Node 버전과 상관없는 kedovi 명령 (고정 위치 실행 파일 + PATH). 처음 한 번만 알린다 */
 function ensureGlobalShim() {
   try {
-    const r = require('./global-shim').ensure({ kit: path.join(KIT_ROOT, 'bin', 'aidure.js'), pkg: JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).name });
-    if (r && r.pathAdded.length) console.error(`ℹ Node 버전이 바뀌어도 aidure 명령이 동작하도록 ${r.file} 를 두고 ${r.pathAdded.join(' · ')} 의 PATH 에 넣었습니다. 새 터미널부터 적용됩니다.`);
+    const r = require('./global-shim').ensure({ kit: path.join(KIT_ROOT, 'bin', 'kedovi.js'), pkg: JSON.parse(read(path.join(KIT_ROOT, 'package.json'))).name });
+    if (r && r.pathAdded.length) console.error(`ℹ Node 버전이 바뀌어도 kedovi 명령이 동작하도록 ${r.file} 를 두고 ${r.pathAdded.join(' · ')} 의 PATH 에 넣었습니다. 새 터미널부터 적용됩니다.`);
     else if (r && r.note && r.changed) console.error(`ℹ ${r.note}`);
   } catch { /* 편의 기능: 못 해도 명령은 계속 */ }
 }
@@ -3505,12 +3505,12 @@ async function main() {
   if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') return cmdHelp(rest);
   if (!cmd.startsWith('-') && (own.includes('--help') || own.includes('-h'))) {
     const u = usageOf(cmd);
-    console.log(u || `aidure ${cmd}: 따로 적힌 사용법이 없습니다. 전체 명령: aidure help`);
+    console.log(u || `kedovi ${cmd}: 따로 적힌 사용법이 없습니다. 전체 명령: kedovi help`);
     process.exit(0);
   }
   if (KNOWN_OPTS[cmd]) {
     const bad = own.filter((x) => x.startsWith('-') && !KNOWN_OPTS[cmd].includes(x));
-    if (bad.length) fail(`aidure ${cmd}: 모르는 옵션 ${bad.join(' ')} 이라 실행하지 않았습니다.${usageOf(cmd) ? `\n${usageOf(cmd)}` : ''}`);
+    if (bad.length) fail(`kedovi ${cmd}: 모르는 옵션 ${bad.join(' ')} 이라 실행하지 않았습니다.${usageOf(cmd) ? `\n${usageOf(cmd)}` : ''}`);
   }
   switch (cmd) {
     case 'init': return cmdInit(rest);
@@ -3527,7 +3527,7 @@ async function main() {
       // 팀 현황 · 한 사람 자세히 · 인수 — 워크스페이스의 도구를 그대로 돈다 (에이전트 없이 리더가 본다)
       const root = locateWorkspace();
       const tool = path.join(root, 'packs', 'core', 'bin', 'team-status.js');
-      if (!fs.existsSync(tool)) fail('이 워크스페이스에는 팀 현황 도구가 없습니다. aidure upgrade 후 다시 하세요');
+      if (!fs.existsSync(tool)) fail('이 워크스페이스에는 팀 현황 도구가 없습니다. kedovi upgrade 후 다시 하세요');
       if (['add', 'remove', 'restrict', 'members', 'edit', 'admins'].includes(rest[0])) return cmdTeamAdmin(root, rest);
       const [id, ...more] = rest;
       const toolArgs = !id || id.startsWith('--') ? rest : more.includes('--take') ? ['--take', id, '--items', more[more.indexOf('--take') + 1] || ''] : ['--id', id, ...more];
@@ -3538,17 +3538,17 @@ async function main() {
     case 'ai': return cmdAi(rest);
     case 'agent': {
       const root = locateWorkspace();
-      // 화면 없이 (AI 가 대신 실행할 때): aidure agent --claude|--codex [--args "<인자>"]. 프로필은 aidure models profile
+      // 화면 없이 (AI 가 대신 실행할 때): kedovi agent --claude|--codex [--args "<인자>"]. 프로필은 kedovi models profile
       const pick = rest.includes('--codex') ? 'codex' : rest.includes('--claude') ? 'claude' : null;
       if (pick || !process.stdin.isTTY) {
-        if (!pick) fail('사용법: aidure agent --claude|--codex [--args "<인자>"]');
-        if (rest.includes('--profile')) fail('내 프로필은 aidure models profile [이름|team] 으로 둡니다 (팀보다 낮은 것만)');
+        if (!pick) fail('사용법: kedovi agent --claude|--codex [--args "<인자>"]');
+        if (rest.includes('--profile')) fail('내 프로필은 kedovi models profile [이름|team] 으로 둡니다 (팀보다 낮은 것만)');
         const val = (k) => { const i = rest.indexOf(k); return i >= 0 ? rest[i + 1] : undefined; };
         const cur = readLocal(root);
         const conf = { agent: pick, args: val('--args') !== undefined ? String(val('--args')).split(/\s+/).filter(Boolean) : cur.agent === pick ? cur.args || [] : [] };
         writeLocal(root, conf);
         runWorkspaceKit(root, ['sync', '--quiet']);
-        console.log(`✔ 메인 에이전트: ${AGENTS[pick].label}${conf.args.length ? ` (${conf.args.join(' ')})` : ''}. 다음 aidure start 부터 적용`);
+        console.log(`✔ 메인 에이전트: ${AGENTS[pick].label}${conf.args.length ? ` (${conf.args.join(' ')})` : ''}. 다음 kedovi start 부터 적용`);
         return;
       }
       clack(); ask(await chooseAgent(root, { force: true, progress: true })); return p.outro('완료');
@@ -3563,7 +3563,7 @@ async function main() {
       const args = ['upgrade', '--from', KIT_ROOT, ...(addAt >= 0 ? ['--add', rest[addAt + 1]] : [])];
       const from = ((kit.loadWorkspace(root) || {}).kit || {}).version;
       if (!runWorkspaceKit(root, args)) process.exit(1);
-      // 요약은 전역 aidure 이 찍는다 (upgrade 를 도는 건 워크스페이스의 옛 kit.js 라 새 형식을 모른다)
+      // 요약은 전역 kedovi 이 찍는다 (upgrade 를 도는 건 워크스페이스의 옛 kit.js 라 새 형식을 모른다)
       process.on('exit', (code) => { if (code === 0) upgradeSummary(root, from); });
       // 옛 유형 옮기기 (유지보수 → 운영·고도화). upgrade 를 도는 옛 kit.js 는 모르는 일이라 여기서
       // 로드맵이 없는 워크스페이스는 종류별 기본 단계로 만든다 (옛 kit.js 의 upgrade 는 모르는 일이라 여기서)
@@ -3573,25 +3573,25 @@ async function main() {
       try {
         const now = new Map(((kit.loadWorkspace(root) || {}).repos || []).map((r) => [r.name, r.stacks || []]));
         const fresh = kit.detectRepos(root, { force: true, write: false, languages: false }).map((d) => [d.name, (d.stacks || []).filter((id) => !(now.get(d.name) || []).includes(id))]).filter(([, l]) => l.length);
-        if (fresh.length) console.log(`  새로 감지되는 스택: ${fresh.map(([n, l]) => `${n} ${l.join(', ')}`).join(' · ')}. 필요하면 aidure detect 화면에서 확인해 더한다 (일부러 뺀 것이면 무시)`);
+        if (fresh.length) console.log(`  새로 감지되는 스택: ${fresh.map(([n, l]) => `${n} ${l.join(', ')}`).join(' · ')}. 필요하면 kedovi detect 화면에서 확인해 더한다 (일부러 뺀 것이면 무시)`);
       } catch { /* 감지는 부가 기능 */ }
       const moved = kit.migrateTypes(root);
       if (moved) { console.log(`  ${moved}`); if (!runWorkspaceKit(root, ['sync'])) process.exit(1); }
       // 옛 워크스페이스 — 멀티모듈 repo 의 모듈 경로를 채운다 (upgrade 를 도는 옛 kit.js 는 모르는 일이라 여기서)
       // 그 사이 유형 기본값이 된 팩(예: 0.33 의 screens · 0.36 의 datamodel)은 켜지 않고 알린다
       const offPacks = kit.missingTypePacks(kit.loadWorkspace(root) || {}, KIT_ROOT);
-      if (offPacks.length) console.log(`  이 유형의 기본 팩인데 꺼져 있음: ${offPacks.join(', ')}. 켜려면 aidure upgrade --add ${offPacks.join(',')} (일부러 뺀 것이면 무시)`);
+      if (offPacks.length) console.log(`  이 유형의 기본 팩인데 꺼져 있음: ${offPacks.join(', ')}. 켜려면 kedovi upgrade --add ${offPacks.join(',')} (일부러 뺀 것이면 무시)`);
       // 진행 방식을 정하지 않은 옛 워크스페이스는 그대로(전체처럼) 두고 고르는 법만 알린다
       // 0.63: 운영·고도화의 운영 · 유지보수는 이슈형으로 (기존 워크스페이스는 그대로 두고 한 번 알린다)
       const pj = (kit.loadWorkspace(root) || {}).project || {};
       const older = (v) => { const [a1, b1] = String(v || '0.0').split('.').map(Number); return a1 === 0 && b1 < 63; };
-      if (pj.type === 'enhancement' && pj.approach !== 'issue' && older(from)) console.log('  운영·고도화: 이슈마다 운영에 반영하는 운영 · 유지보수면 aidure approach issue (로드맵이 단계 대신 이슈 보드가 된다). 기능 묶음을 오픈까지 진행하는 고도화면 그대로');
-      if (!((kit.loadWorkspace(root) || {}).project || {}).approach) console.log('  진행 방식: 정하지 않음 (전체처럼 동작). 최소 기능부터 스프린트로 붙이려면 aidure approach sprint, 지금 방식으로 정해 두려면 aidure approach full');
+      if (pj.type === 'enhancement' && pj.approach !== 'issue' && older(from)) console.log('  운영·고도화: 이슈마다 운영에 반영하는 운영 · 유지보수면 kedovi approach issue (로드맵이 단계 대신 이슈 보드가 된다). 기능 묶음을 오픈까지 진행하는 고도화면 그대로');
+      if (!((kit.loadWorkspace(root) || {}).project || {}).approach) console.log('  진행 방식: 정하지 않음 (전체처럼 동작). 최소 기능부터 스프린트로 붙이려면 kedovi approach sprint, 지금 방식으로 정해 두려면 kedovi approach full');
       const filled = kit.fillStackPaths(root);
       if (filled.length) console.log(`  모듈 경로 기록: ${filled.join(', ')}`);
       // 0.73: repo 언어 감지 (언어별 클린코드 규칙)
       const langs = kit.fillLanguages(root);
-      if (langs.length) console.log(`  언어 감지: ${langs.map((x) => `${x.name} ${kit.labelLanguages(kit.loadLanguages(root), x.languages)}`).join(' · ')}. 언어별 클린 코드 규칙이 붙습니다 (한 repo 에서 빼기: aidure rules off <ID> --repo <이름>)`);
+      if (langs.length) console.log(`  언어 감지: ${langs.map((x) => `${x.name} ${kit.labelLanguages(kit.loadLanguages(root), x.languages)}`).join(' · ')}. 언어별 클린 코드 규칙이 붙습니다 (한 repo 에서 빼기: kedovi rules off <ID> --repo <이름>)`);
       if (filled.length || langs.length) return process.exit(runWorkspaceKit(root, ['sync']) ? 0 : 1);
       return process.exit(0);
     }

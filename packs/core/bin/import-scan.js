@@ -147,7 +147,7 @@ function report(r) {
     out.push('');
   }
   if (r.secrets.length) {
-    out.push(`■ 비밀값 의심 줄 ${r.secrets.length}곳: 옮기지 않는다. 필요한 값은 aidure secret 으로 (값은 여기 찍지 않는다)`);
+    out.push(`■ 비밀값 의심 줄 ${r.secrets.length}곳: 옮기지 않는다. 필요한 값은 kedovi secret 으로 (값은 여기 찍지 않는다)`);
     for (const s of r.secrets.slice(0, 40)) out.push(`  ${s.file}:${s.line} (${s.what})`);
     if (r.secrets.length > 40) out.push(`  … 외 ${r.secrets.length - 40}곳`);
     out.push('');

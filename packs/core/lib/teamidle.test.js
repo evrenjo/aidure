@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-teamidle-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-teamidle-'));
 process.env.CLAUDE_CONFIG_DIR = path.join(tmp, 'claude');
 const ROOT = path.join(tmp, 'ws');
 fs.mkdirSync(ROOT, { recursive: true });

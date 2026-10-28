@@ -1,4 +1,4 @@
-# aidure
+# kedovi
 
 **Claude Code · Codex 겸용 AI 협업 워크스페이스 킷**
 
@@ -12,8 +12,8 @@
 
 ```bash
 node -v              # v20.19 이상
-npm i -g aidure
-aidure --version
+npm i -g kedovi
+kedovi --version
 ```
 
 Claude Code(`npm i -g @anthropic-ai/claude-code`) 나 Codex(`npm i -g @openai/codex`) 중 쓸 것도 설치돼 있어야 한다.
@@ -22,13 +22,13 @@ Claude Code(`npm i -g @anthropic-ai/claude-code`) 나 Codex(`npm i -g @openai/co
 
 | 누가 | 명령 |
 |---|---|
-| 리더 (처음 한 번) | `aidure init` → 유형 · repo · 쓰는 AI 를 고르면 워크스페이스가 만들어진다 |
-| 팀원 (처음 한 번) | 워크스페이스 repo 를 clone → `aidure install` |
-| 모두 (매일) | `aidure start` |
-| 킷 새 버전 | `npm i -g aidure` → 워크스페이스에서 `aidure upgrade` |
+| 리더 (처음 한 번) | `kedovi init` → 유형 · repo · 쓰는 AI 를 고르면 워크스페이스가 만들어진다 |
+| 팀원 (처음 한 번) | 워크스페이스 repo 를 clone → `kedovi install` |
+| 모두 (매일) | `kedovi start` |
+| 킷 새 버전 | `npm i -g kedovi` → 워크스페이스에서 `kedovi upgrade` |
 
 ## 더 보기
 
-- 문서 · 화면: https://github.com/evrenjo/aidure
+- 문서 · 화면: https://github.com/evrenjo/kedovi
 - 변경 기록: 패키지 안 `CHANGELOG.md`
 - 라이선스: MIT

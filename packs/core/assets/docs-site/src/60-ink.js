@@ -7,7 +7,7 @@
   "use strict";
   var DS = window.DS, html = DS.html, H = DS.hooks;
   var NS = "http://www.w3.org/2000/svg", root = document.documentElement;
-  var PREF = "aidure-docs-ink-prefs";
+  var PREF = "kedovi-docs-ink-prefs";
   var TOOLS = {
     pen: { colors: ["var(--fg)", "#cf222e", "#0969da", "#1a7f37", "#bf5af2"], sizes: [2, 3.2, 5, 8] },
     hl: { colors: ["#ffd60a", "#7ee08a", "#7cc4ff", "#ff9ec7", "#ffb35c"], sizes: [10, 16, 22, 30] },
@@ -76,7 +76,7 @@
     }, [props.el]);
     /* 쪽이 바뀌면 그 쪽 획을 읽는다 (새 본문과 같은 화면에: 앞 쪽 획이 잠깐 보이지 않게) */
     H.useLayoutEffect(function () {
-      S.key = "aidure-docs-ink:" + new URL(DS.url(props.page)).pathname;
+      S.key = "kedovi-docs-ink:" + new URL(DS.url(props.page)).pathname;
       var v = DS.load(S.key, []);
       S.strokes = Array.isArray(v) ? v : [];
       S.hist = [];

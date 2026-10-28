@@ -1,7 +1,7 @@
-// Node 버전과 상관없는 aidure 명령: 고정 위치(~/.local/bin · %LOCALAPPDATA%\aidure\bin)에 실행 파일을 두고 PATH 에 넣는다.
-// nvm 등은 전역 npm 명령을 Node 버전마다 따로 두어, 기본 Node 가 바뀌면 aidure 이 PATH 에서 빠진다.
-// 실행 파일은 ① 이번에 실행한 aidure · Node → ② 다른 Node 버전에 깔린 aidure → ③ 지금 node 의 전역 aidure 순으로 찾아 실행한다.
-// aidure 이 실행될 때마다 갱신한다. 전역 설치(node_modules 안)일 때만, AIDURE_NO_GLOBAL_SHIM=1 이면 하지 않는다.
+// Node 버전과 상관없는 kedovi 명령: 고정 위치(~/.local/bin · %LOCALAPPDATA%\kedovi\bin)에 실행 파일을 두고 PATH 에 넣는다.
+// nvm 등은 전역 npm 명령을 Node 버전마다 따로 두어, 기본 Node 가 바뀌면 kedovi 이 PATH 에서 빠진다.
+// 실행 파일은 ① 이번에 실행한 kedovi · Node → ② 다른 Node 버전에 깔린 kedovi → ③ 지금 node 의 전역 kedovi 순으로 찾아 실행한다.
+// kedovi 이 실행될 때마다 갱신한다. 전역 설치(node_modules 안)일 때만, KEDOVI_NO_GLOBAL_SHIM=1 이면 하지 않는다.
 'use strict';
 
 const fs = require('fs');
@@ -9,31 +9,31 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const MARK = '# aidure: Node 버전과 상관없는 aidure 명령 (aidure 이 넣음)';
+const MARK = '# kedovi: Node 버전과 상관없는 kedovi 명령 (kedovi 이 넣음)';
 
 function shDir(home) { return path.join(home, '.local', 'bin'); }
-function winDir(env, home) { return path.join(env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'aidure', 'bin'); }
+function winDir(env, home) { return path.join(env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'kedovi', 'bin'); }
 
-/** sh 실행 파일 본문. kit = 이번 aidure.js, node = 이번 Node, pkg = 패키지 이름 */
+/** sh 실행 파일 본문. kit = 이번 kedovi.js, node = 이번 Node, pkg = 패키지 이름 */
 function shBody({ kit, node, pkg }) {
   const mod = `lib/node_modules/${pkg}`;
   return `#!/bin/sh
-${MARK}. 직접 고치지 않는다 (aidure 이 실행될 때마다 다시 쓴다)
+${MARK}. 직접 고치지 않는다 (kedovi 이 실행될 때마다 다시 쓴다)
 K="${kit}"
 N="${node}"
 if [ ! -f "$K" ]; then
-  # 다른 Node 버전에 깔린 aidure 중 가장 최근에 설치한 것
+  # 다른 Node 버전에 깔린 kedovi 중 가장 최근에 설치한 것
   # (npm 은 패키지 파일 시각을 고정값으로 풀어서 패키지 폴더 시각으로 비교)
   D="$(ls -td "\${NVM_DIR:-$HOME/.nvm}"/versions/node/*/${mod} "$HOME"/.local/share/fnm/node-versions/*/installation/${mod} "$HOME"/.volta/tools/image/packages/${pkg}/${mod} 2>/dev/null | head -n 1)"
   K=""
-  [ -n "$D" ] && [ -f "$D/bin/aidure.js" ] && K="$D/bin/aidure.js" && N="\${D%/lib/node_modules/*}/bin/node"
+  [ -n "$D" ] && [ -f "$D/bin/kedovi.js" ] && K="$D/bin/kedovi.js" && N="\${D%/lib/node_modules/*}/bin/node"
 fi
 if [ -z "$K" ] && command -v npm >/dev/null 2>&1; then
-  f="$(npm root -g 2>/dev/null)/${pkg}/bin/aidure.js"
+  f="$(npm root -g 2>/dev/null)/${pkg}/bin/kedovi.js"
   [ -f "$f" ] && K="$f" && N=node
 fi
 [ -x "$N" ] || N=node
-if [ -z "$K" ]; then echo "aidure 을 찾지 못했습니다. 설치: npm i -g ${pkg}" >&2; exit 127; fi
+if [ -z "$K" ]; then echo "kedovi 을 찾지 못했습니다. 설치: npm i -g ${pkg}" >&2; exit 127; fi
 exec "$N" "$K" "$@"
 `;
 }
@@ -43,17 +43,17 @@ function cmdBody({ kit, node, pkg }) {
   const w = pkg.replace(/\//g, '\\');
   return [
     '@echo off',
-    'rem aidure launcher independent of the Node version. Rewritten on every aidure run, do not edit', // cmd 는 UTF-8 한글이 깨질 수 있어 영문
+    'rem kedovi launcher independent of the Node version. Rewritten on every kedovi run, do not edit', // cmd 는 UTF-8 한글이 깨질 수 있어 영문
     'setlocal',
     `set "K=${kit}"`,
     `set "N=${node}"`,
     'if exist "%K%" goto run',
-    // nvm-windows: 최근에 만든 Node 버전 폴더부터, aidure 이 있는 첫 버전
-    `if defined NVM_HOME for /f "delims=" %%D in ('dir /b /ad /o-d "%NVM_HOME%\\v*" 2^>nul') do if exist "%NVM_HOME%\\%%D\\node_modules\\${w}\\bin\\aidure.js" (set "K=%NVM_HOME%\\%%D\\node_modules\\${w}\\bin\\aidure.js"& set "N=%NVM_HOME%\\%%D\\node.exe"& goto run)`,
-    `for /f "delims=" %%R in ('npm root -g 2^>nul') do if exist "%%R\\${w}\\bin\\aidure.js" (set "K=%%R\\${w}\\bin\\aidure.js"& set "N=node"& goto run)`,
+    // nvm-windows: 최근에 만든 Node 버전 폴더부터, kedovi 이 있는 첫 버전
+    `if defined NVM_HOME for /f "delims=" %%D in ('dir /b /ad /o-d "%NVM_HOME%\\v*" 2^>nul') do if exist "%NVM_HOME%\\%%D\\node_modules\\${w}\\bin\\kedovi.js" (set "K=%NVM_HOME%\\%%D\\node_modules\\${w}\\bin\\kedovi.js"& set "N=%NVM_HOME%\\%%D\\node.exe"& goto run)`,
+    `for /f "delims=" %%R in ('npm root -g 2^>nul') do if exist "%%R\\${w}\\bin\\kedovi.js" (set "K=%%R\\${w}\\bin\\kedovi.js"& set "N=node"& goto run)`,
     ':run',
     'if not exist "%N%" set "N=node"',
-    `if not exist "%K%" (echo aidure not found. Install: npm i -g ${pkg} 1>&2 & exit /b 9009)`,
+    `if not exist "%K%" (echo kedovi not found. Install: npm i -g ${pkg} 1>&2 & exit /b 9009)`,
     '"%N%" "%K%" %*',
     '',
   ].join('\r\n');
@@ -87,13 +87,13 @@ function ensure(opts = {}) {
   const home = opts.home || os.homedir();
   const platform = opts.platform || process.platform;
   const kit = opts.kit;
-  if (!kit || env.AIDURE_NO_GLOBAL_SHIM === '1') return null;
+  if (!kit || env.KEDOVI_NO_GLOBAL_SHIM === '1') return null;
   if (!opts.force && !/[\\/]node_modules[\\/]/.test(kit)) return null; // 킷 repo 에서 직접 실행 · 개발 중이면 건드리지 않는다
-  const pkg = opts.pkg || 'aidure';
+  const pkg = opts.pkg || 'kedovi';
   const node = opts.node || process.execPath;
   const win = platform === 'win32';
   const dir = win ? winDir(env, home) : shDir(home);
-  const file = path.join(dir, win ? 'aidure.cmd' : 'aidure');
+  const file = path.join(dir, win ? 'kedovi.cmd' : 'kedovi');
   const res = { file, changed: false, pathAdded: [], note: '' };
   try {
     res.changed = writeIfChanged(file, (win ? cmdBody : shBody)({ kit, node, pkg }), win ? 0 : 0o755);

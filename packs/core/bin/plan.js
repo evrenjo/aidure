@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 로드맵 도구: handoffs/PLAN.md 를 읽어 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음 순서를 그린다. 실행: aidure plan [명령] 또는 node packs/core/bin/plan.js [명령]
+// 로드맵 도구: handoffs/PLAN.md 를 읽어 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음 순서를 그린다. 실행: kedovi plan [명령] 또는 node packs/core/bin/plan.js [명령]
 /*
  * 명령
  *   (없음)              완료 보고용 블록 (markdown: 흐름도 코드 블록 + 지금 단계 표 + 이번에 생긴 것 + 다음)
@@ -7,9 +7,9 @@
  *   --json              전광판 등 다른 도구용
  *   --stage <번호>      그 단계 기준으로 그린다 (기본: 진행 중인 단계)
  *   --report [시작 [끝]] 이슈형: 기간 보고 markdown (기본: 오늘까지 7일). 운영 반영 · 진행 중(상태별) · 새 접수 · 보류 · 멈춘 이슈
- *   init [--type t] [--switch]  PLAN.md 가 없으면 종류 · 진행 방식 · 스택별 기본 단계로 만든다. 기본 단계 그대로(aidure:preset)면 스택에 맞게 단계를 더하고,
+ *   init [--type t] [--switch]  PLAN.md 가 없으면 종류 · 진행 방식 · 스택별 기본 단계로 만든다. 기본 단계 그대로(kedovi:preset)면 스택에 맞게 단계를 더하고,
  *                       진행 방식이 바뀌어 단계가 다르면(아직 끝낸 단계가 없을 때만) 새 뼈대로 바꾼다 (사람이 고친 것은 그대로).
- *                       이슈형으로 바꿀 때(--switch: aidure approach · type)는 고친 로드맵이어도 맨 앞에 `## 이슈` 절을 끼운다 (단계 표는 남기고 읽지 않는다)
+ *                       이슈형으로 바꿀 때(--switch: kedovi approach · type)는 고친 로드맵이어도 맨 앞에 `## 이슈` 절을 끼운다 (단계 표는 남기고 읽지 않는다)
  *   check               갱신 누락 경고 (⚠ 줄. 항상 exit 0)
  * 숫자는 센 것만 쓴다: 커밋 · 새 파일 · ID(vars.plan.ids 접두사)는 단계 시작 날짜 이후 git 기록에서 센다. 시작 날짜가 없으면 세지 않는다.
  */
@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const { load, allRepos, git, localDate } = require('../lib/workspace');
 const P = require('../lib/plan');
-const PRESET = '<!-- aidure:preset';
+const PRESET = '<!-- kedovi:preset';
 
 const argv = process.argv.slice(2);
 const opt = (k) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : null; };
@@ -116,12 +116,12 @@ function report(ws, plan) {
 /** 갱신 누락 경고 */
 function check(ws, plan, root) {
   const warn = [];
-  if (!plan) return ['로드맵(handoffs/PLAN.md)이 없거나 단계 표가 없습니다. aidure plan init 으로 만든다'];
+  if (!plan) return ['로드맵(handoffs/PLAN.md)이 없거나 단계 표가 없습니다. kedovi plan init 으로 만든다'];
   if (plan.issues) return issueCheck(plan);
   // 아이디어 단계 중이면 로드맵을 고칠지는 그 대화가 끝난 뒤에 묻는다 (첫 질문이 겹치지 않게)
   if (plan.preset) warn.push(`로드맵이 기본 단계 그대로입니다. ${P.presetHint(plan)}`);
   warn.push(...P.missingStages(plan, layersOf(ws), (ws.project || {}).type, (ws.project || {}).approach));
-  // 진행 방식과 로드맵 모양이 다르면 (aidure approach 가 손댄 로드맵을 그대로 둔 경우) 단계 표를 고치게 알린다
+  // 진행 방식과 로드맵 모양이 다르면 (kedovi approach 가 손댄 로드맵을 그대로 둔 경우) 단계 표를 고치게 알린다
   const sprintShape = plan.stages.some((s) => s.name.replace(/\s+/g, '') === '스프린트계획');
   const ap = (ws.project || {}).approach;
   const oldEnh = plan.stages.map((s) => s.name).join('|') === P.OLD_ENHANCEMENT.join('|'); // 0.63 전 운영·고도화 기본 단계는 일부러 그대로 둔다
@@ -208,13 +208,13 @@ function main() {
     return;
   }
   if (!plan) {
-    console.log(`로드맵이 없습니다 (${P.FILE}). 만들기: aidure plan init`);
+    console.log(`로드맵이 없습니다 (${P.FILE}). 만들기: kedovi plan init`);
     process.exitCode = has('json') ? 1 : 0;
     return;
   }
   if (has('json')) return console.log(JSON.stringify({ ...P.toJson(plan), at: localDate() }, null, 2));
   if (has('report')) {
-    if (!plan.issues) return console.log('기간 보고(--report)는 이슈형 로드맵에서만 됩니다. 단계형은 aidure plan');
+    if (!plan.issues) return console.log('기간 보고(--report)는 이슈형 로드맵에서만 됩니다. 단계형은 kedovi plan');
     const i = argv.indexOf('--report');
     const ds = argv.slice(i + 1, i + 3).filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x));
     const to = ds[1] || localDate();

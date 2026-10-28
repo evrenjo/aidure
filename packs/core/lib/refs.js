@@ -46,7 +46,7 @@ const KIND = { docs: '기획', legacy: '레거시', issues: '이슈' };
 
 /** 한 항목을 짧은 한국어로 */
 function describe(s) {
-  if (s.state === 'missing') return `${s.name}: 받지 않음 (aidure install)`;
+  if (s.state === 'missing') return `${s.name}: 받지 않음 (kedovi install)`;
   if (s.state === 'no-path') return `${s.name}: ${s.readDir}/ 폴더 없음`;
   if (s.state === 'empty') return `${s.name}: 비어 있음 (${s.readDir}/ 에 README 만)`;
   return `${s.name}: ${s.kind === 'legacy' ? '파일' : 'md'} ${s.count}${s.count >= 2000 ? '+' : ''}개`;

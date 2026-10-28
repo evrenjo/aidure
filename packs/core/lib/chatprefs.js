@@ -1,7 +1,7 @@
 // 응답 언어 · 대화 스타일 (chat.language · chat.style): 이 PC(.agents/local.json) → 팀(workspace.json) → 킷 기본값.
 /*
  * 쓰는 곳: kit.js sync (CLAUDE.local.md · AGENTS.override.md 머리 · .claude/settings.local.json language · outputStyle · .claude/output-styles/)
- *        · 훅 chat-prefs.js (요청마다 한 줄) · aidure prefs (보기 · 바꾸기).
+ *        · 훅 chat-prefs.js (요청마다 한 줄) · kedovi prefs (보기 · 바꾸기).
  * 의존성 없음 (kit.js 가 워크스페이스에서 require 한다).
  */
 'use strict';
@@ -18,7 +18,7 @@ const STYLES = {
   expert: { label: '전문가', hint: '부가 설명 없이 현업 용어 · 결과 · 근거 표와 그림 위주' },
 };
 const DEFAULT_STYLE = 'normal';
-const OUTPUT_STYLE_PREFIX = 'aidure-'; // .claude/output-styles/aidure-<스타일>.md · settings outputStyle 값
+const OUTPUT_STYLE_PREFIX = 'kedovi-'; // .claude/output-styles/kedovi-<스타일>.md · settings outputStyle 값
 
 const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return {}; } };
 
@@ -80,7 +80,7 @@ function headSection(p, { codeLanguage } = {}) {
     `- ${lang}${codeLanguage ? ` 코드 · 커밋 · 식별자 언어는 팀 규칙(${codeLanguage}) 그대로.` : ''}`,
     `- **대화 스타일: ${S.label}.** ${STYLE_RULES[p.style].join(' ')}`,
     `- ${DIAGRAM_RULE}`,
-    '- 바꾸기: `aidure prefs language ko|en` · `aidure prefs style learn|normal|expert` (팀 기본값은 `--team`).', '',
+    '- 바꾸기: `kedovi prefs language ko|en` · `kedovi prefs style learn|normal|expert` (팀 기본값은 `--team`).', '',
   ].join('\n');
 }
 
@@ -91,13 +91,13 @@ function reminder(p) {
   return `응답: 한국어만 (진행 알림 포함, 코드 · 명령 · 로그 · 현업 용어만 원문) · 스타일 ${S.label} · 그림: mermaid_preview 있으면 그것, 없으면 텍스트`;
 }
 
-/** Claude Code 출력 스타일 파일 (.claude/output-styles/aidure-<스타일>.md). 일반은 기본 스타일이라 만들지 않는다 */
+/** Claude Code 출력 스타일 파일 (.claude/output-styles/kedovi-<스타일>.md). 일반은 기본 스타일이라 만들지 않는다 */
 function outputStyleFiles() {
   const out = new Map();
   for (const key of ['learn', 'expert']) {
     const s = STYLES[key];
     out.set(`.claude/output-styles/${OUTPUT_STYLE_PREFIX}${key}.md`, [
-      '---', `name: ${OUTPUT_STYLE_PREFIX}${key}`, `description: aidure 대화 스타일 ${s.label}: ${s.hint}`, 'keep-coding-instructions: true', '---', '',
+      '---', `name: ${OUTPUT_STYLE_PREFIX}${key}`, `description: kedovi 대화 스타일 ${s.label}: ${s.hint}`, 'keep-coding-instructions: true', '---', '',
       `# 대화 스타일: ${s.label}`, '', ...STYLE_RULES[key].map((x) => `- ${x}`), `- ${DIAGRAM_RULE}`, '',
     ].join('\n'));
   }

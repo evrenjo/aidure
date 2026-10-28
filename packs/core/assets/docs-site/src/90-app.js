@@ -58,7 +58,7 @@
     H.useEffect(function () {
       if (document.documentElement.dataset.theme === theme) return;
       document.documentElement.dataset.theme = theme;
-      try { localStorage.setItem("aidure-docs-theme", theme); } catch (e) { /* 저장 못 함 */ }
+      try { localStorage.setItem("kedovi-docs-theme", theme); } catch (e) { /* 저장 못 함 */ }
       ready.current = DS.drawDiagrams(bodyEl.current);
       DS.emit("theme", theme);
     }, [theme]);

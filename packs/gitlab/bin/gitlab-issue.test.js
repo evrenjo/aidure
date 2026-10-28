@@ -8,7 +8,7 @@ const http = require('http');
 const { spawn } = require('child_process');
 
 const TOKEN = 'glpat-test-issue-00001';
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-gitlab-issue-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-gitlab-issue-'));
 const seen = [];
 const issue = (iid, state, title) => ({ iid, state, title, description: `본문 ${iid}`, author: { username: 'dev' }, created_at: '2026-01-02T03:04:05.000Z', labels: ['bug'], web_url: `http://git.test/i/${iid}` });
 const server = http.createServer((req, res) => {
@@ -32,7 +32,7 @@ const server = http.createServer((req, res) => {
 
 function run(args, cwd) {
   return new Promise((resolve) => {
-    const env = { ...process.env, GITLAB_TOKEN: TOKEN, AIDURE_CONFIG_DIR: path.join(tmp, 'config'), AIDURE_SECRETS_BACKEND: 'file' };
+    const env = { ...process.env, GITLAB_TOKEN: TOKEN, KEDOVI_CONFIG_DIR: path.join(tmp, 'config'), KEDOVI_SECRETS_BACKEND: 'file' };
     delete env.CLAUDE_PROJECT_DIR;
     const c = spawn(process.execPath, [path.join(__dirname, 'gitlab-issue.js'), ...args], { cwd, env });
     let out = '';

@@ -6,7 +6,7 @@
  *   Notification      결정 대기 (질문 · 권한 확인). 질문은 PreToolUse 에서 적어 둔 질문 · 선택지로. 팀원 세션의 승인 · 입력 대기도 (리더 화면에 안 보여서)
  *   PreToolUse(Agent) · SubagentStop · TeammateIdle   에이전트 시작 · 끝 · 대기 (all · progress)
  *   PC 앞에 있으면(키보드 · 마우스를 deskSeconds 안에 만짐, macOS) 끝남 · 에이전트 진행 · 음성은 보내지 않는다. 결정 대기 · 전체 수준 · 자리 비움은 그대로
- * 채널 세션(aidure start 가 AIDURE_CHANNEL=1)만:
+ * 채널 세션(kedovi start 가 KEDOVI_CHANNEL=1)만:
  *   자리 비움이면 질문 창을 막고 텔레그램 버튼 질문(notify.js ask)으로 묻게 한다. 막을 때만 deny JSON 출력
  *   자리 비움인데 끝 응답이 결정 질문이고 이번 요청에 ask 를 안 보냈으면 Stop 을 한 번 막는다 (block JSON)
  *   수신 감시: 플러그인 서버가 끊기면 한 번 알린다. UserPromptSubmit 이면 Claude 에게도 평문으로 알린다 (자리 비움 전환 안내도)
@@ -27,7 +27,7 @@ run(async () => {
   const event = String(input.hook_event_name || '');
   const tool = String(input.tool_name || '');
   const id = safeId(input.session_id);
-  const channel = process.env.AIDURE_CHANNEL === '1';
+  const channel = process.env.KEDOVI_CHANNEL === '1';
   // 리모트 컨트롤(Claude 앱)로 이어져 있으면 결정 · 입력 대기는 앱이 알린다: 결정은 질문 창으로 (자리 비움 무시), 텔레그램은 작업 끝 한 줄만 (quiet 면 그것도 쉼)
   const remote = cfg.remote !== 'send' && notify.remoteControl(input.session_id);
   if (remote) { cfg.away = false; if (cfg.remote === 'quiet') cfg.token = ''; }
@@ -76,13 +76,13 @@ run(async () => {
       if (!h.ok && !fs.existsSync(down)) {
         fs.writeFileSync(down, h.reason);
         // 팀원 막기(bun 대리 실행)가 없는 세션이면 다시 시작하라고 덧붙인다: 그 전까지는 팀원을 띄울 때마다 또 끊긴다
-        const guarded = String(process.env.PATH || '').split(path.delimiter).includes(path.join(notify.channelDir(ROOT), 'aidure-bin'));
-        await send(`⚠️ [${project}] 텔레그램 채널 끊김: ${h.reason}\n바로 할 일: 터미널에서 /mcp → plugin:telegram → Reconnect (안 되면 세션을 끝내고 aidure start -c)${guarded ? '' : '\n팀원이 수신을 가져가지 않게 하려면 세션을 끝내고 aidure start -c 로 다시 시작 (팀원 막기가 켜진다)'}`);
+        const guarded = String(process.env.PATH || '').split(path.delimiter).includes(path.join(notify.channelDir(ROOT), 'kedovi-bin'));
+        await send(`⚠️ [${project}] 텔레그램 채널 끊김: ${h.reason}\n바로 할 일: 터미널에서 /mcp → plugin:telegram → Reconnect (안 되면 세션을 끝내고 kedovi start -c)${guarded ? '' : '\n팀원이 수신을 가져가지 않게 하려면 세션을 끝내고 kedovi start -c 로 다시 시작 (팀원 막기가 켜진다)'}`);
       } else if (h.ok && fs.existsSync(down)) {
         rm(down);
         await send(`✅ [${project}] 텔레그램 채널 다시 연결됨`);
       }
-      if (!h.ok && event === 'UserPromptSubmit') process.stdout.write(`⚠️ 텔레그램 채널이 끊겼다 (${h.reason}). 이 요청을 처리하기 전에 사용자에게 한 줄로 알린다: 터미널에서 /mcp → plugin:telegram → Reconnect, 안 되면 세션을 끝내고 aidure start -c 로 이어서 시작.\n`);
+      if (!h.ok && event === 'UserPromptSubmit') process.stdout.write(`⚠️ 텔레그램 채널이 끊겼다 (${h.reason}). 이 요청을 처리하기 전에 사용자에게 한 줄로 알린다: 터미널에서 /mcp → plugin:telegram → Reconnect, 안 되면 세션을 끝내고 kedovi start -c 로 이어서 시작.\n`);
     }
   }
 

@@ -1,15 +1,15 @@
 {
-  "name": "aidure",
+  "name": "kedovi",
   "version": "0.76.0",
   "private": false,
   "description": "Claude Code · Codex 겸용 AI 협업 워크스페이스 킷",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/evrenjo/aidure.git"
+    "url": "git+https://github.com/evrenjo/kedovi.git"
   },
   "bin": {
-    "aidure": "bin/aidure.js"
+    "kedovi": "bin/kedovi.js"
   },
   "engines": {
     "node": ">=20.19"
@@ -49,8 +49,8 @@
     "esbuild": "^0.28.2",
     "playwright-core": "^1.63.0"
   },
-  "homepage": "https://evrenjo.github.io/aidure/",
+  "homepage": "https://evrenjo.github.io/kedovi/",
   "bugs": {
-    "url": "https://github.com/evrenjo/aidure/issues"
+    "url": "https://github.com/evrenjo/kedovi/issues"
   }
 }

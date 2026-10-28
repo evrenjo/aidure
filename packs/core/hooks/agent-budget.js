@@ -42,7 +42,7 @@ run(() => {
   const kitRole = !!type && /^[A-Za-z0-9._-]+$/.test(type) && fs.existsSync(path.join(ws, '.claude', 'agents', `${type}.md`));
   if (nameCheck !== 'off' && kitRole && !String(ti.name || '').trim() && !ti.isolation && judge(ws).team) {
     const msg = `팀 모드입니다. 역할 에이전트(${type})를 이름 없이 띄우면 팀원이 아니라 서브에이전트로 돕니다. Agent 도구에 name(역할 이름, 예: ${type})을 주어 팀원으로 띄우세요. 처음 띄우는 것이면 먼저 실행 방식 한 줄과 구성표를 사용자에게 알립니다 (team 스킬)`;
-    if (nameCheck === 'block') return deny(`${msg}. 수준 바꾸기: aidure team-mode enforce name warn|off`);
+    if (nameCheck === 'block') return deny(`${msg}. 수준 바꾸기: kedovi team-mode enforce name warn|off`);
     warns.push(msg);
   }
   // 리뷰 전 검사: 리뷰 역할 에이전트의 지시문에 「검사: <명령> 통과」 줄이 없으면 막는다 (agents.enforce.checkBeforeReview)
@@ -55,7 +55,7 @@ run(() => {
     }
   } catch { /* 옛 워크스페이스 */ }
   if (st.turn >= limits.total) {
-    return deny(`역할 에이전트 상한: 이번 요청에 이미 ${st.turn}개를 불렀습니다 (한 요청 ${limits.total}개). 새로 부르지 말고 앞 에이전트에게 이어서 맡기거나 직접 하세요. 꼭 더 필요하면 이유와 함께 사용자에게 물어보세요 (사용자가 답하면 다시 셉니다). 상한은 aidure ai show 의 limits`);
+    return deny(`역할 에이전트 상한: 이번 요청에 이미 ${st.turn}개를 불렀습니다 (한 요청 ${limits.total}개). 새로 부르지 말고 앞 에이전트에게 이어서 맡기거나 직접 하세요. 꼭 더 필요하면 이유와 함께 사용자에게 물어보세요 (사용자가 답하면 다시 셉니다). 상한은 kedovi ai show 의 limits`);
   }
   if (st.running >= limits.parallel) {
     return deny(`역할 에이전트 상한: 지금 ${st.running}개가 돌고 있습니다 (동시 ${limits.parallel}개). 먼저 끝난 결과를 받고 부르세요`);

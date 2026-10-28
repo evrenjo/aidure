@@ -86,7 +86,7 @@ function overrun(ROOT, sessionId, { after = 60 } = {}, { mark = true, now = Date
 function message(list, { after = 60 } = {}) {
   return `오래 일하는 중입니다: ${list.map((x) => `${x.label}(${x.minutes}분)`).join(', ')}. 상한 ${after}분. `
     + '계속할지 · 범위를 줄일지 · 멈추고 정리할지 사용자에게 선택지로 묻습니다 (지금까지 한 것 · 남은 것 한 줄씩). '
-    + `같은 대상은 ${after}분 뒤에 다시 알립니다. 수준 바꾸기: aidure team-mode enforce run off|warn|block [--after 분]`;
+    + `같은 대상은 ${after}분 뒤에 다시 알립니다. 수준 바꾸기: kedovi team-mode enforce run off|warn|block [--after 분]`;
 }
 
 module.exports = { settings, markIdle, delegations, overrun, message };

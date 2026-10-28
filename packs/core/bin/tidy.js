@@ -83,7 +83,7 @@ const GREP_EXCLUDE = ['*.min.js', '*.min.css', '*.map', '*.lock', 'package-lock.
 function referenced(dir, names) {
   const found = new Map();
   if (!names.length) return found;
-  const tmp = path.join(os.tmpdir(), `aidure-tidy-${process.pid}-${Date.now()}.txt`);
+  const tmp = path.join(os.tmpdir(), `kedovi-tidy-${process.pid}-${Date.now()}.txt`);
   fs.writeFileSync(tmp, names.join('\n') + '\n');
   try {
     const r = spawnSync('git', ['-C', dir, '-c', 'core.quotePath=false', 'grep', '--untracked', '-I', '-o', '-F', '-z', '-f', tmp, '--', '.', ...GREP_EXCLUDE], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, timeout: 120000 });
@@ -163,7 +163,7 @@ function main() {
   if (has('json')) { console.log(JSON.stringify({ total, newFiles: fresh, repos: results }, null, 2)); return; }
   if (has('count')) {
     const by = results.filter((r) => n(r)).map((r) => `${r.name} ${n(r)}`);
-    console.log(total ? `정리 후보 ${total}개 (${by.join(' · ')}) · 이번 작업 새 파일 ${fresh}개. 확인: aidure tidy` : `정리 후보 없음 · 이번 작업 새 파일 ${fresh}개`);
+    console.log(total ? `정리 후보 ${total}개 (${by.join(' · ')}) · 이번 작업 새 파일 ${fresh}개. 확인: kedovi tidy` : `정리 후보 없음 · 이번 작업 새 파일 ${fresh}개`);
     return;
   }
   const show = (title, list, note = '') => {

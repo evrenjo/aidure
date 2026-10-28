@@ -11,8 +11,8 @@ description: 화면설계서(스토리보드)를 킷 양식으로 만든다. 진
 |---|---|
 | `packs/screens/assets/storyboard/template.html` | 장 양식 견본 5장: 표지 · 변경 이력 · 메뉴 구조 · 정책 · 화면 |
 | `packs/screens/assets/storyboard/storyboard.css` · `src/` | 양식 스타일 · 뷰어 (문서 사이트를 만들 때 `assets/storyboard/` 로 들어간다. 기획 repo 에 따로 두지 않는다) |
-| `packs/core/bin/docs-site.js` | `aidure docs build` : 기획 repo 의 md 와 장 HTML 로 문서 사이트(`<기획 repo>/docs-site/`)와 근거 색인(`<기획 repo>/docs-site/assets/ids.json`)을 만든다 |
-| `packs/screens/bin/check-screens.js` | `aidure screens check` : 장의 근거 ID · 화면 ID 중복 · 기능 ID 누락 |
+| `packs/core/bin/docs-site.js` | `kedovi docs build` : 기획 repo 의 md 와 장 HTML 로 문서 사이트(`<기획 repo>/docs-site/`)와 근거 색인(`<기획 repo>/docs-site/assets/ids.json`)을 만든다 |
+| `packs/screens/bin/check-screens.js` | `kedovi screens check` : 장의 근거 ID · 화면 ID 중복 · 기능 ID 누락 |
 
 ## 1. 진행 방식 합의
 
@@ -67,24 +67,24 @@ description: 화면설계서(스토리보드)를 킷 양식으로 만든다. 진
 - 한 줄 60자 안. 「이름: 무엇 · 무엇」 꼴로 쓴다.
 - 쓰지 않는다: 날짜 · 결정 번호 · 바뀐 경위(「…으로 바꿈」 · 「추가됨」 · 「사용자 결정」), 괄호 속 세부 조건 나열, 값 범위 · 색 · 개수 같은 세부 규칙. 이것들은 기능정의 · 정책 · 결정 문서에 두고 줄 아래 근거 ID(기능 ID · 정책 ID · 결정 ID)로 잇는다.
 - 근거 문서에 없는 세부 내용이면 지우기 전에 그 기능 · 정책 문서에 먼저 옮긴다. 화면설계서에만 남은 규칙이 없어야 한다.
-- `aidure screens check` 가 60자 넘음 · 날짜 · 결정 경위가 든 줄을 ⚠ 로 알린다.
+- `kedovi screens check` 가 60자 넘음 · 날짜 · 결정 경위가 든 줄을 ⚠ 로 알린다.
 
 | 나쁜 예 | 좋은 예 (근거 ID 는 줄 아래 `<ul>`) |
 |---|---|
 | 시장 띠: 지수 카드 3개(코스피 · 코스닥 · 코스피200 선물 값 · 등락 · 당일 미니 선, 선물은 2026-10-16 사용자 결정으로 추가) / 테마 TOP 5 가로 막대(…) | 시장 띠: 지수 · 테마 TOP 5 · 시장 수급 카드 |
 | 보유 종목 카드: [내 계좌 \| 가상 계좌] 전환, 마지막 선택을 계정 화면 설정에 기억(FN-…, 결정 89), 기본 접힘, … | 보유 종목 카드: 계좌별 보유 종목과 비중 |
 
-**이미 쓴 설계서 다듬기**: `aidure screens check` 의 ⚠ 줄을 위 규칙으로 고친다. 줄마다 (1) 세부 내용이 근거 문서에 있는지 보고 없으면 옮기고, (2) 결론 한 줄로 줄이고, (3) 근거 ID 를 줄 아래에 둔다. 다 고치면 `aidure docs build` 로 다시 만들고 넘침 장도 함께 본다.
+**이미 쓴 설계서 다듬기**: `kedovi screens check` 의 ⚠ 줄을 위 규칙으로 고친다. 줄마다 (1) 세부 내용이 근거 문서에 있는지 보고 없으면 옮기고, (2) 결론 한 줄로 줄이고, (3) 근거 ID 를 줄 아래에 둔다. 다 고치면 `kedovi docs build` 로 다시 만들고 넘침 장도 함께 본다.
 
 ## 5. 문서 사이트 반영 · 검사
 
 ```
-aidure docs build <기획 repo>      # docs-site/ 와 근거 색인을 다시 만든다 (md 나 장을 고칠 때마다)
-aidure screens check <기획 repo>   # ✖ 가 없어야 한다
+kedovi docs build <기획 repo>      # docs-site/ 와 근거 색인을 다시 만든다 (md 나 장을 고칠 때마다)
+kedovi screens check <기획 repo>   # ✖ 가 없어야 한다
 ```
 
-- Pages 를 켠 repo(`aidure docs pages`)는 `docs-site/` 를 커밋한다. 기획 repo 의 pre-commit 이 md 와 `docs-site/` 가 어긋나면 막는다.
+- Pages 를 켠 repo(`kedovi docs pages`)는 `docs-site/` 를 커밋한다. 기획 repo 의 pre-commit 이 md 와 `docs-site/` 가 어긋나면 막는다.
 - 문서 사이트 메뉴에는 장 파일이 따로 나오지 않는다. 화면설계 묶음의 첫 항목(화면 폴더 README 쪽, 없으면 폴더 쪽)이 개요가 되어 맨 위에 장 수 · 묶음별 화면 목록 · 「설계서 보기」 를 보이고, 묶음 제목 옆 ▶ 버튼도 설계서로 간다. 뷰어의 「← 문서」 는 그 개요로 돌아간다.
-- 확인은 `docs-site/` 를 브라우저로 연다 (`file://` 로도 열리지만 근거 패널은 http 서버에서 확실하다: `aidure docs serve`).
-- 뷰어에서 「⚠ 한 쪽 넘침」 장이 없는지 본다 (썸네일의 ⚠). 있으면 4단계의 순서로 줄이고 다시 만든다. 이 검사는 브라우저에서만 된다 (`aidure screens check` 는 높이를 재지 못한다).
+- 확인은 `docs-site/` 를 브라우저로 연다 (`file://` 로도 열리지만 근거 패널은 http 서버에서 확실하다: `kedovi docs serve`).
+- 뷰어에서 「⚠ 한 쪽 넘침」 장이 없는지 본다 (썸네일의 ⚠). 있으면 4단계의 순서로 줄이고 다시 만든다. 이 검사는 브라우저에서만 된다 (`kedovi screens check` 는 높이를 재지 못한다).
 - 결과를 사용자에게 알릴 때 장 수 · 화면 수 · 검사 결과(✖ · ⚠ 줄) · 한 쪽 넘침 장를 그대로 옮긴다.

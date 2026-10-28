@@ -6,7 +6,7 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-docsite-'));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-docsite-'));
 const put = (f, c) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), c); };
 put('workspace.json', JSON.stringify({ project: { title: '시험' }, repos: [
   { name: 'web', kind: 'code', url: 'git@gitlab.example.com:grp/web.git' },
@@ -66,7 +66,7 @@ assert.match(out.stdout, /repos: web 사본\(기본\(code\)\) · old 뺌\(기본
 fs.rmSync(dir, { recursive: true, force: true });
 
 // 옛 출력 폴더 html/ → docs-site/ 옮기기 (git mv · 우리 CI 경로 · .gitignore) 와 Pages 켜고 끄기
-const g = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-pages-'));
+const g = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-pages-'));
 const git = (...a) => spawnSync('git', ['-C', g, ...a], { encoding: 'utf8' });
 const tool = (...a) => spawnSync(process.execPath, [path.join(__dirname, 'docs-site.js'), ...a, g], { encoding: 'utf8' });
 const gput = (f, c) => { fs.mkdirSync(path.dirname(path.join(g, f)), { recursive: true }); fs.writeFileSync(path.join(g, f), c); };
@@ -74,7 +74,7 @@ git('init', '-q', '-b', 'main'); git('config', 'user.email', 't@t'); git('config
 git('remote', 'add', 'origin', 'git@gitlab.example.com:grp/plans.git');
 gput('README.md', '# 기획\n');
 gput('html/assets/site.json', JSON.stringify({ files: [] }));
-gput('.gitlab-ci.yml', '# 문서 사이트(html/)를 GitLab Pages 로 올린다. html/ 은 aidure docs build 로 만들어 커밋한 것을 그대로 쓴다\npages:\n  script:\n    - rm -rf public && cp -r html public\n    - cp -r html/. public/\n  artifacts:\n    paths: [public]\n  rules:\n    - exists:\n        - html/assets/site.json\n');
+gput('.gitlab-ci.yml', '# 문서 사이트(html/)를 GitLab Pages 로 올린다. html/ 은 kedovi docs build 로 만들어 커밋한 것을 그대로 쓴다\npages:\n  script:\n    - rm -rf public && cp -r html public\n    - cp -r html/. public/\n  artifacts:\n    paths: [public]\n  rules:\n    - exists:\n        - html/assets/site.json\n');
 gput('.github/workflows/pages.yml', fs.readFileSync(path.join(__dirname, '..', 'assets', 'pages', 'github-pages.yml'), 'utf8'));
 git('add', '-A'); git('commit', '-qm', 'init');
 let o2 = tool('build');
@@ -149,7 +149,7 @@ assert.strictEqual(fs.readFileSync(path.join(g, 'refs.md'), 'utf8'), '# 근거\n
 fs.rmSync(g, { recursive: true, force: true });
 // 옮겨진 문서: 옛 주소에 새 주소로 넘기는 쪽, 다음 build · check 도 같다
 {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-moved-'));
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-moved-'));
   fs.mkdirSync(path.join(d, 'AS-IS'), { recursive: true });
   fs.writeFileSync(path.join(d, 'README.md'), '# 기획\n');
   fs.writeFileSync(path.join(d, 'AS-IS', '30-sidecar.md'), '# 사이드카\n');

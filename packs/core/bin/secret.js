@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// 비밀값(토큰) 관리: 넣기 · 목록 · 확인 · 지우기 · 옛 위치에서 옮기기 · 명령에만 주입. 실행: aidure secret <명령> 또는 node packs/core/bin/secret.js <명령>
+// 비밀값(토큰) 관리: 넣기 · 목록 · 확인 · 지우기 · 옛 위치에서 옮기기 · 명령에만 주입. 실행: kedovi secret <명령> 또는 node packs/core/bin/secret.js <명령>
 /*
  * 명령
  *   set <이름> [--global] [--no-test]   값은 숨김 입력(터미널) 또는 표준 입력. 인자로 받지 않는다 (셸 기록에 남는다)
  *   list [--all]                        이름 · 범위 · 저장소 · 저장일 · 마지막 확인 · 지금 읽는 곳 (값 없음). --all = 다른 프로젝트 범위도
  *   test <이름>                         실제 호출로 유효성 · 권한 · 만료 확인 (gitlab · telegram · npm)
  *   rm <이름> [--global]
- *   import [--global | --project] [--yes]   옛 위치(~/.config/aidure/telegram.env · gitlab-token · ci-npm-token · 같은 이름의 환경변수)에서 옮긴다
+ *   import [--global | --project] [--yes]   옛 위치(~/.config/kedovi/telegram.env · gitlab-token · ci-npm-token · 같은 이름의 환경변수)에서 옮긴다
  *   exec [--only A,B] -- <명령…>          그 명령에만 환경변수로 넣는다 (기본: 팩이 선언한 비밀값 중 찾은 것)
  * 범위: 기본 = 이 워크스페이스(project.name), --global = 이 PC 의 모든 프로젝트. 찾는 순서: 환경변수 > 프로젝트 > 전역 > 옛 파일
  * 값은 어떤 출력에도 찍지 않는다. 저장소는 lib/secrets.js (macOS 키체인 · Windows 자격 증명 관리자 · Linux libsecret, 못 쓰면 권한 600 파일)
@@ -61,7 +61,7 @@ const readValue = (label) => S.readHidden(`${label} 값 (입력은 보이지 않
 
 async function runTest(name, { quiet } = {}) {
   const got = S.get(name, { project });
-  if (!got) { console.log(`✖ ${name}: 값이 없습니다. 넣기: aidure secret set ${name}${declared.find((x) => x.name === name && x.scope === 'global') ? ' --global' : ''}`); return false; }
+  if (!got) { console.log(`✖ ${name}: 값이 없습니다. 넣기: kedovi secret set ${name}${declared.find((x) => x.name === name && x.scope === 'global') ? ' --global' : ''}`); return false; }
   const kind = kindOf(name);
   if (!kind) { if (!quiet) console.log(`- ${name} ← ${got.label}: 확인 방법이 없는 이름 (pack.json secrets 의 test 로 정한다)`); return true; }
   const res = await S.test(kind, got.value, testContext());
@@ -70,14 +70,14 @@ async function runTest(name, { quiet } = {}) {
   const warns = S.testWarnings(res, (d && d.needs) || []);
   console.log(`${res.ok && !warns.length ? '✔' : res.ok ? '⚠' : '✖'} ${name} ← ${got.label} · ${S.testLine(res, new Date(), false)}`);
   for (const w of warns) console.log(`  ⚠ ${w}`);
-  if (got.source === 'legacy') console.log(`  ⚠ 옛 파일에서 읽었습니다. 옮기기: aidure secret import`);
+  if (got.source === 'legacy') console.log(`  ⚠ 옛 파일에서 읽었습니다. 옮기기: kedovi secret import`);
   return res.ok && !warns.length;
 }
 
 async function cmdSet() {
   const name = positional[1];
-  if (!name) die('사용: aidure secret set <이름> [--global]   (값은 숨김 입력 또는 표준 입력)');
-  if (positional.length > 2) die('값은 인자로 받지 않습니다 (셸 기록에 남는다). aidure secret set <이름> 만 실행하고 숨김 입력에 넣으세요');
+  if (!name) die('사용: kedovi secret set <이름> [--global]   (값은 숨김 입력 또는 표준 입력)');
+  if (positional.length > 2) die('값은 인자로 받지 않습니다 (셸 기록에 남는다). kedovi secret set <이름> 만 실행하고 숨김 입력에 넣으세요');
   const scope = scopeArg();
   const value = await readValue(name);
   const r = S.set(name, value, { scope });
@@ -90,7 +90,7 @@ function cmdList() {
   const all = has('all');
   const stored = S.list().filter((x) => all || x.scope === S.GLOBAL || x.scope === project);
   const names = [...new Set([...declared.map((d) => d.name), ...stored.map((x) => x.name), ...S.legacySources().map((x) => x.name)])].sort();
-  if (!names.length) { console.log(`저장한 비밀값이 없습니다. 넣기: aidure secret set <이름> [--global]  (범위: ${project ? `프로젝트 ${project}` : '워크스페이스 밖'})`); return; }
+  if (!names.length) { console.log(`저장한 비밀값이 없습니다. 넣기: kedovi secret set <이름> [--global]  (범위: ${project ? `프로젝트 ${project}` : '워크스페이스 밖'})`); return; }
   console.log(`비밀값 (값은 보이지 않습니다) · 저장소 ${S.STORE_LABEL[S.backend()] || S.backend()} · 범위 ${project ? `프로젝트 ${project}` : '워크스페이스 밖'}`);
   for (const name of names) {
     const d = declared.find((x) => x.name === name);
@@ -98,13 +98,13 @@ function cmdList() {
     console.log(`\n${name}${d ? `  (${d.pack} 팩: ${d.purpose || ''}${d.needs && d.needs.length ? ` · 권한 ${d.needs.join(', ')}` : ''})` : ''}`);
     console.log(`  지금 읽는 곳: ${now ? now.label : '없음'}`);
     for (const x of stored.filter((y) => y.name === name)) console.log(`  ${S.scopeLabel(x.scope)} · ${S.STORE_LABEL[x.store] || x.store} · 저장 ${x.savedAt || '?'} · 확인 ${x.test ? `${S.localDate(new Date(x.test.at))} ${S.testLine(x.test)}` : '안 함'}`);
-    if (!now && d && !d.optional) console.log(`  ⚠ 없음. 넣기: aidure secret set ${name}${d.scope === 'global' ? ' --global' : ''}`);
+    if (!now && d && !d.optional) console.log(`  ⚠ 없음. 넣기: kedovi secret set ${name}${d.scope === 'global' ? ' --global' : ''}`);
   }
 }
 
 function cmdRm() {
   const name = positional[1];
-  if (!name) die('사용: aidure secret rm <이름> [--global]');
+  if (!name) die('사용: kedovi secret rm <이름> [--global]');
   const scope = scopeArg();
   console.log(S.rm(name, { scope }) ? `✔ ${name} 지움: ${S.scopeLabel(scope)}` : `- ${name}: ${S.scopeLabel(scope)} 에 없습니다`);
 }
@@ -122,7 +122,7 @@ async function cmdImport() {
       .filter((n, i, a) => a.indexOf(n) === i && process.env[n]).map((n) => ({ name: n, value: process.env[n], from: '환경변수' }))];
   if (!found.length) { console.log('옮길 것이 없습니다 (telegram.env · gitlab-token · ci-npm-token · 환경변수)'); return; }
   const fixed = has('global') ? S.GLOBAL : has('project') ? scopeArg() : null;
-  if (!fixed && !process.stdin.isTTY) die('범위를 고르세요: aidure secret import --global 또는 --project');
+  if (!fixed && !process.stdin.isTTY) die('범위를 고르세요: kedovi secret import --global 또는 --project');
   const moved = [];
   for (const f of found) {
     let scope = fixed;
@@ -152,12 +152,12 @@ async function cmdImport() {
 }
 
 function cmdExec() {
-  if (dd < 0 || dd === argv.length - 1) die('사용: aidure secret exec [--only A,B] -- <명령…>');
+  if (dd < 0 || dd === argv.length - 1) die('사용: kedovi secret exec [--only A,B] -- <명령…>');
   const names = opt('only') ? opt('only').split(',').map((x) => x.trim()).filter(Boolean) : declared.map((d) => d.name);
   const env = { ...process.env };
   const used = [];
   for (const n of names) { const g = S.get(n, { project }); if (g) { env[n] = g.value; used.push(`${n} ← ${g.label}`); } }
-  console.error(`aidure secret exec: ${used.length ? used.join(' · ') : '넣을 비밀값 없음'}`);
+  console.error(`kedovi secret exec: ${used.length ? used.join(' · ') : '넣을 비밀값 없음'}`);
   const [cmd, ...args] = argv.slice(dd + 1);
   const [file, list, shell] = winSafe(cmd, args);
   const r = spawnSync(file, list, { stdio: 'inherit', env, shell });
@@ -184,11 +184,11 @@ async function main() {
   const cmd = positional[0];
   if (cmd === 'set') return cmdSet();
   if (cmd === 'list' || cmd === 'ls' || !cmd) return cmdList();
-  if (cmd === 'test') { if (!positional[1]) die('사용: aidure secret test <이름>'); return process.exit((await runTest(positional[1])) ? 0 : 1); }
+  if (cmd === 'test') { if (!positional[1]) die('사용: kedovi secret test <이름>'); return process.exit((await runTest(positional[1])) ? 0 : 1); }
   if (cmd === 'rm') return cmdRm();
   if (cmd === 'import') return cmdImport();
   if (cmd === 'exec') return cmdExec();
-  die('사용: aidure secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>');
+  die('사용: kedovi secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>');
 }
 
 main().catch((e) => die(e.message));

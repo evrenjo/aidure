@@ -7,7 +7,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { privateHits } = require('./issue-check.js');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-issue-check-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-issue-check-'));
 try {
   fs.writeFileSync(path.join(tmp, 'workspace.json'), JSON.stringify({ project: { name: 'x' }, repos: [], vars: { issue: { forbid: ['acme', '고객사'] } } }));
   const run = (text) => {

@@ -40,7 +40,7 @@ function site() {
   const files = sources();
   const res = build(files, { config, title: config.title, assets, mermaid: DS.mermaidAssets(), srcOf: repoFile, fileUrl: repoFile });
   res.files = files;
-  res.pages[MANIFEST] = `${JSON.stringify({ generator: 'aidure docs', note: '이 폴더는 node bin/docs.js 가 만든다. 손으로 고치지 않는다 (다시 만들면 사라진다)', files: Object.keys(res.pages).sort() }, null, 1)}\n`;
+  res.pages[MANIFEST] = `${JSON.stringify({ generator: 'kedovi docs', note: '이 폴더는 node bin/docs.js 가 만든다. 손으로 고치지 않는다 (다시 만들면 사라진다)', files: Object.keys(res.pages).sort() }, null, 1)}\n`;
   return res;
 }
 
@@ -104,7 +104,7 @@ function packCatalogMd() {
     if (cat === 'stack') return `repo 스택이 ${(pk.meta.stacks || []).join(', ')} 일 때 (${pk.meta.layer} 계층 팩과 함께)`;
     if (cat === 'lang') { const langs = stacks.languages || []; return pk.meta.languages ? `repo 에 ${kit.labelLanguages(langs, pk.meta.languages)} 소스가 있을 때 (언어 감지)` : `repo 에 감지된 언어(${kit.labelLanguages(langs, langs.map((l) => l.id))})가 하나라도 있을 때`; }
     const on = Object.entries(kit.TYPE_RULES || {}).filter(([, t]) => (t.defaults || []).includes(pk.name)).map(([k]) => (kit.PROJECT_TYPES || {})[k] || k);
-    return on.length ? `시작 유형이 ${on.join(' · ')} 이면 기본. 다른 유형은 aidure upgrade --add ${pk.name}` : `aidure upgrade --add ${pk.name}`;
+    return on.length ? `시작 유형이 ${on.join(' · ')} 이면 기본. 다른 유형은 kedovi upgrade --add ${pk.name}` : `kedovi upgrade --add ${pk.name}`;
   };
   const list = (d, pred) => { try { return fs.readdirSync(d).filter(pred).sort(); } catch { return []; } };
   const out = [];

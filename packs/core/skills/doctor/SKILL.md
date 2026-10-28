@@ -24,8 +24,8 @@ description: 워크스페이스 셋업·환경(Node·git·repos/ 의 repo·훅 �
 | git | 설치 여부 | git 설치 |
 | git: 워크스페이스 | 루트가 git 저장소 | `git init` 또는 clone |
 | 개발자 ID | 루트 `git config user.name` (핸드오프 폴더·호칭에 쓴다) | `git config user.name <id>` |
-| git core.hooksPath | `.githooks` 로 설정됐는가 (pre-commit 검사) | `aidure install` |
-| repo: {이름} | `workspace.json` repos 가 `repos/<이름>` 에 있고 git 저장소인가. `local: true`(원격 없이 새로 만든 repo)면 원격이 생겼는가 | `aidure install` · 원격 없음이면 만든 사람이 origin 을 달고 push |
+| git core.hooksPath | `.githooks` 로 설정됐는가 (pre-commit 검사) | `kedovi install` |
+| repo: {이름} | `workspace.json` repos 가 `repos/<이름>` 에 있고 git 저장소인가. `local: true`(원격 없이 새로 만든 repo)면 원격이 생겼는가 | `kedovi install` · 원격 없음이면 만든 사람이 origin 을 달고 push |
 | kit check | 생성물이 정본(`packs/`·`workspace.json`)과 같은가 | 정본을 고치고 `node bin/kit.js sync` |
 | 죽은 참조 | 문서가 없는 경로를 가리키는가 | `node packs/core/bin/check-refs.js` 로 목록 확인 |
 | CLI: Claude Code / Codex | 에이전트 CLI 설치 여부 (둘 중 하나 이상 필요) | 쓸 도구 설치 |
@@ -34,7 +34,7 @@ description: 워크스페이스 셋업·환경(Node·git·repos/ 의 repo·훅 �
 
 ```
 1. workspace.json 의 repos 를 path 위치에 clone
-2. 워크스페이스 루트에서 aidure install   (repos/ clone + 훅 경로 + sync)
+2. 워크스페이스 루트에서 kedovi install   (repos/ clone + 훅 경로 + sync)
 3. git config user.name <id>
 4. doctor 로 확인 → 모두 정상이면 resume 또는 go
 ```

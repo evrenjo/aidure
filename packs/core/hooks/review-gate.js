@@ -3,7 +3,7 @@
 /*
  * 대상: workspace.json repos 의 코드 · 기획 repo (agents.enforce.reviewRepos). 워크스페이스 repo 자체(핸드오프 · 설정)는 보지 않는다.
  * 판정: 리뷰 기록 · 이미 push 된 상태와 비교해 리뷰 안 된 줄 수가 기준(reviewMinLines)을 넘으면 알린다. 계산은 lib/review.js
- * 생략: 사용자가 승인하면 리더가 aidure review skip --reason "<사유>" 로 한 번만 쓰는 표시를 남긴다.
+ * 생략: 사용자가 승인하면 리더가 kedovi review skip --reason "<사유>" 로 한 번만 쓰는 표시를 남긴다.
  * 명령 문자열에서 git commit · push 와 폴더(cd <폴더> && · git -C <폴더>)를 찾는다. 알아보지 못하면 조용히 통과한다 (잘못 막지 않는다).
  */
 'use strict';
@@ -40,7 +40,7 @@ run(() => {
   if (skip) return;
   const msg = `리뷰 확인: ${repo.name} 에 리뷰를 거치지 않은 변경이 ${res.unreviewed}줄 있습니다${st.minLines ? ` (기준 ${st.minLines}줄)` : ''}${res.last ? `. 마지막 리뷰 ${R.when(res.last.at)}${res.last.by ? ` (${res.last.by})` : ''} 뒤에 바뀐 만큼입니다` : ''}. ` +
     `${m[2]} 전에 리뷰를 거칩니다 (review 스킬 · reviewer 역할 에이전트 · 다른 AI 에게 위임). 코드뿐 아니라 문서도 같습니다. ` +
-    '이미 다른 방법으로 리뷰했으면 aidure review mark, 생략은 사용자에게 먼저 묻고 승인받았을 때만 aidure review skip --reason "<사유>". 지금 상태: aidure review status';
+    '이미 다른 방법으로 리뷰했으면 kedovi review mark, 생략은 사용자에게 먼저 묻고 승인받았을 때만 kedovi review skip --reason "<사유>". 지금 상태: kedovi review status';
   if (st.level === 'block') return deny(msg);
   R.markWarned(ROOT, repo.name, res.tree);
   process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: `⚠ ${msg}` } }));

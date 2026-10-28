@@ -22,7 +22,7 @@ description: 흔한 방식 · 업계 관례 · 표준을 웹 검색으로 확인
    - 날짜를 본다. 오래된 글(대략 3년 넘음)은 날짜를 표시한다.
 
    > Claude Code: 웹 검색 · 웹 페이지 가져오기 도구를 쓴다.
-   > Codex: `--search` 로 켜진 웹 검색 도구를 쓴다 (`aidure start` 가 기본으로 붙인다. `workspace.json` 의 `agents.webSearch: false` 면 꺼짐).
+   > Codex: `--search` 로 켜진 웹 검색 도구를 쓴다 (`kedovi start` 가 기본으로 붙인다. `workspace.json` 의 `agents.webSearch: false` 면 꺼짐).
 3. **답한다** (결론 먼저):
    - 첫 줄: 보편적인 방법이 무엇인지, 사용자 말이 맞는지.
    - 표: `방법 | 쓰는 곳(예시 서비스 · 표준) | 장단점 | 출처`. 출처는 링크.
@@ -35,7 +35,7 @@ description: 흔한 방식 · 업계 관례 · 표준을 웹 검색으로 확인
 
 - 첫 줄에 **「검색 불가: 내 지식 기준(학습 시점까지)」** 이라고 밝히고 답한다. 표의 출처 칸은 「미확인」.
 - 사용자가 직접 확인할 검색어나 공식 문서 이름을 1~2개 제안한다.
-- Codex 에서 꺼져 있으면 켜는 법을 한 번 알린다: `aidure agent --codex --args "--search"` 또는 `workspace.json` 의 `agents.webSearch` 를 지운다.
+- Codex 에서 꺼져 있으면 켜는 법을 한 번 알린다: `kedovi agent --codex --args "--search"` 또는 `workspace.json` 의 `agents.webSearch` 를 지운다.
 
 ## 하지 않는 것
 

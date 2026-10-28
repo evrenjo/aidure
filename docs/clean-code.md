@@ -19,7 +19,7 @@ repo 에 감지된 언어마다 클린 코드 규칙이 붙는다. 언어 공통
 
 | 하고 싶은 것 | 방법 |
 |---|---|
-| 한 repo 에서 언어 규칙 끄기 | `aidure rules off lang-java--10-java --repo <이름>` |
+| 한 repo 에서 언어 규칙 끄기 | `kedovi rules off lang-java--10-java --repo <이름>` |
 | 한 repo 만 우리 규칙으로 | `packs/project/rules/<이름>.md` 머리말에 `replaces: lang-java--10-java` + `repos: <이름>` |
 | 모든 repo 를 우리 규칙으로 | 위에서 `repos:` 를 뺀다 |
 

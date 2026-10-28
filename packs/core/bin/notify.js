@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// 메신저(텔레그램) 알림 설정·발송. 실행: aidure notify my|team <명령> (aidure 이 이 도구로 옮겨 부른다) 또는 node packs/core/bin/notify.js <명령>
+// 메신저(텔레그램) 알림 설정·발송. 실행: kedovi notify my|team <명령> (kedovi 이 이 도구로 옮겨 부른다) 또는 node packs/core/bin/notify.js <명령>
 /*
- * 개인 채널 (이 PC · 이 워크스페이스). 설정 화면은 aidure notify setup
+ * 개인 채널 (이 PC · 이 워크스페이스). 설정 화면은 kedovi notify setup
  *   level all|decisions|progress|off   알림 수준: 전체 · 결과와 결정(기본) · 진행 현황 · 끄기
  *   min <초>                       결과 알림 기준 (이보다 짧게 끝난 요청은 보내지 않는다. 0 = 모두)
  *   away on|off                    자리 비움: 결정은 텔레그램 버튼 질문으로 (ask) · 결과는 시간과 상관없이. 자리에 있으면 선택 대기 · 모든 작업 끝 한 줄만
@@ -24,7 +24,7 @@
  *   channel on [--new]|off|status  양방향 채널 (기본 꺼짐): 이 프로젝트 전용 봇에게 보낸 메시지가 Claude Code 세션에 들어오고 답이 온다
  *                                  봇 토큰은 숨김 입력 또는 표준 입력 (--new = 봇 바꾸기. 인자로도 받지만 셸 기록에 남는다)
  *                                  on = Bun · 공식 telegram 플러그인 확인(없으면 user 범위로 설치) · 프로젝트 봇(다른 곳에서 쓰는 봇은 거부) · 내 채팅만 허용
- *                                  → aidure start 가 --channels 와 TELEGRAM_STATE_DIR(프로젝트 상태 폴더)을 붙인다. 이 워크스페이스 알림도 그 봇으로
+ *                                  → kedovi start 가 --channels 와 TELEGRAM_STATE_DIR(프로젝트 상태 폴더)을 붙인다. 이 워크스페이스 알림도 그 봇으로
  * 팀 채널
  *   setup --team [--new]           팀 봇 토큰 저장 (관리자에게 받는다) + 봇이 들어간 그룹방 ID 보여 주기
  *   team-chat <id|off>             팀 그룹방 지정 (workspace.json vars.notify.teamChat, 팀 설정)
@@ -33,7 +33,7 @@
  *   status                         지금 설정
  *   test [--team]                  테스트 메시지
  *   pre-push <remote>              .githooks/pre-push 가 부른다. push 가 끝나면 핸드오프·설정 변경을 팀 방에 알린다 (push 를 막지 않는다)
- * 비밀값: ~/.config/aidure/telegram.env (권한 600). 토큰은 어떤 출력에도 찍지 않는다.
+ * 비밀값: ~/.config/kedovi/telegram.env (권한 600). 토큰은 어떤 출력에도 찍지 않는다.
  */
 'use strict';
 const fs = require('fs');
@@ -75,7 +75,7 @@ async function setup() {
   const isTeam = has('team');
   const key = isTeam ? 'TELEGRAM_TEAM_BOT_TOKEN' : 'TELEGRAM_BOT_TOKEN';
   const token = await readToken(positional()[0], notify.readSecrets()[key], isTeam ? '팀 봇 토큰 (관리자에게 받은 것)' : '개인 봇 토큰 (@BotFather /newbot)');
-  if (!token) throw new Error(`토큰이 없습니다. 터미널에서 aidure notify ${isTeam ? 'team' : 'my'} setup 을 실행해 숨김 입력에 넣으세요`);
+  if (!token) throw new Error(`토큰이 없습니다. 터미널에서 kedovi notify ${isTeam ? 'team' : 'my'} setup 을 실행해 숨김 입력에 넣으세요`);
   const chats = await notify.recentChats(token);
   const file = notify.writeSecrets({ [key]: token });
   console.log(`✓ 토큰 저장: ${file}`);
@@ -83,7 +83,7 @@ async function setup() {
     const groups = chats.filter((c) => c.type !== 'private');
     const cur = notify.team(ROOT, ws).chat;
     if (cur) console.log(`  팀 방: ${cur} (workspace.json)`);
-    else if (groups.length) console.log(`  봇이 본 그룹방:\n${groups.map((c) => `    ${c.id}  ${c.name}`).join('\n')}\n  팀 방 지정: aidure notify team chat <id>`);
+    else if (groups.length) console.log(`  봇이 본 그룹방:\n${groups.map((c) => `    ${c.id}  ${c.name}`).join('\n')}\n  팀 방 지정: kedovi notify team chat <id>`);
     else console.log('  그룹방이 아직 보이지 않습니다. 봇을 팀 방에 초대하고 방에서 아무 말이나 한 뒤 다시 실행하세요.');
     return;
   }
@@ -96,11 +96,11 @@ async function setup() {
   if (!notify.personal(ROOT, ws).events.length) {
     const ln = notify.readLocal(ROOT).notify || {};
     const offByMe = ln.events === 'off' || ln.level === 'off'; // 전에 직접 끈 것은 그대로 둔다
-    if (has('no-on') || offByMe) console.log('  ⚠ 자동 알림은 꺼져 있습니다 (test 만 옵니다). 켜기: aidure notify my on');
-    else { writeLocal((l) => { l.notify = { ...(l.notify || {}), level: 'decisions' }; delete l.notify.events; }); console.log('✓ 알림 수준: 결과와 결정 (오래 걸린 요청의 결과 · 질문 · 권한 확인). 바꾸기: aidure notify setup'); }
+    if (has('no-on') || offByMe) console.log('  ⚠ 자동 알림은 꺼져 있습니다 (test 만 옵니다). 켜기: kedovi notify my on');
+    else { writeLocal((l) => { l.notify = { ...(l.notify || {}), level: 'decisions' }; delete l.notify.events; }); console.log('✓ 알림 수준: 결과와 결정 (오래 걸린 요청의 결과 · 질문 · 권한 확인). 바꾸기: kedovi notify setup'); }
   }
   status();
-  console.log('  시험: aidure notify my test');
+  console.log('  시험: kedovi notify my test');
 }
 
 /** 옛 명령: on = 결과와 결정 수준 (--min 은 그대로) */
@@ -125,15 +125,15 @@ function status() {
   console.log(`알림 수준  ${notify.LEVEL_LABEL[p.level]}${p.source === 'team' ? ' (팀 기본)' : ''}${p.away ? ' · 자리 비움' : ''}`);
   console.log(`           결과는 ${p.away ? '모든 요청' : `${p.minSeconds}초 넘게 걸린 요청`} · 진행 현황 ${prog ? `${prog}분마다` : '끔'} (전체 · 진행 현황 수준일 때)`);
   console.log(`           자리에 있으면 선택 대기 · 모든 작업 끝 한 줄만, 설명 · 보기 · 답 앞부분은 자리 비움일 때 (전체 수준은 늘 전문)`);
-  console.log(`           리모트 컨트롤(Claude 앱) 연결 중: ${{ send: '텔레그램도 모두 보냄', quiet: '텔레그램 쉼', done: '텔레그램은 작업 끝만 (결정은 앱이 알린다)' }[p.remote]} (aidure notify my remote done|quiet|send)`);
-  console.log(`           PC 앞이면 끝남 알림 생략: ${p.deskSeconds ? `${p.deskSeconds}초 안에 키보드 · 마우스를 만졌을 때${notify.idleSeconds() == null ? ' (이 PC 는 잴 수 없어 늘 보냄)' : ''}` : '끔'} (aidure notify my desk <초>|off)`);
+  console.log(`           리모트 컨트롤(Claude 앱) 연결 중: ${{ send: '텔레그램도 모두 보냄', quiet: '텔레그램 쉼', done: '텔레그램은 작업 끝만 (결정은 앱이 알린다)' }[p.remote]} (kedovi notify my remote done|quiet|send)`);
+  console.log(`           PC 앞이면 끝남 알림 생략: ${p.deskSeconds ? `${p.deskSeconds}초 안에 키보드 · 마우스를 만졌을 때${notify.idleSeconds() == null ? ' (이 PC 는 잴 수 없어 늘 보냄)' : ''}` : '끔'} (kedovi notify my desk <초>|off)`);
   const v = notify.voiceOf(ROOT);
-  console.log(`음성       ${v.on ? `켜짐 · ${notify.VOICE_SCOPE_LABEL[v.scope]} · 목소리 ${v.name}` : '꺼짐'} (aidure notify my voice on|off)`);
-  console.log(`개인 봇    ${p.token ? '있음 (이 PC 의 모든 워크스페이스 공통. 알림 첫머리의 [프로젝트 이름]으로 구분)' : '없음 → aidure notify setup'} · 채팅 ${p.chat || '없음'}`);
+  console.log(`음성       ${v.on ? `켜짐 · ${notify.VOICE_SCOPE_LABEL[v.scope]} · 목소리 ${v.name}` : '꺼짐'} (kedovi notify my voice on|off)`);
+  console.log(`개인 봇    ${p.token ? '있음 (이 PC 의 모든 워크스페이스 공통. 알림 첫머리의 [프로젝트 이름]으로 구분)' : '없음 → kedovi notify setup'} · 채팅 ${p.chat || '없음'}`);
   // 개인 봇이 다른 프로젝트의 양방향 채널 봇과 같으면, 이 워크스페이스 알림이 그 프로젝트 대화방으로 섞여 들어간다
   const secretToken = notify.readSecrets().TELEGRAM_BOT_TOKEN;
   const clash = secretToken && !notify.channelOn(ROOT) && notify.channelTokenUsedElsewhere(ROOT, secretToken);
-  if (clash && !clash.shared) console.log(`           ⚠ 개인 봇이 다른 프로젝트의 채널 봇(${path.basename(clash.dir).replace(/^telegram-/, '')})과 같습니다. 이 워크스페이스 알림도 그 대화방으로 갑니다. 개인용 봇을 따로 만들어 aidure notify my setup --new (토큰은 숨김 입력)`);
+  if (clash && !clash.shared) console.log(`           ⚠ 개인 봇이 다른 프로젝트의 채널 봇(${path.basename(clash.dir).replace(/^telegram-/, '')})과 같습니다. 이 워크스페이스 알림도 그 대화방으로 갑니다. 개인용 봇을 따로 만들어 kedovi notify my setup --new (토큰은 숨김 입력)`);
   console.log(`양방향     ${notify.channelOn(ROOT) ? '켜짐' : '꺼짐'}`);
   console.log(`팀 방      ${t.chat ? `${t.events.join(', ') || '꺼짐'} → ${t.chat}` : '없음'}${t.chat && !t.token ? ' · 팀 봇 없음' : ''}`);
 }
@@ -148,7 +148,7 @@ async function test() {
 
 function teamChat() {
   const id = positional()[0];
-  if (!id) throw new Error('사용: aidure notify team chat <그룹방 ID|off>');
+  if (!id) throw new Error('사용: kedovi notify team chat <그룹방 ID|off>');
   const f = path.join(ROOT, 'workspace.json');
   const raw = JSON.parse(fs.readFileSync(f, 'utf8'));
   raw.vars = raw.vars || {};
@@ -179,7 +179,7 @@ function prePush() {
   const changes = notify.collectPush((args) => git(ROOT, args), stdin, remote);
   const messages = notify.teamMessages(cfg, { project: PROJECT, ...changes });
   if (!messages.length) return;
-  const job = path.join(os.tmpdir(), `aidure-notify-${process.pid}-${Date.now()}.json`);
+  const job = path.join(os.tmpdir(), `kedovi-notify-${process.pid}-${Date.now()}.json`);
   fs.writeFileSync(job, JSON.stringify({ remote, refs: changes.refs, messages }), { mode: 0o600 });
   spawn(process.execPath, [__filename, 'deliver', job], { cwd: ROOT, detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }
@@ -223,7 +223,7 @@ function readInputText() {
 const lastAskFile = () => path.join(stateDir(ROOT), 'last-ask.json');
 function personalOrFail() {
   const cfg = notify.personal(ROOT, ws);
-  if (!cfg.token || !cfg.chat) throw new Error('개인 텔레그램 봇이 없습니다. aidure notify setup');
+  if (!cfg.token || !cfg.chat) throw new Error('개인 텔레그램 봇이 없습니다. kedovi notify setup');
   return cfg;
 }
 
@@ -291,20 +291,20 @@ async function voiceCmd() {
   if (!v || v === 'status') return show();
   if (v === 'on' || v === 'off') set({ on: v === 'on' });
   else if (v === 'scope') {
-    if (!notify.VOICE_SCOPES.includes(arg)) throw new Error(`사용: aidure notify my voice scope ${notify.VOICE_SCOPES.join('|')} (결정+끝남 · 결정만 · 끝남만 · 모두)`);
+    if (!notify.VOICE_SCOPES.includes(arg)) throw new Error(`사용: kedovi notify my voice scope ${notify.VOICE_SCOPES.join('|')} (결정+끝남 · 결정만 · 끝남만 · 모두)`);
     set({ scope: arg });
   } else if (v === 'name') {
-    if (!arg) throw new Error('사용: aidure notify my voice name <목소리> (macOS: say -v \'?\' | grep ko_KR 로 목록)');
+    if (!arg) throw new Error('사용: kedovi notify my voice name <목소리> (macOS: say -v \'?\' | grep ko_KR 로 목록)');
     const t = notify.tts('목소리를 바꿨습니다.', { name: arg });
     if (!t.file) throw new Error(t.error);
     fs.rmSync(t.file, { force: true });
     set({ name: arg });
   } else if (v === 'test') {
     const r = await notify.sendSpeech(ROOT, personalOrFail(), 'other', `${PROJECT} 음성 알림 시험입니다. 이렇게 들립니다.`).catch((e) => ({ ok: false, error: e.message }));
-    if (!cur().on) return console.log('음성이 꺼져 있습니다. aidure notify my voice on');
+    if (!cur().on) return console.log('음성이 꺼져 있습니다. kedovi notify my voice on');
     console.log(r && r.ok ? '✔ 시험 음성을 보냈습니다' : `⚠ 시험 음성 실패: ${(r && (r.error || r.description)) || '알 수 없음'}`);
     return;
-  } else throw new Error('사용: aidure notify my voice on|off · scope both|decisions|done|all · name <목소리> · test');
+  } else throw new Error('사용: kedovi notify my voice on|off · scope both|decisions|done|all · name <목소리> · test');
   console.log('✓ 바로 적용');
   show();
 }
@@ -316,39 +316,39 @@ const commands = {
   reset: () => { writeLocal((l) => { if (l.notify) for (const k of ['level', 'events', 'minSeconds', 'deskSeconds', 'away', 'remote', 'channelAsk', 'channelProgress', 'voice']) delete l.notify[k]; }); status(); },
   level: () => {
     const v = positional()[0];
-    if (!notify.LEVELS.includes(v)) throw new Error(`사용: aidure notify my level ${notify.LEVELS.join('|')} (전체 · 결과와 결정 · 진행 현황 · 끄기)`);
+    if (!notify.LEVELS.includes(v)) throw new Error(`사용: kedovi notify my level ${notify.LEVELS.join('|')} (전체 · 결과와 결정 · 진행 현황 · 끄기)`);
     writeLocal((l) => { l.notify = { ...(l.notify || {}), level: v }; delete l.notify.events; });
     console.log(`✓ 알림 수준: ${notify.LEVEL_LABEL[v]} (바로 적용)`);
   },
   min: () => {
     const v = Number(positional()[0]);
-    if (!Number.isFinite(v) || v < 0) throw new Error('사용: aidure notify my min <초> (이보다 짧게 끝난 요청은 결과를 보내지 않는다. 0 = 모두)');
+    if (!Number.isFinite(v) || v < 0) throw new Error('사용: kedovi notify my min <초> (이보다 짧게 끝난 요청은 결과를 보내지 않는다. 0 = 모두)');
     writeLocal((l) => { l.notify = { ...(l.notify || {}), minSeconds: v }; });
     console.log(`✓ 결과 알림 기준: ${v ? `${v}초 넘게 걸린 요청` : '모든 요청'}`);
   },
   desk: () => {
     const a = positional()[0];
     const v = a === 'off' ? 0 : Number(a);
-    if (!Number.isFinite(v) || v < 0) throw new Error('사용: aidure notify my desk <초>|off (이 안에 키보드 · 마우스를 만졌으면 PC 앞으로 보고 끝남 · 위임 끝 · 음성을 보내지 않는다. 기본 120초 · macOS)');
+    if (!Number.isFinite(v) || v < 0) throw new Error('사용: kedovi notify my desk <초>|off (이 안에 키보드 · 마우스를 만졌으면 PC 앞으로 보고 끝남 · 위임 끝 · 음성을 보내지 않는다. 기본 120초 · macOS)');
     writeLocal((l) => { l.notify = { ...(l.notify || {}), deskSeconds: v }; });
     console.log(`✓ 자리 판단: ${v ? `${v}초 안에 만졌으면 PC 앞 (끝남 알림 생략)` : '끔 (늘 보냄)'}`);
   },
   remote: () => {
     const v = positional()[0];
-    if (!['done', 'quiet', 'send'].includes(v)) throw new Error('사용: aidure notify my remote done|quiet|send (리모트 컨트롤로 Claude 앱에 이어진 세션: done = 작업 끝만 텔레그램, 기본 · quiet = 텔레그램 쉼 · send = 그대로 보냄)');
+    if (!['done', 'quiet', 'send'].includes(v)) throw new Error('사용: kedovi notify my remote done|quiet|send (리모트 컨트롤로 Claude 앱에 이어진 세션: done = 작업 끝만 텔레그램, 기본 · quiet = 텔레그램 쉼 · send = 그대로 보냄)');
     writeLocal((l) => { l.notify = { ...(l.notify || {}) }; if (v === 'done') delete l.notify.remote; else l.notify.remote = v; });
     console.log({ done: '✓ 리모트 컨트롤 연결 중에는 작업 끝만 텔레그램으로 (결정 · 입력 대기는 앱이 알리고 질문 창으로 답한다)', quiet: '✓ 리모트 컨트롤 연결 중에는 텔레그램을 보내지 않는다 (결정은 질문 창으로, 앱에서 답한다)', send: '✓ 리모트 컨트롤 연결 중에도 텔레그램을 모두 보낸다' }[v]);
   },
   away: () => {
     const v = positional()[0];
-    if (!['on', 'off'].includes(v)) throw new Error('사용: aidure notify my away on|off (자리 비움: 결정을 텔레그램 버튼 질문으로 · 결과는 시간과 상관없이)');
+    if (!['on', 'off'].includes(v)) throw new Error('사용: kedovi notify my away on|off (자리 비움: 결정을 텔레그램 버튼 질문으로 · 결과는 시간과 상관없이)');
     // 자리 비움인데 알림이 꺼져 있으면 끝남 보고가 오지 않는다: 「결과와 결정」 으로 켠다
-    const envOff = process.env.AIDURE_NOTIFY === '0'; // 환경 변수로 끈 것은 파일로 못 켠다
+    const envOff = process.env.KEDOVI_NOTIFY === '0'; // 환경 변수로 끈 것은 파일로 못 켠다
     const wasOff = v === 'on' && !envOff && notify.personal(ROOT, ws).level === 'off';
     writeLocal((l) => { l.notify = { ...(l.notify || {}) }; delete l.notify.channelAsk; if (v === 'on') l.notify.away = true; else delete l.notify.away; if (wasOff) { l.notify.level = 'decisions'; delete l.notify.events; } });
     console.log(v === 'on' ? '✓ 자리 비움: 결정은 텔레그램 버튼 질문으로, 버튼 · 번호 · 글로 답한다 (바로 적용, 진행 중인 세션은 다음 요청부터)' : '✓ 돌아옴: 질문은 터미널 선택지 창으로');
-    if (v === 'on' && envOff) console.log('  ⚠ AIDURE_NOTIFY=0 이라 알림이 꺼져 있습니다. 자리 비움을 쓰려면 이 변수를 지운다');
-    if (wasOff) console.log(`  알림이 꺼져 있어 수준을 「${notify.LEVEL_LABEL.decisions}」 으로 켰습니다 (끝남 보고가 텔레그램으로 오게). 바꾸기: aidure notify my level <all|decisions|progress|off>`);
+    if (v === 'on' && envOff) console.log('  ⚠ KEDOVI_NOTIFY=0 이라 알림이 꺼져 있습니다. 자리 비움을 쓰려면 이 변수를 지운다');
+    if (wasOff) console.log(`  알림이 꺼져 있어 수준을 「${notify.LEVEL_LABEL.decisions}」 으로 켰습니다 (끝남 보고가 텔레그램으로 오게). 바꾸기: kedovi notify my level <all|decisions|progress|off>`);
   },
   'team-chat': teamChat,
   channel,
@@ -361,7 +361,7 @@ async function channel() {
   const { findCli } = require('../lib/cli');
   if (sub === 'off') {
     writeLocal((l) => { if (l.notify) delete l.notify.channel; });
-    console.log('✓ 양방향 채널 끔. 다음 aidure start 부터 --channels 를 붙이지 않습니다 (플러그인 · 토큰은 그대로)');
+    console.log('✓ 양방향 채널 끔. 다음 kedovi start 부터 --channels 를 붙이지 않습니다 (플러그인 · 토큰은 그대로)');
     return;
   }
   if (sub === 'status') return channelStatus(findCli);
@@ -373,26 +373,26 @@ async function channel() {
       const r = require('child_process').spawnSync(findCli('claude'), ['plugin', 'uninstall', notify.CHANNEL_PLUGIN, '-s', 'local'], { cwd: ROOT, encoding: 'utf8' });
       console.log(r.status === 0 ? '✓ 이 워크스페이스의 telegram 플러그인 설치(local) 삭제' : `  플러그인 삭제 실패: claude plugin uninstall ${notify.CHANNEL_PLUGIN} -s local`);
     }
-    console.log('✓ 양방향 채널 제거. 다시 쓰려면 aidure notify my channel on (봇 토큰은 숨김 입력)');
+    console.log('✓ 양방향 채널 제거. 다시 쓰려면 kedovi notify my channel on (봇 토큰은 숨김 입력)');
     return;
   }
   if (sub === 'progress') {
     const v = positional()[1];
     const mins = v === 'off' ? 0 : Number(v);
-    if (v == null || !Number.isFinite(mins) || mins < 0) throw new Error('사용: aidure notify my channel progress <분|off> (기본 5분: 사용자 입력 없이 그만큼 작업하면 그 간격으로 진행 현황을 보낸다)');
+    if (v == null || !Number.isFinite(mins) || mins < 0) throw new Error('사용: kedovi notify my channel progress <분|off> (기본 5분: 사용자 입력 없이 그만큼 작업하면 그 간격으로 진행 현황을 보낸다)');
     writeLocal((l) => { l.notify = { ...(l.notify || {}), channelProgress: mins }; });
     console.log(mins ? `✓ 진행 현황: 입력 없이 ${mins}분 넘게 작업하면 ${mins}분마다 텔레그램으로 (바로 적용)` : '✓ 진행 현황 알림 끔');
     return;
   }
   if (sub === 'ask') {
     const mode = positional()[1];
-    if (!['dialog', 'text'].includes(mode)) throw new Error('사용: aidure notify my channel ask dialog|text (dialog = 터미널 선택지 창, 기본 · text = 텔레그램 버튼 질문)');
+    if (!['dialog', 'text'].includes(mode)) throw new Error('사용: kedovi notify my channel ask dialog|text (dialog = 터미널 선택지 창, 기본 · text = 텔레그램 버튼 질문)');
     writeLocal((l) => { l.notify = { ...(l.notify || {}) }; delete l.notify.channelAsk; if (mode === 'text') l.notify.away = true; else delete l.notify.away; }); // 자리 비움과 같다
-    console.log(mode === 'text' ? '✓ 질문 방식: 텔레그램 버튼 질문 (버튼 · 번호 · ✏️ 직접 입력으로 답한다. 자리를 비울 때). 되돌리기: aidure notify my channel ask dialog' : '✓ 질문 방식: 터미널 선택지 창 (방향키 · 직접 입력). 텔레그램에는 질문과 선택지가 알림으로 간다');
+    console.log(mode === 'text' ? '✓ 질문 방식: 텔레그램 버튼 질문 (버튼 · 번호 · ✏️ 직접 입력으로 답한다. 자리를 비울 때). 되돌리기: kedovi notify my channel ask dialog' : '✓ 질문 방식: 터미널 선택지 창 (방향키 · 직접 입력). 텔레그램에는 질문과 선택지가 알림으로 간다');
     console.log('  바로 적용된다 (진행 중인 세션은 다음 요청부터). 세션 안에서는 "자리 비울게" · "돌아왔어" 라고 말해도 바꾼다');
     return;
   }
-  if (sub !== 'on') throw new Error('사용: aidure notify my channel on [--new]|off|status|ask dialog|text');
+  if (sub !== 'on') throw new Error('사용: kedovi notify my channel on [--new]|off|status|ask dialog|text');
 
   // 무엇을 확인했고 무엇을 바꿨는지 한 줄씩 보여 준다 (이미 돼 있는 것도 "그대로" 로)
   const pad = (t) => t + ' '.repeat(Math.max(1, 14 - [...t].reduce((w, c) => w + (/[\u1100-\uffdc]/.test(c) ? 2 : 1), 0))); // 한글은 두 칸
@@ -402,7 +402,7 @@ async function channel() {
   // 1. 실행 조건: claude.ai 로그인 또는 Console API 키로 직접 연결 (게이트웨이 · Bedrock 등은 채널이 안 된다)
   let gateway = false;
   try { const kit = require(path.join(ROOT, 'bin', 'kit.js')); gateway = kit.resolveModels(ROOT, kit.loadWorkspace(ROOT)).access.connection === 'gateway'; } catch { /* 옛 워크스페이스 */ }
-  if (gateway) stop('연결 방식', 'AI 게이트웨이', '채널은 claude.ai 로그인 · Console API 키로 직접 연결할 때만 됩니다 (aidure ai show)');
+  if (gateway) stop('연결 방식', 'AI 게이트웨이', '채널은 claude.ai 로그인 · Console API 키로 직접 연결할 때만 됩니다 (kedovi ai show)');
   ok('연결 방식', 'AI 서비스 직접');
   const claudeAt = findCli('claude');
   if (!claudeAt) stop('Claude Code', '없음', 'npm i -g @anthropic-ai/claude-code');
@@ -418,19 +418,19 @@ async function channel() {
   const given = positional()[1];
   if (!given && !notify.channelToken(ROOT) && process.stdin.isTTY) console.log('  이 프로젝트 전용 봇이 필요합니다. 텔레그램 @BotFather 에서 /newbot 으로 봇을 만들고 그 봇에게 아무 말이나 보낸 뒤 토큰을 붙여 넣으세요.');
   const token = await readToken(given, notify.channelToken(ROOT), '  봇 토큰');
-  if (!token) stop('프로젝트 봇', '없음', '이 프로젝트 전용 봇을 만드세요: ① 텔레그램 @BotFather 에서 /newbot → 토큰 받기 ② 만든 봇에게 아무 말이나 보내기 ③ 터미널에서 aidure notify my channel on (토큰은 숨김 입력)');
+  if (!token) stop('프로젝트 봇', '없음', '이 프로젝트 전용 봇을 만드세요: ① 텔레그램 @BotFather 에서 /newbot → 토큰 받기 ② 만든 봇에게 아무 말이나 보내기 ③ 터미널에서 kedovi notify my channel on (토큰은 숨김 입력)');
   const name = await notify.botName(token);
   if (!name) stop('프로젝트 봇', '토큰을 확인하지 못함', '토큰이 맞는지, 인터넷이 되는지 확인하고 다시 실행');
   const other = notify.channelTokenUsedElsewhere(ROOT, token);
-  if (other && !other.shared) stop('프로젝트 봇', `${name} 은 다른 프로젝트(${other.dir})에서 쓰는 봇`, '같은 봇을 두 프로젝트가 받으면 서로 끊긴다. 이 프로젝트용 봇을 새로 만들어 aidure notify my channel on --new (토큰은 숨김 입력)');
+  if (other && !other.shared) stop('프로젝트 봇', `${name} 은 다른 프로젝트(${other.dir})에서 쓰는 봇`, '같은 봇을 두 프로젝트가 받으면 서로 끊긴다. 이 프로젝트용 봇을 새로 만들어 kedovi notify my channel on --new (토큰은 숨김 입력)');
   const globalToken = notify.readSecrets().TELEGRAM_BOT_TOKEN;
   ok('프로젝트 봇', `${name}${token === notify.channelToken(ROOT) && !given ? ' (그대로)' : ''}`);
   if (token === globalToken) console.log('    ⚠ 개인 알림 봇과 같은 봇입니다. 채널을 켜지 않은 다른 워크스페이스의 알림이 이 대화에 섞입니다 (다른 프로젝트에도 쓰면 그쪽은 다른 봇으로)');
   if (other && other.shared) {
     // 플러그인 기본 폴더에 같은 봇 토큰이 있으면 이 PC 의 다른 Claude Code 세션마다 같은 봇을 받으려 해 서로 끊긴다 (409). 끄고 남겨 둔다
     const envFile = path.join(other.dir, '.env');
-    fs.renameSync(envFile, `${envFile}.off-by-aidure`);
-    console.log(`    ✓ 플러그인 기본 폴더(${other.dir})의 같은 봇 토큰을 껐습니다 (.env → .env.off-by-aidure). 다른 Claude Code 세션이 이 봇을 받아 채널이 끊기던 원인`);
+    fs.renameSync(envFile, `${envFile}.off-by-kedovi`);
+    console.log(`    ✓ 플러그인 기본 폴더(${other.dir})의 같은 봇 토큰을 껐습니다 (.env → .env.off-by-kedovi). 다른 Claude Code 세션이 이 봇을 받아 채널이 끊기던 원인`);
   }
   // 3. 내 텔레그램 사용자 ID (= 1:1 채팅 ID). 개인 알림 설정에 있으면 그것, 없으면 이 봇에게 온 메시지에서
   let chat = notify.personal(ROOT, ws).chat;
@@ -470,7 +470,7 @@ async function channel() {
   ok('상태 폴더', `${dir} (토큰 · 허용: 내 채팅${access.allowFrom.length > 1 ? ` 외 ${access.allowFrom.length - 1}명` : '만'})`);
   // 6. 켠다 (이 PC · 이 워크스페이스)
   writeLocal((l) => { l.notify = { ...(l.notify || {}), channel: true, ...(notify.readSecrets().TELEGRAM_CHAT_ID ? {} : { chat: String(chat) }) }; });
-  console.log(`\n✓ 양방향 채널 켬 (이 프로젝트 · ${name}). 다음 aidure start (Claude Code) 부터 --channels 를 붙입니다. 이번만 빼려면 aidure start --no-channel`);
+  console.log(`\n✓ 양방향 채널 켬 (이 프로젝트 · ${name}). 다음 kedovi start (Claude Code) 부터 --channels 를 붙입니다. 이번만 빼려면 kedovi start --no-channel`);
   console.log(`  이 워크스페이스의 개인 알림(작업 끝 · 입력 대기)도 ${name} 로 옵니다. 다른 프로젝트와 섞이지 않습니다.`);
   console.log('  알아 둘 것: 이 프로젝트 세션을 두 개 띄우면 나중 세션만 메시지를 받는다.');
   console.log('  Team · Enterprise 조직 계정은 관리자가 채널을 켜야 한다 (시작 화면에 경고가 나오면 그 때문).');
@@ -481,11 +481,11 @@ async function channelStatus(findCli) {
   const chk = notify.channelCheck(ROOT, findCli);
   const access = notify.channelAccess(ROOT);
   const token = notify.channelToken(ROOT);
-  console.log(`채널  ${on ? '켜짐 (aidure start 가 --channels 를 붙임)' : '꺼짐 (켜기: aidure notify my channel on)'}`);
+  console.log(`채널  ${on ? '켜짐 (kedovi start 가 --channels 를 붙임)' : '꺼짐 (켜기: kedovi notify my channel on)'}`);
   console.log(`      프로젝트 봇 ${token ? (await notify.botName(token)) || '(이름 확인 실패)' : '없음'} · Bun ${findCli('bun') ? '있음' : '없음'} · 플러그인 ${notify.channelPluginScope(ROOT) || '없음'} · 허용 ${access ? `${access.dmPolicy} ${(access.allowFrom || []).length}명` : '없음'}`);
   const prog = Number((notify.readLocal(ROOT).notify || {}).channelProgress != null ? notify.readLocal(ROOT).notify.channelProgress : 5);
   console.log(`      상태 폴더 ${notify.channelDir(ROOT)} · 질문 방식 ${notify.channelAskMode(ROOT) === 'text' ? '텔레그램 버튼 질문 (ask text)' : '선택지 창 (ask dialog)'} · 진행 현황 ${prog ? `${prog}분` : '끔'}`);
-  if (on && !chk.ready) console.log(`  ⚠ ${chk.problems.join(' · ')} → aidure notify my channel on 을 다시 실행`);
+  if (on && !chk.ready) console.log(`  ⚠ ${chk.problems.join(' · ')} → kedovi notify my channel on 을 다시 실행`);
 }
 
 const fn = commands[cmd];

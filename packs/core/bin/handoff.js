@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 핸드오프 기록 도구 — 작업별 기록 · 크기 검사 · 색인 · 찾기 · 보관 · 정리. 실행: aidure handoff <명령> [--id <id>] 또는 node packs/core/bin/handoff.js <명령>
+// 핸드오프 기록 도구 — 작업별 기록 · 크기 검사 · 색인 · 찾기 · 보관 · 정리. 실행: kedovi handoff <명령> [--id <id>] 또는 node packs/core/bin/handoff.js <명령>
 /*
  * 기록 구조 (handoffs/<id>/)
  *   LATEST.md            마지막 상태 (짧게, 4KB 이내)
@@ -134,7 +134,7 @@ function cmdCheck() {
   const stray = ls(d).filter((e) => !KNOWN.has(e.name) && !(e.isFile() && WEEK_RE.test(e.name))).map((e) => e.name);
   if (stray.length) warn(`흩어진 파일 ${stray.length}개 (${stray.slice(0, 4).join(', ')}${stray.length > 4 ? ' …' : ''}): 작업 메모면 topics/ 로 옮긴다`);
   const oldWeeks = ls(d).filter((e) => e.isFile() && WEEK_RE.test(e.name) && weeksAgo(e.name) > 8).length;
-  if (oldWeeks) warn(`8주 지난 주간 기록 ${oldWeeks}개: aidure handoff archive`);
+  if (oldWeeks) warn(`8주 지난 주간 기록 ${oldWeeks}개: kedovi handoff archive`);
   // 로드맵(팀 공용 handoffs/PLAN.md): 단계 상태 갱신을 잊었는지
   const { check: planCheck } = require('./plan');
   for (const m of planCheck(ws, require('../lib/plan').read(ROOT), ROOT)) warn(`로드맵: ${m}`);
@@ -170,7 +170,7 @@ function cmdIndex() {
 
 function cmdFind() {
   const q = argv.slice(1).filter((x) => !x.startsWith('--') && x !== opt('id')).join(' ').trim();
-  if (!q) { console.error('사용법: aidure handoff find <검색어> [--all] [--id <id>]'); process.exit(1); }
+  if (!q) { console.error('사용법: kedovi handoff find <검색어> [--all] [--id <id>]'); process.exit(1); }
   const needle = q.toLowerCase();
   const people = opt('id') ? [opt('id')] : ls(HROOT).filter((e) => e.isDirectory()).map((e) => e.name);
   const hitsIn = (file, max) => {

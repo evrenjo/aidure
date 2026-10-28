@@ -2,7 +2,7 @@
   "name": "screens",
   "title": "화면설계서",
   "summary": "화면설계서 양식 · 뷰어 · screens 스킬 · 검사",
-  "description": "화면의 정본은 프로토타입(기본: 화면 목록 · 정책 · 스크린샷만) 또는 화면설계서 중 하나로 고른다. 화면설계서(스토리보드)를 같은 양식 · 같은 뷰어로: 장 양식(표지 · 변경 이력 · 메뉴 구조 · 정책 · 화면, 가로 1280×760), 뷰어(썸네일 · 발표 · A4 가로 인쇄 · 한 쪽 넘침 표시 · 내부 정보(Check Point · 근거 ID · sb-dev) 숨김과 I 키 토글 · 근거 ID 를 누르면 오른쪽 패널에 근거 문서), 화면설계 절차(screens 스킬: 진행 방식 합의 → 화면 정책 → 화면 목록 → 장 작성 → 문서 사이트 반영), 검사(Related ID · 근거 ID 가 색인에 있는지 · Description 이 결론 한 줄인지 · 화면 ID 중복 · 기능 ID 누락). 문서 사이트는 core 의 aidure docs build 가 만든다. 신규 · 차세대 유형은 기본으로 켜진다",
+  "description": "화면의 정본은 프로토타입(기본: 화면 목록 · 정책 · 스크린샷만) 또는 화면설계서 중 하나로 고른다. 화면설계서(스토리보드)를 같은 양식 · 같은 뷰어로: 장 양식(표지 · 변경 이력 · 메뉴 구조 · 정책 · 화면, 가로 1280×760), 뷰어(썸네일 · 발표 · A4 가로 인쇄 · 한 쪽 넘침 표시 · 내부 정보(Check Point · 근거 ID · sb-dev) 숨김과 I 키 토글 · 근거 ID 를 누르면 오른쪽 패널에 근거 문서), 화면설계 절차(screens 스킬: 진행 방식 합의 → 화면 정책 → 화면 목록 → 장 작성 → 문서 사이트 반영), 검사(Related ID · 근거 ID 가 색인에 있는지 · Description 이 결론 한 줄인지 · 화면 ID 중복 · 기능 ID 누락). 문서 사이트는 core 의 kedovi docs build 가 만든다. 신규 · 차세대 유형은 기본으로 켜진다",
   "requires": [
     "core"
   ],
@@ -13,7 +13,7 @@
     },
     "screens.theme": {
       "default": "",
-      "desc": "화면설계서 색 (indigo · blue · teal · orange · rose). 비우면 indigo. aidure docs build 가 장에 달고, 장 파일 body 에 data-theme 를 직접 달면 그것이 먼저다"
+      "desc": "화면설계서 색 (indigo · blue · teal · orange · rose). 비우면 indigo. kedovi docs build 가 장에 달고, 장 파일 body 에 data-theme 를 직접 달면 그것이 먼저다"
     }
   }
 }

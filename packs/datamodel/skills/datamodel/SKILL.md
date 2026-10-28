@@ -11,8 +11,8 @@ description: 데이터 설계(테이블 정의서 · ERD)를 킷 양식으로 �
 |---|---|
 | `packs/datamodel/assets/erd/template.md` | 정의서 견본 (스키마 한 파일: 「### 스키마.테이블 논리명」 + 설명 줄 + 컬럼 표) |
 | `packs/datamodel/assets/erd/` 의 `src/` · `erd.css` · `ddl.js` · `elk.bundled.js` | ERD 뷰어 (문서 사이트를 만들 때 `assets/erd/` 로 들어간다. 기획 repo 에 따로 두지 않는다) |
-| `packs/core/bin/docs-site.js` | `aidure docs build` : 정의서가 든 폴더마다 `<폴더>/erd.html` 을 만든다 |
-| `packs/datamodel/bin/check-datamodel.js` | `aidure datamodel check` : 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 |
+| `packs/core/bin/docs-site.js` | `kedovi docs build` : 정의서가 든 폴더마다 `<폴더>/erd.html` 을 만든다 |
+| `packs/datamodel/bin/check-datamodel.js` | `kedovi datamodel check` : 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 |
 
 ## 1. 진행 방식 합의
 
@@ -39,7 +39,7 @@ description: 데이터 설계(테이블 정의서 · ERD)를 킷 양식으로 �
 | 코드값(enum) 방식 | 운영 중 늘어나면 코드 테이블, 안 바뀌는 작은 집합은 문자열 + CHECK | `enumStyle` |
 | 외래키를 DB 에 걸지 | 건다 (다른 DB · 서비스로 나뉘어 못 걸면 그 사실과 대신 지키는 법을 적는다) | `fkInDb` (Y · N) |
 
-- 답은 워크스페이스 `workspace.json` 의 `vars.datamodel` 에 적고 `aidure sync` 한다. 검사기와 Export DDL 이 읽는다.
+- 답은 워크스페이스 `workspace.json` 의 `vars.datamodel` 에 적고 `kedovi sync` 한다. 검사기와 Export DDL 이 읽는다.
 - 같은 내용을 데이터 설계 폴더 `README.md` 의 컨벤션 표에도 적는다 (기획자가 읽는 쪽). 정한 것은 결정 ID 를 단다.
 - 기능 ID 머리말은 `vars.datamodel.functionIds` (비우면 `vars.screens.functionIds`). 기능 대조 검사가 쓴다.
 
@@ -70,8 +70,8 @@ description: 데이터 설계(테이블 정의서 · ERD)를 킷 양식으로 �
 ## 5. ERD 생성 · 검사 · 사이트 반영
 
 ```
-aidure docs build <기획 repo>       # docs-site/ 와 <폴더>/erd.html 을 다시 만든다 (정의서를 고칠 때마다)
-aidure datamodel check <기획 repo>  # ✖ 가 없어야 한다
+kedovi docs build <기획 repo>       # docs-site/ 와 <폴더>/erd.html 을 다시 만든다 (정의서를 고칠 때마다)
+kedovi datamodel check <기획 repo>  # ✖ 가 없어야 한다
 ```
 
 - ERD 는 정의서에서 생성한다. **HTML 을 손으로 고치지 않는다.** Pages 를 켠 repo 는 `docs-site/` 를 커밋한다 (기획 repo pre-commit 이 어긋나면 막는다).

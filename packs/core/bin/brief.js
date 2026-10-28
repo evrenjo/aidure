@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 세션 브리핑 — 프로젝트 · 로드맵(handoffs/PLAN.md: 한 줄 + 단계 흐름도 + 지금 단계 표) · 공지(NOTICE.md) · 마지막 핸드오프 · 진행 중 작업(미완 완료 조건) · 사용자가 등록한 TODO 를 짧게 적는다.
-// 세션 시작 훅(hooks/session-brief.js)이 이 내용을 컨텍스트로 넘기고, aidure start 의 첫 메시지 "세션 브리핑" 한 줄에 에이전트가 표로 보여 준다. 실행: node packs/core/bin/brief.js
+// 세션 시작 훅(hooks/session-brief.js)이 이 내용을 컨텍스트로 넘기고, kedovi start 의 첫 메시지 "세션 브리핑" 한 줄에 에이전트가 표로 보여 준다. 실행: node packs/core/bin/brief.js
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -21,8 +21,8 @@ const p = ws.project || {};
 out.push(`프로젝트: ${p.title || p.name || path.basename(ROOT)} · ${TYPES[p.type] || p.type || '유형 없음'} · repo: ${(ws.repos || []).map((r) => r.name).join(', ') || '없음'}`);
 const P = require('../lib/plan');
 const plan = P.read(ROOT);
-out.push(plan ? P.shortLine(plan) : `로드맵 없음 (${P.FILE}). aidure plan init 으로 만든다`);
-// 처음 시작할 때 전체 위치가 보이게 — 흐름도와 지금 단계 표 (이번에 생긴 것은 git 을 세야 해서 aidure plan 에서)
+out.push(plan ? P.shortLine(plan) : `로드맵 없음 (${P.FILE}). kedovi plan init 으로 만든다`);
+// 처음 시작할 때 전체 위치가 보이게 — 흐름도와 지금 단계 표 (이번에 생긴 것은 git 을 세야 해서 kedovi plan 에서)
 if (plan) {
   const cur = P.current(plan);
   out.push('', '로드맵 (아래 그림 · 표는 그대로 보여 준다):', '```', P.flow(plan), '```', ...(cur ? ['', P.detailTable(cur)] : []));

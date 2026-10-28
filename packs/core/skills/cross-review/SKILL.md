@@ -31,7 +31,7 @@ node packs/core/bin/cross-review.js --to claude --base origin/main --question ".
 ```
 
 - `--to auto`(기본) 는 호출한 쪽의 반대 벤더를 고른다. 호출자를 알 수 없으면 설치된 쪽을 쓴다 — `--dry-run` 첫 줄에 고른 이유가 나온다. 틀렸으면 `--to` 로 지정한다.
-- 모델은 `--model`, 없으면 프로필·`workspace.json`·`.agents/local.json` 을 합친 교차 검토 모델(`aidure models` 에 보이는 값), 그것도 없으면 그 CLI 의 기본값.
+- 모델은 `--model`, 없으면 프로필·`workspace.json`·`.agents/local.json` 을 합친 교차 검토 모델(`kedovi models` 에 보이는 값), 그것도 없으면 그 CLI 의 기본값.
   추론 강도는 `--effort`, 없으면 같은 자리의 `effort`.
 - 상대 CLI 가 없거나 로그인이 안 돼 실패하면 오류를 그대로 보여 주고 멈춘다. 대신 같은 벤더로 돌려 "교차 리뷰" 라고 부르지 않는다.
 

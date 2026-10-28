@@ -21,7 +21,7 @@ assert.deepStrictEqual(descIssues('가'.repeat(61)), ['60자 넘음']);
 assert.deepStrictEqual(descIssues('보유 종목 카드: 계좌별 보유 종목과 비중'), []);
 
 // 임시 기획 repo
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-screens-'));
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-screens-'));
 const put = (f, c) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), c); };
 put('README.md', '# 기획\n');
 put('40-functions.md', '# 기능정의\n\n### FN-001 로그인\n\n본문\n\n### FN-002 목록\n\n본문\n');
@@ -72,7 +72,7 @@ assert.strictEqual(node([site, 'hook', dir]).status, 0);
 fs.rmSync(path.join(dir, '40-functions.md'));
 node([site, 'build', dir]);
 assert.ok(!fs.existsSync(path.join(dir, 'docs-site', '40-functions.html')));
-const other = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-screens-other-'));
+const other = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-screens-other-'));
 fs.mkdirSync(path.join(other, 'docs-site'));
 fs.writeFileSync(path.join(other, 'docs-site', 'index.html'), 'hand made');
 fs.writeFileSync(path.join(other, 'a.md'), '# A\n');

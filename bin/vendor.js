@@ -32,7 +32,7 @@ function shape(text, pkg, file) {
   return t.endsWith('\n') ? t : `${t}\n`;
 }
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-vendor-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-vendor-'));
 const want = {};
 try {
   for (const pkg of conf.packages) {
@@ -67,10 +67,10 @@ function bundles() {
   const out = {};
   const list = conf.bundles || [];
   if (!list.length) return out;
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-bundle-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-bundle-'));
   try {
     const deps = Object.assign({}, ...list.map((b) => b.packages));
-    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'aidure-vendor', private: true, dependencies: deps }, null, 1));
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'kedovi-vendor', private: true, dependencies: deps }, null, 1));
     const lockFile = path.join(KIT, 'vendor-lock.json');
     const locked = fs.existsSync(lockFile) && (() => { const l = JSON.parse(fs.readFileSync(lockFile, 'utf8')); return JSON.stringify((l.packages[''] || {}).dependencies) === JSON.stringify(deps); })();
     if (locked) fs.copyFileSync(lockFile, path.join(dir, 'package-lock.json'));

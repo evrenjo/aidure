@@ -1,4 +1,4 @@
-// repo 공개 여부: 로그인 정보 없이 받아지면 공개다 (GitHub · GitLab 등 호스트 무관, 토큰 불필요). 쓰는 곳: aidure init (워크스페이스 repo 주소) · doctor
+// repo 공개 여부: 로그인 정보 없이 받아지면 공개다 (GitHub · GitLab 등 호스트 무관, 토큰 불필요). 쓰는 곳: kedovi init (워크스페이스 repo 주소) · doctor
 'use strict';
 const { spawnSync } = require('child_process');
 

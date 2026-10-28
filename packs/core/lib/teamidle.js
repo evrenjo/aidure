@@ -108,7 +108,7 @@ function overdue(ROOT, sessionId, { after = 10, remind = 30 } = {}, { mark = tru
 function message(list, { remind = 30 } = {}) {
   return `일을 마치고 대기 중인 팀원이 있습니다: ${list.map((x) => `${x.name}(대기 ${x.minutes}분)`).join(', ')}. `
     + '다시 맡길 일이 없으면 팀원마다 정식 종료 요청(SendMessage 의 shutdown_request)을 보내고, 몇 분 지나도 팀원 목록에 남아 있으면 TaskStop(task_id 에 팀원 이름)으로 멈춥니다. '
-    + `남겨 둘 것이면 사용자 보고에 "대기 중: <역할> · 사유" 한 줄을 적습니다. 같은 팀원은 ${remind}분 뒤에 다시 알립니다. 수준 바꾸기: aidure team-mode enforce idle off|warn|block`;
+    + `남겨 둘 것이면 사용자 보고에 "대기 중: <역할> · 사유" 한 줄을 적습니다. 같은 팀원은 ${remind}분 뒤에 다시 알립니다. 수준 바꾸기: kedovi team-mode enforce idle off|warn|block`;
 }
 
 /**
@@ -133,7 +133,7 @@ const leftText = (w) => [w.bg.length ? `리더의 백그라운드 작업 ${w.bg.
 /** 상태 줄이 없을 때 리더에게 줄 문구 */
 function statusMessage(w) {
   return `남아 있는 것이 있는데 답변에 상태 줄이 없습니다 (${leftText(w)}). 사용자는 화면의 팀원 목록만으로 일하는 중과 대기를 구분하지 못합니다. `
-    + '답변 끝에 한 줄을 적습니다: "지금 도는 것: <무엇, 없으면 없음> · 예상 종료: <언제쯤, 모르면 모름> · 사용자가 할 일: <있음(무엇) | 없음>". 대기 중인 팀원은 일하는 것으로 적지 않고 "대기 중: <역할> · 사유" 로 적습니다. 수준 바꾸기: aidure team-mode enforce status off|block';
+    + '답변 끝에 한 줄을 적습니다: "지금 도는 것: <무엇, 없으면 없음> · 예상 종료: <언제쯤, 모르면 모름> · 사용자가 할 일: <있음(무엇) | 없음>". 대기 중인 팀원은 일하는 것으로 적지 않고 "대기 중: <역할> · 사유" 로 적습니다. 수준 바꾸기: kedovi team-mode enforce status off|block';
 }
 
 /** 끝남 알림에 덧붙일 한 줄. 남은 것이 없으면 '' */

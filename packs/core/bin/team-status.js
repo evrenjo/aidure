@@ -25,7 +25,7 @@ const TAKE_RE = /\s*← (\S+) 에게서 인수 \((\d{4}-\d{2}-\d{2})\)\s*$/;
 const ws = load();
 const ROOT = ws.root;
 const me = devId(ROOT);
-const ROSTER = ((ws.team || {}).members || []).filter(Boolean); // 리더가 정한 명단 (aidure team add). 비어 있으면 명단 없이 운영
+const ROSTER = ((ws.team || {}).members || []).filter(Boolean); // 리더가 정한 명단 (kedovi team add). 비어 있으면 명단 없이 운영
 
 // ───────── 읽기 — upstream 기준 ─────────
 if (!args.includes('--no-fetch')) git(ROOT, ['fetch', '-q'], 15000);
@@ -175,7 +175,7 @@ function overview() {
   console.log('');
   if (!list.length) return console.log('핸드오프가 아직 없습니다 (handoffs/<id>/ 가 비어 있음)');
   for (const p of list) {
-    if (!p.joined) { console.log(`■ ${p.id}: 미합류 (명단에만 있음, 아직 aidure install · 합류 기록 없음)\n`); continue; }
+    if (!p.joined) { console.log(`■ ${p.id}: 미합류 (명단에만 있음, 아직 kedovi install · 합류 기록 없음)\n`); continue; }
     const stale = p.days !== null && p.days > STALE_DAYS ? `  ⚠ ${p.days}일째 갱신 없음` : '';
     const who = p.id === me ? `${p.id} (나)` : p.id;
     const tag = ROSTER.length && !p.inRoster ? '  (명단에 없음)' : '';

@@ -46,4 +46,4 @@ node packs/core/bin/check-refs.js             # 지운 파일을 가리키는 �
 node packs/core/bin/tidy.js --count --new     # 남은 후보 (repo 전체를 정리했으면 --new 없이)
 ```
 
-빌드 · 테스트(그 repo 의 명령)와 기획 repo 면 `aidure docs build` 도 돌린다. 보고: 지운 것 · 남긴 것(이유) · 검증 결과.
+빌드 · 테스트(그 repo 의 명령)와 기획 repo 면 `kedovi docs build` 도 돌린다. 보고: 지운 것 · 남긴 것(이유) · 검증 결과.

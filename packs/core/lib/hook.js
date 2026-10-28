@@ -54,11 +54,11 @@ function note(text) { process.stdout.write(JSON.stringify({ hookSpecificOutput: 
 
 /**
  * 훅은 세션을 깨지 않는다 — 본문을 감싸 예외를 삼키고 항상 exit 0.
- * 위임받아 도는 세션(delegate.js run 이 AIDURE_DELEGATED=1 을 준다)에서는 아무것도 하지 않는다.
+ * 위임받아 도는 세션(delegate.js run 이 KEDOVI_DELEGATED=1 을 준다)에서는 아무것도 하지 않는다.
  * 팀원 · 서브에이전트 안에서도 기본은 아무것도 하지 않는다 (핸드오프 · 완료 조건 · 위임 정리 · 알림은 리더 몫). 팀원에서도 돌 이벤트만 opts.teammateEvents 로 연다
  */
 function run(fn, { teammateEvents = [] } = {}) {
-  if (process.env.AIDURE_DELEGATED === '1') process.exit(0);
+  if (process.env.KEDOVI_DELEGATED === '1') process.exit(0);
   const input = readInput();
   if (isTeammate(input) && !teammateEvents.includes(String(input.hook_event_name || ''))) process.exit(0);
   Promise.resolve().then(fn).catch((e) => { process.stderr.write(`[hook] ${e && e.message}\n`); }).finally(() => process.exit(0));

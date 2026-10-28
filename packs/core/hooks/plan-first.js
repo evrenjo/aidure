@@ -71,7 +71,7 @@ run(() => {
   if (LIGHT.test(abs) && changedLines(tool, ti) <= 2) return;
   if (headerShown(input.transcript_path)) return;
   const what = '이번 요청에서 「착수 전 확인:」 없이 코드를 고치려 합니다. 기능 변경 · 공유 상태 변경이면 먼저 `착수 전 확인:` 머리말로 영향 범위 · 공유 상태 · 구조 결정 · 검증 · 시간 예산을 보이고 사용자 확인을 받습니다 (go 스킬 3단계). '
-    + '오타 · 한두 줄 같은 단순 수정이면 `착수 전 확인: 단순 수정 (이유)` 한 줄을 적고 이어 갑니다. 수준 바꾸기: aidure team-mode enforce plan off|warn|block';
+    + '오타 · 한두 줄 같은 단순 수정이면 `착수 전 확인: 단순 수정 (이유)` 한 줄을 적고 이어 갑니다. 수준 바꾸기: kedovi team-mode enforce plan off|warn|block';
   if (level === 'block') { deny(what); return; }
   fs.writeFileSync(mark, '1');
   note(what);

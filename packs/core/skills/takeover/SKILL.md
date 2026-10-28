@@ -56,4 +56,4 @@ node packs/core/bin/team-status.js --take <from> --items <번호,…|all>
 - 인수 기록(내 TODO.md · 작업별 기록)은 다음 handoff 가 commit · push 한다. 바로 공유하려면 사용자에게 지금 handoff 할지 묻는다.
 - 이어서 할 첫 작업 1~2건을 제안한다.
 
-> 터미널에서는 `aidure team <from>` (보기) · `aidure team <from> --take <번호,…|all>` (옮기기) 로 같은 일을 한다.
+> 터미널에서는 `kedovi team <from>` (보기) · `kedovi team <from> --take <번호,…|all>` (옮기기) 로 같은 일을 한다.

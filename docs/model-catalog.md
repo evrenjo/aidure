@@ -70,7 +70,7 @@
 3. `npm run models`: 오류 없음 확인
 4. 아래 "근거" 표를 갱신
 5. `npm test` 통과 → `package.json` version 올림 (추천 변경 = patch, 형식 변경 = minor) → 커밋·push
-6. 워크스페이스는 `aidure upgrade` 로 받는다. 팀이 직접 고른 값은 그대로 두고, 퇴역 모델만 sync 가 경고한다 (`aidure models --migrate`)
+6. 워크스페이스는 `kedovi upgrade` 로 받는다. 팀이 직접 고른 값은 그대로 두고, 퇴역 모델만 sync 가 경고한다 (`kedovi models --migrate`)
 
 ## 근거 (2026-10-01)
 

@@ -25,7 +25,7 @@ function secretHits(root, text) {
   for (const f of [path.join(root, 'bin', 'kit.js'), path.join(__dirname, '..', '..', '..', 'bin', 'kit.js')]) {
     if (fs.existsSync(f)) return require(f).secretHits(text);
   }
-  die('bin/kit.js 를 찾지 못했습니다. aidure upgrade');
+  die('bin/kit.js 를 찾지 못했습니다. kedovi upgrade');
 }
 
 const ESC = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

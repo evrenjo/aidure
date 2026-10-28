@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// GitLab MR 미리보기·생성 · 파이프라인 조회 도우미 (머지 · 재실행은 하지 않는다). 사용: node packs/gitlab/bin/gitlab-mr.js <preview|create|pipeline|repos> --repo <name> … (파이프라인은 aidure gitlab pipeline 으로도)
+// GitLab MR 미리보기·생성 · 파이프라인 조회 도우미 (머지 · 재실행은 하지 않는다). 사용: node packs/gitlab/bin/gitlab-mr.js <preview|create|pipeline|repos> --repo <name> … (파이프라인은 kedovi gitlab pipeline 으로도)
 'use strict';
 
 /*
@@ -14,7 +14,7 @@
  * repos    workspace.json repos 중 gitlab 설정이 있는 것 목록
  *
  * 설정: workspace.json repos[].gitlab = { host, projectId, apiBase? }
- * 토큰: 환경변수 GITLAB_TOKEN (vars.gitlab.tokenEnv 로 이름 변경) → 비밀값 저장소(aidure secret: 프로젝트 > 전역 > 옛 ~/.config/aidure/gitlab-token) → 없으면 git credential fill.
+ * 토큰: 환경변수 GITLAB_TOKEN (vars.gitlab.tokenEnv 로 이름 변경) → 비밀값 저장소(kedovi secret: 프로젝트 > 전역 > 옛 ~/.config/kedovi/gitlab-token) → 없으면 git credential fill.
  * 토큰은 어떤 출력에도 찍지 않는다. 머지·auto-merge API 는 이 도구에 없다.
  * 의존성 없음 (Node 18+ fetch).
  */
@@ -105,7 +105,7 @@ function token(ws, r) {
 
 async function api(ws, r, method, p, body) {
   const t = token(ws, r);
-  if (!t) throw new Error('토큰이 없습니다. 터미널에서 aidure secret set GITLAB_TOKEN (숨김 입력, 권한 api)');
+  if (!t) throw new Error('토큰이 없습니다. 터미널에서 kedovi secret set GITLAB_TOKEN (숨김 입력, 권한 api)');
   const res = await fetch(`${apiBase(r)}/projects/${encodeURIComponent(r.gitlab.projectId)}${p}`, {
     method,
     headers: { 'PRIVATE-TOKEN': t.value, ...(body ? { 'Content-Type': 'application/json' } : {}) },
@@ -113,7 +113,7 @@ async function api(ws, r, method, p, body) {
   });
   const text = await res.text();
   let data; try { data = JSON.parse(text); } catch { data = text; }
-  if (res.status === 401) throw new Error(`HTTP 401: 토큰이 거부됐습니다 (${t.from}).${t.from === 'git credential' ? ' git 계정 비밀번호는 API 에 쓸 수 없습니다.' : ' 만료 · 취소됐을 수 있습니다.'} 개인 액세스 토큰(권한 api)을 터미널에서 aidure secret set GITLAB_TOKEN 으로 넣고 aidure secret test GITLAB_TOKEN 으로 확인하세요`);
+  if (res.status === 401) throw new Error(`HTTP 401: 토큰이 거부됐습니다 (${t.from}).${t.from === 'git credential' ? ' git 계정 비밀번호는 API 에 쓸 수 없습니다.' : ' 만료 · 취소됐을 수 있습니다.'} 개인 액세스 토큰(권한 api)을 터미널에서 kedovi secret set GITLAB_TOKEN 으로 넣고 kedovi secret test GITLAB_TOKEN 으로 확인하세요`);
   if (!res.ok) throw new Error(`HTTP ${res.status} ${typeof data === 'string' ? data.slice(0, 300) : JSON.stringify(data.message || data).slice(0, 300)}`);
   return data;
 }
@@ -128,7 +128,7 @@ function defaultRemoveSource(ws, source) {
 }
 
 function commits(r, source, target) {
-  if (!fs.existsSync(r.dir)) throw new Error(`${r.dir} 가 없습니다. aidure install (또는 node bin/kit.js install)`);
+  if (!fs.existsSync(r.dir)) throw new Error(`${r.dir} 가 없습니다. kedovi install (또는 node bin/kit.js install)`);
   git(r.dir, ['fetch', '-q', 'origin', target, source]);
   const out = git(r.dir, ['log', '--no-merges', '--reverse', '--format=%h%x09%s', `origin/${target}..origin/${source}`]);
   return out ? out.split('\n').map((l) => { const [sha, ...s] = l.split('\t'); return { sha, subject: s.join('\t') }; }) : [];

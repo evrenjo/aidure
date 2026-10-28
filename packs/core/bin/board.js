@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// 워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지와 기록(핸드오프 · 로드맵 · 모델 조사 · 설정 요약)을 문서 사이트와 같은 틀의 HTML 로. 실행: aidure board [--no-open] [--no-fetch]
+// 워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지와 기록(핸드오프 · 로드맵 · 모델 조사 · 설정 요약)을 문서 사이트와 같은 틀의 HTML 로. 실행: kedovi board [--no-open] [--no-fetch]
 /*
  * 보기 전용. 이 PC 의 .agents/board/ 에 만든다 (gitignore. 현황이 매번 바뀌고 사람마다 달라 커밋하지 않는다).
- * 팀 현황은 aidure team 과 같은 기준(git fetch 뒤 upstream, 본인 폴더는 작업 폴더), 로드맵은 aidure plan 과 같은 계산.
+ * 팀 현황은 kedovi team 과 같은 기준(git fetch 뒤 upstream, 본인 폴더는 작업 폴더), 로드맵은 kedovi plan 과 같은 계산.
  */
 'use strict';
 const fs = require('fs');
@@ -54,14 +54,14 @@ function records() {
 
 function dashboard(t, plan) {
   const L = [`# ${ws.project.title || ws.project.name} 현황판`, '',
-    `> 기준: ${t.source}. 보기 전용 (다시 만들기: aidure board)`, ''];
+    `> 기준: ${t.source}. 보기 전용 (다시 만들기: kedovi board)`, ''];
   L.push('## 로드맵', '');
   if (plan) {
     L.push(P.shortLine(plan), '', '```', P.flow(plan, 100), '```', '');
     const cur = P.current(plan);
     if (cur) L.push(`### 지금 단계: ${cur.no}. ${cur.name}`, '', P.detailTable(cur), '');
     L.push('자세히: [로드맵](handoffs/PLAN.md)', '');
-  } else L.push('로드맵(handoffs/PLAN.md)이 없습니다. 만들기: aidure plan init', '');
+  } else L.push('로드맵(handoffs/PLAN.md)이 없습니다. 만들기: kedovi plan init', '');
   L.push('## 팀', '');
   const people = (t.people || []).filter((p) => p.joined);
   if (people.length) {
@@ -86,7 +86,7 @@ function dashboard(t, plan) {
 
 function settings(t) {
   const a = ws.agents || {};
-  const L = ['# 설정 요약', '', '> workspace.json 기준. 바꾸기는 aidure 명령으로 (aidure 스킬 참고)', '',
+  const L = ['# 설정 요약', '', '> workspace.json 기준. 바꾸기는 kedovi 명령으로 (kedovi 스킬 참고)', '',
     '| 항목 | 값 |', '|---|---|',
     `| 프로젝트 | ${cell(ws.project.title || ws.project.name)} (${cell(ws.project.type || '')}) |`,
     `| 킷 버전 | ${cell((ws.kit || {}).version || '')} |`,
@@ -107,7 +107,7 @@ function main() {
   const files = { 'README.md': dashboard(t, plan), '설정.md': settings(t), ...rec.files };
   const ids = [...new Set(Object.keys(rec.files).map((f) => (f.match(/^handoffs\/([^/]+)\//) || [])[1]).filter((x) => x && !/\.md$/.test(x)))].sort((x, y) => (x === me ? -1 : y === me ? 1 : x.localeCompare(y)));
   const config = {
-    title: `${ws.project.title || ws.project.name} 워크스페이스`, version: `aidure ${(ws.kit || {}).version || ''}`.trim(),
+    title: `${ws.project.title || ws.project.name} 워크스페이스`, version: `kedovi ${(ws.kit || {}).version || ''}`.trim(),
     groups: [
       { group: '현황', icon: '◆', files: ['README.md', '설정.md'] },
       { group: '로드맵 · 공용 기록', icon: '⇢', files: ['handoffs/PLAN.md', 'handoffs/MODELS.md', 'handoffs/README.md'] },

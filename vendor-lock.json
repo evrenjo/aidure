@@ -1,10 +1,10 @@
 {
- "name": "aidure-vendor",
+ "name": "kedovi-vendor",
  "lockfileVersion": 3,
  "requires": true,
  "packages": {
   "": {
-   "name": "aidure-vendor",
+   "name": "kedovi-vendor",
    "dependencies": {
     "markdown-it": "15.0.2",
     "markdown-it-cjk-friendly": "3.0.0"

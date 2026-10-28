@@ -6,7 +6,7 @@ const path = require('path');
 const assert = require('assert');
 const { parseTopic, listTopics, activeTopics } = require('./topics');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-topics-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-topics-'));
 const dir = path.join(tmp, 'handoffs', 'kim', 'topics');
 fs.mkdirSync(dir, { recursive: true });
 const write = (name, body) => fs.writeFileSync(path.join(dir, `${name}.md`), body);

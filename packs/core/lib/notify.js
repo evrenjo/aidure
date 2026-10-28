@@ -4,7 +4,7 @@
  * 채널 두 개
  *   개인  작업 끝 · 입력 대기 → 나만의 채팅 (봇과의 1:1). 켜기: 팀 기본 vars.notify.events ← 이 PC .agents/local.json notify.events
  *   팀    핸드오프 push · 설정 변경 push · 공지 → 팀 그룹방 vars.notify.teamChat. 고르기: vars.notify.team
- * 비밀값은 repo 밖 ~/.config/aidure/telegram.env (권한 600)
+ * 비밀값은 repo 밖 ~/.config/kedovi/telegram.env (권한 600)
  *   TELEGRAM_BOT_TOKEN · TELEGRAM_CHAT_ID   개인 봇 · 개인 채팅
  *   TELEGRAM_TEAM_BOT_TOKEN                 팀 봇 (관리자가 따로 전달)
  */
@@ -26,8 +26,8 @@ const RESULT_CLIP = 800; // 결과와 결정: 답 앞부분
 const TEAM_EVENTS = ['handoff', 'settings', 'announce'];
 const DEFAULT_MIN_SECONDS = 60;
 const DEFAULT_DESK_SECONDS = 120; // 이 안에 키보드 · 마우스를 만졌으면 PC 앞에 있다고 본다
-const API = () => process.env.AIDURE_TELEGRAM_API || 'https://api.telegram.org'; // 시험용으로 바꿀 수 있다
-const secretFile = () => path.join(process.env.AIDURE_CONFIG_DIR || path.join(os.homedir(), '.config', 'aidure'), 'telegram.env');
+const API = () => process.env.KEDOVI_TELEGRAM_API || 'https://api.telegram.org'; // 시험용으로 바꿀 수 있다
+const secretFile = () => path.join(process.env.KEDOVI_CONFIG_DIR || path.join(os.homedir(), '.config', 'kedovi'), 'telegram.env');
 
 /** "1" · "stop,notification" · "off" … → 켜진 이벤트 목록 */
 function parseEvents(value, all = EVENTS) {
@@ -39,7 +39,7 @@ function parseEvents(value, all = EVENTS) {
 }
 
 /**
- * ~/.config/aidure/telegram.env (KEY=값 줄) + 비밀값 저장소(aidure secret)의 봇 토큰. 없으면 {}
+ * ~/.config/kedovi/telegram.env (KEY=값 줄) + 비밀값 저장소(kedovi secret)의 봇 토큰. 없으면 {}
  * 토큰은 저장소(프로젝트 > 전역)가 telegram.env 보다 먼저다. 환경변수는 쓰는 곳에서 먼저 본다. root 가 없으면 전역만
  */
 function readSecretFile() {
@@ -67,7 +67,7 @@ function readSecrets(root) {
 function writeSecrets(values) {
   const file = secretFile();
   fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
-  // 저장소(aidure secret)로 옮긴 봇 토큰은 저장소를 고친다 (파일에 쓰면 저장소의 옛 값이 먼저 읽힌다)
+  // 저장소(kedovi secret)로 옮긴 봇 토큰은 저장소를 고친다 (파일에 쓰면 저장소의 옛 값이 먼저 읽힌다)
   try {
     const S = require('./secrets');
     const stored = new Set(S.list().filter((x) => x.scope === S.GLOBAL).map((x) => x.name));
@@ -103,7 +103,7 @@ function personal(root, ws) {
   const hasLocal = Object.prototype.hasOwnProperty.call(local, 'events') || LEVELS.includes(local.level);
   // 수준: 이 PC 값 → 옛 events 값(켜짐 = 결과와 결정) → 팀 기본(vars.notify.level · events)
   const legacy = (v) => (parseEvents(v).length ? 'decisions' : 'off');
-  const level = process.env.AIDURE_NOTIFY === '0' ? 'off'
+  const level = process.env.KEDOVI_NOTIFY === '0' ? 'off'
     : LEVELS.includes(local.level) ? local.level
       : Object.prototype.hasOwnProperty.call(local, 'events') ? legacy(local.events)
         : LEVELS.includes(team.level) ? team.level : legacy(team.events);
@@ -130,7 +130,7 @@ function team(root, ws) {
   const chat = String(v.teamChat || '');
   const secrets = readSecrets(root);
   return {
-    events: chat && process.env.AIDURE_NOTIFY !== '0' ? parseEvents(v.team == null || v.team === '' ? 'all' : v.team, TEAM_EVENTS) : [],
+    events: chat && process.env.KEDOVI_NOTIFY !== '0' ? parseEvents(v.team == null || v.team === '' ? 'all' : v.team, TEAM_EVENTS) : [],
     chat,
     token: process.env.TELEGRAM_TEAM_BOT_TOKEN || secrets.TELEGRAM_TEAM_BOT_TOKEN || '',
   };
@@ -152,9 +152,9 @@ function duration(sec) {
  * elapsed = 이번 요청 처리에 걸린 초 (모르면 null → 시간 조건 없이 보낸다)
  */
 const levelOf = (cfg) => cfg.level || (cfg.events && cfg.events.length ? 'decisions' : 'off');
-/** 키보드 · 마우스를 마지막으로 만진 뒤 지난 초. 모르면 null (macOS 만 잰다. 시험은 AIDURE_IDLE_SECONDS) */
+/** 키보드 · 마우스를 마지막으로 만진 뒤 지난 초. 모르면 null (macOS 만 잰다. 시험은 KEDOVI_IDLE_SECONDS) */
 function idleSeconds() {
-  if (process.env.AIDURE_IDLE_SECONDS != null) { const n = Number(process.env.AIDURE_IDLE_SECONDS); return Number.isFinite(n) ? n : null; }
+  if (process.env.KEDOVI_IDLE_SECONDS != null) { const n = Number(process.env.KEDOVI_IDLE_SECONDS); return Number.isFinite(n) ? n : null; }
   if (process.platform !== 'darwin') return null;
   try {
     const out = require('child_process').execFileSync('ioreg', ['-c', 'IOHIDSystem', '-d', '4'], { encoding: 'utf8', timeout: 2000, stdio: ['ignore', 'pipe', 'ignore'] });
@@ -167,11 +167,11 @@ const atDesk = (cfg) => { if (cfg.away || !(cfg.deskSeconds > 0)) return false; 
 
 /**
  * 이 세션이 리모트 컨트롤(Claude 앱 연결)로 이어져 있나. 공식: 연결된 동안 훅에 CLAUDE_CODE_BRIDGE_SESSION_ID 가 있다 (Claude Code 2.1.199+).
- * 옛 버전은 세션 파일(~/.claude/sessions/<pid>.json)의 bridgeSessionId 로 본다 (문서에 없는 내부 파일, 못 읽으면 false). 시험은 AIDURE_REMOTE_CONTROL=1|0
+ * 옛 버전은 세션 파일(~/.claude/sessions/<pid>.json)의 bridgeSessionId 로 본다 (문서에 없는 내부 파일, 못 읽으면 false). 시험은 KEDOVI_REMOTE_CONTROL=1|0
  */
 function remoteControl(sessionId) {
   if (process.env.CLAUDE_CODE_BRIDGE_SESSION_ID) return true;
-  if (process.env.AIDURE_REMOTE_CONTROL != null) return process.env.AIDURE_REMOTE_CONTROL === '1';
+  if (process.env.KEDOVI_REMOTE_CONTROL != null) return process.env.KEDOVI_REMOTE_CONTROL === '1';
   if (!sessionId) return false;
   const dir = path.join(process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude'), 'sessions');
   try {
@@ -205,7 +205,7 @@ function personalMessage(cfg, input, { project, agent, elapsed, question, prompt
   if (event === 'notification') {
     const kind = waitKind(input, question);
     if (kind === 'idle') return null;
-    if (kind === 'permission' && process.env.AIDURE_CHANNEL === '1') return null;
+    if (kind === 'permission' && process.env.KEDOVI_CHANNEL === '1') return null;
     if (brief(cfg)) return kind === 'question' ? `❓ [${project}] ${who}: 선택할 것이 있습니다. 터미널에서 골라 주세요` : `${WAIT[kind][0]} [${project}] ${who}: ${WAIT[kind][1]}`; // 자리에 있으면 알리기만 (설명 · 보기는 자리 비움일 때)
     const detail = kind === 'question' ? (question && question !== '질문' ? question : '') : String(input.message || '');
     return `${WAIT[kind][0]} [${project}] ${who}: ${WAIT[kind][1]}${detail ? `\n${clip(detail, 500)}` : ''}`;
@@ -246,7 +246,7 @@ function waitKind(input, question) {
 
 // ───────── 양방향 채널 (Claude Code 공식 telegram 플러그인, 개인 · 이 PC · 프로젝트마다) ─────────
 // claude --channels plugin:telegram@claude-plugins-official 로 띄우면 봇에게 보낸 메시지가 세션에 들어오고 Claude 가 답한다.
-// 기본은 꺼짐. aidure notify my channel on 이 이 PC .agents/local.json notify.channel 을 켜고, aidure start 가 플래그와 TELEGRAM_STATE_DIR 을 붙인다.
+// 기본은 꺼짐. kedovi notify my channel on 이 이 PC .agents/local.json notify.channel 을 켜고, kedovi start 가 플래그와 TELEGRAM_STATE_DIR 을 붙인다.
 // 텔레그램은 봇 하나에 메시지를 받는 쪽이 하나뿐이라 **프로젝트마다 전용 봇 · 상태 폴더**를 둔다 (다른 프로젝트 세션과 대화가 섞이지 않게).
 // 상태 폴더: ~/.claude/channels/telegram-<프로젝트>/{.env, access.json}. 채널을 켠 워크스페이스는 개인 알림도 그 봇으로 보낸다
 const CHANNEL_PLUGIN = 'telegram@claude-plugins-official';
@@ -291,7 +291,7 @@ const channelToken = (root) => tokenIn(channelDir(root));
 
 /**
  * 같은 토큰을 쓰는 다른 프로젝트 상태 폴더 (telegram-<프로젝트>). 같은 봇을 두 곳이 받으면 서로 끊는다.
- * 플러그인 기본 폴더(telegram, aidure 밖에서 claude --channels 로 쓸 때)는 { shared: true } 로 따로 알린다
+ * 플러그인 기본 폴더(telegram, kedovi 밖에서 claude --channels 로 쓸 때)는 { shared: true } 로 따로 알린다
  */
 function channelTokenUsedElsewhere(root, token) {
   const mine = channelDir(root);
@@ -312,7 +312,7 @@ const channelOn = (root) => (readLocal(root).notify || {}).channel === true;
 
 /**
  * 채널 세션의 선택지 질문 방식. dialog(기본) = 터미널 선택지 창(방향키 · 직접 입력), 텔레그램에는 질문과 선택지를 알림으로.
- * text = 창 대신 텔레그램 버튼 질문 (자리를 비울 때: 버튼 · 번호 · 직접 입력으로 답한다). aidure notify my channel ask dialog|text
+ * text = 창 대신 텔레그램 버튼 질문 (자리를 비울 때: 버튼 · 번호 · 직접 입력으로 답한다). kedovi notify my channel ask dialog|text
  */
 /**
  * 끝 응답이 사용자에게 고르라는 결정 질문인가 (자리 비움 Stop 검사). 완료 보고의 번호 목록을 결정으로 보지 않게 좁게 본다:
@@ -375,27 +375,27 @@ function holderOf(ancestors) {
 
 // ───────── 채널 세션만 수신 (bun 대리 실행) ─────────
 // 텔레그램 봇은 한 곳에서만 받는다. 플러그인을 켠 프로젝트에서는 팀원 세션(tmux, 리더 환경 · --settings 를 물려받음)도 같은 봇의 서버를 띄우고,
-// 시작하면서 bot.pid 의 리더 서버를 꺼 버린다. aidure start 가 채널 세션의 PATH 앞에 이 bun 을 두어 --channels 로 시작한 세션만 서버를 띄우게 한다.
-// 판정: 부모(Claude Code) 실행 인자에 --channels 가 있고 --agent-id 가 없으며 위임 세션(AIDURE_DELEGATED=1)이 아님. 막은 것 · 띄운 것은 상태 폴더의 aidure-channel.log 에 한 줄
-const CHANNEL_LOG = 'aidure-channel.log';
+// 시작하면서 bot.pid 의 리더 서버를 꺼 버린다. kedovi start 가 채널 세션의 PATH 앞에 이 bun 을 두어 --channels 로 시작한 세션만 서버를 띄우게 한다.
+// 판정: 부모(Claude Code) 실행 인자에 --channels 가 있고 --agent-id 가 없으며 위임 세션(KEDOVI_DELEGATED=1)이 아님. 막은 것 · 띄운 것은 상태 폴더의 kedovi-channel.log 에 한 줄
+const CHANNEL_LOG = 'kedovi-channel.log';
 function channelShim(root, realBun) {
   if (!realBun || process.platform === 'win32') return null;
-  const dir = path.join(channelDir(root), 'aidure-bin');
+  const dir = path.join(channelDir(root), 'kedovi-bin');
   const log = path.join(channelDir(root), CHANNEL_LOG);
-  if (path.dirname(realBun) === dir) { // 채널 세션 안에서 다시 aidure start: PATH 에서 이 대리 실행을 빼고 진짜 bun 을 찾는다
+  if (path.dirname(realBun) === dir) { // 채널 세션 안에서 다시 kedovi start: PATH 에서 이 대리 실행을 빼고 진짜 bun 을 찾는다
     realBun = String(process.env.PATH || '').split(path.delimiter).filter((d) => d && d !== dir).map((d) => path.join(d, 'bun')).find((f) => { try { return fs.statSync(f).isFile(); } catch { return false; } }) || null;
     if (!realBun) return null;
   }
   const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
   const body = `#!/bin/sh
-# aidure: 텔레그램 채널 서버는 --channels 로 시작한 세션 하나만 띄운다 (팀원 · 위임 세션은 막는다). 그 밖의 bun 은 그대로 실행
+# kedovi: 텔레그램 채널 서버는 --channels 로 시작한 세션 하나만 띄운다 (팀원 · 위임 세션은 막는다). 그 밖의 bun 은 그대로 실행
 case " $* " in
   *" --cwd "*telegram*" start "*)
     P="$(ps -o args= -p "$PPID" 2>/dev/null)"
     WHO="$(printf '%s' "$P" | sed -n 's/.*--agent-name[= ]\\([^ ]*\\).*/팀원 \\1/p')"
-    if [ "$AIDURE_DELEGATED" = 1 ] || [ -n "$WHO" ] || ! printf '%s' "$P" | grep -q -- '--channels'; then
+    if [ "$KEDOVI_DELEGATED" = 1 ] || [ -n "$WHO" ] || ! printf '%s' "$P" | grep -q -- '--channels'; then
       echo "$(date '+%m-%d %H:%M') 막음: \${WHO:-채널 아닌 세션} (pid $PPID)" >> ${q(log)}
-      echo "aidure: 이 세션은 텔레그램 채널을 받지 않는다 (--channels 로 시작한 세션만)" >&2
+      echo "kedovi: 이 세션은 텔레그램 채널을 받지 않는다 (--channels 로 시작한 세션만)" >&2
       exit 0
     fi
     echo "$(date '+%m-%d %H:%M') 띄움: 채널 세션 (pid $PPID)" >> ${q(log)}
@@ -414,7 +414,7 @@ exec ${q(realBun)} "$@"
     return dir;
   } catch { return null; }
 }
-/** aidure-channel.log 마지막 줄 (끊김 알림에 붙인다) */
+/** kedovi-channel.log 마지막 줄 (끊김 알림에 붙인다) */
 function channelLogLast(root) {
   try { return fs.readFileSync(path.join(channelDir(root), CHANNEL_LOG), 'utf8').trim().split('\n').pop() || ''; } catch { return ''; }
 }
@@ -695,7 +695,7 @@ function voiceList() {
 
 function tts(text, { name = 'Yuna', dir = os.tmpdir() } = {}) {
   const { execFileSync } = require('child_process');
-  const base = path.join(dir, `aidure-voice-${process.pid}-${Date.now()}`);
+  const base = path.join(dir, `kedovi-voice-${process.pid}-${Date.now()}`);
   try {
     if (process.platform === 'darwin') {
       // 없는 이름이면 say 가 기본 목소리로 조용히 바꿔 읽는다 → 미리 막는다 ("Yuna" 는 목록에 "Yuna (한국어(한국))" 처럼 나올 수 있다)

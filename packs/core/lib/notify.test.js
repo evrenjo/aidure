@@ -19,9 +19,9 @@ const path = require('path');
 const assert = require('assert');
 const { execFileSync } = require('child_process');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-notify-'));
-process.env.AIDURE_CONFIG_DIR = path.join(tmp, 'config');
-for (const k of ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'TELEGRAM_TEAM_BOT_TOKEN', 'AIDURE_NOTIFY', 'CLAUDE_CODE_BRIDGE_SESSION_ID', 'AIDURE_REMOTE_CONTROL', 'AIDURE_CHANNEL']) delete process.env[k]; // 채널 세션(aidure start) · 리모트 세션 안에서 돌려도 같게
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-notify-'));
+process.env.KEDOVI_CONFIG_DIR = path.join(tmp, 'config');
+for (const k of ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'TELEGRAM_TEAM_BOT_TOKEN', 'KEDOVI_NOTIFY', 'CLAUDE_CODE_BRIDGE_SESSION_ID', 'KEDOVI_REMOTE_CONTROL', 'KEDOVI_CHANNEL']) delete process.env[k]; // 채널 세션(kedovi start) · 리모트 세션 안에서 돌려도 같게
 const n = require('./notify');
 
 // 이벤트 파싱
@@ -47,9 +47,9 @@ assert.strictEqual(n.personal(root, ws).source, 'off'); // 팀이 켜도 이 PC 
 fs.writeFileSync(path.join(root, '.agents', 'local.json'), JSON.stringify({ notify: { events: '1', chat: '-7', minSeconds: 0 } }));
 p = n.personal(root, { vars: {} });
 assert.deepStrictEqual([p.events.length, p.source, p.chat, p.minSeconds], [2, 'local', '-7', 0]);
-process.env.AIDURE_NOTIFY = '0';
+process.env.KEDOVI_NOTIFY = '0';
 assert.deepStrictEqual(n.personal(root, ws).events, []);
-delete process.env.AIDURE_NOTIFY;
+delete process.env.KEDOVI_NOTIFY;
 
 // 개인 문장: 짧은 작업은 보내지 않는다
 const cfg = { events: ['stop', 'notification'], minSeconds: 60, token: 'T', chat: '42' };
@@ -70,12 +70,12 @@ assert.match(n.personalMessage(cfg, perm, ctx), /^🔐 \[shop\] Claude: 권한 �
 assert.match(n.personalMessage(cfg, { ...perm, message: 'Claude needs your permission' }, { ...ctx, question: '어느 쪽으로 할까요?' }), /^❓ \[shop\] Claude: 질문 대기\n어느 쪽으로 할까요\?$/);
 assert.strictEqual(n.personalMessage(cfg, { hook_event_name: 'Notification', message: 'Claude is waiting for your input', notification_type: 'idle_prompt' }, ctx), null); // 응답 뒤 입력 대기는 결과 알림과 겹친다
 assert.strictEqual(n.waitKind({ message: 'Claude needs your permission' }), 'permission');
-// 채널로 띄운 세션(aidure start 가 AIDURE_CHANNEL=1)은 플러그인이 권한 요청을 버튼으로 보내므로 aidure 은 보내지 않는다
-process.env.AIDURE_CHANNEL = '1';
+// 채널로 띄운 세션(kedovi start 가 KEDOVI_CHANNEL=1)은 플러그인이 권한 요청을 버튼으로 보내므로 kedovi 은 보내지 않는다
+process.env.KEDOVI_CHANNEL = '1';
 assert.strictEqual(n.personalMessage(cfg, perm, ctx), null);
 assert.strictEqual(n.personalMessage(cfg, { hook_event_name: 'Notification', notification_type: 'idle_prompt', message: 'Claude is waiting for your input' }, ctx), null);
 assert.match(n.personalMessage(cfg, { ...perm, message: 'x' }, { ...ctx, question: '질문?' }), /질문 대기/);
-delete process.env.AIDURE_CHANNEL;
+delete process.env.KEDOVI_CHANNEL;
 delete cfg.away;
 // 알림 수준: 전체 · 결과와 결정 · 진행 현황 · 끄기 (st 는 자리 비움 x.away 를 넘겨야 답 앞부분)
 {
@@ -90,7 +90,7 @@ delete cfg.away;
   // PC 앞이면 결과를 보내지 않는다 (전체 수준은 그대로)
   const sd = (level, desk) => n.personalMessage({ ...cfg, level }, { hook_event_name: 'Stop', last_assistant_message: '끝냈다' }, { ...ctx, elapsed: 125, desk });
   assert.ok(sd('decisions', true) === null && sd('progress', true) === null && /모든 작업 끝/.test(sd('decisions', false)));
-  const idle = (s, x = {}) => { process.env.AIDURE_IDLE_SECONDS = String(s); try { return n.atDesk({ deskSeconds: 120, ...x }); } finally { delete process.env.AIDURE_IDLE_SECONDS; } };
+  const idle = (s, x = {}) => { process.env.KEDOVI_IDLE_SECONDS = String(s); try { return n.atDesk({ deskSeconds: 120, ...x }); } finally { delete process.env.KEDOVI_IDLE_SECONDS; } };
   assert.ok(idle(30) && !idle(300) && !idle(30, { away: true }) && !idle(30, { deskSeconds: 0 }) && !idle('x'));
   assert.strictEqual(st('off'), null);
   assert.strictEqual(st('all', { prompt: 'x', replied: true }), null); // 텔레그램 요청은 Claude 가 reply 로 이미 답했다
@@ -99,7 +99,7 @@ delete cfg.away;
   assert.match(n.personalMessage({ ...cfg, level: 'all' }, q, { ...ctx, question: '어느 쪽?\n1. A' }), /1\. A$/); // 전체 수준은 늘 보기까지
   assert.strictEqual(n.personalMessage({ ...cfg, level: 'off' }, q, { ...ctx, question: '어느 쪽?' }), null);
   assert.ok(n.wantsProgress({ level: 'all' }) && n.wantsProgress({ level: 'progress', away: true }) && !n.wantsProgress({ level: 'progress' }) && !n.wantsProgress({ level: 'decisions', away: true }));
-  process.env.AIDURE_REMOTE_CONTROL = '1'; assert.ok(n.remoteControl('x')); process.env.AIDURE_REMOTE_CONTROL = '0'; assert.ok(!n.remoteControl('x')); delete process.env.AIDURE_REMOTE_CONTROL;
+  process.env.KEDOVI_REMOTE_CONTROL = '1'; assert.ok(n.remoteControl('x')); process.env.KEDOVI_REMOTE_CONTROL = '0'; assert.ok(!n.remoteControl('x')); delete process.env.KEDOVI_REMOTE_CONTROL;
   { const prev = process.env.CLAUDE_CODE_BRIDGE_SESSION_ID; process.env.CLAUDE_CODE_BRIDGE_SESSION_ID = 'session_x'; assert.ok(n.remoteControl()); if (prev == null) delete process.env.CLAUDE_CODE_BRIDGE_SESSION_ID; else process.env.CLAUDE_CODE_BRIDGE_SESSION_ID = prev; }
   // 이 PC 수준 · 자리 비움 (옛 channelAsk text = 자리 비움)
   fs.writeFileSync(path.join(root, '.agents', 'local.json'), JSON.stringify({ notify: { level: 'progress', channelAsk: 'text' } }));
@@ -159,7 +159,7 @@ console.log('notify.test.js ok');
   const os2 = require('os');
   const fs2 = require('fs');
   const path2 = require('path');
-  const home = fs2.mkdtempSync(path2.join(os2.tmpdir(), 'aidure-ch-'));
+  const home = fs2.mkdtempSync(path2.join(os2.tmpdir(), 'kedovi-ch-'));
   const ws1 = path2.join(home, 'shop'); const ws2 = path2.join(home, 'blog');
   for (const w of [ws1, ws2]) { fs2.mkdirSync(path2.join(w, '.agents'), { recursive: true }); fs2.writeFileSync(path2.join(w, 'workspace.json'), JSON.stringify({ project: { name: path2.basename(w) } })); }
   process.env.CLAUDE_CONFIG_DIR = home;
@@ -200,12 +200,12 @@ if (process.platform !== 'win32') {
     const lead = viaParent(['--channels', 'plugin:telegram@claude-plugins-official'], plugin);
     const mate = viaParent(['--agent-id', 'w1@t', '--agent-name', 'w1', '--team-name', 't'], plugin);
     const plain = viaParent(['--model', 'opus'], plugin);
-    const deleg = viaParent(['--channels', 'x'], plugin, { AIDURE_DELEGATED: '1' });
+    const deleg = viaParent(['--channels', 'x'], plugin, { KEDOVI_DELEGATED: '1' });
     const other = viaParent(['--model', 'opus'], ['install', 'x']);
     assert.match(lead, /--cwd \/x\/plugins\/telegram/, '채널 세션은 진짜 bun');
     assert.ok(mate === '' && plain === '' && deleg === '', '팀원 · 채널 아닌 세션 · 위임은 막는다');
     assert.strictEqual(other.trim(), 'install x', '텔레그램 서버가 아닌 bun 은 그대로');
-    const log = fs.readFileSync(path.join(n.channelDir(wsS), 'aidure-channel.log'), 'utf8');
+    const log = fs.readFileSync(path.join(n.channelDir(wsS), 'kedovi-channel.log'), 'utf8');
     assert.match(log, /띄움: 채널 세션/);
     assert.match(log, /막음: 팀원 w1/);
     assert.match(n.channelLogLast(wsS), /막음: 채널 아닌 세션/);
@@ -299,7 +299,7 @@ console.log('notify.test.js 결정 질문 · 음성 문장 ok');
     req.on('end', () => { got.push({ url: req.url, type: req.headers['content-type'] || '', body: Buffer.concat(body).toString('utf8') }); res.setHeader('content-type', 'application/json'); res.end('{"ok":true,"result":{}}'); });
   });
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  process.env.AIDURE_TELEGRAM_API = `http://127.0.0.1:${server.address().port}`;
+  process.env.KEDOVI_TELEGRAM_API = `http://127.0.0.1:${server.address().port}`;
   const cfg = { token: 'T', chat: '42' };
   const r = n.decisionMessages({ decisions: [{ title: 'A', options: [{ label: 'x' }] }, { title: 'B', options: [{ label: 'y' }] }] });
   await n.send(r.head, cfg, 3000, { html: true });
@@ -308,7 +308,7 @@ console.log('notify.test.js 결정 질문 · 음성 문장 ok');
   const bodies = got.map((g) => JSON.parse(g.body));
   assert.ok(bodies.every((b) => b.parse_mode === 'HTML' && b.chat_id === '42'));
   assert.ok(!bodies[0].reply_markup && !bodies[1].reply_markup && bodies[2].reply_markup.keyboard.length === 5, '답 버튼은 마지막 메시지에만');
-  const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-voice-')), 'v.m4a');
+  const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-voice-')), 'v.m4a');
   fs.writeFileSync(f, 'fake');
   await n.sendVoice(f, cfg);
   const v = got[got.length - 1];
@@ -316,11 +316,11 @@ console.log('notify.test.js 결정 질문 · 음성 문장 ok');
   assert.match(v.type, /multipart\/form-data/);
   assert.match(v.body, /name="voice"; filename="v\.m4a"/);
   // 리모트 컨트롤(Claude 앱) 연결 중 훅: 결정 · 입력 대기는 앱 몫이라 보내지 않고, 작업 끝 한 줄만 (remote quiet 면 그것도 쉼)
-  const wsr = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-remote-'));
+  const wsr = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-remote-'));
   fs.mkdirSync(path.join(wsr, '.agents'));
   fs.writeFileSync(path.join(wsr, 'workspace.json'), '{}');
   const hook = (input, remote) => new Promise((resolve) => {
-    const c = require('child_process').spawn(process.execPath, [path.join(__dirname, '..', 'hooks', 'notify.js'), '--agent=claude'], { env: { ...process.env, CLAUDE_PROJECT_DIR: wsr, TELEGRAM_BOT_TOKEN: 'R', AIDURE_IDLE_SECONDS: '100000', CLAUDE_CODE_BRIDGE_SESSION_ID: 'session_x' } });
+    const c = require('child_process').spawn(process.execPath, [path.join(__dirname, '..', 'hooks', 'notify.js'), '--agent=claude'], { env: { ...process.env, CLAUDE_PROJECT_DIR: wsr, TELEGRAM_BOT_TOKEN: 'R', KEDOVI_IDLE_SECONDS: '100000', CLAUDE_CODE_BRIDGE_SESSION_ID: 'session_x' } });
     c.on('close', resolve);
     c.stdin.end(JSON.stringify({ session_id: 'remote-t', ...input }));
   });
@@ -339,6 +339,6 @@ console.log('notify.test.js 결정 질문 · 음성 문장 ok');
   assert.strictEqual((await runRemote('send')).length, 3, 'remote send 면 모두');
   fs.rmSync(wsr, { recursive: true, force: true });
   server.close();
-  delete process.env.AIDURE_TELEGRAM_API;
+  delete process.env.KEDOVI_TELEGRAM_API;
   console.log('notify.test.js 보낸 요청 (답 버튼 · 음성 업로드) ok');
 })().catch((e) => { console.error(e); process.exit(1); });

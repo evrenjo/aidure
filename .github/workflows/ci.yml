@@ -22,7 +22,7 @@ jobs:
       - run: npm ci --ignore-scripts   # 시험은 devDependencies(esbuild · playwright-core)의 설치 스크립트가 필요 없다
       - run: npm test
         env:
-          AIDURE_NO_UPDATE_CHECK: '1'
+          KEDOVI_NO_UPDATE_CHECK: '1'
   guard:
     # 배포 전 검사: 하나라도 걸리면 발행 · 사이트를 하지 않는다
     if: github.ref == 'refs/heads/deploy' && github.event_name == 'push'
@@ -89,7 +89,7 @@ jobs:
         run: |
           V=$(node -p 'require("./package.json").version')
           echo "version=$V" >> "$GITHUB_OUTPUT"
-          if npm view "aidure@$V" version >/dev/null 2>&1; then echo "published=yes" >> "$GITHUB_OUTPUT"; echo "aidure@$V 은 이미 있어 발행을 건너뜁니다"; else echo "published=no" >> "$GITHUB_OUTPUT"; fi
+          if npm view "kedovi@$V" version >/dev/null 2>&1; then echo "published=yes" >> "$GITHUB_OUTPUT"; echo "kedovi@$V 은 이미 있어 발행을 건너뜁니다"; else echo "published=no" >> "$GITHUB_OUTPUT"; fi
       - if: steps.ver.outputs.published == 'no'
         run: npm install -g --ignore-scripts npm@11.21.0   # 신뢰 게시(OIDC)는 npm 11.5.1 이상. 범위가 아닌 정확한 버전으로
       # 발행에는 의존 설치가 필요 없다 (빌드 단계 없음). OIDC 토큰을 받을 수 있는 이 작업에서는 남의 설치 스크립트를 돌리지 않는다

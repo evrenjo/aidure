@@ -1,11 +1,11 @@
-/* ERD 뷰어 스타일 (datamodel 팩). aidure docs build 가 html/assets/erd/ 로 복사한다 */
+/* ERD 뷰어 스타일 (datamodel 팩). kedovi docs build 가 html/assets/erd/ 로 복사한다 */
 :root {
   --bg: #f4f5f7; --panel: #fff; --line: #d7dbe0; --ink: #1f2328; --muted: #6a7179;
   --bar: #3a3f45; --bar-ink: #fff; --accent: #e8792b; --edge: #8a929b; --hi: #e8792b;
   --pk: #b4560f; --fk: #2f6fb3; --uk: #6b5bb5;
   --s0: #2f6fb3; --s1: #2e8b57; --s2: #8a5cc2; --s3: #c2572f; --s4: #3b8a99; --s5: #9a7b1c;
 }
-/* 다크: 문서 사이트와 같은 값(◐ 버튼 · localStorage aidure-docs-theme) */
+/* 다크: 문서 사이트와 같은 값(◐ 버튼 · localStorage kedovi-docs-theme) */
 :root[data-theme="dark"] { --bg: #17191c; --panel: #202327; --line: #3a3f45; --ink: #e6e8eb; --muted: #9aa1a9; --bar: #2a2e33; --edge: #7d858d; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme]) { --bg: #17191c; --panel: #202327; --line: #3a3f45; --ink: #e6e8eb; --muted: #9aa1a9; --bar: #2a2e33; --edge: #7d858d; } }
 * { box-sizing: border-box; }

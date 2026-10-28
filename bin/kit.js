@@ -12,7 +12,7 @@
  *   node bin/kit.js upgrade --from <kit 경로> [--add 팩,팩]   킷의 bin·팩을 새 버전으로 교체·팩 추가
  *   node bin/kit.js packs           사용 가능한 팩 목록
  *
- * 대화형 화면·에이전트 실행은 전역 명령 `aidure` (init · install · start). 이 파일은 그 엔진이다.
+ * 대화형 화면·에이전트 실행은 전역 명령 `kedovi` (init · install · start). 이 파일은 그 엔진이다.
  * 의존성 없음 (Node 18+).
  */
 'use strict';
@@ -54,7 +54,7 @@ const TYPE_RULES = {
   enhancement: { pack: 'enhancement', requires: ['code'], warnsOn: ['legacy'], approach: 'sprint' },
   consulting: { pack: 'consulting', requires: [], warnsOn: ['code'], approach: 'full' },
 };
-// 진행 방식 (workspace.json project.approach). 없으면 전체처럼 동작한다 (옛 워크스페이스는 aidure approach 로 고른다)
+// 진행 방식 (workspace.json project.approach). 없으면 전체처럼 동작한다 (옛 워크스페이스는 kedovi approach 로 고른다)
 const APPROACHES = {
   sprint: 'MVP · 스프린트 (끝까지 동작하는 최소 기능부터, 스프린트마다 데모하며 하나씩 붙인다)',
   full: '워터폴 · 전체 (전체 범위를 설계한 뒤 구축)',
@@ -200,7 +200,7 @@ function loadWorkspace(root) {
   try { ws = JSON.parse(read(file)); } catch (e) { die(`workspace.json 을 읽지 못했습니다: ${e.message}`); }
   ws.project = ws.project || {};
   ws.packs = ws.packs || ['core'];
-  // 옛 유형 — 유지보수(maintenance)는 운영·고도화(enhancement)로 합쳤다. aidure upgrade 가 파일도 옮긴다 (migrateTypes)
+  // 옛 유형 — 유지보수(maintenance)는 운영·고도화(enhancement)로 합쳤다. kedovi upgrade 가 파일도 옮긴다 (migrateTypes)
   if (ws.project.type === 'maintenance') ws.project.type = 'enhancement';
   ws.packs = [...new Set(ws.packs.map((pk) => (pk === 'maintenance' ? 'enhancement' : pk)))];
   ws.repos = ws.repos || [];
@@ -225,7 +225,7 @@ function validateProject(ws, errors, warnings) {
   if (!type) warnings.push(`workspace.json project.type 이 없습니다. ${Object.keys(PROJECT_TYPES).join(' | ')} 중 하나로 정하세요`);
   else if (!PROJECT_TYPES[type]) errors.push(`project.type '${type}': ${Object.keys(PROJECT_TYPES).join(' | ')} 중 하나`);
   const ap = ws.project.approach;
-  if (ap !== undefined && !APPROACHES[ap]) errors.push(`project.approach '${ap}': ${Object.keys(APPROACHES).join(' | ')} 중 하나 (aidure approach)`);
+  if (ap !== undefined && !APPROACHES[ap]) errors.push(`project.approach '${ap}': ${Object.keys(APPROACHES).join(' | ')} 중 하나 (kedovi approach)`);
   for (const r of ws.repos) {
     if (!REPO_KINDS[r.kind]) errors.push(`repos '${r.name}': kind '${r.kind}': ${Object.keys(REPO_KINDS).join(' | ')} 중 하나`);
     if (!r.name || !REPO_SEG.test(r.name)) errors.push(`repos 항목 name 은 영문·숫자·._- 만 ('-' 로 시작 · '.' · '..' 금지): ${JSON.stringify(r.name)}`);
@@ -243,13 +243,13 @@ function validateProject(ws, errors, warnings) {
     const t = ws.team || {};
     if (t.members !== undefined && (!Array.isArray(t.members) || t.members.some((m) => typeof m !== 'string' || !m.trim()))) errors.push('workspace.json team.members 는 개발자 id(워크스페이스의 git user.name) 문자열 목록이어야 합니다');
     if (t.admins !== undefined && (!Array.isArray(t.admins) || t.admins.some((m) => typeof m !== 'string' || !m.trim()))) errors.push('workspace.json team.admins 는 관리자 id(워크스페이스의 git user.name) 문자열 목록이어야 합니다');
-    if (t.lock && !(t.admins || []).length) warnings.push('workspace.json team.lock 이 켜져 있지만 관리자(team.admins)가 없어 잠금이 적용되지 않습니다 (aidure team admins <id>)');
-    if (t.restrict && !(t.members || []).length) warnings.push('workspace.json team.restrict 가 켜져 있지만 명단이 비어 있습니다. 제한이 적용되지 않습니다 (aidure team add <id>)');
+    if (t.lock && !(t.admins || []).length) warnings.push('workspace.json team.lock 이 켜져 있지만 관리자(team.admins)가 없어 잠금이 적용되지 않습니다 (kedovi team admins <id>)');
+    if (t.restrict && !(t.members || []).length) warnings.push('workspace.json team.restrict 가 켜져 있지만 명단이 비어 있습니다. 제한이 적용되지 않습니다 (kedovi team add <id>)');
   }
   const legacy = ws.repos.filter((r) => r.kind === 'legacy');
   const rule = TYPE_RULES[type];
   if (rule) {
-    if (rule.pack && !ws.packs.includes(rule.pack)) errors.push(`유형이 ${PROJECT_TYPES[type]} 인데 ${rule.pack} 팩이 없습니다. aidure upgrade --add ${rule.pack}`);
+    if (rule.pack && !ws.packs.includes(rule.pack)) errors.push(`유형이 ${PROJECT_TYPES[type]} 인데 ${rule.pack} 팩이 없습니다. kedovi upgrade --add ${rule.pack}`);
     for (const k of rule.requires) {
       if (!ws.repos.some((r) => r.kind === k)) (k === 'legacy' ? errors : warnings).push(`유형이 ${PROJECT_TYPES[type]} 인데 ${REPO_KINDS[k]}(kind: "${k}") repo 가 없습니다`);
     }
@@ -466,7 +466,7 @@ function fillLanguages(root) {
   const filled = [];
   let changed = false;
   for (const r of raw.repos || []) {
-    // 비었으면 (새 repo 에 코드가 생겼을 수 있다) 다시 감지. false = aidure detect 에서 건너뛴 repo
+    // 비었으면 (새 repo 에 코드가 생겼을 수 있다) 다시 감지. false = kedovi detect 에서 건너뛴 repo
     if ((r.kind || 'code') !== 'code' || r.languages === false || (Array.isArray(r.languages) && r.languages.length)) continue;
     const langs = repoLanguages(root, r, opts);
     if (!langs) continue;
@@ -566,7 +566,7 @@ function detectLineStacks(catalog, d) {
   if (!d.builds || !d.builds.length) return (d.languages || []).length ? '없음' : '없음 (공통 규칙만)';
   return `없음: 빌드 파일(${d.builds.slice(0, 2).join(', ')})은 있습니다. 사내 라이브러리를 거쳐 프레임워크를 쓰면 ${HINT_HELP}`;
 }
-const HINT_HELP = 'aidure detect --hint <스택 id> --contains <라이브러리 좌표 정규식> 으로 힌트를 적으세요';
+const HINT_HELP = 'kedovi detect --hint <스택 id> --contains <라이브러리 좌표 정규식> 으로 힌트를 적으세요';
 
 /** workspace.json stackHints 에 힌트 하나를 더한다 (같은 stack·contains 는 다시 넣지 않는다) */
 function addStackHint(root, { stack, contains, files }) {
@@ -574,7 +574,7 @@ function addStackHint(root, { stack, contains, files }) {
   const raw = JSON.parse(read(file));
   const hint = { stack, contains, ...(files ? { files: String(files).split(',').map((x) => x.trim()).filter(Boolean) } : {}) };
   const detectLib = path.join(root, 'packs', 'core', 'lib', 'detect.js');
-  const errs = exists(detectLib) && require(detectLib).checkHints ? require(detectLib).checkHints(loadCatalog(root), [hint]) : ['이 워크스페이스의 packs/core 가 힌트를 모릅니다. aidure upgrade'];
+  const errs = exists(detectLib) && require(detectLib).checkHints ? require(detectLib).checkHints(loadCatalog(root), [hint]) : ['이 워크스페이스의 packs/core 가 힌트를 모릅니다. kedovi upgrade'];
   if (errs.length) die(errs.join('\n').replace(/stackHints\[0\]: /g, ''));
   raw.stackHints = raw.stackHints || [];
   if (!raw.stackHints.some((h) => h.stack === stack && h.contains === contains)) raw.stackHints.push(hint);
@@ -734,7 +734,7 @@ function applyRuleChoices(ws, all, errors, warnings, repoMap = {}) {
   const appliesTo = (r) => ruleRepos(r, repoMap);
   for (const id of ((ws.rules || {}).off || [])) {
     const r = byId.get(id);
-    if (!r) { warnings.push(`workspace.json rules.off: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (aidure rules 로 목록 확인)`); continue; }
+    if (!r) { warnings.push(`workspace.json rules.off: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (kedovi rules 로 목록 확인)`); continue; }
     if (r.required) { errors.push(`workspace.json rules.off: '${id}'(${r.title}) 는 필수 규칙이라 끌 수 없습니다`); continue; }
     off.add(id);
   }
@@ -764,7 +764,7 @@ function applyRuleChoices(ws, all, errors, warnings, repoMap = {}) {
   for (const [id, raw] of Object.entries((ws.rules || {}).offIn || {})) {
     const names = [].concat(raw); // 손으로 쓴 "api" 꼴도 목록으로
     const r = byId.get(id);
-    if (!r) { warnings.push(`workspace.json rules.offIn: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (지우기: aidure rules on ${id} --repo ${names.join(',')})`); continue; }
+    if (!r) { warnings.push(`workspace.json rules.offIn: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (지우기: kedovi rules on ${id} --repo ${names.join(',')})`); continue; }
     for (const p of partial[id] || []) { // 일부 repo 를 대체한 규칙: 겹치는 repo 는 대체 규칙에서도 뺀다
       const by = byId.get(p.by);
       const both = names.filter((n) => p.repos.includes(n));
@@ -776,9 +776,9 @@ function applyRuleChoices(ws, all, errors, warnings, repoMap = {}) {
       continue;
     }
     if (r.required) { errors.push(`workspace.json rules.offIn: '${id}'(${r.title}) 는 필수 규칙이라 끌 수 없습니다`); continue; }
-    if (r.scope !== 'repo' || r.agents !== 'all') { warnings.push(`workspace.json rules.offIn: '${id}' 는 ${r.agents !== 'all' ? 'Claude 전용' : '워크스페이스 전체'} 규칙이라 repo 별로 끌 수 없습니다 (aidure rules off 로 전체를 끈다)`); continue; }
+    if (r.scope !== 'repo' || r.agents !== 'all') { warnings.push(`workspace.json rules.offIn: '${id}' 는 ${r.agents !== 'all' ? 'Claude 전용' : '워크스페이스 전체'} 규칙이라 repo 별로 끌 수 없습니다 (kedovi rules off 로 전체를 끈다)`); continue; }
     const stray = names.filter((n) => !appliesTo(r).includes(n));
-    if (stray.length) warnings.push(`workspace.json rules.offIn: '${id}' 는 ${stray.join(', ')} 에 걸리지 않는 규칙입니다 (걸리는 repo: ${appliesTo(r).join(', ') || '없음'}). 지우기: aidure rules on ${id} --repo ${stray.join(',')}`);
+    if (stray.length) warnings.push(`workspace.json rules.offIn: '${id}' 는 ${stray.join(', ')} 에 걸리지 않는 규칙입니다 (걸리는 repo: ${appliesTo(r).join(', ') || '없음'}). 지우기: kedovi rules on ${id} --repo ${stray.join(',')}`);
     r.skipRepos = [...new Set([...(r.skipRepos || []), ...names])];
   }
   // 상시 규칙을 필요할 때만 읽게 (AGENTS.md 를 줄인다). REPO_TASKS 는 「repo 별 작업 규칙」의 작업별 표
@@ -786,7 +786,7 @@ function applyRuleChoices(ws, all, errors, warnings, repoMap = {}) {
   for (const id of ((ws.rules || {}).onDemand || [])) {
     if (id === REPO_TASKS) { lazy.push(id); continue; }
     const r = byId.get(id);
-    if (!r) { warnings.push(`workspace.json rules.onDemand: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (aidure rules 로 목록 확인)`); continue; }
+    if (!r) { warnings.push(`workspace.json rules.onDemand: '${id}' 는 이 워크스페이스에 없는 규칙입니다 (kedovi rules 로 목록 확인)`); continue; }
     if (r.required) { warnings.push(`workspace.json rules.onDemand: '${id}'(${r.title}) 는 필수 규칙이라 상시로 둡니다`); continue; }
     if (r.load !== 'always') continue;
     r.load = 'on-demand';
@@ -814,8 +814,8 @@ function repoTable(ws) {
   const issues = byGroup(ws.repos.filter((r) => r.kind === 'issues'));
   if (code.length) {
     out.push('## 프로젝트 repo', '', grouped
-      ? `repo 는 \`${REPOS_DIR}/<이름>/\` 또는 그룹 폴더 \`${REPOS_DIR}/<그룹>/<이름>/\` 에 있다 (워크스페이스 git 에서 제외). 경로는 표의 위치를 쓴다. 없으면 \`aidure install\` (또는 \`node bin/kit.js install\`).`
-      : `모든 repo 는 \`${REPOS_DIR}/<이름>/\` 에 있다 (워크스페이스 git 에서 제외). 없으면 \`aidure install\` (또는 \`node bin/kit.js install\`).`, '',
+      ? `repo 는 \`${REPOS_DIR}/<이름>/\` 또는 그룹 폴더 \`${REPOS_DIR}/<그룹>/<이름>/\` 에 있다 (워크스페이스 git 에서 제외). 경로는 표의 위치를 쓴다. 없으면 \`kedovi install\` (또는 \`node bin/kit.js install\`).`
+      : `모든 repo 는 \`${REPOS_DIR}/<이름>/\` 에 있다 (워크스페이스 git 에서 제외). 없으면 \`kedovi install\` (또는 \`node bin/kit.js install\`).`, '',
       ...(grouped
         ? ['| repo | 그룹 | 위치 | 스택 | 역할 | 원본 |', '|---|---|---|---|---|---|', ...code.map((r) => `| **${r.name}** | ${r.group || ''} | \`${r.dir}/\` | ${r.stack || ''} | ${r.role || ''} | ${repoSource(r)} |`)]
         : ['| repo | 위치 | 스택 | 역할 | 원본 |', '|---|---|---|---|---|', ...code.map((r) => `| **${r.name}** | \`${r.dir}/\` | ${r.stack || ''} | ${r.role || ''} | ${repoSource(r)} |`)]), '');
@@ -867,13 +867,13 @@ function repoRulesSection(ws, rules, repoMap, catalog, extra = new Map(), langua
   const where = (r, pack) => { const m = packModules(r, pack); return m ? `: ${m.map((x) => `\`${x}/\``).join(', ')}` : ''; };
   const anyModules = code.some((r) => r.stackPaths && Object.keys(r.stackPaths).length);
   const out = ['## repo 별 작업 규칙. 그 repo 를 고치기 전에 읽는다', '',
-    '스택(기술)과 협업 도구(GitHub·GitLab)마다 규칙이 다르다. **아래 표의 문서를 읽기 전에는 그 repo 를 고치지 않는다.** 스택이 틀렸으면 `aidure detect`.' +
+    '스택(기술)과 협업 도구(GitHub·GitLab)마다 규칙이 다르다. **아래 표의 문서를 읽기 전에는 그 repo 를 고치지 않는다.** 스택이 틀렸으면 `kedovi detect`.' +
       (anyModules ? ' 규칙 뒤에 모듈 경로(`api/` 등)가 붙어 있으면 그 모듈을 고칠 때만 읽는다.' : ''), '',
     '| repo | 스택 · 협업 | 먼저 읽을 규칙 |', '|---|---|---|'];
   for (const r of code) {
     const stacks = r.stacks || [];
     const host = HOSTS[r.host] || '협업 도구 미확인';
-    const label = r.kind === 'issues' ? `이슈 기록 · ${host}` : (!Array.isArray(r.stacks) ? '스택 미확인: `aidure detect`' : !stacks.length ? ((r.languages || []).length ? '스택 없음' : '스택 없음: 공통 규칙만') :
+    const label = r.kind === 'issues' ? `이슈 기록 · ${host}` : (!Array.isArray(r.stacks) ? '스택 미확인: `kedovi detect`' : !stacks.length ? ((r.languages || []).length ? '스택 없음' : '스택 없음: 공통 규칙만') :
       stacksLabel(catalog, stacks, (s) => !(s.pack && packsOf(r.name).includes(s.pack)), r.stackPaths)) + (r.kind === 'code' ? `${langLabel(r)} · ${host}` : '');
     const docs = scoped.filter((x) => x.load === 'always' && applies(x, r.name)).map((x) => `\`${x.out}\`${x.repos && !x.forPack ? '' : where(r, x.forPack || x.pack)}`);
     out.push(`| **${r.name}** | ${label} | ${docs.length ? docs.join('<br>') : '—'} |`);
@@ -900,7 +900,7 @@ function repoGuidesSection(ws) {
   const MAX = 6;
   const show = (r, gs) => gs.slice(0, MAX).map((g) => `\`${posix(r.dir)}/${g}\``).join(' · ') + (gs.length > MAX ? ` 외 ${gs.length - MAX}개` : '');
   const out = ['## repo 자체 지침', '',
-    'repo 안에 원래 있던 AI 지침 파일이다. 따르는 방식은 repo 마다 정한다 (`aidure repo guides <이름> follow|kit|ignore`).', '',
+    'repo 안에 원래 있던 AI 지침 파일이다. 따르는 방식은 repo 마다 정한다 (`kedovi repo guides <이름> follow|kit|ignore`).', '',
     '| repo | 지침 | 방식 |', '|---|---|---|'];
   for (const r of list) {
     const docs = r.guides.filter((g) => !isGuideSetting(g));
@@ -1016,7 +1016,7 @@ function hookGroups(hooks, agent) {
 const READONLY_ALLOW = [
   'Bash(git log:*)', 'Bash(git show:*)', 'Bash(git diff:*)', 'Bash(git status:*)', 'Bash(git blame:*)', 'Bash(git grep:*)', 'Bash(git ls-files:*)', 'Bash(git rev-parse:*)',
   'Bash(ls:*)', 'Bash(cat:*)', 'Bash(head:*)', 'Bash(tail:*)', 'Bash(wc:*)', 'Bash(grep:*)', 'Bash(rg:*)', 'Bash(tree:*)', 'Bash(pwd)',
-  'Bash(aidure docs show:*)', 'Bash(aidure docs refs:*)', 'Bash(aidure docs trace:*)',
+  'Bash(kedovi docs show:*)', 'Bash(kedovi docs refs:*)', 'Bash(kedovi docs trace:*)',
   'Bash(node packs/core/bin/docs-site.js show:*)', 'Bash(node packs/core/bin/docs-site.js refs:*)', 'Bash(node packs/core/bin/docs-site.js trace:*)',
   'Bash(node packs/core/bin/handoff.js find:*)',
 ];
@@ -1071,7 +1071,7 @@ function buildGitignore(current, ws) {
   const block = [GITIGNORE_BEGIN, '# 개인 지침: 공유하지 않는다',
     '.agents/local.md', LOCAL_CONFIG, 'CLAUDE.local.md', 'AGENTS.override.md', '.claude/settings.local.json', '.handoff-snooze', '.agents/bin/', '.agents/board/',
     '# 팀 에이전트: 모델이 사람마다 다를 수 있어 각자 sync 가 만든다', '.claude/agents/', '.codex/agents/', LOCAL_MANIFEST,
-    '# repo: 각자 aidure install 로 clone 한다', `/${REPOS_DIR}/`, GITIGNORE_END].join('\n');
+    '# repo: 각자 kedovi install 로 clone 한다', `/${REPOS_DIR}/`, GITIGNORE_END].join('\n');
   const re = new RegExp(`${GITIGNORE_BEGIN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${GITIGNORE_END}`);
   return re.test(current) ? current.replace(re, block) : `${current.replace(/\s*$/, '')}${current.trim() ? '\n\n' : ''}${block}\n`;
 }
@@ -1097,7 +1097,7 @@ function generate(root) {
   const { rules, state: ruleState } = applyRuleChoices(ws, allRules, errors, warnings, repoMap);
   for (const pk of packs) {
     if (['layer', 'stack', 'lang'].includes(pk.meta.category) && ws.packs.includes(pk.name) && !repoMap[pk.name]) {
-      warnings.push(`팩 '${pk.name}' 이 packs 에 직접 적혀 있어 워크스페이스 전체에 적용됩니다. repo 별로 붙이려면 packs 에서 빼고 aidure detect`);
+      warnings.push(`팩 '${pk.name}' 이 packs 에 직접 적혀 있어 워크스페이스 전체에 적용됩니다. repo 별로 붙이려면 packs 에서 빼고 kedovi detect`);
     }
   }
   const files = new Map();
@@ -1134,7 +1134,7 @@ function generate(root) {
   base.permissions = { allow: READONLY_ALLOW, ...(linked.length ? { additionalDirectories: linked.map((r) => r.path) } : {}) };
   const { team, teamLimits } = resolveModels(root, ws);
   team.limits = teamLimits;
-  if (team.main && team.main.claude) base.model = team.main.claude; // 팀 기본 메인 모델 — 개인은 aidure agent (start 때 --model)
+  if (team.main && team.main.claude) base.model = team.main.claude; // 팀 기본 메인 모델 — 개인은 kedovi agent (start 때 --model)
   // 커밋·PR 에 도구 서명(Co-Authored-By · Generated with)을 넣지 않는다. false 한 값은 v2.1.281 미만이 파일째 무시하므로 빈 문자열로
   base.attribution = { commit: '', pr: '', sessionUrl: false };
   const excludes = guideExcludes(ws);
@@ -1142,7 +1142,7 @@ function generate(root) {
   const claudeSettings = deepMerge(base, (ws.claude && ws.claude.settings) || {});
   files.set('.claude/settings.json', JSON.stringify(claudeSettings, null, 2) + '\n');
   files.set('.codex/hooks.json', JSON.stringify({ description: GEN_NOTE, hooks: hookGroups(hooks, 'codex') }, null, 2) + '\n');
-  // 대화 스타일 (학습 · 전문가) Claude 출력 스타일. 고르는 것은 각자 (.claude/settings.local.json outputStyle, aidure prefs)
+  // 대화 스타일 (학습 · 전문가) Claude 출력 스타일. 고르는 것은 각자 (.claude/settings.local.json outputStyle, kedovi prefs)
   const chat = chatPrefsLib(root);
   if (chat) for (const [rel, content] of chat.outputStyleFiles()) files.set(rel, content);
   if (ws.mcp && Object.keys(ws.mcp).length) files.set('.mcp.json', buildMcpJson(ws));
@@ -1167,7 +1167,7 @@ function generate(root) {
     const big = agentsMd.split(/^(?=## )/m).map((s) => [Buffer.byteLength(s), (s.match(/^## ([^.\n—]*)/) || ['', ''])[1].trim()]).filter((x) => x[1]).sort((a, b) => b[0] - a[0]).slice(0, 2);
     warnings.push([`AGENTS.md ${kb(bytes)} + 개인 지침 몫 ${kb(PERSONAL_HEADROOM)} = 약 ${kb(withPersonal)}: Codex 기본 한도 ${kb(limit)} 를 넘어 한도를 ${kb(effective)} 로 올렸습니다 (Claude 는 상관없음)`,
       `큰 절: ${big.map(([b, h]) => `${h} ${kb(b)}`).join(' · ')}`,
-      `줄이기: aidure rules ondemand ${REPO_TASKS} 또는 aidure rules ondemand <규칙 ID> (필요할 때만 읽게. 목록은 aidure rules list)`].join('\n'));
+      `줄이기: kedovi rules ondemand ${REPO_TASKS} 또는 kedovi rules ondemand <규칙 ID> (필요할 때만 읽게. 목록은 kedovi rules list)`].join('\n'));
     }
   } else if (withPersonal > limit * 0.9) warnings.push(`AGENTS.md ${kb(bytes)}: 개인 지침을 더하면 한도 ${kb(limit)} 에 가깝습니다`);
   files.set('.codex/config.toml', buildCodexConfig(ws, bytes, team, effective));
@@ -1257,7 +1257,7 @@ function roleGrades(root, ws) {
  * 프로필은 팀 값(workspace.json agents.profile, 없으면 models.json defaultProfile)이 기본이다.
  * 이 PC 값(agents.profile)은 팀보다 낮은 프로필(요금제 제약)일 때만 적용한다. 높은 프로필은 팀이 agents.allowHigherProfile 로 허용했을 때만.
  * 역할 에이전트 상한(limits)도 팀 값을 넘지 않는다.
- * team = 팀 프로필 기준(공유 설정 파일에 쓰는 값), effective = 이 PC 기준(에이전트 파일·aidure start).
+ * team = 팀 프로필 기준(공유 설정 파일에 쓰는 값), effective = 이 PC 기준(에이전트 파일·kedovi start).
  * profile = { team, local(적용된 이 PC 프로필), blocked(팀보다 높아 무시한 이 PC 값), allowHigher }
  */
 function resolveModels(root, ws) {
@@ -1285,11 +1285,11 @@ function resolveModels(root, ws) {
   const effective = merge(localBase, picks(local));
   // base = 그 범위에서 직접 고르기 전 값 (역할별로 고르는 화면의 "프로필대로")
   const base = { team: profileModels(cat, teamProfile, grades) || {}, local: localBase };
-  // run = 이 PC 의 연결 방식(쓰는 AI · 구성 · 게이트웨이)에 맞춘 실제 실행 값 — 에이전트 파일 · aidure start 가 쓴다
+  // run = 이 PC 의 연결 방식(쓰는 AI · 구성 · 게이트웨이)에 맞춘 실제 실행 값 — 에이전트 파일 · kedovi start 가 쓴다
   const access = normalizeAccess({ ...(teamAgents.access || {}), ...(local.access || {}) });
   const runWarnings = [];
   const run = applyAccess(effective, access, runWarnings);
-  if (blocked) runWarnings.push(`이 PC 프로필 ${profileLabel(cat, blocked)} 은(는) 팀 프로필 ${profileLabel(cat, teamProfile)} 보다 높아 적용하지 않습니다 (팀 값 사용). 지우기: aidure models profile team · 팀이 허용하려면 aidure models allow-higher on`);
+  if (blocked) runWarnings.push(`이 PC 프로필 ${profileLabel(cat, blocked)} 은(는) 팀 프로필 ${profileLabel(cat, teamProfile)} 보다 높아 적용하지 않습니다 (팀 값 사용). 지우기: kedovi models profile team · 팀이 허용하려면 kedovi models allow-higher on`);
   // 역할 에이전트 상한 — 팀 값(프로필 ← workspace.json agents.limits)이 기준이고, 이 PC 값(개인 프로필 · agents.limits)은 낮추기만 한다
   const num = (o) => Object.fromEntries(Object.entries(o || {}).filter(([k, v]) => ['parallel', 'total'].includes(k) && Number.isInteger(v) && v > 0));
   const teamLimits = { parallel: 2, total: 5, ...num(((cat.profiles || {})[teamProfile] || {}).limits), ...num(teamAgents.limits) };
@@ -1333,8 +1333,8 @@ function countPicks(agents) {
 }
 
 /**
- * 팀과 다른 개인 모델 설정이 적용 중이면 한 줄로 알린다 (세션 시작 훅 · aidure start · aidure models). 모두 팀 값이면 ''.
- * 예: 모델 프로필: 이 PC 절약 (팀 표준 대신) · 되돌리기 aidure models profile team · 상한 동시 1 · 모두 3 (팀 2 · 5)
+ * 팀과 다른 개인 모델 설정이 적용 중이면 한 줄로 알린다 (세션 시작 훅 · kedovi start · kedovi models). 모두 팀 값이면 ''.
+ * 예: 모델 프로필: 이 PC 절약 (팀 표준 대신) · 되돌리기 kedovi models profile team · 상한 동시 1 · 모두 3 (팀 2 · 5)
  */
 function profileNotice(root, ws) {
   let cat = {};
@@ -1343,10 +1343,10 @@ function profileNotice(root, ws) {
   try { local = JSON.parse(read(path.join(root, LOCAL_CONFIG))).agents || {}; } catch { /* 없음 */ }
   const r = resolveModels(root, ws);
   const parts = [];
-  if (r.profile.local) parts.push(`이 PC ${profileLabel(cat, r.profile.local)} (팀 ${profileLabel(cat, r.profile.team)} 대신) · 되돌리기 aidure models profile team`);
-  else if (r.profile.blocked) parts.push(`팀 ${profileLabel(cat, r.profile.team)} (이 PC 값 ${profileLabel(cat, r.profile.blocked)} 은 팀보다 높아 적용하지 않음) · 지우기 aidure models profile team · 팀이 허용하려면 aidure models allow-higher on`);
+  if (r.profile.local) parts.push(`이 PC ${profileLabel(cat, r.profile.local)} (팀 ${profileLabel(cat, r.profile.team)} 대신) · 되돌리기 kedovi models profile team`);
+  else if (r.profile.blocked) parts.push(`팀 ${profileLabel(cat, r.profile.team)} (이 PC 값 ${profileLabel(cat, r.profile.blocked)} 은 팀보다 높아 적용하지 않음) · 지우기 kedovi models profile team · 팀이 허용하려면 kedovi models allow-higher on`);
   const picks = countPicks(local);
-  if (picks) parts.push(`이 PC 직접 지정 ${picks}개 (aidure models)`);
+  if (picks) parts.push(`이 PC 직접 지정 ${picks}개 (kedovi models)`);
   if (r.limits.parallel !== r.teamLimits.parallel || r.limits.total !== r.teamLimits.total) parts.push(`상한 동시 ${r.limits.parallel} · 모두 ${r.limits.total} (팀 ${r.teamLimits.parallel} · ${r.teamLimits.total})`);
   return parts.length ? `모델 프로필: ${parts.join(' · ')}` : '';
 }
@@ -1445,7 +1445,7 @@ function applyAccess(models, access, warnings = []) {
   const map = (tool, id, where) => {
     if (!gw || !id) return id;
     const g = gatewayId(gw, tool, id);
-    if (g === null) { warnings.push(`${where}: ${id} 가 게이트웨이 모델 목록에 없습니다. aidure ai refresh 로 목록을 다시 받거나 aidure models 로 바꾸세요`); return id; }
+    if (g === null) { warnings.push(`${where}: ${id} 가 게이트웨이 모델 목록에 없습니다. kedovi ai refresh 로 목록을 다시 받거나 kedovi models 로 바꾸세요`); return id; }
     return g;
   };
   // 게이트웨이 + Claude Code 에서 GPT 메인: 프로필의 GPT 메인 모델을 Claude Code 로 돌린다
@@ -1515,7 +1515,7 @@ function auditModels(root, ws, today = new Date().toISOString().slice(0, 10)) {
       if (ret) {
         const past = !ret.retiresAt || ret.retiresAt <= today; // 날짜 없음 = 공지에 날짜 없이 이미 퇴역
         found.push({ where, path: [...trail, k], tool, id: v, level: past ? 'error' : 'warn', replacement: ret.replacement,
-          message: `${place} = ${v}: ${ret.label} ${past ? `퇴역${ret.retiresAt ? `(${ret.retiresAt})` : ''}` : `${ret.retiresAt} 퇴역 예정`} → ${ret.replacement} 로 바꾸세요 (aidure models --migrate)` });
+          message: `${place} = ${v}: ${ret.label} ${past ? `퇴역${ret.retiresAt ? `(${ret.retiresAt})` : ''}` : `${ret.retiresAt} 퇴역 예정`} → ${ret.replacement} 로 바꾸세요 (kedovi models --migrate)` });
         continue;
       }
       const known = (cat.tools[tool] || []).some((m) => m.id === v) || ((cat.aliases || {})[tool] || []).includes(v);
@@ -1547,7 +1547,7 @@ const tomlMultiline = (text) => `"""\n${String(text).replace(/\\/g, '\\\\').repl
 
 /** 이 PC 의 역할 에이전트 상한 — 규칙(core 29-agents)이 가리킨다 */
 const limitSection = (l, t = l) => [
-  '## 역할 에이전트 상한: 이 PC (aidure ai show)',
+  '## 역할 에이전트 상한: 이 PC (kedovi ai show)',
   '',
   `한 요청(사용자 메시지 하나)에 **동시 ${l.parallel}개 · 모두 ${l.total}개**까지${l.parallel !== t.parallel || l.total !== t.total ? ` (팀 ${t.parallel} · ${t.total} 보다 낮춘 이 PC 값)` : ''}. 위임 작업(delegate.js)도 동시 상한에 든다. Claude Code 는 넘으면 도구가 막는다.`,
   '',
@@ -1662,9 +1662,9 @@ function teamSection(tool, { roles, run, access, opts, cat, profile, dele = [], 
   const used = access.compose === 'single' || access.compose === 'vendor' ? [access.main === 'codex' && access.gateway ? 'codex' : tool] : access.vendors;
   const roomText = used.filter((v) => (rooms[v] || {}).room).map((v) => `${VENDOR[v]} ${rooms[v].label} (${ROOM_LABEL[rooms[v].room]})`).join(' · ');
   const head = [
-    '## 팀 구성: 이 PC (aidure team-mode)',
+    '## 팀 구성: 이 PC (kedovi team-mode)',
     '',
-    `모드: **${opts.mode === 'auto' ? '자동' : '고정'}** · 성향: ${(pf.label || profile || '기본')} · 요금제: ${roomText || '모름 (aidure ai 에서 고른다)'}${prefer ? ` · 선호: ${prefer}` : ''}`,
+    `모드: **${opts.mode === 'auto' ? '자동' : '고정'}** · 성향: ${(pf.label || profile || '기본')} · 요금제: ${roomText || '모름 (kedovi ai 에서 고른다)'}${prefer ? ` · 선호: ${prefer}` : ''}`,
     '',
     opts.mode === 'auto'
       ? ['자동: 리더가 **작업마다** 역할과 모델을 고른다 (자세한 절차는 team 스킬 「팀 구성」). 아래 기본 모델은 출발점일 뿐이다. 고르는 규칙:',
@@ -1675,7 +1675,7 @@ function teamSection(tool, { roles, run, access, opts, cat, profile, dele = [], 
         '4. 목록에 없는 역할이 필요하면 지시서에 임시 역할(목적 · 소유 파일 · 금지)을 적어 가장 가까운 역할로 띄운다.',
         '5. 시작 전에 구성표를 알린다: `| 역할 | 모델 · 강도 | 이유 |` + 근거 한 줄(카탈로그 확인일 · 점수 출처, 검색했으면 그 출처). 웹 검색으로 고른 모델이 있거나 high 가 4개 이상이면 승인 뒤 시작, 아니면 바로 시작.',
       ].join('\n')
-      : '고정: 역할마다 아래 모델을 쓴다. 바꾸지 않는다 (바꾸려면 사용자가 aidure models).',
+      : '고정: 역할마다 아래 모델을 쓴다. 바꾸지 않는다 (바꾸려면 사용자가 kedovi models).',
     ...(tool === 'codex' ? ['', 'Codex 는 역할 파일을 하위 에이전트에 스스로 적용하지 않는다. `spawn_agent` 에 모델 · 추론 강도를 넣고(메인과 같게면 모델을 비운다), 지시 첫 줄에 "packs/<팩>/agents/<역할>.md 를 읽고 그 역할로만 일한다" 를 적는다.'] : []),
     '',
     '| 역할 | 등급 | 권한 | 기본 모델 | 맡기는 때 |',
@@ -1748,7 +1748,7 @@ function delegationSection(tool, rows, mode = 'fixed') {
   const name = (t) => (t === 'codex' ? 'OpenAI Codex' : 'Claude Code');
   const waitSec = tool === 'claude' ? 100 : 50;
   return [
-    '## 역할 위임: 이 PC 의 모델 설정 (aidure models)',
+    '## 역할 위임: 이 PC 의 모델 설정 (kedovi models)',
     '',
     mode === 'auto'
       ? '아래 역할의 **기본값**은 상대 회사 모델이다. 그 모델을 쓸 때는 서브에이전트를 띄우지 말고 **리더가 직접** 위임 도구를 부른다. 자동 모드라 작업에 따라 위 「팀 구성」 메뉴의 다른 모델로 바꿀 수 있다 (바꾸면 구성표에 이유를 적는다).'
@@ -1771,7 +1771,7 @@ function delegationSection(tool, rows, mode = 'fixed') {
 /** 역할 → 도구별 에이전트 파일 (Claude Code · Codex). 모델이 사람마다 다를 수 있어 git 에 넣지 않고 각자 sync 가 만든다. 위임 역할은 그 도구 파일을 만들지 않는다 */
 function buildAgentFiles(roles, models, { cliFor = () => true, warnings = [] } = {}) {
   const files = new Map();
-  const note = (r) => `${GEN_NOTE} · 출처: ${r.src} · 모델은 프로필 → workspace.json agents(팀) → .agents/local.json agents(개인, 팀보다 낮추기만). aidure models`;
+  const note = (r) => `${GEN_NOTE} · 출처: ${r.src} · 모델은 프로필 → workspace.json agents(팀) → .agents/local.json agents(개인, 팀보다 낮추기만). kedovi models`;
   const dele = delegations(roles, models, { cliFor, warnings });
   const delegated = (tool, name) => dele[tool].some((d) => d.role === name);
   for (const r of roles) {
@@ -1853,7 +1853,7 @@ function sameContent(abs, content) { return compareContent(abs, content) === 'sa
 // ───────────────────────── 명령 ─────────────────────────
 
 /**
- * 원격 없이 만든 repo(local)에 origin 이 생겼으면 workspace.json 의 remote 로 옮긴다 — 커밋·push 하면 팀원이 aidure install 로 받는다.
+ * 원격 없이 만든 repo(local)에 origin 이 생겼으면 workspace.json 의 remote 로 옮긴다 — 커밋·push 하면 팀원이 kedovi install 로 받는다.
  * 반환: 옮긴 repo 이름 목록
  */
 function fillLocalRemotes(root) {
@@ -1877,16 +1877,16 @@ function fillLocalRemotes(root) {
 
 function cmdSync(root, { quiet, soft } = {}) {
   const moved = fillLocalRemotes(root);
-  if (moved.length) console.log(`✔ 원격이 생긴 repo 를 workspace.json 에 기록했습니다: ${moved.join(', ')}. workspace.json 을 commit · push 하면 팀원이 aidure install 로 받습니다`);
+  if (moved.length) console.log(`✔ 원격이 생긴 repo 를 workspace.json 에 기록했습니다: ${moved.join(', ')}. workspace.json 을 commit · push 하면 팀원이 kedovi install 로 받습니다`);
   // repo 안에 원래 있던 AI 지침: 처음 받은 repo 는 기록하고, 기록과 달라졌으면 알린다
   const guidesFilled = fillGuides(root);
   const guidesNew = guidesFilled.filter((x) => !x.locked);
   const guidesHeld = guidesFilled.filter((x) => x.locked);
-  if (guidesNew.length) console.log(`✔ repo 안의 AI 지침을 찾아 workspace.json 에 적었습니다: ${guidesNew.map((x) => `${x.name} ${x.guides.length}개`).join(' · ')}. 기본은 repo 지침 우선이고, 바꾸려면 aidure repo guides <이름> kit|ignore`);
+  if (guidesNew.length) console.log(`✔ repo 안의 AI 지침을 찾아 workspace.json 에 적었습니다: ${guidesNew.map((x) => `${x.name} ${x.guides.length}개`).join(' · ')}. 기본은 repo 지침 우선이고, 바꾸려면 kedovi repo guides <이름> kit|ignore`);
   if (guidesHeld.length && !quiet) console.log(`… repo 안의 AI 지침이 있지만 설정 수정이 잠겨 있어 기록하지 않았습니다: ${guidesHeld.map((x) => x.name).join(', ')}. 관리자가 sync 하면 기록됩니다`);
   const generated = generate(root);
   const { ws, files, errors, warnings, stats } = generated;
-  for (const c of guideChanges(root, ws)) warnings.push(`repo '${c.name}' 의 AI 지침이 기록과 다릅니다${c.added.length ? ` (새로 생김: ${c.added.join(', ')})` : ''}${c.removed.length ? ` (없어짐: ${c.removed.join(', ')})` : ''}. 맞으면 aidure repo guides --rescan ${c.name}`);
+  for (const c of guideChanges(root, ws)) warnings.push(`repo '${c.name}' 의 AI 지침이 기록과 다릅니다${c.added.length ? ` (새로 생김: ${c.added.join(', ')})` : ''}${c.removed.length ? ` (없어짐: ${c.removed.join(', ')})` : ''}. 맞으면 kedovi repo guides --rescan ${c.name}`);
   if (errors.length) {
     errors.forEach((e) => console.error(`✖ ${e}`));
     if (soft) { console.error(`  → workspace.json 을 고친 뒤 node bin/kit.js sync`); return false; }
@@ -1923,7 +1923,7 @@ function cmdSync(root, { quiet, soft } = {}) {
   const docsAll = installDocsHooks(root, ws);
   const docsLinked = docsAll.filter((x) => x.startsWith('링크:')).map((x) => x.slice(3));
   const docsSkipped = docsAll.filter((x) => !x.startsWith('링크:'));
-  if (docsLinked.length) warnings.push(`다른 워크스페이스에서 링크로 빌려 온 기획 repo: ${docsLinked.join(', ')}. 커밋 훅은 그 워크스페이스 것을 두고, 문서 사이트(aidure docs build)도 그 워크스페이스에서 만든다 (킷 버전이 다르면 결과가 달라 커밋이 막힌다)`);
+  if (docsLinked.length) warnings.push(`다른 워크스페이스에서 링크로 빌려 온 기획 repo: ${docsLinked.join(', ')}. 커밋 훅은 그 워크스페이스 것을 두고, 문서 사이트(kedovi docs build)도 그 워크스페이스에서 만든다 (킷 버전이 다르면 결과가 달라 커밋이 막힌다)`);
   if (docsSkipped.length) warnings.push(`문서 사이트 검사 훅을 넣지 못한 기획 repo: ${docsSkipped.join(', ')}. 그 repo 의 pre-commit 에서 node packs/core/bin/docs-site.js hook <repo 폴더> 를 부르게 하세요`);
   // 위임 역할은 상대 CLI 가 이 PC 에 있을 때만 — 없으면 fallback 모델로 대신하고 알린다
   let cliFor = () => true;
@@ -1943,14 +1943,14 @@ function cmdSync(root, { quiet, soft } = {}) {
   warnings.push(...catWarnings);
   const opts = teamOptions(ws, localAgents);
   const rooms = vendorRooms(cat, resolved.access, opts.plans);
-  // 요금제 — 로그인 값이 처음 보는 값이거나 저장한 요금제와 다르면 알린다 (고르는 것은 사람: aidure ai)
+  // 요금제 — 로그인 값이 처음 보는 값이거나 저장한 요금제와 다르면 알린다 (고르는 것은 사람: kedovi ai)
   if (resolved.access.connection !== 'gateway') {
     const found = detectPlans(cat);
     for (const t of resolved.access.vendors) {
       const f = found[t];
       const name = t === 'codex' ? 'ChatGPT' : 'Claude';
-      if (f.raw && !f.id) warnings.push(`${name} 로그인 요금제 값 '${f.raw}' 가 카탈로그에 없습니다. aidure ai 에서 가장 가까운 요금제를 고르세요 (고르기 전에는 빠듯으로 봅니다)`);
-      else if (f.id && opts.plans[t] && f.id !== opts.plans[t]) warnings.push(`${name} 요금제가 바뀐 것 같습니다 (로그인: ${f.id} · 저장: ${opts.plans[t]}). 맞으면 aidure ai plan ${t} ${f.id}`);
+      if (f.raw && !f.id) warnings.push(`${name} 로그인 요금제 값 '${f.raw}' 가 카탈로그에 없습니다. kedovi ai 에서 가장 가까운 요금제를 고르세요 (고르기 전에는 빠듯으로 봅니다)`);
+      else if (f.id && opts.plans[t] && f.id !== opts.plans[t]) warnings.push(`${name} 요금제가 바뀐 것 같습니다 (로그인: ${f.id} · 저장: ${opts.plans[t]}). 맞으면 kedovi ai plan ${t} ${f.id}`);
       if (f.raw && !f.id && !opts.plans[t]) rooms[t] = { plan: null, label: '처음 보는 요금제', room: 'tight' };
     }
   }
@@ -1994,7 +1994,7 @@ function cmdCheck(root) {
   console.log(`✔ check: 생성물 ${files.size}개 일치 · AGENTS.md ${(stats.bytes / 1024).toFixed(1)}/${(stats.limit / 1024).toFixed(0)}KB`);
 }
 
-const COMMIT_MSG_MARK = '# aidure commit-msg';
+const COMMIT_MSG_MARK = '# kedovi commit-msg';
 // 커밋 전 검사 — 생성물 어긋남 · 죽은 참조 · 워크스페이스 잠금(관리자가 아니면 자기 handoffs/ 밖 변경 거부)
 const PRE_COMMIT_HOOK = `#!/usr/bin/env sh
 # ${'생성 파일'}: node bin/kit.js sync 가 만든다. 직접 고치지 말 것
@@ -2104,7 +2104,7 @@ function chatPrefsLib(root) {
 }
 
 /**
- * 응답 언어 · 대화 스타일을 이 PC 에 적용한다: .claude/settings.local.json 의 language · outputStyle (킷이 넣은 aidure-* 스타일만 관리, 사용자가 고른 다른 스타일은 그대로).
+ * 응답 언어 · 대화 스타일을 이 PC 에 적용한다: .claude/settings.local.json 의 language · outputStyle (킷이 넣은 kedovi-* 스타일만 관리, 사용자가 고른 다른 스타일은 그대로).
  * 반환: 개인 지침 머리 글 (없으면 '')
  */
 function applyChatPrefs(root, ws) {
@@ -2174,9 +2174,9 @@ function installCommitMsgHooks(root, ws) {
   return skipped;
 }
 
-const DOCS_HOOK_MARK = '# aidure docs pre-commit';
+const DOCS_HOOK_MARK = '# kedovi docs pre-commit';
 const DOCS_HOOK = (script) => `#!/bin/sh
-${DOCS_HOOK_MARK}: md 와 문서 사이트(docs-site/)가 어긋나면 커밋을 막는다 (aidure docs build 로 만든 적이 없으면 통과). ${GEN_NOTE}
+${DOCS_HOOK_MARK}: md 와 문서 사이트(docs-site/)가 어긋나면 커밋을 막는다 (kedovi docs build 로 만든 적이 없으면 통과). ${GEN_NOTE}
 S=${script}
 [ -f "$S" ] && command -v node >/dev/null 2>&1 || exit 0
 node "$S" hook "$(git rev-parse --show-toplevel)"
@@ -2272,7 +2272,7 @@ function installRepos(root, ws, { createLocal = false, onResult } = {}) {
     fs.mkdirSync(path.dirname(dir), { recursive: true });
     if (exists(dir)) { results.push({ name: r.name, state: 'ok', note: '있음' }); continue; }
     if (r.local && !r.remote && !r.path) {
-      if (!createLocal) { results.push({ name: r.name, state: 'pending', note: '아직 원격 없음: 만든 사람이 origin 을 달고 push 한 뒤 workspace.json 을 push 하면 aidure install 로 받는다' }); continue; }
+      if (!createLocal) { results.push({ name: r.name, state: 'pending', note: '아직 원격 없음: 만든 사람이 origin 을 달고 push 한 뒤 workspace.json 을 push 하면 kedovi install 로 받는다' }); continue; }
       fs.mkdirSync(dir, { recursive: true });
       try { execFileSync('git', ['init', '-q', dir]); results.push({ name: r.name, state: 'created', note: '새로 만듦 (git init, 원격 없음)' }); }
       catch { results.push({ name: r.name, state: 'fail', note: 'git init 실패' }); }
@@ -2289,7 +2289,7 @@ function installRepos(root, ws, { createLocal = false, onResult } = {}) {
         const msg = c.err;
         const auth = /Authentication failed|could not read Username|terminal prompts disabled|Permission denied|403|401/i.test(msg);
         results.push({ name: r.name, state: 'fail', note: auth
-          ? `인증 필요. 이 호스트의 git 인증(키체인·토큰·SSH 키)을 먼저 설정하고 aidure install (한 번 git clone ${r.remote} 을 직접 해 보면 인증이 저장된다)`
+          ? `인증 필요. 이 호스트의 git 인증(키체인·토큰·SSH 키)을 먼저 설정하고 kedovi install (한 번 git clone ${r.remote} 을 직접 해 보면 인증이 저장된다)`
           : `clone 실패: ${msg.trim().split('\n').pop()}` });
       }
       continue;
@@ -2305,10 +2305,10 @@ function installRepos(root, ws, { createLocal = false, onResult } = {}) {
 function cmdInstall(root, opts = {}) {
   const ws = loadWorkspace(root);
   const icon = { ok: '✓', cloned: '⬇', linked: '↪', created: '✚', pending: '…', fail: '✖' };
-  // 한 repo 씩 끝나는 대로 찍는다 (clone 이 길어도 어디까지 왔는지 보이게). opts.out 이 있으면 그쪽으로 (aidure init 은 다른 출력을 모아 두므로)
+  // 한 repo 씩 끝나는 대로 찍는다 (clone 이 길어도 어디까지 왔는지 보이게). opts.out 이 있으면 그쪽으로 (kedovi init 은 다른 출력을 모아 두므로)
   const out = opts.out || ((l) => console.log(l));
   const got = installRepos(root, ws, { createLocal: opts.createLocal, onResult: (x, i, n) => out(`  ${icon[x.state]} ${n > 1 ? `(${i}/${n}) ` : ''}${x.name.padEnd(14)} ${x.note}`) });
-  if (opts.results) opts.results.push(...got); // aidure init 이 끝 화면에 repo 별 상태를 다시 보인다
+  if (opts.results) opts.results.push(...got); // kedovi init 이 끝 화면에 repo 별 상태를 다시 보인다
   if (opts.detect !== false) {
     const catalog = loadCatalog(root);
     for (const d of detectRepos(root)) console.log(`  ◎ ${d.name.padEnd(14)} 스택 감지: ${detectLine(catalog, d, loadLanguages(root))}`);
@@ -2373,7 +2373,7 @@ function refsFromArg(list, kind, dst) {
 /** 원격 없이 새로 만들 repo — 인자 값 new:<이름> */
 const NEW_REPO = /^new:/;
 
-/** 워크스페이스를 만든다. opts = { dir, name, title, description, type, packs[], repos[] } — 화면(aidure)과 플래그 둘 다 여기로 온다 */
+/** 워크스페이스를 만든다. opts = { dir, name, title, description, type, packs[], repos[] } — 화면(kedovi)과 플래그 둘 다 여기로 온다 */
 /** 로드맵(handoffs/PLAN.md)이 없으면 종류 · 스택별 기본 단계로 만든다: 팩 도구를 그 워크스페이스 기준으로 돌린다. 기본 단계 그대로면 스택 단계를 더하고, 사람이 고친 것은 그대로. 결과 한 줄 (도구가 없으면 '') */
 /** 그 유형의 기본 팩인데 workspace.json 에 없는 팩 (나중 버전에서 기본이 된 팩 · 일부러 뺀 팩). upgrade 가 알린다 (켜지는 않는다) */
 function missingTypePacks(ws, kitDir = kitRoot()) {
@@ -2386,8 +2386,8 @@ function missingTypePacks(ws, kitDir = kitRoot()) {
 function ensurePlan(root, { sw = false } = {}) {
   const tool = path.join(root, 'packs', 'core', 'bin', 'plan.js');
   const plan = path.join(root, 'handoffs', 'PLAN.md');
-  // 이미 있으면 기본 단계 그대로(aidure:preset)일 때만 init 이 스택 단계를 더한다
-  if (!exists(tool) || (!sw && exists(plan) && !read(plan).includes('<!-- aidure:preset'))) return '';
+  // 이미 있으면 기본 단계 그대로(kedovi:preset)일 때만 init 이 스택 단계를 더한다
+  if (!exists(tool) || (!sw && exists(plan) && !read(plan).includes('<!-- kedovi:preset'))) return '';
   try { const out = execFileSync(process.execPath, [tool, 'init', ...(sw ? ['--switch'] : [])], { cwd: root, encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: root } }).trim(); return /이미 있음/.test(out) ? '' : out; } catch { return ''; }
 }
 
@@ -2418,7 +2418,7 @@ function initWorkspace(opts) {
   copyTemplate(path.join(kit, 'templates', 'workspace'), dst);
   fs.mkdirSync(path.join(dst, 'bin'), { recursive: true });
   fs.copyFileSync(path.join(kit, 'bin', 'kit.js'), path.join(dst, 'bin', 'kit.js'));
-  // 팩은 전부 복사한다 — repo 스택이 나중에 바뀌어도(aidure detect) 킷 없이 sync 가 된다. 쓰는 팩은 workspace.json 이 정한다
+  // 팩은 전부 복사한다 — repo 스택이 나중에 바뀌어도(kedovi detect) 킷 없이 sync 가 된다. 쓰는 팩은 workspace.json 이 정한다
   for (const p of available) copyDir(path.join(kit, 'packs', p), path.join(dst, 'packs', p));
 
   const wsFile = path.join(dst, 'workspace.json');
@@ -2446,7 +2446,7 @@ function initWorkspace(opts) {
 
 function cmdInit(args) {
   const target = args._[1];
-  if (!target) die(`사용법: node bin/kit.js init <대상폴더> --type ${Object.keys(PROJECT_TYPES).join('|')} [--approach ${Object.keys(APPROACHES).join('|')}] [--packs ..] [--code ..(주소·폴더·new:<이름>)] [--docs ..] [--legacy ..]  (대화형은 aidure init)`);
+  if (!target) die(`사용법: node bin/kit.js init <대상폴더> --type ${Object.keys(PROJECT_TYPES).join('|')} [--approach ${Object.keys(APPROACHES).join('|')}] [--packs ..] [--code ..(주소·폴더·new:<이름>)] [--docs ..] [--legacy ..]  (대화형은 kedovi init)`);
   const dst = path.resolve(target);
   const res = initWorkspace({
     dir: dst, name: args.name, title: args.title, type: args.type, approach: args.approach,

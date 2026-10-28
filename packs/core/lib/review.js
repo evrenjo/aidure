@@ -3,7 +3,7 @@
  * 리뷰 기록 = 리뷰를 시작한 때의 작업 폴더 전체(추적 안 된 파일 포함)를 git tree 로 만든 해시. 임시 index 로 만들어 실제 index · 작업 폴더는 건드리지 않는다.
  * 리뷰 안 된 줄 수 = 지금 상태와 가장 가까운 기준(리뷰 기록들 · 이미 push 된 상태)의 차이. 리뷰 뒤 고친 만큼만 다시 센다 (기준 줄 수 reviewMinLines 이하면 통과).
  *   리뷰 기록과는 더한 줄만 센다 (리뷰어가 보지 못한 줄. 리뷰한 것의 일부만 commit · push 해도 통과). push 된 상태와는 더한 줄 + 뺀 줄.
- * 기록이 생기는 때: 다른 AI 에게 reviewer 위임이 끝남(delegate.js) · 교차 검토(cross-review.js) · reviewer 역할 에이전트를 띄움(hooks/agent-budget.js) · aidure review mark
+ * 기록이 생기는 때: 다른 AI 에게 reviewer 위임이 끝남(delegate.js) · 교차 검토(cross-review.js) · reviewer 역할 에이전트를 띄움(hooks/agent-budget.js) · kedovi review mark
  * 기록 위치: 워크스페이스 밖 임시 상태 폴더의 review.json (이 PC 만). 없어지면 다시 경고가 날 뿐이다.
  * 쓰는 곳: hooks/review-gate.js · bin/review.js. 설정은 bin/kit.js resolveModels 의 enforce.reviewBeforePush · review
  */
@@ -52,7 +52,7 @@ function repoOf(ws, st, dir) {
 function workTree(dir) {
   const idx = git(dir, ['rev-parse', '--git-path', 'index']);
   if (idx == null) return null;
-  const tmp = path.join(os.tmpdir(), `aidure-review-index-${process.pid}-${Date.now()}`);
+  const tmp = path.join(os.tmpdir(), `kedovi-review-index-${process.pid}-${Date.now()}`);
   try {
     const src = path.resolve(dir, idx);
     if (fs.existsSync(src)) fs.copyFileSync(src, tmp);
@@ -148,7 +148,7 @@ function markWarned(ROOT, repoName, tree) { const d = read(ROOT); d.warned[repoN
 
 /** 리뷰 전 검사: 지시서에 「검사: <명령> 통과」(검사가 없는 변경은 「검사: 없음 (사유)」) 줄이 있나 */
 const hasCheckLine = (text) => /^[\s>*-]*\**검사\**\s*[:：]\s*\S/m.test(String(text || ''));
-const CHECK_MESSAGE = '지시서에 검사 줄이 없습니다. 둘 중 하나를 넣습니다: 「검사: <명령> 통과」(빌드 · 테스트 · 회귀 검사를 돌려 통과시킨 뒤) 또는 「검사: 없음 (사유)」(문서만 바꾼 변경 등 검사할 것이 없을 때). 리뷰어가 회귀를 머리로 판정하지 않게 하려는 것입니다. 순서: 구현 → 해당 검사 → 리뷰 → 수정 → 해당 검사. 수준 바꾸기: aidure team-mode enforce check off|warn|block';
+const CHECK_MESSAGE = '지시서에 검사 줄이 없습니다. 둘 중 하나를 넣습니다: 「검사: <명령> 통과」(빌드 · 테스트 · 회귀 검사를 돌려 통과시킨 뒤) 또는 「검사: 없음 (사유)」(문서만 바꾼 변경 등 검사할 것이 없을 때). 리뷰어가 회귀를 머리로 판정하지 않게 하려는 것입니다. 순서: 구현 → 해당 검사 → 리뷰 → 수정 → 해당 검사. 수준 바꾸기: kedovi team-mode enforce check off|warn|block';
 /** 수준 (off | warn | block, 기본 block) */
 function checkLevel(ROOT) {
   try { const kit = require(path.join(ROOT, 'bin', 'kit.js')); return (kit.resolveModels(ROOT, kit.loadWorkspace(ROOT)).enforce || {}).checkBeforeReview || 'block'; } catch { return 'block'; }

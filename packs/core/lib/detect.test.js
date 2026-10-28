@@ -7,7 +7,7 @@ const assert = require('assert');
 const { detect, loadCatalog, withHints, checkHints, buildFiles } = require('./detect');
 
 const catalog = loadCatalog(path.resolve(__dirname, '..', '..', '..'));
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aidure-detect-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-detect-'));
 const repo = (name, files) => {
   const dir = path.join(tmp, name);
   for (const [f, body] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), body); }

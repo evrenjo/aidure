@@ -15,7 +15,7 @@
 | 6 | 결정 · 미결 | [90-decisions/](90-decisions/) | 결정 기록(상태: 제안 · 확정 · 대체됨) · 미결 목록 |
 | 부록 | 원본 | [originals/](originals/) · [md/](md/) | Word · Excel · PPT 원본과 md 사본 |
 
-메뉴 순서는 `docs-site.json` 이 정한다. 문서 사이트는 `aidure docs build` 가 만든다 (`docs-site/`, 손으로 고치지 않는다).
+메뉴 순서는 `docs-site.json` 이 정한다. 문서 사이트는 `kedovi docs build` 가 만든다 (`docs-site/`, 손으로 고치지 않는다).
 
 ## 정본은 사실마다 하나
 
@@ -46,7 +46,7 @@
 | 미결 | `Q-<번호>` | `Q-003` | 미결 목록 |
 
 - 영역은 대문자 2~4자(`ORD` · `MEM`)로 정해 모든 문서에서 같게 쓴다.
-- 코드에는 진입점 머리 주석에 `@spec <ID>` 로 한 번 적는다 (화면 컴포넌트 = 화면 ID + 기능 ID, 테스트 = 수용 기준 ID). 개발 워크스페이스의 `aidure docs trace` 가 대조한다.
+- 코드에는 진입점 머리 주석에 `@spec <ID>` 로 한 번 적는다 (화면 컴포넌트 = 화면 ID + 기능 ID, 테스트 = 수용 기준 ID). 개발 워크스페이스의 `kedovi docs trace` 가 대조한다.
 
 ## 쓰는 규칙
 

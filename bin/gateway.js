@@ -1,6 +1,6 @@
 'use strict';
 /**
- * AI 게이트웨이 찾기 · 모델 목록 조회 (aidure init · install · ai 가 쓴다). 의존성 없음.
+ * AI 게이트웨이 찾기 · 모델 목록 조회 (kedovi init · install · ai 가 쓴다). 의존성 없음.
  *
  * 게이트웨이 = 여러 회사 모델을 한 주소로 주는 중계 서버 (LiteLLM · OpenRouter · 사내 LLM 프록시 등).
  * 키 값은 읽어서 조회에만 쓰고 어디에도 저장하지 않는다. 저장하는 것은 주소 · 찾은 곳 · 모델 ID 목록뿐.

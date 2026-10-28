@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 문서 사이트: 기획 repo 의 md 를 같은 경로 구조의 HTML(docs-site/)로 만든다. 실행: aidure docs <명령> 또는 node packs/core/bin/docs-site.js <명령>
+// 문서 사이트: 기획 repo 의 md 를 같은 경로 구조의 HTML(docs-site/)로 만든다. 실행: kedovi docs <명령> 또는 node packs/core/bin/docs-site.js <명령>
 /*
  * 명령
  *   build [repo|폴더] [--out docs-site] [--force]   만들기. repo 를 안 주면 workspace.json 의 기획 repo(kind: docs) 전부. 옛 출력 폴더 html/ 은 docs-site/ 로 한 번 옮긴다 (git mv)
@@ -7,7 +7,7 @@
  *   serve [repo|폴더] [--port 8000] [--open]     docs-site/ 를 이 PC 에서 웹 주소로 보기 (Ctrl+C 로 끝). file:// 로도 열리지만 쪽 이동이 새로고침이 되고 전체 인쇄가 안 된다
  *   pages [on|off] [repo|폴더]                 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일을 두고 docs-site/ 를 커밋 대상으로, off = .gitignore 에 /docs-site/
  *   refs-quote <md 파일…> [--dry]              본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다
- *   hook <repo 폴더>                           기획 repo 의 pre-commit 이 부른다 (aidure docs build 로 만든 적이 없으면 아무것도 안 한다)
+ *   hook <repo 폴더>                           기획 repo 의 pre-commit 이 부른다 (kedovi docs build 로 만든 적이 없으면 아무것도 안 한다)
  *   show <ID> [--in <파일 조각>] [--all]         그 ID 의 정의 부분만 출력 (문서를 통째로 읽지 않는다). --all = 정의가 여럿이면 모두
  *   refs <ID> [--docs]                         그 ID 가 나오는 곳 (기획 · 코드 · 이슈 repo, 파일:줄). --docs = 기획 repo 만
  *   trace [--ids FN,API] [--all] [--strict] [--md] [--new]   기획 ID 와 코드의 구현 표시(@spec 주석의 ID) 대조 (머리말: --ids → vars.docs.traceIds → vars.screens.functionIds → FN,SCR,API,AC). 코드에 없는 ID(⚠) · 기획에 정의 없는 ID(✖, 오타 · 지운 기능) · 테스트에 없는 수용 기준(AC-).
@@ -67,7 +67,7 @@ function targets(ws, arg) {
     return [r];
   }
   const docs = repos.filter((r) => r.kind === 'docs');
-  if (!docs.length) throw new Error('기획 repo(kind: docs)가 없습니다. aidure docs build <repo 이름|폴더>');
+  if (!docs.length) throw new Error('기획 repo(kind: docs)가 없습니다. kedovi docs build <repo 이름|폴더>');
   return docs;
 }
 
@@ -105,7 +105,7 @@ const SHARED_DIR = path.join(SITE_DIR, 'shared');   // 문서 사이트 · ERD �
 /** 원본 폴더의 *.js 를 이름 순으로 이은 파일 하나 (문서 사이트 앱 · ERD · 화면설계서 뷰어) */
 function concatSrc(src, where, shared) {
   const part = (dir) => fs.readdirSync(dir).filter((f) => /\.js$/.test(f)).sort().map((f) => `/* ── ${f} ── */\n${fs.readFileSync(path.join(dir, f), 'utf8').replace(/\s*$/, '')}`);
-  return Buffer.from([`/* 생성물: aidure docs build. 원본은 킷의 ${where}${shared ? ' (+ 공통 부품 packs/core/assets/docs-site/shared/)' : ''} (손으로 고치지 않는다) */`,
+  return Buffer.from([`/* 생성물: kedovi docs build. 원본은 킷의 ${where}${shared ? ' (+ 공통 부품 packs/core/assets/docs-site/shared/)' : ''} (손으로 고치지 않는다) */`,
     ...(shared ? part(SHARED_DIR) : []), ...part(src)].join('\n') + '\n');
 }
 function siteAssets(dir) {
@@ -114,7 +114,7 @@ function siteAssets(dir) {
   a['assets/site.js'] = concatSrc(path.join(SITE_DIR, 'src'), 'packs/core/assets/docs-site/src/', true);
   const vd = path.join(SITE_DIR, 'vendor');
   const ix = JSON.parse(fs.readFileSync(path.join(vd, 'index.json'), 'utf8'));
-  a['assets/vendor.js'] = Buffer.from(`/* 생성물: aidure docs build. 외부 라이브러리 (라이선스: vendor-LICENSES.txt) ${ix.packages.map((p) => `${p.name}@${p.version}`).join(' · ')} */\n${ix.files.map((f) => fs.readFileSync(path.join(vd, f), 'utf8')).join('')}`);
+  a['assets/vendor.js'] = Buffer.from(`/* 생성물: kedovi docs build. 외부 라이브러리 (라이선스: vendor-LICENSES.txt) ${ix.packages.map((p) => `${p.name}@${p.version}`).join(' · ')} */\n${ix.files.map((f) => fs.readFileSync(path.join(vd, f), 'utf8')).join('')}`);
   a['assets/vendor-LICENSES.txt'] = Buffer.from(ix.packages.map((p) => `== ${p.name} ${p.version} (${p.license}) ${p.home}\n\n${fs.readFileSync(path.join(vd, `${p.name}-LICENSE.txt`), 'utf8').trim()}\n`).join('\n'));
   for (const [to, name] of Object.entries(EXTRA)) {
     const f = dir && path.join(dir, name);
@@ -218,7 +218,7 @@ function sourceOf(dir, remote) {
 /** Pages: 원격 종류 · CI 파일 · 켜짐 여부. 켜짐 = 원격에 맞는 CI 파일이 있고 docs-site/ 를 .gitignore 로 빼지 않음 */
 const CI = { gitlab: '.gitlab-ci.yml', github: path.join('.github', 'workflows', 'pages.yml') };
 const CI_SRC = { gitlab: 'gitlab-ci.yml', github: 'github-pages.yml' };
-const CI_MARK = 'aidure docs pages';
+const CI_MARK = 'kedovi docs pages';
 function hostOfRemote(dir) {
   const url = gitOut(dir, ['remote', 'get-url', 'origin']);
   if (!url) return null;
@@ -238,9 +238,9 @@ const HOST_NAME = { gitlab: 'GitLab', github: 'GitHub' };
 /** build 끝의 Pages 한 줄 */
 function pagesHint(dir, out) {
   const st = pagesState(dir);
-  if (!st.host) return `Pages: 원격이 없습니다. 이 PC 에서 보기: aidure docs serve`;
-  if (st.on) return `Pages 켜짐 (${HOST_NAME[st.host]}): ${out}/ 를 커밋 · push 하면 ${CI[st.host]} 가 올린다. 끄기: aidure docs pages off`;
-  return `Pages 꺼짐 (${HOST_NAME[st.host]}): ${out}/ 는 이 PC 에서만 본다. 올리려면: aidure docs pages on`;
+  if (!st.host) return `Pages: 원격이 없습니다. 이 PC 에서 보기: kedovi docs serve`;
+  if (st.on) return `Pages 켜짐 (${HOST_NAME[st.host]}): ${out}/ 를 커밋 · push 하면 ${CI[st.host]} 가 올린다. 끄기: kedovi docs pages off`;
+  return `Pages 꺼짐 (${HOST_NAME[st.host]}): ${out}/ 는 이 PC 에서만 본다. 올리려면: kedovi docs pages on`;
 }
 
 /** 기본 브랜치 (origin HEAD, 없으면 지금 브랜치, 그것도 없으면 main) */
@@ -252,8 +252,8 @@ function setIgnore(dir, on) {
   const text = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
   const re = new RegExp(`^/?${OUT}/?\\s*$`, 'm');
   if (on === re.test(text)) return false;
-  if (on) fs.writeFileSync(f, `${text}${text && !text.endsWith('\n') ? '\n' : ''}# aidure docs pages off: 문서 사이트는 이 PC 에서만 본다 (올리려면 aidure docs pages on)\n/${OUT}/\n`);
-  else fs.writeFileSync(f, text.replace(/^# aidure docs pages off:.*\n/m, '').replace(new RegExp(`^/?${OUT}/?\\s*\\n?`, 'm'), ''));
+  if (on) fs.writeFileSync(f, `${text}${text && !text.endsWith('\n') ? '\n' : ''}# kedovi docs pages off: 문서 사이트는 이 PC 에서만 본다 (올리려면 kedovi docs pages on)\n/${OUT}/\n`);
+  else fs.writeFileSync(f, text.replace(/^# kedovi docs pages off:.*\n/m, '').replace(new RegExp(`^/?${OUT}/?\\s*\\n?`, 'm'), ''));
   return true;
 }
 
@@ -265,7 +265,7 @@ function putCi(dir, h) {
   if (fs.existsSync(f)) {
     const cur = fs.readFileSync(f, 'utf8');
     if (cur === body) return '그대로';
-    if (!cur.includes(CI_MARK) && !/aidure docs build/.test(cur)) {
+    if (!cur.includes(CI_MARK) && !/kedovi docs build/.test(cur)) {
       if (ciHasPages(dir, h)) return '그대로 (이미 pages 작업이 있음)';
       return `직접 넣기: 이 repo 의 ${CI[h]} 에 packs/core/assets/pages/${CI_SRC[h]} 의 pages 작업을 붙인다`;
     }
@@ -275,7 +275,7 @@ function putCi(dir, h) {
   return '만듦';
 }
 
-/** aidure docs pages [on|off] [repo|폴더] */
+/** kedovi docs pages [on|off] [repo|폴더] */
 function cmdPages(ws) {
   const mode = ['on', 'off'].includes(argv[1]) ? argv[1] : null;
   const arg = mode ? argv[2] : argv[1];
@@ -283,7 +283,7 @@ function cmdPages(ws) {
     migrate(t);
     if (!mode) {
       const st = pagesState(t.dir);
-      console.log(`${st.on ? '●' : '○'} ${t.name}: Pages ${st.on ? '켜짐' : '꺼짐'} · 원격 ${st.host ? HOST_NAME[st.host] : '없음'}${st.ci.length ? ` · CI ${st.ci.map((h) => CI[h]).join(' · ')}` : ''}. ${st.on ? '끄기: aidure docs pages off' : '켜기: aidure docs pages on'} ${t.name}`);
+      console.log(`${st.on ? '●' : '○'} ${t.name}: Pages ${st.on ? '켜짐' : '꺼짐'} · 원격 ${st.host ? HOST_NAME[st.host] : '없음'}${st.ci.length ? ` · CI ${st.ci.map((h) => CI[h]).join(' · ')}` : ''}. ${st.on ? '끄기: kedovi docs pages off' : '켜기: kedovi docs pages on'} ${t.name}`);
       continue;
     }
     if (mode === 'off') {
@@ -304,7 +304,7 @@ function cmdPages(ws) {
     }
     const unignored = setIgnore(t.dir, false);
     console.log(`● ${t.name}: Pages 켬 (${host ? HOST_NAME[host] : '원격 없음: GitLab · GitHub 둘 다 둠'}). ${done.join(' · ')}${unignored ? ' · .gitignore 에서 /docs-site/ 뺌' : ''}`);
-    console.log(`  다음: aidure docs build ${t.name} → ${OUT}/ 와 CI 파일을 커밋 · push`);
+    console.log(`  다음: kedovi docs build ${t.name} → ${OUT}/ 와 CI 파일을 커밋 · push`);
     if (host === 'github') console.log('  한 번만: GitHub 의 Settings > Pages > Source 를 「GitHub Actions」 로 (비공개 repo 는 유료 요금제)');
     else console.log('  GitLab 서버에 Pages 기능과 러너가 있어야 한다 (Pages 는 서버 관리자가 켠다)');
   }
@@ -322,7 +322,7 @@ function migrate(t) {
     const f = path.join(t.dir, CI[h]);
     if (!fs.existsSync(f)) continue;
     const cur = fs.readFileSync(f, 'utf8');
-    if (/aidure docs build|site\.json/.test(cur)) {
+    if (/kedovi docs build|site\.json/.test(cur)) {
       const next = cur.split('\n').map(ciLine).join('\n');
       const n = next.split('\n').filter((l, i) => l !== cur.split('\n')[i]).length;
       if (n) { fs.writeFileSync(f, next); fixed.push(`${CI[h]} ${n}줄`); }
@@ -338,7 +338,7 @@ function migrate(t) {
 
 // CI 줄 안의 옛 출력 경로 (html · html/ · ./html/ · html/. · html/**): text/html · index.html 은 아니다
 const OLD_REF = /(^|[\s'"(=:,[])(\.\/)?html(?=\/|[\s'"\]),;]|$)/g;
-const ciLine = (l) => l.replace(/\bhtml\/ 이 없습니다/g, `${OUT}/ 가 없습니다`).replace(/\bhtml\/ 은 aidure docs build/g, `${OUT}/ 는 aidure docs build`)
+const ciLine = (l) => l.replace(/\bhtml\/ 이 없습니다/g, `${OUT}/ 가 없습니다`).replace(/\bhtml\/ 은 kedovi docs build/g, `${OUT}/ 는 kedovi docs build`)
   .replace(OLD_REF, (m, a, dot) => `${a}${dot || ''}${OUT}`).replace(/문서 사이트\(html\/\)/g, `문서 사이트(${OUT}/)`);
 const oldRefs = (text) => text.split('\n').map((l, i) => (new RegExp(OLD_REF.source).test(l) || /문서 사이트\(html\/\)/.test(l) ? i + 1 : 0)).filter(Boolean);
 
@@ -405,7 +405,7 @@ function generate(t, ws, out) {
   res.moved = moved;
   const list = Object.keys(res.pages).sort();
   res.files = files;
-  res.pages[MANIFEST] = `${JSON.stringify({ generator: 'aidure docs', note: '이 폴더는 aidure docs build 가 만든다. 손으로 고치지 않는다 (다시 만들면 사라진다)', files: list, ...(Object.keys(moved).length ? { moved } : {}) }, null, 1)}\n`;
+  res.pages[MANIFEST] = `${JSON.stringify({ generator: 'kedovi docs', note: '이 폴더는 kedovi docs build 가 만든다. 손으로 고치지 않는다 (다시 만들면 사라진다)', files: list, ...(Object.keys(moved).length ? { moved } : {}) }, null, 1)}\n`;
   return res;
 }
 
@@ -492,10 +492,10 @@ function healthLines(t, ws, res) {
 
 /** show: ID 의 정의 부분만 */
 function cmdShow(ws, id) {
-  if (!id) throw new Error('사용법: aidure docs show <ID> [--in <파일 조각>] [--all]');
+  if (!id) throw new Error('사용법: kedovi docs show <ID> [--in <파일 조각>] [--all]');
   const defs = DR.show(targets(ws, null), id, opt('in'));
   if (!defs.length) {
-    console.log(`정의를 못 찾았습니다: ${id} (제목 · 표 첫 칸 · **${id}** 문단 · 화면설계서 장). 쓰는 곳: aidure docs refs ${id}`);
+    console.log(`정의를 못 찾았습니다: ${id} (제목 · 표 첫 칸 · **${id}** 문단 · 화면설계서 장). 쓰는 곳: kedovi docs refs ${id}`);
     process.exitCode = 1;
     return;
   }
@@ -513,7 +513,7 @@ function cmdShow(ws, id) {
 /** 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다. --dry 면 개수만 */
 function cmdRefsQuote(files) {
   const list = files.filter((f) => !f.startsWith('--'));
-  if (!list.length) throw new Error('사용법: aidure docs refs-quote <md 파일…> [--dry]');
+  if (!list.length) throw new Error('사용법: kedovi docs refs-quote <md 파일…> [--dry]');
   let total = 0;
   for (const f of list) {
     if (!fs.existsSync(f)) { console.log(`✖ ${f}: 파일이 없습니다`); process.exitCode = 1; continue; }
@@ -528,7 +528,7 @@ function cmdRefsQuote(files) {
 }
 
 function cmdRefs(ws, id) {
-  if (!id) throw new Error('사용법: aidure docs refs <ID> [--docs]');
+  if (!id) throw new Error('사용법: kedovi docs refs <ID> [--docs]');
   const repos = ((ws && ws.repos) || []).filter((r) => (has('docs') ? r.kind === 'docs' : r.kind !== 'legacy'));
   const hits = DR.refs(repos.length ? repos : targets(ws, null).map((t) => ({ ...t, kind: 'docs' })), id);
   if (!hits.length) { console.log(`${id}: 나오는 곳 없음 (${repos.map((r) => r.name).join(', ') || '기획 repo'})`); return; }
@@ -579,7 +579,7 @@ function untracedEntries(code, re) {
       if (!/D/.test(xy)) files.add(e.slice(3));
     }
     // 아직 push 안 한 커밋 = 어느 원격 브랜치에도 없는 커밋 (남이 올린 변경 · 이미 올린 커밋은 세지 않는다).
-    // 원격이 없으면 커밋하지 않은 것만 본다 (전체 기록을 다 보면 옛 진입 파일이 모두 나온다. 전체는 aidure docs trace)
+    // 원격이 없으면 커밋하지 않은 것만 본다 (전체 기록을 다 보면 옛 진입 파일이 모두 나온다. 전체는 kedovi docs trace)
     // 원격 브랜치(받아 온 것)가 하나도 없으면 원격이 없는 것으로 본다 (원격만 추가하고 push 전이면 전체 기록이 잡힌다)
     const remote = (git('for-each-ref', '--count=1', '--format=%(refname)', 'refs/remotes') || '').trim();
     const hasHead = git('rev-parse', '--verify', '-q', 'HEAD') !== null;
@@ -608,14 +608,14 @@ function cmdTrace(ws) {
   const isAc = (id) => acPre.some((p) => id.startsWith(`${p}-`));
   const configured = !!(opt('ids') || dv.traceIds || (ws && ws.vars && ws.vars.screens && ws.vars.screens.functionIds)); // 옛 워크스페이스는 정한 머리말만 본다
   const ids = [...new Set([...traceIds(ws), ...(configured ? [] : acPre)])];
-  if (!ids.length) throw new Error('대조할 ID 머리말이 없습니다. aidure docs trace --ids FN 또는 workspace.json 의 vars.docs.traceIds (예: "FN")');
+  if (!ids.length) throw new Error('대조할 ID 머리말이 없습니다. kedovi docs trace --ids FN 또는 workspace.json 의 vars.docs.traceIds (예: "FN")');
   const code = ((ws && ws.repos) || []).filter((r) => (r.kind || 'code') === 'code');
   const hasDocs = ((ws && ws.repos) || []).some((r) => r.kind === 'docs');
   if (has('new') && (!code.length || !hasDocs)) return console.log(`✔ ${!code.length ? '코드 repo' : '기획 repo'}가 없어 기획 ID 를 대조하지 않습니다`); // 커밋 전 확인이 기획 없는 워크스페이스를 막지 않게
   if (!code.length) throw new Error('코드 repo(kind: code)가 없습니다');
   if (has('new')) { // 새 진입 파일에 기획 ID 가 있나 (커밋 전 확인)
     const { missing: list, unread, noRemote } = untracedEntries(code, DR.prefixRe(ids));
-    if (noRemote.length) console.log(`  원격 브랜치를 받아 온 적이 없는 repo(${noRemote.join(', ')})는 커밋하지 않은 파일만 봤습니다 (기획에 정의가 있는지는 aidure docs trace)`);
+    if (noRemote.length) console.log(`  원격 브랜치를 받아 온 적이 없는 repo(${noRemote.join(', ')})는 커밋하지 않은 파일만 봤습니다 (기획에 정의가 있는지는 kedovi docs trace)`);
     if (unread.length) console.log(`⚠ 읽지 못해 보지 못한 진입 파일 ${unread.length}개: ${unread.slice(0, 10).join(', ')}`);
     if (unread.length && has('strict')) process.exitCode = 1; // 보지 못한 것이 있으면 통과로 치지 않는다
     if (!list.length) return console.log(`${unread.length ? '…' : '✔'} 새로 만들거나 고친 진입 파일에 기획 ID(${ids.join(', ')})가 ${unread.length ? '읽은 것은 ' : ''}모두 있습니다`);
@@ -632,7 +632,7 @@ function cmdTrace(ws) {
   const split = (id) => parts.get(id) || { code: [], test: [] };
   if (has('md')) { // 추적표 (기획 repo 에 두려면 > 파일로 저장)
     const rows = [...res.defined].map(([id, d]) => { const s2 = split(id); const fmt = (l) => { const u = [...new Set(l.map((x) => `${x.repo}/${x.rel}`))]; return u.length ? u.slice(0, 3).map((x) => `\`${x}\``).join('<br>') + (u.length > 3 ? ` 외 ${u.length - 3}` : '') : '없음'; }; return `| ${id} | ${d.rel} | ${fmt(s2.code)} | ${fmt(s2.test)} |`; });
-    console.log(['# 추적표', '', `> 생성: aidure docs trace --md (머리말 ${ids.join(', ')}). 손으로 고치지 않는다`, '', '| ID | 정의 | 코드 | 테스트 |', '|---|---|---|---|', ...rows, ''].join('\n'));
+    console.log(['# 추적표', '', `> 생성: kedovi docs trace --md (머리말 ${ids.join(', ')}). 손으로 고치지 않는다`, '', '| ID | 정의 | 코드 | 테스트 |', '|---|---|---|---|', ...rows, ''].join('\n'));
     return;
   }
   // 수용 기준(AC-)은 테스트에 있어야 한다: 어디에도 없거나 코드에만 있으면 「테스트에 없는 수용 기준」 으로 묶는다
@@ -657,7 +657,7 @@ function cmdTrace(ws) {
     for (const id of many(res.missing, 30)) { const d = res.defined.get(id); console.log(d ? `  ${id}  ${d.repo}/${d.rel}:${d.line}` : `  ${id}`); }
   }
   if (res.unknown.length) {
-    console.log(`✖ 기획에 정의 없는 ID ${res.unknown.length}곳 (오타 · 지운 기능 · 아직 안 쓴 문서. 정의 확인: aidure docs show <ID>):`);
+    console.log(`✖ 기획에 정의 없는 ID ${res.unknown.length}곳 (오타 · 지운 기능 · 아직 안 쓴 문서. 정의 확인: kedovi docs show <ID>):`);
     for (const u of many(res.unknown, 30)) console.log(typeof u === 'string' ? `  ${u}` : `  ${u.id}  ${u.repo}/${u.rel}:${u.line}`);
     if (has('strict')) process.exitCode = 1;
   }
@@ -667,7 +667,7 @@ function cmdTrace(ws) {
     for (const id of many(noTest, 30)) console.log(`  ${id}`);
   }
   if (!res.found.size && total) console.log('  구현한 코드의 진입점 머리 주석에 기획 ID 를 한 번 적으면 대조된다 (예: // @spec FN-ORD-003 SCR-ORD-01)');
-  console.log('  추적표: aidure docs trace --md · 새 진입 파일 확인: aidure docs trace --new');
+  console.log('  추적표: kedovi docs trace --md · 새 진입 파일 확인: kedovi docs trace --new');
 }
 
 /** 크기 한 줄: docs-site/ 전체 · 묶음(repos/<이름> · 첫 폴더)별, 워크스페이스 루트면 repo 마다 넣은 방식 */
@@ -748,12 +748,12 @@ async function cmdCheck(ws, dirArg, quietIfNone) {
   for (const t of targets(ws, dirArg)) {
     const out = outOf(t.dir);
     const outDir = path.join(t.dir, out);
-    if (!ours(outDir)) { if (!quietIfNone) console.log(`- ${t.name}: 문서 사이트를 만든 적 없음 (aidure docs build)`); continue; }
+    if (!ours(outDir)) { if (!quietIfNone) console.log(`- ${t.name}: 문서 사이트를 만든 적 없음 (kedovi docs build)`); continue; }
     const res = generate(t, ws, out);
     const changed = diff(outDir, res.pages);
     if (changed.length) {
       bad++;
-      console.log(`✖ ${t.name}: md 와 ${out}/ 가 어긋났습니다 (${changed.length}개). 다시 만든다: aidure docs build ${t.name}`);
+      console.log(`✖ ${t.name}: md 와 ${out}/ 가 어긋났습니다 (${changed.length}개). 다시 만든다: kedovi docs build ${t.name}`);
       for (const c of changed.slice(0, 8)) console.log(`  ${c}`);
     } else if (!quietIfNone) console.log(`✔ ${t.name}: ${out}/ 가 md 와 같음`);
     const mm = await mermaidLines(res);
@@ -772,7 +772,7 @@ function cmdServe(ws) {
   const arg = argv[1] && !argv[1].startsWith('--') ? argv[1] : null;
   const [t] = targets(ws, arg);
   const dir = path.join(t.dir, outOf(t.dir));
-  if (!ours(dir)) throw new Error(`${t.name}: 문서 사이트를 만든 적 없음 (aidure docs build ${t.name})`);
+  if (!ours(dir)) throw new Error(`${t.name}: 문서 사이트를 만든 적 없음 (kedovi docs build ${t.name})`);
   const http = require('http');
   const server = http.createServer((req, res) => {
     let rel;
@@ -796,7 +796,7 @@ function cmdServe(ws) {
   });
   server.on('listening', () => {
     const url = `http://127.0.0.1:${port}/`;
-    console.log(`● ${t.name}: ${url} (${path.relative(process.cwd(), dir).startsWith('..') ? dir : path.relative(process.cwd(), dir) || dir}, 이 PC 에서만. 끝내기: Ctrl+C). 고친 뒤에는 aidure docs build 하고 새로고침`);
+    console.log(`● ${t.name}: ${url} (${path.relative(process.cwd(), dir).startsWith('..') ? dir : path.relative(process.cwd(), dir) || dir}, 이 PC 에서만. 끝내기: Ctrl+C). 고친 뒤에는 kedovi docs build 하고 새로고침`);
     if (has('open')) {
       const opener = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]];
       require('child_process').spawn(opener[0], opener[1], { stdio: 'ignore', detached: true }).unref();
@@ -818,7 +818,7 @@ async function main() {
     if (cmd === 'trace') return cmdTrace(ws);
     if (cmd === 'pages') return cmdPages(ws);
     if (cmd === 'serve') return cmdServe(ws);
-    console.log('사용법: aidure docs build [repo|폴더] [--out docs-site] [--force] · pages [on|off] [repo|폴더] · check [repo|폴더] · serve [repo|폴더] [--port 8000] [--open] · show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs] · refs-quote <md 파일…> [--dry] · trace [--ids FN] [--all] [--strict] [--md] [--new]');
+    console.log('사용법: kedovi docs build [repo|폴더] [--out docs-site] [--force] · pages [on|off] [repo|폴더] · check [repo|폴더] · serve [repo|폴더] [--port 8000] [--open] · show <ID> [--in <파일 조각>] [--all] · refs <ID> [--docs] · refs-quote <md 파일…> [--dry] · trace [--ids FN] [--all] [--strict] [--md] [--new]');
     process.exitCode = cmd ? 1 : 0;
   } catch (e) {
     console.error(`✖ ${e.message}`);

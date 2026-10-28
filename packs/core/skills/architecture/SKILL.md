@@ -5,7 +5,7 @@ description: 시스템 구성도(서비스 · DB 와 스키마 · Redis · 메�
 
 # architecture: 시스템 구성도 (단계별 · 서버 사양 포함)
 
-양식은 킷이 준다 (`packs/core/assets/architecture/template.md`, 기획 repo 뼈대에는 `<기획 repo>/10-system/architecture.md` 로 들어 있다. 옛 뼈대면 그 repo 의 설계 폴더). 이 스킬은 내용을 채우는 순서다. 정할 것은 사용자에게 **하나씩** 묻고, 권장안을 첫째 선택지로 둔다. 문서 사이트(`aidure docs build`)가 mermaid 블록을 그림으로 그린다 (확대 · 새 창).
+양식은 킷이 준다 (`packs/core/assets/architecture/template.md`, 기획 repo 뼈대에는 `<기획 repo>/10-system/architecture.md` 로 들어 있다. 옛 뼈대면 그 repo 의 설계 폴더). 이 스킬은 내용을 채우는 순서다. 정할 것은 사용자에게 **하나씩** 묻고, 권장안을 첫째 선택지로 둔다. 문서 사이트(`kedovi docs build`)가 mermaid 블록을 그림으로 그린다 (확대 · 새 창).
 
 ## 1. 근거 모으기 (지어내지 않는다)
 
@@ -26,7 +26,7 @@ description: 시스템 구성도(서비스 · DB 와 스키마 · Redis · 메�
 
 ## 3. 그리기 규칙
 
-- **구성도는 mermaid 로 쓴다.** 상자 · 화살표 문자로 그린 ASCII 그림은 쓰지 않는다 (`aidure docs build` 가 ⚠ 로 알린다).
+- **구성도는 mermaid 로 쓴다.** 상자 · 화살표 문자로 그린 ASCII 그림은 쓰지 않는다 (`kedovi docs build` 가 ⚠ 로 알린다).
 - 단계마다 그림 하나. 한 그림에 노드가 20개를 넘으면 영역(예: 수집 · 매매 · 알림)으로 나눈다.
 - 계층 순서: 사용자 · 외부 → 서비스 → 미들웨어 → 저장소. 서버(호스트)는 `subgraph` 로 묶고 제목에 이름 · 사양을 적는다 (`app-01 · 4 vCPU · 16GB · SSD 200GB`).
 - 모양: 서비스 `[ ]`, 미들웨어 `[[ ]]`, 저장소 `[( )]`, 사용자 `([ ])`. 라벨 두 번째 줄은 `<br/><i>역할</i>`.
@@ -40,6 +40,6 @@ description: 시스템 구성도(서비스 · DB 와 스키마 · Redis · 메�
 
 ## 5. 마무리
 
-1. `aidure docs build` 로 그림을 확인한다. mermaid 문법이 틀리면 ✖ 로 알리고 사이트에는 원문과 오류 문구가 보인다.
+1. `kedovi docs build` 로 그림을 확인한다. mermaid 문법이 틀리면 ✖ 로 알리고 사이트에는 원문과 오류 문구가 보인다.
 2. 머리말 표는 짧게 둔다. 바뀐 이유는 결정 기록(`DEC-…`)에 두고 ID 를 건다. 이력은 git 이 남긴다 (그 프로젝트가 이력 표를 쓰고 있으면 그것을 따른다).
 3. 구성이 바뀌는 결정이 나면 결정 문서에 남기고 이 문서의 해당 단계를 고친다.
