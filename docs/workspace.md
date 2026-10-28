@@ -92,6 +92,8 @@ repo 가 많으면(MSA · 화면 repo 여럿) `repos/` 아래를 그룹으로 �
 | 킷 규칙 우선 | `kit` | 지침은 명령 · 구조를 알 때만 참고하고, 다른 점은 보고에 적는다 |
 | 무시 | `ignore` | 읽지 않는다. Claude Code 가 그 폴더의 `CLAUDE.md` · `.claude/rules` 를 스스로 불러오지 않게 막는다 |
 
+설정 수정이 잠긴 팀(`aidure team edit deny`)에서는 팀원 PC 의 sync 가 지침을 찾아도 기록하지 않고 알리기만 한다. 관리자가 sync 하면 기록된다.
+
 | 할 일 | 명령 |
 |---|---|
 | 목록 · 방식 보기 | `aidure repo guides` |
@@ -110,9 +112,9 @@ flowchart LR
   I --> X["Claude 설정 claudeMdExcludes"]
 ```
 
-- 도구마다 읽는 방식이 달라 표로 맞춘다. Claude Code 는 그 폴더 파일을 열 때 `CLAUDE.md` · `.claude/rules` · `.claude/skills` 를 스스로 불러오지만, 워크스페이스에 `CLAUDE.md` 가 있어 repo 의 `AGENTS.md` 는 읽지 않는다. Codex 는 repo 안의 지침을 스스로 읽지 않는다.
+- 도구마다 읽는 방식이 달라 표로 맞춘다. Claude Code 는 그 폴더 파일을 열 때 `CLAUDE.md` · `.claude/rules` 를 스스로 불러오지만, 워크스페이스에 `CLAUDE.md` 가 있어 repo 의 `AGENTS.md` 는 읽지 않는다. Codex 는 repo 안의 지침을 스스로 읽지 않는다.
 - repo 안의 `.claude/settings.json` · `.codex/` · `.mcp.json` 은 워크스페이스에서 실행하면 적용되지 않는다. 필요한 훅 · 권한 · MCP 는 워크스페이스 설정으로 옮긴다.
-- 무시로 둬도 repo 안의 스킬은 그 폴더를 열면 Claude Code 스킬 목록에 뜰 수 있다 (에이전트는 따르지 않는다).
+- repo 안의 스킬은 워크스페이스에서 실행하면 Claude Code 스킬 목록에 오지 않는다 (2026-10 실제 세션 확인). repo 지침 우선이면 에이전트가 표의 경로에서 그 SKILL.md 를 읽고 따른다.
 
 > 근거: Claude Code 메모리 문서 (하위 폴더 CLAUDE.md 는 필요할 때 읽음 · AGENTS.md 는 CLAUDE.md 가 없을 때만 · `claudeMdExcludes`), 스킬 문서 (하위 폴더 `.claude/skills` 는 그 폴더 파일을 열 때 읽음)
 

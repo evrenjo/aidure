@@ -88,6 +88,8 @@
 | 동결 | 구현이 끝나 코드가 정본이 된 문서는 머리말에 `상태: 동결 (YYYY-MM-DD, 정본: <repo/경로>)`. 고치지 않고 바뀐 점은 결정 문서에. 점검에서 빠지고 `show` · `refs` 에 [동결] |
 | 문서 점검 경고 | `aidure docs build` · `check` 가 알린다: 큰 문서(`vars.docs.maxKB`, 기본 60KB) · 문장형 제목 · 긴 코드 블록 · 파일:줄 참조 · 본문 근거 줄 · 머리말에 쌓인 변경 이력(3KB 넘고 날짜 5개 이상) · 여러 문서에 같은 문장(60자 이상). 경고만이고 막지 않는다 |
 
+커밋 전 확인: Claude Code 는 코드 repo 에서 `git commit` 하기 전에 `trace --new` 결과(기획 ID 가 없는 새 진입 파일)를 에이전트에게 알린다. 막지 않고, `vars.docs.traceOnCommit` 을 `off` 로 두면 끈다.
+
 **화면설계서**(`screens` 팩, 신규 · 차세대 유형은 기본으로 켜짐. 다른 유형은 `aidure upgrade --add screens`):
 
 - **장 양식** (가로 1280×760): 표지 · 변경 이력 · 메뉴 구조 · 정책 · 화면(메타 표 + 와이어프레임 번호 마커 + 설명 · Check Point · 근거). 견본은 `packs/screens/assets/storyboard/template.html`, 기획 repo 에는 `30-screens/_template.html` (옛 뼈대는 `02-screens/`).

@@ -321,6 +321,10 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   const w1 = JSON.parse(fs.readFileSync(wsFile, 'utf8')); const ra = w1.repos.find((x) => x.name === 'app'); ra.guides = []; ra.guidesMode = 'ignore'; fs.writeFileSync(wsFile, JSON.stringify(w1, null, 2));
   run(process.execPath, ['bin/kit.js', 'sync'], dir);
   got['빈 기록 + 무시도 제외'] = (JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).claudeMdExcludes || []).includes('**/repos/app/CLAUDE.md');
+  // 설정 수정이 잠긴 팀의 팀원 PC: 지침을 찾아도 기록하지 않고 알린다
+  const w3 = JSON.parse(fs.readFileSync(wsFile, 'utf8')); const rb = w3.repos.find((x) => x.name === 'app'); delete rb.guides; delete rb.guidesMode; w3.team = { ...(w3.team || {}), admins: ['someone-else'], lock: true }; fs.writeFileSync(wsFile, JSON.stringify(w3, null, 2));
+  const s3 = run(process.execPath, ['bin/kit.js', 'sync'], dir);
+  got['잠긴 팀 팀원은 기록하지 않음'] = /설정 수정이 잠겨 있어 기록하지 않았습니다: app/.test(s3.out) && reg().guides === undefined;
   record('repo 자체 지침 (기록 · 방식 · 무시 · 변경 경고)', Object.values(got).every(Boolean), Object.entries(got).map(([k, v]) => `${k} ${v}`).join(' · '));
 }
 
@@ -1117,7 +1121,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     spawnSync(process.execPath, ['bin/kit.js', 'sync', '--quiet'], { cwd: dir });
     const cleared = !local().outputStyle && local().language === 'korean';
     const bad = cli('style', 'chatty').status !== 0 && cli('language', 'jp').status !== 0;
-    const wiredP = /chat-prefs/.test(claudeHooks) && !/chat-prefs/.test(codexHooks);
+    const wiredP = /chat-prefs/.test(claudeHooks) && /chat-prefs/.test(codexHooks) && (JSON.parse(codexHooks).hooks.PostToolUse || []).some((g) => JSON.stringify(g).includes('chat-prefs'));
     // 긴 작업 중 다시 알림 (PostToolUse): 요청 시작 뒤 도구 14번은 조용, 15번째에 한 줄, 다시 세기
     hook('chat-prefs.js', 'selftest-prefs-long');
     const tool = () => hook('chat-prefs.js', 'selftest-prefs-long', { hook_event_name: 'PostToolUse', tool_name: 'Bash' });
@@ -1125,7 +1129,7 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
     const again = tool();
     const longRun = quiet && /"hookEventName":"PostToolUse"/.test(again) && /한국어만/.test(again) && !tool().trim() && /chat-prefs[^\n]*/.test(claudeHooks) && (JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).hooks.PostToolUse || []).some((g) => JSON.stringify(g).includes('chat-prefs'));
     record('응답 언어 · 대화 스타일 (aidure prefs · 개인 지침 머리 · 출력 스타일 · 요청마다 한 줄 · 긴 작업 중 다시)', def && styles && expert && en && mineFirst && teamFollow && cleared && bad && wiredP && longRun,
-      `기본 ${def} · 출력 스타일 파일 ${styles} · 전문가 ${expert} · 영어 ${en} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 되돌리면 킷 스타일 지움 ${cleared} · 잘못된 값 ${bad} · 훅 연결(Claude 만) ${wiredP} · 긴 작업 중 다시 알림 ${longRun}`);
+      `기본 ${def} · 출력 스타일 파일 ${styles} · 전문가 ${expert} · 영어 ${en} · 이 PC 값 먼저 ${mineFirst} · team 이면 팀 값 ${teamFollow} · 되돌리면 킷 스타일 지움 ${cleared} · 잘못된 값 ${bad} · 훅 연결(Claude · Codex) ${wiredP} · 긴 작업 중 다시 알림 ${longRun}`);
   }
   // 언어 감지 · 클린 코드 팩 (repos[].languages · clean-code · lang-*) · repo 별 바꾸기(repos:) · repo 별 끄기(rules.offIn · --repo) · 옛 워크스페이스 채우기
   {
@@ -1762,6 +1766,14 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const mdOk = /\| FN-ORD-001 \| 20-features\/order\.md \| `app\/src\/OrderController\.java` \| 없음 \|/.test(md) && /\| AC-ORD-001-1 \| .* \| 없음 \| `app\/test\/OrderTest\.java` \|/.test(md);
   const nw = tr('--new').stdout;
   const newOk = /기획 ID 가 없는 새 진입 파일 1개[\s\S]*app\/src\/PayController\.java/.test(nw) && !/OrderController/.test(nw);
+  // 커밋 전 훅 (spec-commit.js): 코드 repo 의 git commit 에 알림 · 막지 않음 · 다른 명령 · 끄기는 조용
+  const sc = (command, cwd = ws) => spawnSync(process.execPath, [path.join(ws, 'packs', 'core', 'hooks', 'spec-commit.js'), '--agent=claude'], { cwd: ws, encoding: 'utf8', input: JSON.stringify({ session_id: 'spec-1', hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command }, cwd }), env: { ...process.env, CLAUDE_PROJECT_DIR: ws } }).stdout;
+  const warnOut = sc('git -C repos/app commit -m x');
+  const specHook = /"additionalContext":"⚠ 기획 ID\(@spec\) 가 없는 새 진입 파일 1개: app\/src\/PayController\.java/.test(warnOut) && !/"deny"/.test(warnOut)
+    && /PayController/.test(sc('cd repos/app && git commit -m x')) && !sc('git -C repos/app status').trim() && !sc('git commit -m x').trim();
+  const w2 = JSON.parse(fs.readFileSync(wsFile, 'utf8')); w2.vars.docs.traceOnCommit = 'off'; fs.writeFileSync(wsFile, JSON.stringify(w2, null, 2));
+  const specOff = !sc('git -C repos/app commit -m x').trim();
+  w2.vars.docs.traceOnCommit = 'warn'; fs.writeFileSync(wsFile, JSON.stringify(w2, null, 2));
   // 문서와 다름 설정: 기본 approve 가 규칙에 들어간다
   const agentsMd = fs.readFileSync(path.join(ws, 'AGENTS.md'), 'utf8');
   const sync = /`vars\.docs\.syncMode` \(지금 `approve`\)/.test(agentsMd) && /@spec SCR-ORD-01 FN-ORD-003/.test(agentsMd) && /`approve` 면 사용자 승인 뒤/.test(fs.readFileSync(path.join(ws, '.agents', 'rules', 'core--45-docs-writing.md'), 'utf8'));
@@ -1776,9 +1788,9 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const planKept = /- 알림/.test(kept) && /\| 1 \| 스프린트 계획 \| ▶ \| 2026-10-25/.test(kept) && !kept.includes(`| ${P2.IDEA_STAGE} |`);
   const arch = fs.readFileSync(path.join(docs, '10-system', 'architecture.md'), 'utf8');
   const archOk = /^# 시스템 구성도/m.test(arch) && /견본이다/.test(arch) && !/## 변경 이력/.test(arch);
-  record('기획 repo 뼈대 · 메뉴 순서 · @spec 추적 · 문서와 다름 설정', skeleton && menuOk && traced && mdOk && newOk && sync && planKept && archOk,
+  record('기획 repo 뼈대 · 메뉴 순서 · @spec 추적 · 커밋 전 알림 · 문서와 다름 설정', skeleton && menuOk && traced && mdOk && newOk && specHook && specOff && sync && planKept && archOk,
     `옛 신규 로드맵 그대로(백로그 · 날짜) ${planKept} · 구성도 견본 표시 · 이력 표 없음 ${archOk} · `
-    + `뼈대 ${skeleton} · 메뉴 ${menuOk} (${menu.join(' > ')}) · 코드 · 테스트 나눠 세기 ${traced} · --md 추적표 ${mdOk} · --new ${newOk} · syncMode · @spec 규칙 ${sync}`);
+    + `뼈대 ${skeleton} · 메뉴 ${menuOk} (${menu.join(' > ')}) · 코드 · 테스트 나눠 세기 ${traced} · --md 추적표 ${mdOk} · --new ${newOk} · 커밋 전 알림 ${specHook} · 끄기 ${specOff} · syncMode · @spec 규칙 ${sync}`);
 }
 
 

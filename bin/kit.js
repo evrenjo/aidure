@@ -527,10 +527,13 @@ function fillGuides(root) {
   try { raw = JSON.parse(read(file)); } catch { return []; }
   const filled = [];
   let changed = false;
+  // 설정 수정이 잠긴 팀의 팀원 PC 에서는 적지 않는다 (workspace.json · AGENTS.md 를 커밋할 수 없다). 관리자가 sync 하면 적힌다
+  const locked = !lockState(root, raw).admin;
   for (const r of raw.repos || []) {
     if (!['code', 'issues'].includes(r.kind || 'code') || Array.isArray(r.guides)) continue;
     const g = scanGuides(path.join(root, repoRel(r)));
     if (!g) continue; // 아직 받지 않은 repo
+    if (locked) { if (g.length) filled.push({ name: r.name, guides: g, locked: true }); continue; }
     r.guides = g;
     changed = true;
     if (g.length) filled.push({ name: r.name, guides: g });
@@ -905,7 +908,7 @@ function repoGuidesSection(ws) {
   }
   const modes = new Set(list.filter((r) => r.guides.some((g) => !isGuideSetting(g))).map(guideMode));
   out.push('');
-  if (modes.has('follow')) out.push('- **repo 지침 우선**: 그 repo 를 고치기 전에 표의 지침을 읽는다 (Codex 는 스스로 읽지 않는다). 코드 규칙 · 빌드 · 테스트 명령 · 구조가 킷 규칙과 다르면 repo 지침을 따르고, 킷 규칙은 지침에 없는 부분만 채운다. 커밋 · push · 배포 승인, 비밀값, 운영 접근 같은 워크스페이스 안전 규칙은 킷 규칙을 따른다.');
+  if (modes.has('follow')) out.push('- **repo 지침 우선**: 그 repo 를 고치기 전에 표의 지침을 읽는다 (Codex 는 스스로 읽지 않는다). 코드 규칙 · 빌드 · 테스트 명령 · 구조가 킷 규칙과 다르면 repo 지침을 따르고, 킷 규칙은 지침에 없는 부분만 채운다. repo 안의 스킬(`.claude/skills/` · `.agents/skills/`)은 스킬 목록에 오지 않으므로, 설명에 맞는 작업이면 그 SKILL.md 를 읽고 따른다. 커밋 · push · 배포 승인, 비밀값, 운영 접근 같은 워크스페이스 안전 규칙은 킷 규칙을 따른다.');
   if (modes.has('kit')) out.push('- **킷 규칙 우선**: 지침은 빌드 · 테스트 명령과 구조를 알 때만 참고한다. 규칙이 다르면 킷 규칙을 따르고, 다른 점을 보고에 한 줄 적는다.');
   if (modes.has('ignore')) out.push('- **무시**: 읽지 않는다. 도구가 그 폴더의 지침을 스스로 불러와도 따르지 않는다.');
   if (list.some((r) => r.guides.some(isGuideSetting))) out.push('- repo 안의 실행 도구 설정(`.claude/settings.json` · `.codex/` · `.mcp.json`)은 워크스페이스에서 실행하면 적용되지 않는다. 필요한 훅 · 권한 · MCP 는 사용자에게 알리고 워크스페이스 설정으로 옮긴다 (import 스킬).');
@@ -1877,7 +1880,10 @@ function cmdSync(root, { quiet, soft } = {}) {
   if (moved.length) console.log(`✔ 원격이 생긴 repo 를 workspace.json 에 기록했습니다: ${moved.join(', ')}. workspace.json 을 commit · push 하면 팀원이 aidure install 로 받습니다`);
   // repo 안에 원래 있던 AI 지침: 처음 받은 repo 는 기록하고, 기록과 달라졌으면 알린다
   const guidesFilled = fillGuides(root);
-  if (guidesFilled.length) console.log(`✔ repo 안의 AI 지침을 찾아 workspace.json 에 적었습니다: ${guidesFilled.map((x) => `${x.name} ${x.guides.length}개`).join(' · ')}. 기본은 repo 지침 우선이고, 바꾸려면 aidure repo guides <이름> kit|ignore`);
+  const guidesNew = guidesFilled.filter((x) => !x.locked);
+  const guidesHeld = guidesFilled.filter((x) => x.locked);
+  if (guidesNew.length) console.log(`✔ repo 안의 AI 지침을 찾아 workspace.json 에 적었습니다: ${guidesNew.map((x) => `${x.name} ${x.guides.length}개`).join(' · ')}. 기본은 repo 지침 우선이고, 바꾸려면 aidure repo guides <이름> kit|ignore`);
+  if (guidesHeld.length && !quiet) console.log(`… repo 안의 AI 지침이 있지만 설정 수정이 잠겨 있어 기록하지 않았습니다: ${guidesHeld.map((x) => x.name).join(', ')}. 관리자가 sync 하면 기록됩니다`);
   const generated = generate(root);
   const { ws, files, errors, warnings, stats } = generated;
   for (const c of guideChanges(root, ws)) warnings.push(`repo '${c.name}' 의 AI 지침이 기록과 다릅니다${c.added.length ? ` (새로 생김: ${c.added.join(', ')})` : ''}${c.removed.length ? ` (없어짐: ${c.removed.join(', ')})` : ''}. 맞으면 aidure repo guides --rescan ${c.name}`);
