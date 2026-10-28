@@ -396,8 +396,21 @@ function writeRegistry(list) {
 function workspaceName(root) {
   try { return JSON.parse(read(path.join(root, 'workspace.json'))).project.name || path.basename(root); } catch { return path.basename(root); }
 }
-/** 목록에 올린다 (이미 있으면 이름만 갱신) — 받은 경로를 그대로 돌려준다 */
+/**
+ * 임시 폴더의 워크스페이스인가 — 시험 · 에이전트 작업이 만든 것. 이 PC 목록(kedovi list · upgrade --all)에 올리지 않는다.
+ * 시스템 임시 폴더(os.tmpdir · /tmp · /private/tmp · /var/folders · Windows TEMP)와 ~/.claude/jobs
+ */
+function isTempWorkspace(dir) {
+  const os = require('os');
+  const real = (x) => { try { return fs.realpathSync(x); } catch { return path.resolve(x); } };
+  const p = real(dir);
+  const roots = [os.tmpdir(), '/tmp', '/private/tmp', '/var/folders', '/private/var/folders', process.env.TEMP, process.env.TMP, path.join(os.homedir(), '.claude', 'jobs')]
+    .filter(Boolean).map(real);
+  return roots.some((r) => p === r || p.startsWith(r + path.sep));
+}
+/** 목록에 올린다 (이미 있으면 이름만 갱신) — 받은 경로를 그대로 돌려준다. 임시 폴더는 올리지 않는다 */
 function remember(root) {
+  if (isTempWorkspace(root) && !process.env.KEDOVI_HOME) { writeShim(root); return root; }
   const all = readRegistry();
   const name = workspaceName(root);
   const old = all.find((w) => w.path === root);
@@ -425,10 +438,10 @@ function writeShim(root) {
     }
   } catch { /* 편의 기능 — 못 만들어도 명령은 계속 */ }
 }
-/** 아직 워크스페이스로 남아 있는 것만 — 지웠거나 옮긴 폴더는 목록에서 뺀다 */
+/** 아직 워크스페이스로 남아 있는 것만 — 지웠거나 옮긴 폴더 · 임시 폴더는 목록에서 뺀다 */
 function liveRegistry() {
   const all = readRegistry();
-  const live = all.filter((w) => fs.existsSync(path.join(w.path, 'workspace.json')));
+  const live = all.filter((w) => fs.existsSync(path.join(w.path, 'workspace.json')) && (process.env.KEDOVI_HOME || !isTempWorkspace(w.path)));
   if (live.length !== all.length) writeRegistry(live);
   return live;
 }

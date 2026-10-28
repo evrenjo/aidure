@@ -2,6 +2,13 @@
 
 `kedovi upgrade` 가 올린 버전 사이의 항목을 표로 보여 준다. 배포할 때 이번 버전 항목을 맨 위에 더한다 (`## 버전` 아래 `| 구분 | 내용 |` 표, 한 줄씩 짧게).
 
+## 0.77.1
+
+| 구분 | 내용 |
+|---|---|
+| 수정 | 임시 폴더(시스템 임시 폴더 · `/private/tmp` · `/var/folders` · `~/.claude/jobs`)의 워크스페이스를 이 PC 목록에 넣지 않음. 이미 있으면 `kedovi list` · `upgrade --all` 때 정리 |
+| 수정 | 공개판 CI 의 GitHub action 을 Node 24 판으로 (Node 20 지원 종료 경고), setup-node 자동 캐시 끔 |
+
 ## 0.77.0
 
 | 구분 | 내용 |

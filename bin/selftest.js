@@ -60,6 +60,8 @@ for (const t of walk(path.join(KIT, 'packs'), (p) => p.endsWith('.test.js'))) {
 
 // 2. 워크스페이스 생성 → check → 죽은 참조
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-selftest-'));
+// 이 PC 의 워크스페이스 목록(~/.kedovi)을 건드리지 않게 — 시험이 띄우는 모든 kedovi 이 임시 목록을 쓴다 (따로 KEDOVI_HOME 을 주는 시험은 그 값)
+if (!process.env.KEDOVI_HOME) process.env.KEDOVI_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-selftest-home-'));
 const legacy = path.join(tmp, 'legacy-src');
 fs.mkdirSync(path.join(legacy, 'src'), { recursive: true });
 fs.writeFileSync(path.join(legacy, 'src', 'PGM01.cbl'), '       IDENTIFICATION DIVISION.\n       PROGRAM-ID. PGM01.\n');
