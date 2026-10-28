@@ -135,5 +135,33 @@ assert.deepStrictEqual(tr.unknown.map((u) => `${u.id} ${u.rel}:${u.line}`), ['FN
 assert.throws(() => DR.trace([], [], []), /머리말/);
 for (const d of [plan, code]) fs.rmSync(d, { recursive: true, force: true });
 
+{
+  // 규모 문서: 구성 · 결정 문서가 생겼는데 수치가 없으면 알린다 (「과하다 · 필요 없다」 판단의 근거)
+  const tpl = fs.readFileSync(path.join(__dirname, '..', 'assets', 'scale', 'template.md'), 'utf8');
+  const sc = (docs) => DR.health(null, { docs, scale: true }).filter((x) => /^규모 문서/.test(x));
+  const dec = { rel: '90-decisions/DEC-001.md', text: '# DEC-001 서버\n\n> 상태: 확정\n' };
+  const archTpl = { rel: '10-system/architecture.md', text: '# 시스템 구성도\n\n> 상태: 초안 · 아래 서비스 이름 · 버전 · 서버 사양은 견본이다\n' };
+  const archOwn = { rel: '10-system/architecture.md', text: '# 시스템 구성도\n\n> 상태: 초안\n' };
+  assert.deepStrictEqual(sc([archTpl]), [], '구성 문서가 견본 그대로면 아직 묻지 않는다');
+  assert.deepStrictEqual(sc([{ rel: 'a.md', text: '# a\n' }]), [], '구성 · 결정 문서가 없으면 경고 없음');
+  assert.ok(/규모 문서 없음/.test(sc([dec]).join()), '결정이 있는데 규모 문서가 없으면 알린다');
+  assert.ok(/규모 문서 없음/.test(sc([archOwn]).join()), '직접 쓴 구성 문서도 같다');
+  assert.ok(/수치 없음.*00-overview\/scale\.md/.test(sc([dec, { rel: '00-overview/scale.md', text: tpl }]).join()), '견본 그대로면 수치 없음');
+  assert.ok(!DR.scaleFilled(tpl), '견본의 <예: 100명> 은 채운 것이 아니다');
+  const filled = tpl.replace('| 가입 사용자 | <예: 100명> |', '| 가입 사용자 | 2,000명 |');
+  assert.ok(DR.scaleFilled(filled) && !sc([dec, { rel: '00-overview/scale.md', text: filled }]).length, '「지금」 칸에 수치가 있으면 경고 없음');
+  assert.ok(DR.scaleFilled(tpl.replace('| 하루 생성 데이터 (건) | <> |', '| 하루 생성 데이터 (건) | 미정 |')), '미정도 답한 것으로 본다 (미결 목록이 쫓는다)');
+  assert.ok(!DR.scaleFilled(tpl.replace('| 가입 사용자 | <예: 100명> | <> |', '| 가입 사용자 | <예: 100명> | 5만 |')), '1년 뒤 칸만 채우면 아직 아니다');
+  assert.deepStrictEqual(DR.health(null, { docs: [dec] }).filter((x) => /^규모 문서/.test(x)), [], '기획 repo 가 아니면(scale 꺼짐) 묻지 않는다');
+  const frozen = { rel: '00-overview/scale.md', text: '# 규모\n\n> 상태: 동결\n\n| 항목 | 지금 |\n|---|---|\n| 사용자 | 100 |\n' };
+  assert.ok(DR.isFrozen(frozen.text) && !sc([dec, frozen]).length, '인용구 「> 상태: 동결」 도 동결이고, 동결된 규모 문서도 있는 것으로 센다');
+  const row = (v) => `| 항목 | 지금 | 1년 |\n|---|---|---|\n| 사용자 | ${v} | 1 |\n`;
+  assert.ok(DR.scaleFilled(row('<50명')) && DR.scaleFilled(row('수천 명')) && DR.scaleFilled(row('a \\| b 3')), '<50명 · 수 단위 · 이스케이프한 | 는 값이다');
+  assert.ok(DR.scaleFilled(row('천만 건')) && !DR.scaleFilled(row('백업 예정')) && !DR.scaleFilled(row('만들 예정')), '수 단위 글자는 수로 쓰인 때만');
+  assert.ok(!DR.scaleFilled(row('<>')) && !DR.scaleFilled(row('')), '칸 전체가 <…> 이거나 빈 칸은 아니다');
+  assert.ok(!DR.scaleFilled('```\n' + row('100') + '```\n'), '코드 블록 안 표는 보지 않는다');
+  assert.ok(DR.scaleFilled('| 항목 | 현재 |\n|---|---|\n| 사용자 | 100 |\n'), '「현재」 열도 본다');
+}
+
 fs.rmSync(dir, { recursive: true, force: true });
 console.log('docsref.test.js ✔');

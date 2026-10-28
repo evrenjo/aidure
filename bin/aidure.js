@@ -2807,6 +2807,9 @@ function initDocsRepo(dst) {
   // 견본 값(서버 이름 · 사양)은 예시라고 밝힌다
   if (fs.existsSync(arch)) fs.writeFileSync(path.join(dst, '10-system', 'architecture.md'), fs.readFileSync(arch, 'utf8').replace(/\r\n/g, '\n')
     .replace(/^# 시스템 구성$/m, '# 시스템 구성도').replace(/^> 상태: 초안$/m, '> 상태: 초안 · 아래 서비스 이름 · 버전 · 서버 사양은 견본이다. 프로젝트 값으로 바꾸거나 지운다'));
+  // 규모 · 비기능 문서 양식도 core 팩 견본 하나가 정본이다 (「과하다 · 필요 없다」 판단의 근거)
+  const scale = path.join(KIT_ROOT, 'packs', 'core', 'assets', 'scale', 'template.md');
+  if (fs.existsSync(scale)) fs.copyFileSync(scale, path.join(dst, '00-overview', 'scale.md'));
   if (!fs.existsSync(path.join(dst, '.git'))) {
     try { execFileSync('git', ['init', '-q', dst]); } catch { /* git 없음 — 폴더만 */ }
   }

@@ -59,7 +59,7 @@ function targets(ws, arg) {
     // 워크스페이스의 repo 폴더면 그 이름으로 (안내 명령에 쓴다)
     const real = (x) => { try { return fs.realpathSync(x); } catch { return path.resolve(x); } };
     const r = repos.find((x) => real(x.dir) === real(arg));
-    return [{ name: r ? r.name : path.basename(path.resolve(arg)), dir: path.resolve(arg) }];
+    return [{ name: r ? r.name : path.basename(path.resolve(arg)), dir: path.resolve(arg), kind: r ? r.kind : undefined }];
   }
   if (arg) {
     const r = repos.find((x) => x.name === arg);
@@ -485,7 +485,9 @@ function unlistedLines(res) {
 function healthLines(t, ws, res) {
   const v = (ws && ws.vars && ws.vars.docs) || {};
   const docs = res && res.files ? Object.entries(res.files).filter(([k, c]) => /\.md$/i.test(k) && typeof c === 'string' && wanted(k)).map(([rel, text]) => ({ rel, text, sheet: false })) : undefined;
-  try { return DR.health(t.dir, { maxKB: v.maxKB, cellMax: v.cellMax, cellAvg: v.cellAvg, figureKB: v.figureKB, codeMax: v.codeMax, docs }).map((w) => `⚠ 문서 점검: ${w}`); } catch { return []; }
+  // 규모 문서 점검은 기획 repo 만 (워크스페이스 밖 폴더면 기획 repo 뼈대의 결정 폴더로 알아본다)
+  const scale = t.kind ? t.kind === 'docs' : fs.existsSync(path.join(t.dir, '90-decisions'));
+  try { return DR.health(t.dir, { maxKB: v.maxKB, cellMax: v.cellMax, cellAvg: v.cellAvg, figureKB: v.figureKB, codeMax: v.codeMax, docs, scale }).map((w) => `⚠ 문서 점검: ${w}`); } catch { return []; }
 }
 
 /** show: ID 의 정의 부분만 */

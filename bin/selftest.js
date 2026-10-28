@@ -1788,8 +1788,14 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const planKept = /- 알림/.test(kept) && /\| 1 \| 스프린트 계획 \| ▶ \| 2026-10-25/.test(kept) && !kept.includes(`| ${P2.IDEA_STAGE} |`);
   const arch = fs.readFileSync(path.join(docs, '10-system', 'architecture.md'), 'utf8');
   const archOk = /^# 시스템 구성도/m.test(arch) && /견본이다/.test(arch) && !/## 변경 이력/.test(arch);
-  record('기획 repo 뼈대 · 메뉴 순서 · @spec 추적 · 커밋 전 알림 · 문서와 다름 설정', skeleton && menuOk && traced && mdOk && newOk && specHook && specOff && sync && planKept && archOk,
-    `옛 신규 로드맵 그대로(백로그 · 날짜) ${planKept} · 구성도 견본 표시 · 이력 표 없음 ${archOk} · `
+  // 규모 문서: 뼈대에 들어가고, 결정 기록에 「전제한 규모」 칸, 규칙이 수치로 판단하게 한다 (「과하다」 를 짐작으로 말하지 않게)
+  const scaleDoc = path.join(docs, '00-overview', 'scale.md');
+  const rulesTxt = fs.readFileSync(path.join(ws, '.agents', 'rules', 'core--25-work-principles.md'), 'utf8');
+  const scaleOk = fs.existsSync(scaleDoc) && /^# 규모 · 비기능/m.test(fs.readFileSync(scaleDoc, 'utf8'))
+    && /## 전제한 규모/.test(fs.readFileSync(path.join(docs, '90-decisions', '_template.md'), 'utf8'))
+    && /규모 판단은 수치로 한다/.test(rulesTxt) && /\| 7 \| 규모:/.test(fs.readFileSync(path.join(KIT, 'packs', 'core', 'skills', 'idea', 'SKILL.md'), 'utf8'));
+  record('기획 repo 뼈대 · 메뉴 순서 · @spec 추적 · 커밋 전 알림 · 문서와 다름 설정', skeleton && menuOk && traced && mdOk && newOk && specHook && specOff && sync && planKept && archOk && scaleOk,
+    `옛 신규 로드맵 그대로(백로그 · 날짜) ${planKept} · 구성도 견본 표시 · 이력 표 없음 ${archOk} · 규모 문서 · 전제한 규모 · 규칙 ${scaleOk} · `
     + `뼈대 ${skeleton} · 메뉴 ${menuOk} (${menu.join(' > ')}) · 코드 · 테스트 나눠 세기 ${traced} · --md 추적표 ${mdOk} · --new ${newOk} · 커밋 전 알림 ${specHook} · 끄기 ${specOff} · syncMode · @spec 규칙 ${sync}`);
 }
 

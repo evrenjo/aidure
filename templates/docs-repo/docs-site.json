@@ -8,6 +8,7 @@
         "README.md",
         "00-overview/overview.md",
         "00-overview/idea.md",
+        "00-overview/scale.md",
         "00-overview/*.md"
       ]
     },

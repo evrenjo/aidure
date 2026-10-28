@@ -40,7 +40,7 @@ function listDocs(dir) {
 /** 머리말(첫 40줄)에 「상태: 동결」 이 있으면 동결 문서 */
 function isFrozen(text) {
   const head = String(text).split('\n').slice(0, 40).join('\n');
-  return /^\s*\**상태\**\s*[:：]\s*\**\s*동결/m.test(head) || /^\s*\|\s*\**상태\**\s*\|\s*\**\s*동결/m.test(head);
+  return /^\s*(?:>\s*)?\**상태\**\s*[:：]\s*\**\s*동결/m.test(head) || /^\s*\|\s*\**상태\**\s*\|\s*\**\s*동결/m.test(head);
 }
 
 const stripTags = (h) => String(h).replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, '')
@@ -341,7 +341,8 @@ function health(dir, opts = {}) {
   const cellAvg = n0(opts.cellAvg, 80);
   const figureKB = n0(opts.figureKB, 20);
   const codeMax = n0(opts.codeMax, 15);
-  const docs = (opts.docs || listDocs(dir)).filter((d) => !d.sheet && !isFrozen(d.text));
+  const listed = (opts.docs || listDocs(dir)).filter((d) => !d.sheet);
+  const docs = listed.filter((d) => !isFrozen(d.text));
   const warn = [];
   const big = docs.map((d) => [d.rel, Buffer.byteLength(d.text)]).filter(([, b]) => b > maxKB * 1024).sort((a, b) => b[1] - a[1]);
   if (big.length) warn.push(`큰 문서 ${big.length}개 (상한 ${maxKB}KB, vars.docs.maxKB): ${big.slice(0, 5).map(([r, b]) => `${r} ${Math.round(b / 1024)}KB`).join(' · ')}${big.length > 5 ? ` 외 ${big.length - 5}개` : ''}. 주제별로 나누거나, 구현이 끝난 문서는 「상태: 동결」`);
@@ -405,7 +406,44 @@ function health(dir, opts = {}) {
   }
   const dup = [...seen.entries()].filter(([, s]) => s.size >= 2).sort((a, b) => b[1].size - a[1].size);
   if (dup.length) warn.push(`같은 문장 ${dup.length}개가 여러 문서에 있습니다 (${minLen}자 이상). 예: ${dup.slice(0, 2).map(([t, s]) => `「${cut(t, 40)}」 ${[...s].slice(0, 3).join(' · ')}`).join(' / ')}. 한 문서에만 두고 다른 곳은 ID 링크로`);
+  // 규모 문서는 기획 repo 에서만 본다 (코드 repo 의 docs/architecture.md 에는 묻지 않는다). 동결된 규모 문서도 있는 것으로 센다
+  const sc = opts.scale ? scaleWarn(docs, listed) : null;
+  if (sc) warn.push(sc);
   return warn;
 }
 
-module.exports = { listDocs, isFrozen, sentenceHeads, codeMarks, sourceLines, refsToQuote, defsIn, defIdsIn, prefixRe, show, refs, trace, health, tableCells, cut };
+/* 규모 문서: 「과하다 · 필요 없다」 판단의 근거. 구성 · 결정 문서가 생겼는데 수치가 없으면 알린다.
+ * 구성 문서는 init-docs 견본 그대로(상태 줄에 「견본」)면 아직 안 쓴 것으로 본다 */
+const SCALE_DOC = /(^|\/)scale\.md$/i;
+const DECISION_DOC = /(^|\/)DEC-\d+[^/]*\.md$/i;
+const ARCH_DOC = /(^|\/)architecture\.md$/i;
+// 수 단위 글자는 수로 쓰인 때만 (수천 명 · 천만 건). 「백업 예정」 같은 낱말은 아니다
+const SCALE_VALUE = /\d|(?:수|몇)\s*[십백천만억]|[십백천만억]+\s*(?:명|건|개|회|원|곳|대)|미정/;
+
+/** 「지금」 열에 값이 한 칸이라도 있으면 채운 것: 숫자 · 수 단위(천 · 만 …) · 「미정」(미결 목록이 쫓는다). 칸 전체가 <…> 이면 자리표시. 코드 블록 안 표는 보지 않는다 */
+function scaleFilled(text) {
+  let head = null;
+  let fence = false;
+  for (const line of String(text).split('\n')) {
+    if (/^\s*```/.test(line)) { fence = !fence; head = null; continue; }
+    if (fence || !/^\s*\|/.test(line)) { head = null; continue; }
+    const cells = line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '').split(/(?<!\\)\|/).map((c) => c.trim());
+    if (!head) { head = cells; continue; }
+    if (cells.every((c) => /^:?-+:?$/.test(c))) continue;
+    const i = head.findIndex((c) => /지금|현재/.test(c));
+    const v = i >= 0 ? (cells[i] || '') : '';
+    if (i > 0 && !/^<[^>]*>$/.test(v) && SCALE_VALUE.test(v)) return true;
+  }
+  return false;
+}
+
+function scaleWarn(docs, all = docs) {
+  const arch = (d) => ARCH_DOC.test(d.rel) && !/견본/.test(d.text.split('\n').slice(0, 6).join('\n'));
+  if (!docs.some((d) => DECISION_DOC.test(d.rel) || arch(d))) return null;
+  const s = all.filter((d) => SCALE_DOC.test(d.rel));
+  if (!s.length) return '규모 문서 없음: 구성 · 결정 문서는 있는데 사용자 · 하루 데이터 건수 · 증가량 · 보존 기간을 적은 곳이 없습니다. 00-overview/scale.md 로 만든다 (양식: 워크스페이스 packs/core/assets/scale/template.md). 「과하다 · 필요 없다」 판단과 결정의 「전제한 규모」 근거가 된다';
+  if (!s.some((d) => scaleFilled(d.text))) return `규모 문서에 수치 없음: ${s.map((d) => d.rel).join(' · ')} 의 「지금」 칸이 비었습니다. 사용자 · 하루 데이터 건수 · 증가량 · 보존 기간을 채운다 (모르면 사용자에게 묻고, 정할 수 없으면 미정과 미결)`;
+  return null;
+}
+
+module.exports = { listDocs, isFrozen, sentenceHeads, codeMarks, sourceLines, refsToQuote, defsIn, defIdsIn, prefixRe, show, refs, trace, health, tableCells, cut, scaleFilled };
