@@ -1,0 +1,202 @@
+{
+  "_note": "불만 · 바람 표현(\"왜 이래\" · \"이런 거 안 되나\" · \"매번\" 등)에 주제어가 맞으면 (complaint = 강한 불만, weak = 흔한 말이라 about(에이전트 · 킷 · 설정을 가리키는 말)과 함께이거나 주제어가 킷 기능 자체인 항목(weakOk)일 때만) settings-hint 훅이 관련 설정 후보를 에이전트에게 알린다. topic = 주제 정규식(대소문자 무시), scope = 바꾸는 범위(이 PC · 팀), cmd = 바꾸는 명령. 새 설정 명령을 만들면 여기에도 한 줄 (packs/core/skills/kedovi/SKILL.md 표와 짝)",
+  "complaint": "왜\\s*(?:이래|이렇게|자꾸|계속|맨날)|이런\\s*거|이런거|싫|귀찮|매번|자꾸|그만|불편|짜증|마음에\\s*안|별로|끄고\\s*싶|줄이고\\s*싶|바꾸고\\s*싶|안\\s*나오게|안\\s*하게|하지\\s*마|끌\\s*수|켤\\s*수|바꿀\\s*수|없앨\\s*수",
+  "entries": [
+    {
+      "id": "language",
+      "topic": "영어로|english|한글로|한국어로|언어가|번역",
+      "say": "응답 언어",
+      "cmd": "kedovi prefs language ko|en [--team]",
+      "scope": "이 PC · 팀",
+      "weakOk": true
+    },
+    {
+      "id": "style",
+      "topic": "답이?\\s*(?:너무\\s*)?(?:길|짧)|(?:답변|대답|설명).{0,10}(?:길|짧게|간단|장황|어려)|(?:짧게|간단히)\\s*(?:해|말|답)|장황|자세히\\s*(?:말|설명)|전문가\\s*(?:모드|처럼)|초보|말투|용어가?\\s*어려",
+      "say": "대화 스타일 (학습 · 일반 · 전문가)",
+      "cmd": "kedovi prefs style learn|normal|expert [--team]",
+      "scope": "이 PC · 팀"
+    },
+    {
+      "id": "timestamp",
+      "topic": "시각\\s*표시|시간\\s*표시|타임스탬프|첫\\s*줄.{0,6}(?:시간|시각)|날짜\\s*표시",
+      "say": "답변 첫 줄 시각 표시",
+      "cmd": "kedovi timestamp on|off [--team]",
+      "scope": "이 PC · 팀",
+      "weakOk": true
+    },
+    {
+      "id": "mermaid",
+      "topic": "그림을?\\s*(?:브라우저|창|크게)|다이어그램|\\bmermaid\\b|도표",
+      "say": "그림을 브라우저로 보기 (claude-mermaid)",
+      "cmd": "kedovi prefs mermaid install",
+      "scope": "이 PC",
+      "weakOk": true
+    },
+    {
+      "id": "notify-level",
+      "topic": "알림|텔레그램|메시지가?\\s*많|시끄|푸시",
+      "say": "알림 수준 (전체 · 결과와 결정 · 진행 현황 · 끄기)",
+      "cmd": "kedovi notify my level all|decisions|progress|off",
+      "scope": "이 PC",
+      "weakOk": true
+    },
+    {
+      "id": "notify-voice",
+      "topic": "음성|소리|목소리|말로\\s*알려",
+      "say": "음성 알림",
+      "cmd": "kedovi notify my voice on|off · scope · name <목소리>",
+      "scope": "이 PC",
+      "weakOk": true
+    },
+    {
+      "id": "away",
+      "topic": "자리\\s*비|밖에서|폰으로|휴대폰",
+      "say": "자리 비움 (결정을 텔레그램 버튼으로)",
+      "cmd": "kedovi notify my away on|off",
+      "scope": "이 PC",
+      "weakOk": true
+    },
+    {
+      "id": "models",
+      "topic": "\\b(?:opus|sonnet|haiku|fable|gpt-?\\d|luna|astra)\\b|모델|토큰\\s*(?:비용|많)|요금|사용량",
+      "say": "모델 프로필 (최고 · 표준 · 절약) · 역할별 모델",
+      "cmd": "kedovi models profile rich|standard|lean [--team] · kedovi models set <역할> <claude|codex> <모델>",
+      "scope": "이 PC · 팀"
+    },
+    {
+      "id": "ai",
+      "topic": "구독|게이트웨이|claude\\s*만|gpt\\s*만|codex\\s*만|한\\s*회사",
+      "say": "쓰는 AI · 연결 방식",
+      "cmd": "kedovi ai direct claude|gpt|claude,gpt · kedovi ai compose mix|vendor|single",
+      "scope": "이 PC"
+    },
+    {
+      "id": "plan-first",
+      "topic": "착수\\s*전|머리말|매번\\s*물어|확인을?\\s*(?:너무|자꾸)|먼저\\s*물어",
+      "say": "착수 전 확인",
+      "cmd": "kedovi team-mode enforce plan off|warn|block [--team]",
+      "scope": "이 PC · 팀",
+      "weakOk": true
+    },
+    {
+      "id": "ask",
+      "topic": "질문\\s*창|선택지|객관식|글로\\s*물어",
+      "say": "결정 질문 점검 (질문 창으로 다시 묻기)",
+      "cmd": "kedovi team-mode enforce ask off|block [--team]",
+      "scope": "이 PC · 팀",
+      "weakOk": true
+    },
+    {
+      "id": "status-line",
+      "topic": "상태\\s*줄|지금\\s*도는\\s*것|예상\\s*종료",
+      "say": "상태 줄 점검",
+      "cmd": "kedovi team-mode enforce status off|block [--team]",
+      "scope": "이 PC · 팀",
+      "weakOk": true
+    },
+    {
+      "id": "review",
+      "topic": "리뷰\\s*(?:확인|강제|검사)|커밋\\s*전\\s*리뷰|리뷰를?\\s*(?:매번|자꾸|꼭|안\\s*하면)|리뷰\\s*(?:안\\s*했다고|하라고)",
+      "say": "commit · push 전 리뷰 확인",
+      "cmd": "kedovi team-mode enforce review off|warn|block [--team]",
+      "scope": "이 PC · 팀"
+    },
+    {
+      "id": "run-long",
+      "topic": "오래\\s*(?:일하|걸리는\\s*팀원)|계속할지\\s*(?:물|묻)|60\\s*분",
+      "say": "오래 일하는 팀원 · 위임 점검 (상한 분)",
+      "cmd": "kedovi team-mode enforce run off|warn|block [--after <분>] [--team]",
+      "scope": "이 PC · 팀"
+    },
+    {
+      "id": "idle",
+      "topic": "팀원.{0,10}대기|대기\\s*중인\\s*팀원|\\bidle\\b",
+      "say": "대기 팀원 점검",
+      "cmd": "kedovi team-mode enforce idle off|warn|block [--after <분>] [--team]",
+      "scope": "이 PC · 팀",
+      "weakOk": true
+    },
+    {
+      "id": "team-mode",
+      "topic": "팀\\s*구성|역할\\s*에이전트|서브\\s*에이전트를?\\s*(?:너무|자꾸)|팀원을?\\s*(?:너무|자꾸)",
+      "say": "팀 구성 (자동 · 고정)",
+      "cmd": "kedovi team-mode auto|fixed [--team]",
+      "scope": "이 PC · 팀",
+      "weakOk": true
+    },
+    {
+      "id": "rules",
+      "topic": "(?:킷|kedovi|에이전트|ai)\\s*(?:의\\s*)?(?:규칙|룰|지침)|규칙이?\\s*(?:너무|많|자꾸)|룰이?\\s*(?:너무|많)",
+      "say": "킷 규칙 끄기 · 켜기 · 필요할 때만 (우리 방식으로 바꾸려면 packs/project/rules 에 replaces)",
+      "cmd": "kedovi rules list · off <ID> · ondemand <ID> [--repo <이름>]",
+      "scope": "팀 (팀장)"
+    },
+    {
+      "id": "repo-guides",
+      "topic": "claude\\.md|agents\\.md|repo\\s*지침|원래\\s*있던\\s*(?:규칙|지침)",
+      "say": "repo 안의 기존 AI 지침 따르기 · 무시",
+      "cmd": "kedovi repo guides <이름> follow|kit|ignore",
+      "scope": "팀 (팀장)",
+      "weakOk": true
+    },
+    {
+      "id": "repo-owner",
+      "topic": "담당|고칠\\s*수\\s*없|수정\\s*(?:못|이\\s*막|막혀)|막혀",
+      "say": "팀장 · 팀원 담당 repo",
+      "cmd": "kedovi team whoami · kedovi team repos <username> <repo,…> (팀장)",
+      "scope": "팀 (팀장)",
+      "weakOk": true
+    },
+    {
+      "id": "settings-lock",
+      "topic": "설정.*(?:못\\s*바꿔|잠|막)|workspace\\.json",
+      "say": "팀원 설정 수정 허용 · 불가",
+      "cmd": "kedovi team edit allow|deny",
+      "scope": "팀 (팀장)",
+      "weakOk": true
+    },
+    {
+      "id": "approach",
+      "topic": "스프린트|워터폴|이슈\\s*단위|진행\\s*방식|로드맵",
+      "say": "진행 방식 (스프린트 · 전체 · 이슈형)",
+      "cmd": "kedovi approach sprint|full|issue",
+      "scope": "팀 (팀장)",
+      "weakOk": true
+    },
+    {
+      "id": "docs-warn",
+      "topic": "문서\\s*점검|경고가?\\s*(?:많|자꾸)|긴\\s*표|문장형\\s*제목",
+      "say": "문서 점검 기준 (vars.docs.*: maxKB · cellMax · codeMax 등)",
+      "cmd": "workspace.json vars.docs.<항목> 을 바꾸고 kedovi sync",
+      "scope": "팀 (팀장)",
+      "weakOk": true
+    },
+    {
+      "id": "update-check",
+      "topic": "업데이트\\s*알림|새\\s*버전\\s*알림|버전\\s*확인",
+      "say": "킷 새 버전 확인 알림 끄기",
+      "cmd": "환경변수 KEDOVI_NO_UPDATE_CHECK=1",
+      "scope": "이 PC",
+      "weakOk": true
+    },
+    {
+      "id": "web-search",
+      "topic": "웹\\s*검색|인터넷\\s*검색|\\bweb\\s*search\\b",
+      "say": "Codex 웹 검색",
+      "cmd": "workspace.json agents.webSearch false (지우면 켬)",
+      "scope": "팀 (팀장)",
+      "weakOk": true
+    },
+    {
+      "id": "agent-tool",
+      "topic": "codex\\s*로\\s*(?:시작|바꿔)|claude\\s*로\\s*(?:시작|바꿔)|시작\\s*도구",
+      "say": "시작 도구 (Claude Code · Codex)",
+      "cmd": "kedovi agent --claude|--codex",
+      "scope": "이 PC",
+      "weakOk": true
+    }
+  ],
+  "weak": "왜|너무|할\\s*수\\s*(?:있|없)|안\\s*되나|안되나|못\\s*해|못\\s*하나|안\\s*해|없나|있나\\?|가능(?:해|한가|할까)|이상해",
+  "about": "너|네가|니가|에이전트|ai\\b|kedovi|킷|설정|답변|대답|답이|진행\\s*알림|말투|알림|워크스페이스|훅"
+}

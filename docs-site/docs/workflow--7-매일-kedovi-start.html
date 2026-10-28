@@ -14,7 +14,7 @@
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>kedovi 문서</a></div>
   <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
-  <div class="tools"><span>v0.76.1</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+  <div class="tools"><span>v0.77.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="docs/workflow--7-매일-kedovi-start.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
@@ -32,7 +32,7 @@
     RS --&gt;|&quot;아니오&quot;| A{&quot;시작 도구가 정해졌나&quot;}
     A --&gt;|&quot;아니오&quot;| AG[&quot;AI 연결 방식 (5절)&quot;]
     A --&gt;|&quot;예 · --claude/--codex 로 이번만 지정&quot;| V
-    AG --&gt; V[&quot;새 버전이 나왔으면 npm i -g 안내 (하루 한 번 확인)&lt;br/&gt;설치본이 워크스페이스보다 새로우면 「킷 새 버전을 지금 올릴까요」 (권장: 올리고 시작)&lt;br/&gt;관리자 아님 · 받지 않은 커밋 · 커밋 안 한 변경이면 알리기만&lt;br/&gt;repos/ 에 없는 repo 가 있으면 kedovi install 안내&quot;]
+    AG --&gt; V[&quot;새 버전이 나왔으면 npm i -g 안내 (하루 한 번 확인)&lt;br/&gt;설치본이 워크스페이스보다 새로우면 「킷 새 버전을 지금 올릴까요」 (권장: 올리고 시작)&lt;br/&gt;팀장 아님 · 받지 않은 커밋 · 커밋 안 한 변경이면 알리기만&lt;br/&gt;repos/ 에 없는 repo 가 있으면 kedovi install 안내&quot;]
     V --&gt; M[&quot;메인 모델·추론 강도 = 프로필·팀·개인 + 연결 방식&lt;br/&gt;Claude --model · --effort, Codex -m · -c model_reasoning_effort 로 넘김 (Codex 는 웹 검색 --search 도 기본)&lt;br/&gt;게이트웨이면 게이트웨이 모델 이름으로. Claude Code 에 게이트웨이 설정이 없으면 저장한 주소·키 환경변수로 연결&quot;]
     M --&gt; PX{&quot;--pixel-agents 인가&quot;}
     PX --&gt;|&quot;예 · pixel-agents 설치됨&quot;| PXO[&quot;Pixel Agents 서버를 띄우고 브라우저로 열기&lt;br/&gt;(세션이 끝나면 함께 끔)&quot;]
@@ -49,9 +49,9 @@
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><div class="empty">7. 매일 (kedovi start)</div></div></aside>
 </div>
 </div>
-<script type="application/json" id="ds-page">{"page":"docs/workflow--7-매일-kedovi-start.html","kind":"doc","title":"7. 매일 (kedovi start)","head":"7. 매일 (kedovi start) · kedovi 문서","crumb":"쓰는 법","status":"","h1":"7. 매일 (\u003ccode>kedovi start\u003c/code>)","lead":"","src":{"href":"https://github.com/evrenjo/kedovi/blob/main/docs/workflow.md","name":"workflow.md"},"toc":[],"prev":{"p":"docs/workflow--6-팀원-kedovi-install.html","t":"6. 팀원 (kedovi install)","g":"쓰는 법"},"next":{"p":"docs/workflow--8-바꿀-때.html","t":"8. 바꿀 때","g":"쓰는 법"},"site":{"title":"kedovi 문서","logo":"ai","version":"v0.76.1","ink":true}}</script>
-<script src="../assets/search.js?v=666b5841"></script>
-<script src="../assets/nav.js?v=221a94f5"></script>
+<script type="application/json" id="ds-page">{"page":"docs/workflow--7-매일-kedovi-start.html","kind":"doc","title":"7. 매일 (kedovi start)","head":"7. 매일 (kedovi start) · kedovi 문서","crumb":"쓰는 법","status":"","h1":"7. 매일 (\u003ccode>kedovi start\u003c/code>)","lead":"","src":{"href":"https://github.com/evrenjo/kedovi/blob/main/docs/workflow.md","name":"workflow.md"},"toc":[],"prev":{"p":"docs/workflow--6-팀원-kedovi-install.html","t":"6. 팀원 (kedovi install)","g":"쓰는 법"},"next":{"p":"docs/workflow--8-바꿀-때.html","t":"8. 바꿀 때","g":"쓰는 법"},"site":{"title":"kedovi 문서","logo":"ai","version":"v0.77.0","ink":true}}</script>
+<script src="../assets/search.js?v=2ae10996"></script>
+<script src="../assets/nav.js?v=3a0f43da"></script>
 <script src="../assets/vendor.js?v=93f62565"></script>
 <script src="../assets/site.js?v=d425b1d1"></script>
 </body>

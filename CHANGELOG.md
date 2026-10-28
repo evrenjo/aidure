@@ -2,6 +2,19 @@
 
 `kedovi upgrade` 가 올린 버전 사이의 항목을 표로 보여 준다. 배포할 때 이번 버전 항목을 맨 위에 더한다 (`## 버전` 아래 `| 구분 | 내용 |` 표, 한 줄씩 짧게).
 
+## 0.77.0
+
+| 구분 | 내용 |
+|---|---|
+| 기능 | 팀장 · 팀원 · 담당 repo: `workspace.json` `team.leads` `[{ username, nickname }]` (모든 repo · 설정) · `team.members[].repos` (담당 repo 만, 한 repo 에 여러 명). 담당 없는 repo 는 누구나. 옛 `team.admins` 는 팀장으로 읽음 |
+| 기능 | 담당 아닌 repo 수정 막기: Claude 편집 · Codex `apply_patch` · 셸 쓰기 명령(훅 `repo-guard`), repo 커밋(pre-commit). 읽기 · `git pull` 은 된다. 막을 때 담당자 · 팀장 이름으로 안내 |
+| 기능 | 이 PC 사용자를 저장소 계정으로 확인 (ssh · gh · glab · git credential, 못 읽으면 한 번 묻기). `kedovi team whoami [--refresh]` |
+| 기능 | 명령 `kedovi team lead add\|remove` · `leads` · `add <username> --nick 이름 --repos a,b` · `repos` · `nick` |
+| 규칙 | 사람을 nickname 으로 부름 (개인 지침 「팀과 담당」). 관리자 → 팀장으로 용어 통일 |
+| 기능 | 설정 안내: "왜 이래 · 이런 거 안 되나 · 매번 …" 같은 불만이 킷 설정으로 풀리면 설정 · 범위(이 PC · 팀) · 명령을 알리고 바꿀지 물음 (훅 `settings-hint`, 설정 지도 `packs/core/settings-map.json`) |
+| 문서 | README 「플러그인 · MCP · 도구」 (필수 · 권장 · 선택), `kedovi doctor` 가 권장 플러그인 · MCP 점검 |
+| 적용 | Codex 는 훅이 바뀌어 `/hooks` 에서 다시 신뢰해야 한다. 팀장은 `kedovi team lead add <계정> --nick 이름` 뒤 팀원 담당을 `kedovi team add <계정> --nick 이름 --repos …` 로 |
+
 ## 0.76.1
 
 | 구분 | 내용 |

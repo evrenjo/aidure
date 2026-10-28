@@ -5,6 +5,7 @@
  * 팀 현황은 kedovi team 과 같은 기준(git fetch 뒤 upstream, 본인 폴더는 작업 폴더), 로드맵은 kedovi plan 과 같은 계산.
  */
 'use strict';
+const TL = require('../lib/team');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -92,8 +93,8 @@ function settings(t) {
     `| 킷 버전 | ${cell((ws.kit || {}).version || '')} |`,
     `| 팩 | ${cell((ws.packs || []).join(' · '))} |`,
     `| 팀 구성 | ${a.mode === 'auto' ? '자동 (리더가 작업마다 역할 · 모델)' : '고정 (프로필대로)'} |`,
-    `| 관리자 | ${cell(((ws.team || {}).admins || []).join(' · ') || '없음')} |`,
-    `| 팀 명단 | ${cell(((ws.team || {}).members || []).join(' · ') || '명단 없이 운영')} |`,
+    `| 팀장 | ${cell(TL.roster(ws).leads.map(TL.callName).join(' · ') || '없음')} |`,
+    `| 팀 명단 | ${cell(TL.roster(ws).members.map((p) => `${TL.callName(p)}${p.repos ? ` (${p.repos.join(', ')})` : ''}`).join(' · ') || '명단 없이 운영')} |`,
     `| 이 PC 사용자 | ${cell(me || '')} |`, '',
     '## repo', '', '| 이름 | 종류 | 스택 | 역할 |', '|---|---|---|---|'];
   for (const r of ws.repos) L.push(`| ${cell(r.name)} | ${cell(r.kind)} | ${cell((r.stacks || []).join(' · '))} | ${cell(r.role || '')} |`);

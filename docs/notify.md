@@ -41,7 +41,7 @@
 | 음성 | `voice on\|off` · `voice scope both\|decisions\|done\|all`(결정+끝남 · 결정만(기본) · 끝남만 · 모두) · `voice name <목소리>` · `voice test` |
 | 양방향 대화 | `channel on` (프로젝트 봇 토큰은 숨김 입력. 봇 바꾸기는 `channel on --new`) · `off` · `remove` · `status` |
 | 봇 제거 · 시험 | `remove` · `test` |
-| 팀 봇 · 팀 방 (`kedovi notify team …`) | 팀원마다 `setup` (팀 봇 토큰은 숨김 입력) · 관리자가 `chat <그룹방 ID>` → commit · push · `announce "<내용>"` · `test` |
+| 팀 봇 · 팀 방 (`kedovi notify team …`) | 팀원마다 `setup` (팀 봇 토큰은 숨김 입력) · 팀장이 `chat <그룹방 ID>` → commit · push · `announce "<내용>"` · `test` |
 
 **양방향 대화 (텔레그램 채널)**: 이 프로젝트 전용 봇에게 보낸 메시지가 Claude Code 세션에 들어오고 답이 같은 대화로 온다. Claude Code 공식 telegram 플러그인(연구 미리보기)을 쓰며 **개인 · 이 PC · 프로젝트마다** 따로 켠다 (팀 봇 · 팀 방은 쓰지 않는다).
 
@@ -53,7 +53,7 @@
 | 알림 | 채널을 켠 워크스페이스는 개인 알림도 그 봇으로 온다. 프로젝트마다 대화가 나뉘어 섞이지 않는다 |
 | 시작 | `kedovi start` 가 Claude Code 로 시작할 때 `--channels plugin:telegram@claude-plugins-official` 와 상태 폴더를 붙인다. 준비가 안 됐으면 알리고 채널 없이 시작한다. 이번만 빼기: `kedovi start --no-channel` |
 | 허용 | 내 채팅만 허용(allowlist)한다. 페어링 코드는 필요 없다 |
-| 필요한 것 | [Bun](https://bun.sh) (플러그인 서버가 Bun 으로 돈다), claude.ai 로그인 또는 Console API 키 (AI 게이트웨이 · Bedrock 등은 안 된다). Team · Enterprise 조직은 관리자가 채널을 켜야 한다 |
+| 필요한 것 | [Bun](https://bun.sh) (플러그인 서버가 Bun 으로 돈다), claude.ai 로그인 또는 Console API 키 (AI 게이트웨이 · Bedrock 등은 안 된다). Team · Enterprise 조직은 팀장이 채널을 켜야 한다 |
 | 권한 확인 | 플러그인이 텔레그램 버튼으로 보낸다 (승인 · 거부). 이때 kedovi 의 "권한 확인 대기" 알림은 보내지 않는다 |
 | 양쪽 같은 내용 | 텔레그램에서 온 요청은 Claude 가 텔레그램에 보낸 답을 터미널에도 그대로 쓴다. 터미널 요청이 텔레그램에 얼마나 가는지는 알림 수준대로 |
 | 선택지 | 기본은 터미널 선택지 창(방향키 · 권장안 첫째 · 직접 입력)이고 텔레그램에는 질문과 선택지가 간다 (창은 터미널에서만 답할 수 있다). 자리 비움이면 결정을 텔레그램 버튼 질문(`notify.js ask`)으로 보내 버튼 · 번호 · 직접 입력(✏️)으로 답한다 |

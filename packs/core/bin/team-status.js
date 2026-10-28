@@ -25,7 +25,7 @@ const TAKE_RE = /\s*← (\S+) 에게서 인수 \((\d{4}-\d{2}-\d{2})\)\s*$/;
 const ws = load();
 const ROOT = ws.root;
 const me = devId(ROOT);
-const ROSTER = ((ws.team || {}).members || []).filter(Boolean); // 리더가 정한 명단 (kedovi team add). 비어 있으면 명단 없이 운영
+const ROSTER = ((ws.team || {}).members || []).filter(Boolean).map((m) => (typeof m === 'string' ? m : m.username)).filter(Boolean); // 리더가 정한 명단 (kedovi team add, username). 비어 있으면 명단 없이 운영
 
 // ───────── 읽기 — upstream 기준 ─────────
 if (!args.includes('--no-fetch')) git(ROOT, ['fetch', '-q'], 15000);
@@ -53,8 +53,16 @@ function people() {
       if (d.isDirectory() && (!up || d.name === me)) ids.add(d.name);
     }
   } catch { /* handoffs 없음 */ }
-  for (const id of ROSTER) ids.add(id);
+  // 명단은 저장소 계정 username, 핸드오프 폴더는 git user.name — 폴더의 .account 로 잇는다
+  const mapped = new Set([...ids].map(accountOf).filter(Boolean));
+  for (const id of ROSTER) if (!mapped.has(id)) ids.add(id);
   return [...ids].sort();
+}
+
+/** 핸드오프 폴더(git user.name)의 저장소 계정 — kedovi install · start 가 handoffs/<id>/.account 에 적는다 */
+function accountOf(id) {
+  const t = (readUp(`handoffs/${id}/.account`) || readWt(`handoffs/${id}/.account`) || '').trim();
+  return t || null;
 }
 
 /** 파일 하나 — 본인 것은 작업 폴더(아직 push 전일 수 있다), 남의 것은 upstream */
@@ -92,7 +100,7 @@ function collect() {
       doing: firstLines(findSection(secs, '진행 중'), 3),
       branches: firstLines(findSection(secs, '작업 브랜치'), 10),
       todo: todoItems(todo), latest, todoRaw: todo, open: openTopics(id).map((t) => ({ name: t.name, left: t.todo })),
-      joined: !!(latest || todo), inRoster: ROSTER.includes(id),
+      joined: !!(latest || todo), inRoster: ROSTER.includes(id) || ROSTER.includes(accountOf(id)),
     };
   });
   // 인수 — 다른 사람 TODO 의 "← <id> 에게서 인수" 표시로 원래 항목을 찾는다

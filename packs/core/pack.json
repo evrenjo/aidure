@@ -102,7 +102,7 @@
       "name": "TELEGRAM_TEAM_BOT_TOKEN",
       "scope": "global",
       "optional": true,
-      "purpose": "팀 방 알림 봇 (관리자에게 받음)",
+      "purpose": "팀 방 알림 봇 (팀장에게 받음)",
       "test": "telegram"
     }
   ]

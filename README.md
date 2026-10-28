@@ -139,6 +139,22 @@ kedovi --version
 
 Claude Code(`npm i -g @anthropic-ai/claude-code`) 나 Codex(`npm i -g @openai/codex`) 중 쓸 것도 설치돼 있어야 한다. Codex 앱만 깔아 터미널에 `codex` 명령이 없어도, 앱이 내려받은 CLI(`~/.codex/packages/*/current`)를 찾아 쓴다.
 
+### 플러그인 · MCP · 도구
+
+워크스페이스를 제대로 쓰려면 아래를 PC 마다 한 번 설치한다. `kedovi doctor` 가 같은 목록으로 빠진 것을 알린다.
+
+| 구분 | 항목 | 설치 | 쓰는 기능 |
+|---|---|---|---|
+| 필수 | Node.js 20.19+ · git | `node -v` · `git --version` | 전부 |
+| 필수 | Claude Code 또는 Codex (최신) | `npm i -g @anthropic-ai/claude-code` · `npm i -g @openai/codex` | 에이전트. Haiku 5.5 는 Claude Code 2.1.293 이상 |
+| 필수 (팀) | 저장소 로그인: GitHub `gh` · GitLab `glab` · 또는 SSH 키 | `gh auth login` · `glab auth login` | 이 PC 사용자 확인(팀장 · 담당 repo), MR · PR 스킬 |
+| 권장 | claude-mermaid (Claude Code 플러그인) | `kedovi prefs mermaid install` | 대화 중 그림을 브라우저로 |
+| 권장 (화면 개발) | Playwright MCP | `claude mcp add playwright -- npx @playwright/mcp@latest` | 화면 확인 · 접근성 검사 (stack-react 실행 검사) |
+| 선택 | telegram 플러그인 + bun | `kedovi notify my channel on` (안내에 따라) · `curl -fsSL https://bun.sh/install \| bash` | 텔레그램 양방향 대화 |
+| 선택 | pixel-agents | `npm i -g pixel-agents` | 팀원 작업을 캐릭터 화면으로 (`kedovi start --pixel-agents`) |
+
+Codex 는 따로 넣을 플러그인이 없다. 팀이 함께 쓰는 MCP 서버는 `workspace.json` 의 `mcp` 에 적으면 `.mcp.json` · `.codex/config.toml` 에 함께 들어간다.
+
 설치가 끝나면 [빠른 시작](docs/quickstart.md)의 「팀 리더: 워크스페이스 생성」 또는 「팀원: 합류」 로 간다. 선택 화면마다 무엇을 묻고 어디에 저장하는지는 [업무 흐름](docs/workflow.md).
 
 ### 인증

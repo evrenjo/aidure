@@ -61,7 +61,7 @@ when: 주문·결제 코드를 고치거나 관련 문서를 쓸 때
 3. commit · push 하면 팀원도 받는다.
 
 - `load: always` 는 AGENTS.md 본문에 늘 들어가 예산(32KB)을 쓴다. 대부분은 `on-demand` 와 `when` 으로 둔다.
-- 워크스페이스 설정 수정이 막혀 있으면(`kedovi team edit deny`) 관리자만 만들 수 있다.
+- 워크스페이스 설정 수정이 막혀 있으면(`kedovi team edit deny`) 팀장만 만들 수 있다.
 
 ## 팩 작성 규격
 
@@ -182,7 +182,7 @@ description: 오늘 작업을 마무리하고 인계 기록을 남긴다. "핸�
   - `SessionStart`: stdout 평문 = 에이전트 컨텍스트에 추가. **정상이면 1줄 이하**로 조용히. (예외: core 의 `session-brief.js` 는 브리핑 본문을 넘긴다. 첫 메시지로 넣으면 화면에 전문이 찍히기 때문)
   - `Stop`: stdout 은 **JSON 이거나 비어 있어야 한다** (Codex 는 평문을 오류로 본다).
     계속 작업시키려면 `{"decision":"block","reason":"..."}`. 알리기만 할 거면 출력하지 않는다.
-  - `PreToolUse`(Claude 전용으로 둔 것): 막을 때만 `deny(reason)` 의 JSON, 허용이면 출력하지 않는다. 막지 않고 알리기만 할 때는 `note(text)`(additionalContext JSON).
+  - `PreToolUse`: 막을 때만 `deny(reason)` 의 JSON, 허용이면 출력하지 않는다. 막지 않고 알리기만 할 때는 `note(text)`(additionalContext JSON, Claude). Codex 도 같은 deny JSON 으로 셸(`Bash`) · 파일 편집(`apply_patch`, matcher `apply_patch` · `Edit` · `Write`)을 막는다 (codex-cli 0.165 실측, core `repo-guard.js`). 대부분의 PreToolUse 훅은 Claude 전용이다
   - `UserPromptSubmit`: stdout 평문 = 그 요청의 컨텍스트에 추가 (Claude · Codex 모두, Codex 는 codex-cli 0.159 에서 확인). 요청마다 들어가므로 **2줄 이내**, 없으면 출력하지 않는다.
   - `PostToolUse`: 문맥을 넣으려면 JSON `{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"…"}}` (Codex 는 평문을 버리고, `hookEventName` 이 없으면 실패로 본다). 도구마다 불리므로 가볍게, 대부분 출력하지 않는다.
   - 공통 헬퍼: `packs/core/lib/hook.js`: `root()`, `agent()`, `readInput()`, `context(text)`, `block(reason)`, `deny(reason)`, `note(text)`.

@@ -14,24 +14,24 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ke
 | 요청 | 명령 | 범위 |
 |---|---|---|
 | 지금 모델 보기 | `kedovi models` (화면 없이 실행하면 표: 팀 구성 · 성향 · 역할별 등급과 출처, `--json` 은 JSON) | 보기 |
-| 진행 방식 보기 · 바꾸기 | `kedovi approach` (지금 값) · `kedovi approach sprint\|full\|issue` (MVP · 스프린트: 최소 기능부터 기능 단위 스프린트 · 데모 · 회고, 워터폴 · 전체: 전체 설계 뒤 구축, 이슈형: 운영 · 유지보수의 이슈 보드). 기본 단계 그대로인 로드맵은 새 뼈대로 바뀐다. "작게 시작하자" · "스프린트로" · "이슈 단위로 관리" 같은 말에 쓴다 | 팀 (관리자) |
-| 유형 바꾸기 | `kedovi type <new\|modernization\|enhancement\|consulting> [--approach a] [--code 이름,…]` (분석·설계 → 구축 · 고도화 등. 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 로드맵 새 뼈대, 지난 로드맵은 남김). 바꾸기 전에 무엇이 바뀌는지 보여 주고 확인받는다 | 팀 (관리자) |
+| 진행 방식 보기 · 바꾸기 | `kedovi approach` (지금 값) · `kedovi approach sprint\|full\|issue` (MVP · 스프린트: 최소 기능부터 기능 단위 스프린트 · 데모 · 회고, 워터폴 · 전체: 전체 설계 뒤 구축, 이슈형: 운영 · 유지보수의 이슈 보드). 기본 단계 그대로인 로드맵은 새 뼈대로 바뀐다. "작게 시작하자" · "스프린트로" · "이슈 단위로 관리" 같은 말에 쓴다 | 팀 (팀장) |
+| 유형 바꾸기 | `kedovi type <new\|modernization\|enhancement\|consulting> [--approach a] [--code 이름,…]` (분석·설계 → 구축 · 고도화 등. 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 로드맵 새 뼈대, 지난 로드맵은 남김). 바꾸기 전에 무엇이 바뀌는지 보여 주고 확인받는다 | 팀 (팀장) |
 | 로드맵 보기 · 점검 | `kedovi plan` (흐름도 · 지금 단계 표 · 다음, 이슈형은 이슈 보드) · `kedovi plan --short` (한 줄) · `kedovi plan check` (갱신 누락 ⚠) · `kedovi plan --report [시작 [끝]]` (이슈형 주간 보고) | 보기 |
-| 팀 구성 바꾸기 | `kedovi team-mode auto\|fixed` · `prefer <역할> <claude\|codex>:<모델>` (`--team` 은 팀 기본값, 관리자) | 이 PC · 팀 |
-| 훅 강제 수준 (팀 모드에서 이름 없는 역할 에이전트 · 구성표 알림) | `kedovi team-mode enforce name off\|warn\|block [--team]` (기본 막기) · `kedovi team-mode enforce roster off\|warn [--team]` (한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄, 기본 알림). 이 PC 값은 팀 값보다 세게만, 낮추려면 관리자가 `--team`. 지금 값은 `kedovi team-mode` | 이 PC · 팀 |
-| 대기 팀원 점검 (Claude Code 팀 모드에서 일을 마치고 오래 남은 팀원) | `kedovi team-mode enforce idle off\|warn\|block [--after <분>] [--remind <분>] [--team]`. 막기(기본): 멈출 때 한 번 막고 팀원 이름 · 대기 시간을 알림 · 알림: 요청 시작 때 한 줄 · 끔. 대기 상한(기본 10분) · 같은 팀원을 다시 알리는 간격(기본 30분)은 팀 값(`--team`, 관리자) | 이 PC · 팀 |
+| 팀 구성 바꾸기 | `kedovi team-mode auto\|fixed` · `prefer <역할> <claude\|codex>:<모델>` (`--team` 은 팀 기본값, 팀장) | 이 PC · 팀 |
+| 훅 강제 수준 (팀 모드에서 이름 없는 역할 에이전트 · 구성표 알림) | `kedovi team-mode enforce name off\|warn\|block [--team]` (기본 막기) · `kedovi team-mode enforce roster off\|warn [--team]` (한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄, 기본 알림). 이 PC 값은 팀 값보다 세게만, 낮추려면 팀장이 `--team`. 지금 값은 `kedovi team-mode` | 이 PC · 팀 |
+| 대기 팀원 점검 (Claude Code 팀 모드에서 일을 마치고 오래 남은 팀원) | `kedovi team-mode enforce idle off\|warn\|block [--after <분>] [--remind <분>] [--team]`. 막기(기본): 멈출 때 한 번 막고 팀원 이름 · 대기 시간을 알림 · 알림: 요청 시작 때 한 줄 · 끔. 대기 상한(기본 10분) · 같은 팀원을 다시 알리는 간격(기본 30분)은 팀 값(`--team`, 팀장) | 이 PC · 팀 |
 | 상태 줄 점검 (Claude Code. 팀원 · 백그라운드 작업이 남은 채 멈출 때) | `kedovi team-mode enforce status off\|block [--team]`. 막기(기본): 답변에 「지금 도는 것: … · 예상 종료: … · 사용자가 할 일: …」 줄이 없으면 멈출 때 한 번 막음 · 끔 | 이 PC · 팀 |
 | 결정 질문 점검 (Claude Code. 결정 질문을 글로 끝낼 때) | `kedovi team-mode enforce ask off\|block [--team]`. 막기(기본): 번호 선택지 2개 이상인 결정 질문을 질문 창 없이 끝내면 한 번 막고 질문 창으로 다시 묻게 함 · 끔 | 이 PC · 팀 |
 | 응답 언어 · 대화 스타일 ("영어로 답해줘" · "전문가 모드로" · "설명 자세히" 같은 말) | `kedovi prefs` (지금 값) · `kedovi prefs language ko\|en [--team]` · `kedovi prefs style learn\|normal\|expert [--team]` (학습: 단계마다 왜 · 어떻게 · 일반: 지금 수준 · 전문가: 현업 용어 · 결과 · 근거 표와 그림 위주) · 값 자리에 `team` = 이 PC 값 지우고 팀 따름 · `kedovi prefs mermaid [install]` (그림을 브라우저로 띄우는 claude-mermaid 플러그인) · `kedovi prefs setup` (터미널 화면). 언어 줄은 다음 요청부터, 출력 스타일은 새 세션부터 | 이 PC · 팀 |
 | 답변 첫 줄 시각 표시 (Claude Code. "시간 표시 꺼줘" 같은 말) | `kedovi timestamp` (지금 값) · `kedovi timestamp on\|off [--team]` · `kedovi timestamp team` (이 PC 값 지우고 팀 따름). 켜면(기본) 요청 받은 시각(yyyy-MM-dd HH:mm:ss)을 답변 첫 줄에 쓴다 | 이 PC · 팀 |
-| 오래 일하는 팀원 · 위임 점검 | `kedovi team-mode enforce run off\|warn\|block [--after <분>] [--team]`. 막기(기본): 일하는 팀원(Claude Code 팀 모드) · 위임 작업의 경과가 상한(기본 60분)을 넘으면 멈출 때 한 번 막고 계속할지 묻게 함 · 알림: 요청 시작 때 한 줄 · 끔. 상한은 팀 값(`--team`, 관리자) | 이 PC · 팀 |
+| 오래 일하는 팀원 · 위임 점검 | `kedovi team-mode enforce run off\|warn\|block [--after <분>] [--team]`. 막기(기본): 일하는 팀원(Claude Code 팀 모드) · 위임 작업의 경과가 상한(기본 60분)을 넘으면 멈출 때 한 번 막고 계속할지 묻게 함 · 알림: 요청 시작 때 한 줄 · 끔. 상한은 팀 값(`--team`, 팀장) | 이 PC · 팀 |
 | 착수 전 확인 | `kedovi team-mode enforce plan off\|warn\|block [--team]`. 알림(기본): 요청마다 코드 repo 첫 수정 전에 답변에 「착수 전 확인:」 이 없으면 한 번 알림, 막기: 보일 때까지 수정을 막음. 문서 · 스타일 두 줄 이하는 제외 | 이 PC · 팀 |
 | 리뷰 전 검사 | `kedovi team-mode enforce check off\|warn\|block [--team]`. 막기(기본): 리뷰 위임 · 리뷰 에이전트 지시서에 「검사: <명령> 통과」 줄이 없으면 막음 (검사가 없는 변경은 「검사: 없음 (사유)」) | 이 PC · 팀 |
 | 남은 파일 정리 | 찾기 `kedovi tidy [--new] [--repo <이름>] [--count] [--json]` (읽기만: 이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름). 지우기는 `tidy` 스킬 절차로 표를 보여 주고 승인 뒤에. "안 쓰는 파일 정리해줘" 같은 요청 | 읽기 |
 | 기존 AI 작업 폴더 가져오기 | 훑기 `kedovi import <폴더> [--json]` (읽기만: 분류 · 절대경로 · 비밀값 의심 줄). 옮기기는 `import` 스킬 절차로 계획을 보여 주고 승인 뒤에 | 읽기 |
 | 요금제 바꾸기 | `kedovi ai plan claude\|gpt <요금제>` (`--team` 은 팀 기본값). 요금제 이름은 틀리면 목록을 보여 준다 | 이 PC · 팀 |
 | 프로필 바꾸기 | `kedovi models profile <rich\|standard\|lean\|team> [--team]` (이 PC 값은 팀과 같거나 낮은 것만. `team` = 이 PC 값 지우고 팀 따름. 인자 없이 실행하면 화면에서 고른다) | 이 PC · `--team` 은 팀 |
-| 팀원이 팀보다 높은 프로필을 쓰게 | `kedovi models allow-higher on\|off` | 팀 (관리자) |
+| 팀원이 팀보다 높은 프로필을 쓰게 | `kedovi models allow-higher on\|off` | 팀 (팀장) |
 | 퇴역 모델을 대체 모델로 | `kedovi models --migrate` (sync 가 퇴역 · 퇴역 예정 경고를 냈을 때. 팀 값이 바뀌면 `workspace.json` commit · push) | 이 PC · 팀 |
 | 역할 모델 바꾸기 | `kedovi models set <역할> <claude\|codex> <모델\|-> [--team] [--effort <e>]` | 이 PC · 팀 |
 | 역할을 상대 회사 모델로 | `kedovi models set reviewer claude codex:gpt-6.1-sol` (Claude 세션의 리뷰를 GPT 에게 위임) | 이 PC · 팀 |
@@ -48,11 +48,13 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ke
 | AGENTS.md 줄이기 (상시 규칙을 필요할 때만) | `kedovi rules ondemand <ID…\|repo-tasks>` · 되돌리기 `kedovi rules always <ID…>` | 팀 |
 | 팀 현황 · 한 사람 · 인수 | `kedovi team` · `kedovi team <id>` · `kedovi team <id> --take <번호\|all>` | 보기 · 내 TODO |
 | 팀 명단 · 제한 | `kedovi team add\|remove <id…>` · `kedovi team members` · `kedovi team restrict on\|off` | 팀 |
+| 팀장 · 팀원 · 담당 repo · 부를 이름 | `kedovi team lead add\|remove <username> [--nick 이름]` · `kedovi team leads` · `kedovi team add <username> --nick <이름> --repos a,b` · `kedovi team repos <username> <a,b\|->` · `kedovi team nick <username> <이름>`. 팀장은 모든 repo · 설정, 팀원은 담당 repo 만 고친다 (훅 · 커밋 검사가 막는다). "민수 담당은 api" · "지은이도 api 같이 맡아" 같은 말 | 팀 (팀장) |
+| 이 PC 사용자 확인 | `kedovi team whoami [--refresh]` (저장소 계정 username · nickname · 팀장/팀원 · 고칠 수 없는 repo). "나 누구로 돼 있어?" · "왜 이 repo 못 고쳐?" 같은 말 | 보기 |
 | 설정 수정 권한 | `kedovi team edit allow\|deny` · `kedovi team admins [id…]` | 팀 |
 | repo 추가 | `kedovi repo add <git 주소\|폴더\|새 이름> [--kind code\|docs\|issues\|legacy] [--group <그룹>]` (그룹이면 `repos/<그룹>/<이름>`. 이름만 주면 원격 없이 새로 만든다, 레거시 제외) | 팀 |
-| repo 그룹 폴더로 옮기기 | `kedovi repo move <이름> --group <그룹>` · `--no-group` (폴더 · workspace.json · 문서의 옛 경로를 고치고 sync) | 팀 (관리자) |
-| repo 안의 기존 AI 지침 | `kedovi repo guides` (보기) · `kedovi repo guides <이름> follow\|kit\|ignore` (follow = repo 지침 우선, 기본 · kit = 킷 규칙 우선 · ignore = 무시) · `kedovi repo guides --rescan [<이름>]` (다시 훑기). "이 repo 의 CLAUDE.md 는 무시해줘" 같은 요청 | 팀 (관리자) |
-| repo 빼기 | `kedovi repo remove <이름> [--delete]` (workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알림. 폴더는 `--delete` 일 때만, 커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) | 팀 (관리자) |
+| repo 그룹 폴더로 옮기기 | `kedovi repo move <이름> --group <그룹>` · `--no-group` (폴더 · workspace.json · 문서의 옛 경로를 고치고 sync) | 팀 (팀장) |
+| repo 안의 기존 AI 지침 | `kedovi repo guides` (보기) · `kedovi repo guides <이름> follow\|kit\|ignore` (follow = repo 지침 우선, 기본 · kit = 킷 규칙 우선 · ignore = 무시) · `kedovi repo guides --rescan [<이름>]` (다시 훑기). "이 repo 의 CLAUDE.md 는 무시해줘" 같은 요청 | 팀 (팀장) |
+| repo 빼기 | `kedovi repo remove <이름> [--delete]` (workspace.json · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알림. 폴더는 `--delete` 일 때만, 커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) | 팀 (팀장) |
 | 스택 다시 감지 | `kedovi detect` · 감지 힌트 `kedovi detect --hint <스택> --contains <정규식>` | 팀 |
 | 진단 | `kedovi doctor` | 보기 |
 | 비밀값(토큰) 보기 · 확인 | `kedovi secret list [--all]` (이름 · 범위 · 저장소 · 지금 읽는 곳, 값 없음) · `kedovi secret test <이름>` (유효성 · 권한 · 만료) | 보기 |
@@ -88,7 +90,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ke
 | 데이터 설계 검사 | `kedovi datamodel check [기획 repo]` (참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조). 작성 절차는 `datamodel` 스킬 | 보기 |
 | 팩 켜기 (upgrade 가 「꺼져 있음」 이라 알린 기본 팩 · 다른 유형의 screens · datamodel 등) | `kedovi upgrade --add <팩,팩>` | 팀 |
 | 킷 새 버전 반영 | `kedovi upgrade` | 팀 |
-| 이 PC 의 워크스페이스 모두 새 버전으로 | `kedovi upgrade --all [--scan <폴더>] [--yes]` (목록 · 건너뛸 것을 보인 뒤 묻고 올림. 관리자 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이면 건너뜀. 채팅에서는 목록을 보여 주고 승인받은 뒤 `--yes`) | 팀 |
+| 이 PC 의 워크스페이스 모두 새 버전으로 | `kedovi upgrade --all [--scan <폴더>] [--yes]` (목록 · 건너뛸 것을 보인 뒤 묻고 올림. 팀장 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이면 건너뜀. 채팅에서는 목록을 보여 주고 승인받은 뒤 `--yes`) | 팀 |
 
 - 역할 이름: `analyst` · `architect` · `implementer` · `tester` · `reviewer` · `documenter`, 메인 `main`, 교차 검토 `crossReview`.
 - 모델 이름은 `kedovi models` 결과나 `packs/core/models.json` 의 목록에서 고른다. 없는 이름을 지어내지 않는다.
@@ -98,7 +100,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ke
 
 - **범위가 "팀" 인 명령은 실행 전에 사용자에게 무엇이 바뀌는지 보여 주고 확인받는다.** `workspace.json` 이 바뀌고, commit · push 하면 팀 전체에 적용된다.
 - 이 PC 범위(`--team` 없는 models · agent)는 요청이 분명하면 바로 실행한다.
-- 설정 수정이 막혀 있다고 나오면(관리자가 아님) 우회하지 않고 사용자에게 관리자에게 요청하라고 알린다.
+- 설정 수정이 막혀 있다고 나오면(팀장이 아님) 우회하지 않고 사용자에게 팀장에게 요청하라고 알린다.
 - 게이트웨이 키 **값**을 묻거나 대화·파일에 적지 않는다. 키가 든 환경변수 **이름**만 쓴다.
 
 ## 3. 실행하지 않는 것

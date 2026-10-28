@@ -279,7 +279,7 @@ flowchart TD
     RS -->|"아니오"| A{"시작 도구가 정해졌나"}
     A -->|"아니오"| AG["AI 연결 방식 (5절)"]
     A -->|"예 · --claude/--codex 로 이번만 지정"| V
-    AG --> V["새 버전이 나왔으면 npm i -g 안내 (하루 한 번 확인)<br/>설치본이 워크스페이스보다 새로우면 「킷 새 버전을 지금 올릴까요」 (권장: 올리고 시작)<br/>관리자 아님 · 받지 않은 커밋 · 커밋 안 한 변경이면 알리기만<br/>repos/ 에 없는 repo 가 있으면 kedovi install 안내"]
+    AG --> V["새 버전이 나왔으면 npm i -g 안내 (하루 한 번 확인)<br/>설치본이 워크스페이스보다 새로우면 「킷 새 버전을 지금 올릴까요」 (권장: 올리고 시작)<br/>팀장 아님 · 받지 않은 커밋 · 커밋 안 한 변경이면 알리기만<br/>repos/ 에 없는 repo 가 있으면 kedovi install 안내"]
     V --> M["메인 모델·추론 강도 = 프로필·팀·개인 + 연결 방식<br/>Claude --model · --effort, Codex -m · -c model_reasoning_effort 로 넘김 (Codex 는 웹 검색 --search 도 기본)<br/>게이트웨이면 게이트웨이 모델 이름으로. Claude Code 에 게이트웨이 설정이 없으면 저장한 주소·키 환경변수로 연결"]
     M --> PX{"--pixel-agents 인가"}
     PX -->|"예 · pixel-agents 설치됨"| PXO["Pixel Agents 서버를 띄우고 브라우저로 열기<br/>(세션이 끝나면 함께 끔)"]
@@ -310,30 +310,31 @@ flowchart TD
     MW -->|"메인 모델 (팀 기본값)"| TL2["어느 도구의 모델 → 모델"]
     MW -->|"교차 검토 모델"| TL3["어느 도구의 모델 → 모델"]
     Q -->|"퇴역 모델 교체"| MG["kedovi models --migrate"]
-    Q -->|"팀 구성 방식"| TMO["kedovi team-mode auto · fixed<br/>prefer &lt;역할&gt; &lt;도구:모델&gt;<br/>enforce name off · warn · block (팀 모드에서 이름 없는 역할 에이전트)<br/>enforce roster off · warn (첫 역할 에이전트 때 구성표 알림)<br/>enforce review off · warn · block (commit · push 전 리뷰 확인, 기본 꺼짐)<br/>enforce idle off · warn · block (대기로 오래 남은 팀원 알림)<br/>enforce status off · block (기다리며 멈출 때 상태 줄)<br/>enforce ask off · block (결정 질문을 글로 끝낼 때)<br/>enforce run off · warn · block (오래 일하는 팀원 · 위임, 기본 60분)<br/>enforce check off · warn · block (리뷰 전 검사 줄)<br/>enforce plan off · warn · block (코드 수정 전 착수 전 확인)<br/>--team 은 팀 기본값(관리자) → sync"]
-    Q -->|"비밀값 (토큰)"| SEC["kedovi secret set &lt;이름&gt; [--global] (숨김 입력)<br/>list · test &lt;이름&gt; · rm · import · exec -- &lt;명령&gt;<br/>→ OS 저장소 (키체인 · 자격 증명 관리자 · libsecret)"]
+    Q -->|"팀 구성 방식"| TMO["kedovi team-mode auto · fixed<br/>prefer &lt;역할&gt; &lt;도구:모델&gt;<br/>enforce name off · warn · block (팀 모드에서 이름 없는 역할 에이전트)<br/>enforce roster off · warn (첫 역할 에이전트 때 구성표 알림)<br/>enforce review off · warn · block (commit · push 전 리뷰 확인, 기본 꺼짐)<br/>enforce idle off · warn · block (대기로 오래 남은 팀원 알림)<br/>enforce status off · block (기다리며 멈출 때 상태 줄)<br/>enforce ask off · block (결정 질문을 글로 끝낼 때)<br/>enforce run off · warn · block (오래 일하는 팀원 · 위임, 기본 60분)<br/>enforce check off · warn · block (리뷰 전 검사 줄)<br/>enforce plan off · warn · block (코드 수정 전 착수 전 확인)<br/>--team 은 팀 기본값(팀장) → sync"]
+    Q -->|"비밀값 (토큰)"| SEC["kedovi secret set &lt;이름&gt; [--global] (숨김 입력)<br/>list · test &lt;이름&gt; · rm · import · exec -- &lt;명령&gt;<br/>→ OS 저장소 (키체인 · 자격 증명 팀장 · libsecret)"]
     Q -->|"남은 파일 정리"| TDY["kedovi tidy [--new]<br/>이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름 (읽기만)<br/>지우기는 tidy 스킬: 표 → 승인 → 지움 → 검증"]
     Q -->|"기존 폴더 가져오기"| IMP["kedovi import &lt;폴더&gt;<br/>분류 · 절대경로 · 비밀값 의심 줄 (읽기만)<br/>옮기기는 import 스킬: 계획 → 승인 → 반영"]
     Q -->|"리뷰 확인"| RVW["kedovi review status · mark · skip --reason &lt;사유&gt;<br/>commit · push 전 리뷰 안 된 줄 수 (훅이 알림 · 막기)<br/>켜기: kedovi team-mode enforce review warn · block --team"]
     Q -->|"파이프라인 보기"| GLP["kedovi gitlab pipeline [--ref 브랜치 · --mr 번호 · --id ID] [--log]<br/>최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분 (읽기만)"]
     Q -->|"응답 언어 · 대화 스타일"| PRF["kedovi prefs language ko · en · style learn · normal · expert [--team]<br/>값 team = 이 PC 값 지우기 · mermaid [install] · setup (화면)<br/>→ .agents/local.json (팀은 workspace.json) → sync"]
     Q -->|"답변 시각 표시"| TS["kedovi timestamp on · off · team [--team]<br/>답변 첫 줄에 요청 받은 시각 (기본 켜짐, Claude Code)<br/>→ .agents/local.json (팀은 workspace.json)"]
-    Q -->|"진행 방식"| APR["kedovi approach sprint · full · issue (관리자)<br/>스프린트: 최소 기능부터, 스프린트마다 데모 · 회고 · 전체: 전체 설계 뒤 구축 · 이슈형: 단계 대신 이슈 보드<br/>→ sync · 기본 단계 그대로인 로드맵은 새 뼈대 (이슈형은 고친 로드맵 앞에도 이슈 보드)"]
-    Q -->|"유형 바꾸기"| TYP["kedovi type &lt;유형&gt; [--approach a] [--code 이름,…] (관리자)<br/>고칠 repo (현행 → 개발 repo) → 진행 방식<br/>→ 유형 팩 교체 · 로드맵 새 뼈대 (지난 로드맵은 아래에 남김) → sync"]
+    Q -->|"진행 방식"| APR["kedovi approach sprint · full · issue (팀장)<br/>스프린트: 최소 기능부터, 스프린트마다 데모 · 회고 · 전체: 전체 설계 뒤 구축 · 이슈형: 단계 대신 이슈 보드<br/>→ sync · 기본 단계 그대로인 로드맵은 새 뼈대 (이슈형은 고친 로드맵 앞에도 이슈 보드)"]
+    Q -->|"유형 바꾸기"| TYP["kedovi type &lt;유형&gt; [--approach a] [--code 이름,…] (팀장)<br/>고칠 repo (현행 → 개발 repo) → 진행 방식<br/>→ 유형 팩 교체 · 로드맵 새 뼈대 (지난 로드맵은 아래에 남김) → sync"]
     Q -->|"요금제"| PLN["kedovi ai (화면) · kedovi ai plan claude|gpt &lt;요금제&gt;<br/>--team 은 팀 기본값 → sync"]
     Q -->|"연결 방식 · 인자"| AGT["kedovi agent (5절)"]
     Q -->|"내 프로필 (팀과 같거나 낮게)"| MP["kedovi models profile (화면에서 고름)<br/>인자: rich · standard · lean · team (되돌리기)"]
-    Q -->|"팀원의 높은 프로필 허용"| AH["kedovi models allow-higher (관리자)<br/>팀원이 팀보다 높은 프로필을 써도 되나요? · 인자 on · off"]
+    Q -->|"팀원의 높은 프로필 허용"| AH["kedovi models allow-higher (팀장)<br/>팀원이 팀보다 높은 프로필을 써도 되나요? · 인자 on · off"]
     Q -->|"AI 연결 방식만"| AIC["kedovi ai (화면) · kedovi ai show<br/>kedovi ai direct claude,gpt · gateway [--url --key-env] · refresh<br/>kedovi ai compose mix · vendor · single · main claude · gpt [--team]"]
     Q -->|"repo 스택"| DT["kedovi detect (4절)"]
     Q -->|"팀 상황 · 인수"| TM["kedovi team [id] [--take 번호] (9절)"]
-    Q -->|"설정 수정 권한"| LK["kedovi team edit allow · deny<br/>kedovi team admins &lt;id&gt;<br/>deny: 관리자만 workspace.json · 팩 수정, 팀원은 자기 handoffs/ 와 로드맵만 커밋"]
+    Q -->|"팀장 · 담당 repo"| TLD["kedovi team lead add · add --nick --repos · repos · nick<br/>workspace.json team.leads · members[].repos<br/>kedovi team whoami --refresh (이 PC 사용자: .agents/local.json me)<br/>계정을 못 읽으면 묻기: 저장소 계정 username"]
+    Q -->|"설정 수정 권한"| LK["kedovi team edit allow · deny<br/>kedovi team admins &lt;id&gt;<br/>deny: 팀장만 workspace.json · 팩 수정, 팀원은 자기 handoffs/ 와 로드맵만 커밋"]
     Q -->|"알림 · 텔레그램"| NS["kedovi notify setup: 무엇을 설정할까요?<br/>알림 수준(전체 · 결과와 결정 · 진행 현황 · 끄기) · 양방향 대화(이 프로젝트 봇 토큰 · 다시 점검 · 끄기 · 제거) · 자리 비움<br/>개인 알림 봇(개인 봇 토큰 · 바꾸기 · 제거) · 팀 방 알림(팀 봇 토큰 · 팀 방 ID · 팀 봇 제거)<br/>고급(결과 알림 기준 · PC 앞이면 생략 · 진행 현황 알림) · 시험 메시지 · 알림 설정을 모두 지울까요?<br/>→ .agents/local.json · ~/.config/kedovi/telegram.env (팀 방은 workspace.json)"]
     Q -->|"이 PC 설정을 처음 상태로"| RST["kedovi reset: 무엇을 초기화할까요?<br/>이 PC 설정 · 텔레그램 채널 · 세션 임시 기록 · 개인 지침 · 텔레그램 토큰<br/>→ 선택한 항목을 초기화할까요? → sync<br/>팀 설정 · repos · 핸드오프는 그대로. 화면 없이: kedovi reset local,channel --yes"]
     Q -->|"팀 명단"| TA["kedovi team add · remove &lt;id&gt; · members<br/>kedovi team restrict on · off (명단 밖 kedovi start 막기)<br/>→ workspace.json team → commit · push"]
     Q -->|"규칙"| RL["kedovi rules (켤 규칙 고르기)<br/>kedovi rules list · off &lt;ID&gt; · on &lt;ID&gt; [--repo &lt;이름&gt;]<br/>kedovi rules ondemand · always &lt;ID&gt; (AGENTS.md 줄이기)"]
     RL --> RL2["끈 규칙은 AGENTS.md 에서 빠짐 → workspace.json commit · push<br/>바꾸기: packs/project/rules 에 replaces: &lt;ID&gt;"]
-    Q -->|"repo 빼기"| RRM["kedovi repo remove &lt;이름&gt; [--delete] (관리자)<br/>workspace.json · 리뷰 대상에서 지움 → sync<br/>이름이 남은 문서 알림 · 폴더는 --delete 때만"]
+    Q -->|"repo 빼기"| RRM["kedovi repo remove &lt;이름&gt; [--delete] (팀장)<br/>workspace.json · 리뷰 대상에서 지움 → sync<br/>이름이 남은 문서 알림 · 폴더는 --delete 때만"]
     Q -->|"repo 지침"| RG["kedovi repo guides [&lt;이름&gt; follow · kit · ignore] [--rescan]<br/>workspace.json repos[].guides · guidesMode → sync"]
     Q -->|"repo 추가"| RA["kedovi repo add [주소 · 폴더 · 이름] [--group &lt;그룹&gt;]"]
     RA --> RK{"repo 종류"}
@@ -341,7 +342,7 @@ flowchart TD
     RI --> RG["그룹 폴더 (이미 그룹을 쓰는 워크스페이스만)<br/>기존 그룹 · 그룹 없음 · 새 그룹 → 새 그룹 이름<br/>→ repos/&lt;그룹&gt;/&lt;이름&gt;"]
     RG --> RH["이 repo 의 협업 도구<br/>(주소로 GitHub·GitLab 을 모를 때만)"]
     RH --> RX["clone · 링크 · 새로 만들기 → 스택 확인 → sync"]
-    Q -->|"repo 를 그룹 폴더로"| RMV["kedovi repo move &lt;이름&gt; --group &lt;그룹&gt; · --no-group (관리자)<br/>폴더 옮김 · workspace.json group · 문서의 옛 경로 → sync"]
+    Q -->|"repo 를 그룹 폴더로"| RMV["kedovi repo move &lt;이름&gt; --group &lt;그룹&gt; · --no-group (팀장)<br/>폴더 옮김 · workspace.json group · 문서의 옛 경로 → sync"]
     Q -->|"새로 만든 repo 를 원격에 올림"| RP["git -C repos/&lt;이름&gt; remote add origin &lt;주소&gt; → push"]
     RP --> RF["sync 가 workspace.json 에 remote 기록 (local 삭제)<br/>→ workspace.json commit · push → 팀원 git pull · kedovi install"]
     Q -->|"명령 찾기"| HLP["kedovi --help: 자주 쓰는 명령 · 분류 목록<br/>분류를 고르세요 (터미널) → 그 분류의 명령과 설명<br/>kedovi help &lt;번호&gt; · kedovi help --all · kedovi &lt;명령&gt; --help"]
@@ -373,10 +374,10 @@ flowchart TD
 | `kedovi team-mode` | 팀 구성: 자동(리더가 작업마다 역할 · 모델) · 고정(프로필대로), `prefer` 역할별 선호 모델. `enforce <대상>` 은 훅으로 지키게 하는 수준(off · warn · block)이고, 대상(name · roster · idle · status · ask · run · check · plan · review)과 기본값은 [명령](commands.md). `--team` 은 팀 기본값 |
 | `kedovi ai plan claude\|gpt <요금제>` | 회사별 요금제 (빠듯 · 넉넉 · 종량). 보통은 `kedovi ai` 화면에서 |
 | `kedovi secret` | 비밀값(토큰): `set <이름> [--global]`(숨김 입력) · `list` · `test <이름>`(권한 · 만료) · `rm` · `import`(옛 telegram.env · gitlab-token · 환경변수에서) · `exec -- <명령>`(그 명령에만 주입). OS 저장소에 프로젝트별 · 전역으로, 값은 출력하지 않는다 |
-| `kedovi prefs` | 응답 언어(한국어 · English) · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). `language` · `style` 이 PC · 값 `team` 이 PC 값 지우기 · `--team` 팀 기본값(관리자) · `mermaid install` · `setup` 화면. 인자 없이 = 지금 값 |
-| `kedovi timestamp` | 답변 첫 줄 시각 표시 (Claude Code, 기본 켜짐): 요청 받은 시각 yyyy-MM-dd HH:mm:ss. `on\|off` 이 PC · `team` 이 PC 값 지우기 · `--team` 팀 기본값(관리자). 인자 없이 = 지금 값 |
-| `kedovi approach` | 진행 방식: MVP · 스프린트(최소 기능부터 기능 단위로 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 이슈 보드). 인자 없이 = 지금 값 (관리자) |
-| `kedovi type` | 유형 바꾸기 (분석·설계 → 구축 · 고도화 등): 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대. 인자 없이 = 지금 값 (관리자) |
+| `kedovi prefs` | 응답 언어(한국어 · English) · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). `language` · `style` 이 PC · 값 `team` 이 PC 값 지우기 · `--team` 팀 기본값(팀장) · `mermaid install` · `setup` 화면. 인자 없이 = 지금 값 |
+| `kedovi timestamp` | 답변 첫 줄 시각 표시 (Claude Code, 기본 켜짐): 요청 받은 시각 yyyy-MM-dd HH:mm:ss. `on\|off` 이 PC · `team` 이 PC 값 지우기 · `--team` 팀 기본값(팀장). 인자 없이 = 지금 값 |
+| `kedovi approach` | 진행 방식: MVP · 스프린트(최소 기능부터 기능 단위로 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 이슈 보드). 인자 없이 = 지금 값 (팀장) |
+| `kedovi type` | 유형 바꾸기 (분석·설계 → 구축 · 고도화 등): 현행 repo 중 고칠 것을 개발 repo 로 · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대. 인자 없이 = 지금 값 (팀장) |
 | `kedovi plan` | 로드맵(`handoffs/PLAN.md`): 단계 흐름 · 지금 단계 표 · 이번에 생긴 것 · 다음. 이슈형은 이슈 보드(상태별 건수 · 진행 중 이슈 · 멈춘 이슈 ⚠) (`--short` · `--json` · `--report` 기간 보고 · `init` · `check` 도) |
 | `kedovi docs build [repo]` | 기획 repo 의 md · 화면설계서 장 → 같은 경로 구조의 `docs-site/` (정의 ID 앵커 · 근거 색인 · 정의서 폴더마다 ERD). 묶음 · 포함 범위는 `docs-site.json`, 옛 `html/` 은 처음 build 때 옮긴다. `check` 는 md 와 어긋났는지. 둘 다 문서 점검 경고와 mermaid 문법 오류를 낸다. 자세히는 [문서 사이트](docs-site.md) |
 | `kedovi docs show <ID>` · `refs <ID>` | 기획 문서를 ID 단위로: 정의 부분만 출력 · 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결]) |
@@ -385,8 +386,8 @@ flowchart TD
 | `kedovi docs pages [on\|off] [repo]` | 문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일(`.gitlab-ci.yml` · `.github/workflows/pages.yml`)을 두고 `docs-site/` 를 커밋 대상으로(원격이 없으면 둘 다), off = `.gitignore` 에 `/docs-site/` (CI 는 두어도 돌지 않는다) |
 | `kedovi docs refs-quote <파일…>` | 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다 (`--dry` = 수만) |
 | `kedovi docs trace` | 기획 ID(`vars.docs.traceIds`)와 코드의 `@spec` 주석 대조: 코드에 표시 없는 ID(⚠) · 테스트에 없는 수용 기준(⚠) · 기획에 정의 없는 ID(✖). `--md` 추적표 · `--new` 새 진입 파일 중 ID 없는 것 |
-| `kedovi repo add … --group <그룹>` · `kedovi repo move <이름> --group <그룹>` | 그룹 폴더 `repos/<그룹>/<이름>`: 더할 때 그룹을 주거나(이미 그룹을 쓰면 화면에서 고름) 있는 repo 를 옮긴다(폴더 · `workspace.json` · 문서의 옛 경로, `--no-group` 은 빼기) (관리자) |
-| `kedovi repo remove <이름>` | repo 빼기: `workspace.json` · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 `--delete` 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) (관리자) |
+| `kedovi repo add … --group <그룹>` · `kedovi repo move <이름> --group <그룹>` | 그룹 폴더 `repos/<그룹>/<이름>`: 더할 때 그룹을 주거나(이미 그룹을 쓰면 화면에서 고름) 있는 repo 를 옮긴다(폴더 · `workspace.json` · 문서의 옛 경로, `--no-group` 은 빼기) (팀장) |
+| `kedovi repo remove <이름>` | repo 빼기: `workspace.json` · 리뷰 대상에서 지우고 sync, 이름이 남은 문서를 알린다. 폴더는 `--delete` 일 때만 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) (팀장) |
 | `kedovi tidy` | 정리 후보 찾기 (읽기만): 이번 작업 새 파일 · 안 쓰는 자료 · 링크 없는 문서 · 백업 이름. 지우기는 `tidy` 스킬 (표 → 승인 → 지움 → 검증) |
 | `kedovi import` | 기존 AI 작업 폴더 훑기 (읽기만): 종류별 분류 · 큰 폴더 · 문서 속 절대경로 · 비밀값 의심 줄. 옮기기는 `import` 스킬 (계획 → 승인 → 반영) |
 | `kedovi review` | 리뷰 확인 (기본 꺼짐, `kedovi team-mode enforce review warn\|block --team` 으로 켠다): `status` 대상 repo 마다 리뷰 안 된 줄 수 · `mark` 지금 상태를 리뷰했다고 기록 · `skip --reason` 사용자 승인 뒤 한 번 생략 |
@@ -444,7 +445,7 @@ flowchart TD
 
 | 파일 | 누가 쓰나 | 공유 | 들어가는 것 |
 |---|---|---|---|
-| `workspace.json` | init · detect · models(팀) · team-mode(팀) · team add · rules · upgrade | git 공유 | 유형 · repo · 스택 · 팀 모델 프로필 · 팀 구성(`agents.mode` · `save` · `prefer`) · 훅 강제 수준 · 리뷰 확인 대상 · 대기 팀원 시간(`agents.enforce`) · 팀원의 높은 프로필 허용(`agents.allowHigherProfile`) · 팀 직접 지정 모델 · 팀 명단 · 관리자 · 설정 수정 권한(`team`) · 끈 규칙(`rules.off`) · 필요할 때만 읽는 규칙(`rules.onDemand`) |
+| `workspace.json` | init · detect · models(팀) · team-mode(팀) · team add · rules · upgrade | git 공유 | 유형 · repo · 스택 · 팀 모델 프로필 · 팀 구성(`agents.mode` · `save` · `prefer`) · 훅 강제 수준 · 리뷰 확인 대상 · 대기 팀원 시간(`agents.enforce`) · 팀원의 높은 프로필 허용(`agents.allowHigherProfile`) · 팀 직접 지정 모델 · 팀 명단 · 팀장 · 설정 수정 권한(`team`) · 끈 규칙(`rules.off`) · 필요할 때만 읽는 규칙(`rules.onDemand`) |
 | `.agents/local.json` | install · agent · ai · models(내 PC) | 이 PC 만 | 시작 도구 · 인자 · AI 연결 방식(`agents.access`: 게이트웨이 주소·키 환경변수 이름·모델 목록, 키 값은 없음) · 내 프로필(팀과 같거나 낮은 것만) · 내가 직접 고른 모델 · 역할 상한(`agents.limits`, 팀 값 이내) |
 | `.claude/agents` · `.codex/agents` | sync | 이 PC 만 (사람마다 모델이 달라서) | 역할 에이전트 파일 |
 | `CLAUDE.local.md` · `AGENTS.override.md` · `.claude/settings.local.json` | sync | 이 PC 만 | 개인 지침 · 역할 위임 표 · 설정 잠금 지침과 편집 금지(팀원) |

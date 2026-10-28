@@ -35,7 +35,7 @@
 | 넉넉 | Max 5x · Max 20x · Team 프리미엄 좌석 | Pro · Enterprise · Edu |
 | 종량 | Enterprise · API 키 | API 키 |
 
-- **새 모델 · 요금제**: 목록은 킷 카탈로그(`packs/core/models.json` 의 `tools` · `plans`, 출처 · 확인일 필수) 한 곳이다. 킷 repo 의 주 1회 예약 점검(`npm run models:watch`)이 새 모델 · 카탈로그 오래됨 · 요금제 페이지 변경을 관리자 텔레그램으로 알리고, 관리자가 `docs/model-catalog.md` 절차로 반영해 새 버전으로 낸다. 그 전에 팀이 먼저 써야 하면 `workspace.json` 의 `catalog.tools` · `catalog.plans` 에 출처와 함께 덧붙인다 (킷에 들어오면 sync 가 지우라고 알린다). 로그인 정보에 목록에 없는 요금제가 보이면 sync 가 가장 가까운 것을 고르라고 알리고, 그전엔 빠듯으로 본다.
+- **새 모델 · 요금제**: 목록은 킷 카탈로그(`packs/core/models.json` 의 `tools` · `plans`, 출처 · 확인일 필수) 한 곳이다. 킷 repo 의 주 1회 예약 점검(`npm run models:watch`)이 새 모델 · 카탈로그 오래됨 · 요금제 페이지 변경을 팀장 텔레그램으로 알리고, 팀장이 `docs/model-catalog.md` 절차로 반영해 새 버전으로 낸다. 그 전에 팀이 먼저 써야 하면 `workspace.json` 의 `catalog.tools` · `catalog.plans` 에 출처와 함께 덧붙인다 (킷에 들어오면 sync 가 지우라고 알린다). 로그인 정보에 목록에 없는 요금제가 보이면 sync 가 가장 가까운 것을 고르라고 알리고, 그전엔 빠듯으로 본다.
 - **모델 메뉴**: sync 가 개인 지침(`CLAUDE.local.md` · `AGENTS.override.md`)의 「팀 구성」 절에 이 PC 가 쓸 수 있는 모델(연결 방식 · 게이트웨이 반영)을 등급과 LiveBench 분야별 점수(코딩 · 에이전트 코딩 · 추론 · 데이터 분석 · 지시 따르기, 출처 포함)와 함께 적는다. 리더는 이 메뉴 안에서 고른다.
 - **웹 검색은 필요할 때만**: 메뉴에 없는 모델(게이트웨이 전용 · 새 모델), 카탈로그 확인일 45일 경과, 사용자 요청. 결과는 팀 공용 `handoffs/MODELS.md` 에 날짜 · 출처와 함께 남겨 다음 사람이 다시 찾지 않는다 (설정 잠금이어도 팀원이 커밋할 수 있다).
 - 목록에 없는 역할이 필요하면 리더가 지시서에 임시 역할(목적 · 소유 파일 · 금지)을 적어 가장 가까운 역할로 띄운다.

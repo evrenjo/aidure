@@ -15,14 +15,14 @@
 | `kedovi ai` · `ai show` | 구독·게이트웨이가 바뀌었을 때 | 쓰는 AI(Claude · GPT · 둘 다 · AI 게이트웨이)만 다시 고른다 / 지금 값 보기 |
 | `kedovi ai direct claude,gpt` · `gateway [--url <주소> --key-env <변수>]` · `refresh` · `compose mix\|vendor\|single` · `main claude\|gpt` | AI 에게 시킬 때 | 화면 없이 같은 일. `refresh` 는 게이트웨이 모델 목록을 다시 받는다. `--key-env` 를 빼면 이 PC 설정에서 같은 주소의 키 이름(`ANTHROPIC_AUTH_TOKEN` 등)을 찾아 쓴다. `--team` 이면 팀 기본값 |
 | `kedovi models` | 필요할 때 | 모델 프로필, 또는 역할별(한 번에 차례로·하나씩)·교차 검토 모델을 **팀 기본값** 또는 **이 PC 만** 바꾼다. 화면 없이 실행하면 표(팀 구성 · 역할별 등급과 출처), `--json` 은 JSON |
-| `kedovi approach [sprint\|full\|issue]` | 진행 방식을 바꿀 때 | MVP · 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 단계 대신 이슈 보드). 인자 없이 = 지금 값. 기본 단계 그대로인 로드맵은 새 뼈대로 바꾸고, 이슈형으로 바꾸면 고친 로드맵에도 맨 앞에 이슈 보드를 끼운다 (전 단계 표는 아래에 남김) (관리자) |
-| `kedovi type [유형] [--approach a] [--code 이름,…]` | 분석·설계를 끝내고 구축 · 고도화로 넘어갈 때 | 같은 워크스페이스에서 유형을 바꾼다: 고칠 repo (현행 → 개발 repo, 화면에서 고름) · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대(지난 로드맵은 아래 「지난 로드맵」 절에 남김) → sync. 기획 · 이슈 repo 와 작업 기록은 그대로 이어진다. 인자 없이 = 지금 값 (관리자) |
-| `kedovi team-mode [auto\|fixed]` · `prefer <역할> <claude\|codex>:<모델>` `[--team]` | 팀 구성 방식을 바꿀 때 | 자동(리더가 작업마다 역할·모델) · 고정(프로필대로), 역할별 선호 모델. `--team` 은 팀 기본값(관리자), 없으면 이 PC 만 |
+| `kedovi approach [sprint\|full\|issue]` | 진행 방식을 바꿀 때 | MVP · 스프린트(기능 단위. 끝까지 동작하는 최소 기능부터, 스프린트마다 데모 · 회고하고 백로그에서 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수: 이슈마다 운영 반영, 단계 대신 이슈 보드). 인자 없이 = 지금 값. 기본 단계 그대로인 로드맵은 새 뼈대로 바꾸고, 이슈형으로 바꾸면 고친 로드맵에도 맨 앞에 이슈 보드를 끼운다 (전 단계 표는 아래에 남김) (팀장) |
+| `kedovi type [유형] [--approach a] [--code 이름,…]` | 분석·설계를 끝내고 구축 · 고도화로 넘어갈 때 | 같은 워크스페이스에서 유형을 바꾼다: 고칠 repo (현행 → 개발 repo, 화면에서 고름) · 진행 방식 · 유형 팩 교체 · 로드맵 새 뼈대(지난 로드맵은 아래 「지난 로드맵」 절에 남김) → sync. 기획 · 이슈 repo 와 작업 기록은 그대로 이어진다. 인자 없이 = 지금 값 (팀장) |
+| `kedovi team-mode [auto\|fixed]` · `prefer <역할> <claude\|codex>:<모델>` `[--team]` | 팀 구성 방식을 바꿀 때 | 자동(리더가 작업마다 역할·모델) · 고정(프로필대로), 역할별 선호 모델. `--team` 은 팀 기본값(팀장), 없으면 이 PC 만 |
 | `kedovi team-mode enforce review off\|warn\|block` `[--repos a,b\|*] [--min-lines N] [--paths p1,p2] --team` · `kedovi review status` · `mark` · `skip --reason "<사유>"` | 리뷰 없이 commit · push 하는 것을 잡을 때 | 기본 꺼짐. 켜면 에이전트(Claude Code)가 코드 · 기획 repo 에서 `git commit` · `git push` 할 때 리뷰 기록과 비교해 리뷰 안 된 줄 수가 기준을 넘으면 알리거나(warn) 막는다(block). 리뷰 기록은 reviewer 역할 에이전트 · reviewer 위임 · 교차 검토 때 남고, 리뷰 뒤 고치면 고친 만큼만 다시 센다. `mark` 는 직접 기록, `skip` 은 사용자 승인 뒤 한 번 생략. 핸드오프 기록은 세지 않는다 |
 | `kedovi tidy` `[--new] [--repo <이름>] [--count] [--json]` | 방향을 바꾸거나 고친 뒤 남은 파일을 찾을 때 | 읽기만 하는 보고서: 이번 작업 새 파일(커밋 안 한 것 · push 안 한 커밋), 어느 글에도 이름이 없는 이미지 · 동영상 · PDF, 링크 없는 문서, 백업 이름(`_old` · `.bak` · 번호 사본). 코드는 프로젝트 도구(knip · vulture · detekt 등)를 알려 준다. 지우기는 채팅에서 "안 쓰는 파일 정리해줘" (`tidy` 스킬: 표 → 승인 → 지움 → 검증) |
 | `kedovi import <폴더>` `[--json]` | 예전 AI 작업 폴더(지침 파일 · 룰 · 메모 · 핸드오프 · 스크립트)를 워크스페이스로 옮길 때 | 읽기만 하는 보고서: 종류별 분류, 큰 폴더(산출물 후보), 문서 속 개인 폴더 절대경로, 비밀값 의심 줄(값은 찍지 않는다). 옮기기는 채팅에서 "기존 폴더 가져와" (`import` 스킬: 계획 → 승인 → 반영) |
-| `kedovi prefs` · `language ko\|en\|team` · `style learn\|normal\|expert\|team` `[--team]` · `mermaid [install]` · `setup` | AI 의 답하는 언어 · 설명 정도를 바꿀 때 | 응답 언어(한국어 · English)는 진행 알림 · 중간 설명까지 그 언어로 (Claude Code · Codex 모두 요청마다, 긴 작업 중에는 도구 15번 · 4분마다 다시 한 줄을 넣는다). 대화 스타일은 학습(단계마다 왜 · 어떻게, 용어 풀이) · 일반(지금 수준) · 전문가(부가 설명 없이 현업 용어 · 결과 · 근거 표와 그림). 이 PC 값이 팀 값보다 먼저, `team` 은 이 PC 값을 지운다. `--team` 은 팀 기본값(관리자). `mermaid install` 은 그림을 브라우저로 띄우는 claude-mermaid 플러그인 설치 (없으면 텍스트 그림). 인자 없이 = 지금 값 |
-| `kedovi timestamp [on\|off\|team]` `[--team]` | 답변 첫 줄 시각 표시를 끄거나 켤 때 | 켜짐(기본)이면 Claude Code 답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss)이 나온다. 작업 시작 시각이고 끝 시각은 아니다. 이 PC 값이 팀 값보다 먼저, `team` 은 이 PC 값을 지운다. `--team` 은 팀 기본값(관리자) |
+| `kedovi prefs` · `language ko\|en\|team` · `style learn\|normal\|expert\|team` `[--team]` · `mermaid [install]` · `setup` | AI 의 답하는 언어 · 설명 정도를 바꿀 때 | 응답 언어(한국어 · English)는 진행 알림 · 중간 설명까지 그 언어로 (Claude Code · Codex 모두 요청마다, 긴 작업 중에는 도구 15번 · 4분마다 다시 한 줄을 넣는다). 대화 스타일은 학습(단계마다 왜 · 어떻게, 용어 풀이) · 일반(지금 수준) · 전문가(부가 설명 없이 현업 용어 · 결과 · 근거 표와 그림). 이 PC 값이 팀 값보다 먼저, `team` 은 이 PC 값을 지운다. `--team` 은 팀 기본값(팀장). `mermaid install` 은 그림을 브라우저로 띄우는 claude-mermaid 플러그인 설치 (없으면 텍스트 그림). 인자 없이 = 지금 값 |
+| `kedovi timestamp [on\|off\|team]` `[--team]` | 답변 첫 줄 시각 표시를 끄거나 켤 때 | 켜짐(기본)이면 Claude Code 답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss)이 나온다. 작업 시작 시각이고 끝 시각은 아니다. 이 PC 값이 팀 값보다 먼저, `team` 은 이 PC 값을 지운다. `--team` 은 팀 기본값(팀장) |
 | `kedovi team-mode enforce run off\|warn\|block` `[--after 분] [--team]` | 팀원 · 위임이 오래 돌 때 | 일하는 팀원(Claude Code 팀 모드) · 위임 작업의 경과가 상한(기본 60분, 팀 값)을 넘으면 멈출 때 한 번 막고 계속할지 사용자에게 묻게 한다(기본). 같은 대상은 상한만큼 지나 다시 |
 | `kedovi team-mode enforce plan off\|warn\|block` `[--team]` | 코드를 고치기 전에 계획을 보였는지 | 요청마다 코드 repo 첫 수정 전에 답변에 `착수 전 확인:` 머리말이 없으면 알린다(기본: 요청마다 한 번). 막기면 보일 때까지 수정을 막는다. 문서 · 스타일 두 줄 이하는 제외 |
 | `kedovi team-mode enforce check off\|warn\|block` `[--team]` | 리뷰 전에 검사를 돌렸는지 | 리뷰 위임 · 리뷰 에이전트 지시서에 `검사: <명령> 통과` 줄이 없으면 막는다(기본). 순서: 구현 → 해당 검사 → 리뷰 → 수정 → 해당 검사. 검사가 없는 변경은 `검사: 없음 (사유)` |
@@ -32,7 +32,9 @@
 | `kedovi team-mode enforce name off\|warn\|block` · `roster off\|warn` `[--team]` | 역할 에이전트 규칙을 훅으로 지키게 할 때 | `name`: Claude Code agent teams 가 켜진 PC 에서 역할 에이전트를 이름(`name`) 없이 띄우면 훅이 막는다(기본) · 경고만 · 끈다. `roster`: 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄을 넣는다(기본, 막지 않는다) · 끈다. 이 PC 값은 팀 값보다 세게만 |
 | `kedovi ai plan claude\|gpt <요금제>` `[--team]` | 요금제를 바꿨을 때 | 회사별 요금제(여유도 빠듯 · 넉넉 · 종량). 보통은 `kedovi ai` 화면에서 고르고, 이 PC 로그인 정보의 요금제가 미리 골라져 있다 |
 | `kedovi models profile <이름> [--team]` · `models set <역할> <도구> <모델> [--team]` · `models allow-higher on\|off` · `kedovi agent --claude\|--codex` | AI 에게 시킬 때 | 화면 없이 같은 일을 한다. AI 콘솔에서 "리뷰는 GPT 로 바꿔줘" 처럼 말하면 `kedovi` 스킬이 이 명령을 쓴다 |
-| `kedovi team edit allow\|deny` · `admins [id…]` | 팀장이 설정 수정 권한을 정할 때 | 불가면 관리자만 `workspace.json` · 팩을 바꾸고, 팀원은 자기 핸드오프와 로드맵(`handoffs/PLAN.md`)만 커밋한다 |
+| `kedovi team edit allow\|deny` · `admins [id…]` | 팀장이 설정 수정 권한을 정할 때 | 불가면 팀장만 `workspace.json` · 팩을 바꾸고, 팀원은 자기 핸드오프와 로드맵(`handoffs/PLAN.md`)만 커밋한다 |
+| `kedovi team lead add\|remove <username>` · `leads` · `add <username> --nick 이름 --repos a,b` · `repos <username> <a,b\|->` · `nick <username> <이름>` | 팀장 · 팀원 · 담당 repo · 부를 이름을 정할 때 (팀장) | 팀원은 담당 repo 만 고치고 나머지는 훅 · 커밋 검사가 막는다. 에이전트는 nickname 으로 부른다 |
+| `kedovi team whoami [--refresh]` | 이 PC 가 누구로 판정되는지 볼 때 | 저장소 계정 username · nickname · 팀장/팀원 · 고칠 수 없는 repo |
 | `kedovi team add\|remove <id…>` · `members` · `restrict on\|off` | 리더가 팀 명단을 관리할 때 | `workspace.json` 의 `team` 에 명단을 둔다 (id = 그 사람 워크스페이스의 `git user.name`). `restrict on` 이면 명단 밖 사람은 `kedovi start` 가 멈춘다 |
 | `kedovi team [id] [--take 번호…\|all]` | 팀 상황을 볼 때 · 인수할 때 | 모두의 핸드오프를 모아 누가 언제 무엇을 얼마나 했는지 (원격 기준, 읽기만). id 를 주면 그 사람 자세히, `--take` 면 그 사람 TODO 항목을 내 TODO 로 인수 |
 | `kedovi notify setup` | 텔레그램 알림을 켜고 바꿀 때 | 설정 화면 하나에서 알림 수준 · 양방향 대화 · 자리 비움 · 개인 봇 · 팀 방 · 고급 · 시험 발송을 고른다. 이미 한 것은 바꾸기 · 제거 |
@@ -55,8 +57,8 @@
 | `kedovi rules ondemand\|always <ID…\|repo-tasks>` | AGENTS.md 가 Codex 한도를 넘을 때 | 상시 규칙을 필요할 때만 읽게 한다 (`rules.onDemand`). `repo-tasks` 는 「repo 별 작업 규칙」의 작업별 표를 `.agents/rules/repo-tasks.md` 로 뺀다. sync 경고가 큰 절을 알려 준다 |
 | `kedovi repo add [주소·폴더·이름]` | repo 를 더할 때 | clone · 링크(원격 없는 로컬 repo 도), 또는 이름만 주면 `repos/<이름>` 에 원격 없이 새로 만든다. 인자 없이 = 화면에서 방식(clone · 기존 로컬 폴더 · 새로 만들기)을 먼저 고른다 (레거시 제외. 기획 repo 면 뼈대는 `kedovi init-docs`) → 스택 확인 → sync |
 | `kedovi repo add … --group <그룹>` | repo 가 많아 폴더를 나눌 때 | `repos/<그룹>/<이름>` 에 받는다. 이미 그룹을 쓰는 워크스페이스면 화면에서 고른다 ([그룹 폴더](workspace.md#repo-그룹-폴더)) |
-| `kedovi repo move <이름> --group <그룹>` · `--no-group` | 있는 repo 를 그룹 폴더로 옮길 때 | 폴더 · `workspace.json` · 사람이 쓴 md 의 옛 경로를 고치고 sync (관리자) |
-| `kedovi repo guides` · `<이름> follow\|kit\|ignore` · `--rescan [<이름>]` | 받은 repo 에 원래 CLAUDE.md · AGENTS.md · 룰 · 스킬이 있을 때 | 목록과 따르는 방식을 보여 주고 바꾼다. follow = repo 지침 우선(기본), kit = 킷 규칙 우선, ignore = 무시. 자세히는 [repo 자체 지침](workspace.md#repo-자체-지침) (관리자) |
+| `kedovi repo move <이름> --group <그룹>` · `--no-group` | 있는 repo 를 그룹 폴더로 옮길 때 | 폴더 · `workspace.json` · 사람이 쓴 md 의 옛 경로를 고치고 sync (팀장) |
+| `kedovi repo guides` · `<이름> follow\|kit\|ignore` · `--rescan [<이름>]` | 받은 repo 에 원래 CLAUDE.md · AGENTS.md · 룰 · 스킬이 있을 때 | 목록과 따르는 방식을 보여 주고 바꾼다. follow = repo 지침 우선(기본), kit = 킷 규칙 우선, ignore = 무시. 자세히는 [repo 자체 지침](workspace.md#repo-자체-지침) (팀장) |
 | `kedovi repo remove <이름> [--delete]` | repo 를 뺄 때 | `workspace.json` · 리뷰 대상에서 지우고 sync, 이름이 남은 문서(README 등)를 알린다. 폴더는 `--delete` 일 때만 지운다 (커밋 안 한 변경 · push 안 한 커밋이 있으면 거부) |
 | `kedovi detect` | repo 스택이 바뀌었을 때 | 코드 repo 의 기술 스택을 다시 감지하고 고친다 → repo 별 규칙이 바뀐다 |
 | `kedovi detect --hint <스택> --contains <정규식>` | 사내 라이브러리를 거쳐 쓰는 프레임워크가 감지되지 않을 때 | 감지 힌트를 `workspace.json` 의 `stackHints` 에 더하고 다시 감지한다 |
@@ -66,7 +68,7 @@
 | `kedovi init-docs [폴더]` | 기획 repo 가 없을 때 | 기획자 repo 뼈대 생성 (읽는 순서대로: 개요 · 아이디어 · 규모 → 시스템 구성(아키텍처 양식) → 기능(요구 목록 · 영역별 기능 문서 · 업무 규칙) → 화면(목록 · 정책 · 프로토타입) → 데이터 · API → 결정 · 미결, 메뉴 `docs-site.json`)  기획 repo 를 두지 않는 프로젝트는 `workspace.json` 에 `"docsRepo": false` 를 넣으면 sync 의 "기획 repo 가 없습니다" 경고가 꺼진다 (운영·고도화 유형은 처음부터 경고하지 않는다) |
 | `kedovi sync` · `check` · `doctor` · `packs` | 필요할 때 | 생성 · 생성물 검사 · 환경 진단 · 팩 목록 |
 | `kedovi upgrade [--add 팩]` | 킷 새 버전 후 | 워크스페이스의 `bin/kit.js` 와 팩을 이 킷 버전으로 (project 팩은 그대로). 몇 버전 뒤져도 한 번에 올라가고 그 사이 변경 기록을 모두 보여 준다. 저절로 켜지 않는 것은 한 줄씩 알린다: 그 유형의 기본 팩인데 꺼진 팩(`--add` 로 켬) · 진행 방식 · 새로 감지되는 스택 |
-| `kedovi upgrade --all` `[--scan <폴더>] [--yes]` | `npm i -g` 로 새 버전을 받은 뒤 이 PC 의 워크스페이스를 모두 올릴 때 | `kedovi list` 의 워크스페이스(`--scan` 이면 그 폴더 아래에서 찾아 더함)를 버전과 함께 보이고, 옛 버전만 묻고 올린다. 관리자 아님 · 원격에 받지 않은 커밋(팀원이 먼저 올렸을 수 있음) · 커밋 안 한 변경이 있으면 건너뛴다. 끝나면 워크스페이스마다 commit · push 명령을 보여 준다. 새 버전을 받은 뒤 첫 kedovi 명령이 옛 버전 워크스페이스 수를 한 번 알린다 |
+| `kedovi upgrade --all` `[--scan <폴더>] [--yes]` | `npm i -g` 로 새 버전을 받은 뒤 이 PC 의 워크스페이스를 모두 올릴 때 | `kedovi list` 의 워크스페이스(`--scan` 이면 그 폴더 아래에서 찾아 더함)를 버전과 함께 보이고, 옛 버전만 묻고 올린다. 팀장 아님 · 원격에 받지 않은 커밋(팀원이 먼저 올렸을 수 있음) · 커밋 안 한 변경이 있으면 건너뛴다. 끝나면 워크스페이스마다 commit · push 명령을 보여 준다. 새 버전을 받은 뒤 첫 kedovi 명령이 옛 버전 워크스페이스 수를 한 번 알린다 |
 
 AI 연결 방식과 시작 도구는 **워크스페이스마다** 정하고 `.agents/local.json` 에 저장한다 (이 PC 전용, git 공유 안 함). 구독·게이트웨이는 사람마다 다르기 때문이다.
 

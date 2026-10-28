@@ -44,7 +44,7 @@ const semver = (v) => String(v || '').split('.').map((n) => parseInt(n, 10) || 0
 const cmpVer = (a, b) => { const x = semver(a); const y = semver(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0; };
 if (!cliKit) add(WARN, '킷 버전', `워크스페이스 ${wsKit || '?'} · 전역 kedovi 없음`, 'npm i -g kedovi (README 설치 절)');
 else if (!wsKit || cmpVer(cliKit, wsKit) === 0) add(OK, '킷 버전', `${cliKit}${wsKit ? '' : ' (워크스페이스 기록 없음)'}`);
-else if (cmpVer(cliKit, wsKit) > 0) add(WARN, '킷 버전', `전역 kedovi ${cliKit} · 워크스페이스 ${wsKit} (워크스페이스가 낮음)`, `관리자가 kedovi upgrade → commit · push (팀원은 git pull)`);
+else if (cmpVer(cliKit, wsKit) > 0) add(WARN, '킷 버전', `전역 kedovi ${cliKit} · 워크스페이스 ${wsKit} (워크스페이스가 낮음)`, `팀장이 kedovi upgrade → commit · push (팀원은 git pull)`);
 else add(WARN, '킷 버전', `전역 kedovi ${cliKit} · 워크스페이스 ${wsKit} (전역이 낮음)`, 'npm i -g kedovi 로 전역 kedovi 을 올린다');
 
 // 3. 워크스페이스 repo
@@ -53,13 +53,20 @@ add(isRepo ? OK : FAIL, 'git: 워크스페이스', isRepo ? 'OK' : 'git 저장�
 const id = devId(ROOT);
 add(id ? OK : WARN, '개발자 ID (git user.name)', id || '미설정', '워크스페이스 루트에서 git config user.name <id>');
 const team = ws.team || {};
-if (team.lock && (team.admins || []).length) {
-  const isAdmin = !!id && team.admins.includes(id);
-  add(OK, '팀원 설정 수정', `불가 (관리자 ${team.admins.join(', ')}) · 나: ${isAdmin ? '관리자' : '팀원 (자기 handoffs/ 와 로드맵만 커밋)'}`, '');
+const TL = require('../lib/team');
+const roster = TL.roster(ws);
+const who = TL.whoAmI(ROOT, ws);
+if (roster.leads.length || roster.members.length) {
+  add(who.source === 'git user.name' ? WARN : OK, '이 PC 사용자 (저장소 계정)', `${who.nickname ? `${who.nickname} · ` : ''}${who.username || '모름'} (${who.source})`, '저장소 계정 확인: kedovi team whoami --refresh');
 }
-if ((team.members || []).length) {
-  const inRoster = !!id && team.members.includes(id);
-  add(inRoster ? OK : team.restrict ? FAIL : WARN, '팀 명단', inRoster ? `${id} (명단 ${team.members.length}명${team.restrict ? ' · 제한 켜짐' : ''})` : `${id || '(id 없음)'} 이(가) 명단에 없음${team.restrict ? '. kedovi start 가 멈춘다' : ''}`, `리더에게 명단 추가(kedovi team add ${id || '<id>'}) 요청`);
+if (team.lock && roster.leads.length) {
+  add(OK, '팀원 설정 수정', `불가 (팀장 ${roster.leads.map(TL.callName).join(', ')}) · 나: ${who.lead ? '팀장' : '팀원 (자기 handoffs/ 와 로드맵만 커밋)'}`, '');
+}
+if (roster.members.length) {
+  const inRoster = who.lead || !!who.person;
+  add(inRoster ? OK : team.restrict ? FAIL : WARN, '팀 명단', inRoster ? `${TL.callName(who.person) || who.username} (${who.lead ? '팀장' : `팀원 · 담당 ${(who.repos || []).join(', ') || '없음'}`} · 명단 ${roster.members.length}명${team.restrict ? ' · 제한 켜짐' : ''})` : `${who.username || '(id 없음)'} 이(가) 명단에 없음${team.restrict ? '. kedovi start 가 멈춘다' : ''}`, `팀장에게 명단 추가(kedovi team add ${who.username || '<username>'} --nick 이름) 요청`);
+  const blocked = TL.blockedRepos(ROOT, ws);
+  if (blocked.length) add(OK, '담당 아닌 repo', `${blocked.join(', ')} (읽기만, 수정 · 커밋은 막힘)`, '');
 }
 
 // AI 연결 방식 (kedovi ai) — 쓰는 AI 의 CLI · 게이트웨이 모델 목록 · 역할 모델 경고
@@ -214,6 +221,28 @@ try {
             : `kedovi secret test ${d.name} 로 다시 확인 (네트워크 · 주소)`);
   }
 } catch { /* 옛 워크스페이스 */ }
+
+// 8-3. 권장 플러그인 · MCP (README 「플러그인 · MCP · 도구」 와 같은 목록). 없으면 알리기만 한다
+try {
+  const os = require('os');
+  const home = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+  let plugins = {};
+  try { plugins = JSON.parse(fs.readFileSync(path.join(home, 'plugins', 'installed_plugins.json'), 'utf8')).plugins || {}; } catch { /* 없음 */ }
+  const hasPlugin = (re) => Object.keys(plugins).some((k) => re.test(k));
+  if (which('claude')) add(hasPlugin(/claude-mermaid/) ? OK : WARN, '권장: claude-mermaid', hasPlugin(/claude-mermaid/) ? '설치됨' : '없음 (대화 중 그림을 텍스트로 그린다)', 'kedovi prefs mermaid install');
+  // Playwright MCP: 사용자 · 프로젝트 MCP 설정, 플러그인 어디든
+  const mcpNames = [];
+  for (const f of [path.join(os.homedir(), '.claude.json'), path.join(ROOT, '.mcp.json')]) {
+    try {
+      const j = JSON.parse(fs.readFileSync(f, 'utf8'));
+      mcpNames.push(...Object.keys(j.mcpServers || {}));
+      for (const pr of Object.values(j.projects || {})) mcpNames.push(...Object.keys((pr && pr.mcpServers) || {}));
+    } catch { /* 없음 */ }
+  }
+  const front = (ws.repos || []).some((r) => /react|next|vue|svelte|angular|frontend/i.test(JSON.stringify(r.stacks || r.stack || r.layer || '')));
+  const pw = mcpNames.some((n) => /playwright/i.test(n)) || hasPlugin(/playwright/);
+  if (front || pw) add(pw ? OK : WARN, '권장: Playwright MCP', pw ? '있음' : '없음 (화면 확인 · 접근성 실행 검사를 못 한다)', 'claude mcp add playwright -- npx @playwright/mcp@latest');
+} catch { /* 정보 항목 */ }
 
 // 9. 개인 지침·핸드오프 (정보)
 add(OK, '개인 지침 .agents/local.md', fs.existsSync(path.join(ROOT, '.agents', 'local.md')) ? '있음' : '없음 (선택)');

@@ -32,7 +32,7 @@
 | 항목 | 내용 |
 |---|---|
 | 붙는 조건 | 항상 |
-| 비밀값 | `TELEGRAM_BOT_TOKEN` (전역 · 선택): 개인 알림 봇 (kedovi notify)<br>`TELEGRAM_TEAM_BOT_TOKEN` (전역 · 선택): 팀 방 알림 봇 (관리자에게 받음) |
+| 비밀값 | `TELEGRAM_BOT_TOKEN` (전역 · 선택): 개인 알림 봇 (kedovi notify)<br>`TELEGRAM_TEAM_BOT_TOKEN` (전역 · 선택): 팀 방 알림 봇 (팀장에게 받음) |
 
 **규칙**
 
@@ -79,9 +79,9 @@
 
 **팀 에이전트 역할**: 분석 (`analyst`) · 설계 (`architect`) · 문서화 (`documenter`) · 구현 (`implementer`) · 리뷰 (`reviewer`) · 설계 문서 (`spec-writer`) · 테스트 (`tester`)
 
-**도구**: `bin/board.js` · `bin/brief.js` · `bin/budget.js` · `bin/check-docs.js` · `bin/check-refs.js` · `bin/cross-review.js` · `bin/delegate.js` · `bin/docs-site.js` · `bin/doctor.js` · `bin/handoff.js` · `bin/import-scan.js` · `bin/issue-check.js` · `bin/notify.js` · `bin/plan.js` · `bin/rename-ref.js` · `bin/repo-activity.js` · `bin/review.js` · `bin/secret.js` · `bin/strip-ai-trailers.js` · `bin/team-status.js` · `bin/tidy.js`
+**도구**: `bin/board.js` · `bin/brief.js` · `bin/budget.js` · `bin/check-docs.js` · `bin/check-refs.js` · `bin/cross-review.js` · `bin/delegate.js` · `bin/docs-site.js` · `bin/doctor.js` · `bin/handoff.js` · `bin/import-scan.js` · `bin/issue-check.js` · `bin/notify.js` · `bin/plan.js` · `bin/rename-ref.js` · `bin/repo-activity.js` · `bin/repo-check.js` · `bin/review.js` · `bin/secret.js` · `bin/strip-ai-trailers.js` · `bin/team-status.js` · `bin/tidy.js`
 
-**훅**: 세션 시작: `check-repo-updates.js` · 세션 시작: `check-context-sync.js` · 세션 시작: `handoff-brief.js` · 세션 시작: `session-brief.js` · 세션 시작: `model-profile.js` · 세션 시작: `team-mode.js` · 세션 시작: `channel-mode.js` · 세션 끝: `task-check.js` · 세션 끝: `decision-ask.js` · 세션 끝: `handoff-reminder.js` · 세션 끝: `agent-cleanup.js` · 세션 끝: `budget-check.js` · 세션 끝: `team-idle.js` · 세션 끝: `notify.js` · UserPromptSubmit: `agent-budget.js` · UserPromptSubmit: `task-focus.js` · UserPromptSubmit: `prompt-time.js` · UserPromptSubmit: `chat-prefs.js` · UserPromptSubmit: `budget-check.js` · UserPromptSubmit: `team-idle.js` · UserPromptSubmit: `decision-ask.js` · UserPromptSubmit: `plan-first.js` · UserPromptSubmit: `notify.js` · PreToolUse: `agent-budget.js` · PreToolUse: `notify.js` · PreToolUse: `decision-ask.js` · PreToolUse: `notify.js` · PreToolUse: `plan-first.js` · PreToolUse: `team-guard.js` · PreToolUse: `review-gate.js` · PreToolUse: `spec-commit.js` · PostToolUse: `channel-progress.js` · PostToolUse: `chat-prefs.js` · PostToolUse: `notify.js` · PostToolUse: `notify.js` · Notification: `team-idle.js` · Notification: `notify.js` · SubagentStop: `agent-budget.js` · SubagentStop: `notify.js` · TeammateIdle: `team-idle.js` · TeammateIdle: `notify.js`
+**훅**: 세션 시작: `check-repo-updates.js` · 세션 시작: `check-context-sync.js` · 세션 시작: `handoff-brief.js` · 세션 시작: `session-brief.js` · 세션 시작: `model-profile.js` · 세션 시작: `team-mode.js` · 세션 시작: `channel-mode.js` · 세션 끝: `task-check.js` · 세션 끝: `decision-ask.js` · 세션 끝: `handoff-reminder.js` · 세션 끝: `agent-cleanup.js` · 세션 끝: `budget-check.js` · 세션 끝: `team-idle.js` · 세션 끝: `notify.js` · UserPromptSubmit: `agent-budget.js` · UserPromptSubmit: `task-focus.js` · UserPromptSubmit: `prompt-time.js` · UserPromptSubmit: `chat-prefs.js` · UserPromptSubmit: `settings-hint.js` · UserPromptSubmit: `budget-check.js` · UserPromptSubmit: `team-idle.js` · UserPromptSubmit: `decision-ask.js` · UserPromptSubmit: `plan-first.js` · UserPromptSubmit: `notify.js` · PreToolUse: `agent-budget.js` · PreToolUse: `notify.js` · PreToolUse: `decision-ask.js` · PreToolUse: `notify.js` · PreToolUse: `plan-first.js` · PreToolUse: `team-guard.js` · PreToolUse: `repo-guard.js` · PreToolUse: `review-gate.js` · PreToolUse: `spec-commit.js` · PostToolUse: `channel-progress.js` · PostToolUse: `chat-prefs.js` · PostToolUse: `notify.js` · PostToolUse: `notify.js` · Notification: `team-idle.js` · Notification: `notify.js` · SubagentStop: `agent-budget.js` · SubagentStop: `notify.js` · TeammateIdle: `team-idle.js` · TeammateIdle: `notify.js`
 
 </details>
 

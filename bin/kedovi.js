@@ -19,11 +19,14 @@
  *   kedovi repo guides [<이름> follow|kit|ignore] [--rescan [<이름>]]   repo 안에 원래 있던 AI 지침(CLAUDE.md · AGENTS.md · 룰 · 스킬 등) 보기 · 따르는 방식 정하기 (follow = repo 지침 우선, 기본 · kit = 킷 규칙 우선 · ignore = 무시) · 다시 훑기
  *   kedovi team [id] [--take 1,2|all]   팀 현황 (모두의 핸드오프) · 한 사람 자세히 · 그 사람 TODO 항목을 내 TODO 로 인수
  *   kedovi team add|remove <id…> · members · restrict on|off   팀 명단 (workspace.json team) · 명단 밖 사람의 kedovi start 막기
- *   kedovi team edit allow|deny · admins [id…]   팀원 설정 수정 허용·불가 (불가면 관리자만 workspace.json·팩을 바꾼다)
+ *   kedovi team edit allow|deny · admins [id…]   팀원 설정 수정 허용·불가 (불가면 팀장만 workspace.json·팩을 바꾼다)
+ *   kedovi team lead add|remove <username> [--nick 이름] · leads   팀장 (모든 repo · 설정을 고친다)
+ *   kedovi team add <username> [--nick 이름] [--repos a,b] · repos <username> <a,b|-> · nick <username> <이름>   팀원 · 담당 repo (담당 밖 repo 는 훅 · 커밋 검사가 막는다) · 부를 이름
+ *   kedovi team whoami [--refresh]   이 PC 사용자 (저장소 계정 username · nickname · 팀장/팀원 · 담당 repo)
  *   kedovi detect --hint <스택> --contains <정규식>   사내 라이브러리를 거쳐 쓰는 스택의 감지 힌트를 더한다
  *   kedovi models [--migrate | --json]   모델 프로필·역할별·교차 검토 모델을 바꾼다 (화면 없이 실행하면 표, --json 은 JSON) / 퇴역 모델을 대체 모델로 일괄 교체
  *   kedovi models profile <이름> [--team] · set <역할> <도구> <모델> [--team] [--effort e]   화면 없이 (AI 가 대신 실행). 내 프로필은 팀보다 낮은 것만
- *   kedovi models allow-higher on|off   팀원이 팀보다 높은 프로필을 고를 수 있게 (팀, 관리자)
+ *   kedovi models allow-higher on|off   팀원이 팀보다 높은 프로필을 고를 수 있게 (팀, 팀장)
  *   kedovi agent --claude|--codex [--args "<인자>"]   화면 없이 메인 에이전트
  *   kedovi list                 이 PC 에서 만들거나 쓴 워크스페이스 목록
  *   kedovi reset [항목,… | --all] [--yes]   이 PC 의 개인 설정을 처음 상태로 (이 PC 설정 · 텔레그램 채널 · 임시 기록 · 개인 지침 · 토큰 중 고른다). 팀 설정 · repos 는 그대로
@@ -45,13 +48,13 @@
  *   kedovi board [--no-open] [--no-fetch]   워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽 (.agents/board/, 이 PC 만 · 보기 전용)
  *   kedovi screens check [repo|폴더]   화면설계서 검사: 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락 (screens 팩)
  *   kedovi datamodel check [repo|폴더]   데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
- *   kedovi secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>   비밀값(토큰): OS 저장소(키체인 · 자격 증명 관리자 · libsecret)에 프로젝트별 · 전역으로. 값은 숨김 입력, 어디에도 출력하지 않는다
+ *   kedovi secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>   비밀값(토큰): OS 저장소(키체인 · 자격 증명 팀장 · libsecret)에 프로젝트별 · 전역으로. 값은 숨김 입력, 어디에도 출력하지 않는다
  *   kedovi gitlab pipeline [--repo R] [--ref 브랜치 | --mr 번호 | --id ID] [--limit N] [--log [줄 수]] [--json]   GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분. MR 은 머지 커밋의 파이프라인도 찾는다
  *   kedovi prefs [language ko|en|team · style learn|normal|expert|team] [--team] · mermaid [install] · setup   응답 언어 · 대화 스타일(학습 · 일반 · 전문가) · 그림 미리보기(claude-mermaid). 이 PC 값이 팀 값보다 먼저. 인자 없이 = 지금 값
  *   kedovi timestamp [on|off|team] [--team]   답변 첫 줄에 요청 받은 시각(yyyy-MM-dd HH:mm:ss) 표시 (Claude Code, 기본 켜짐). 이 PC 값이 팀 값보다 먼저, team = 이 PC 값 지우기. 인자 없이 = 지금 값
- *   kedovi type [유형] [--approach a] [--code 이름,…]   유형 바꾸기: 분석·설계 → 구축 · 고도화 등. 유형 팩 · 현행 repo 중 고칠 것(개발 repo 로) · 진행 방식 · 로드맵 새 뼈대 (관리자)
- *   kedovi approach [sprint|full|issue]   진행 방식: MVP · 스프린트(최소 기능부터, 스프린트마다 데모하며 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수, 이슈 보드). 바꾸면 로드맵도 맞춘다 (관리자)
- *   kedovi team-mode [auto|fixed] · prefer <역할> <claude|codex>:<모델>|- · [--team]   팀 구성: 자동(리더가 작업마다 역할·모델, 요금제 여유도 반영) · 고정(프로필대로), 역할별 선호 모델. --team 은 팀 기본값(관리자)
+ *   kedovi type [유형] [--approach a] [--code 이름,…]   유형 바꾸기: 분석·설계 → 구축 · 고도화 등. 유형 팩 · 현행 repo 중 고칠 것(개발 repo 로) · 진행 방식 · 로드맵 새 뼈대 (팀장)
+ *   kedovi approach [sprint|full|issue]   진행 방식: MVP · 스프린트(최소 기능부터, 스프린트마다 데모하며 하나씩) · 워터폴 · 전체(전체 설계 뒤 구축) · 이슈형(운영 · 유지보수, 이슈 보드). 바꾸면 로드맵도 맞춘다 (팀장)
+ *   kedovi team-mode [auto|fixed] · prefer <역할> <claude|codex>:<모델>|- · [--team]   팀 구성: 자동(리더가 작업마다 역할·모델, 요금제 여유도 반영) · 고정(프로필대로), 역할별 선호 모델. --team 은 팀 기본값(팀장)
  *   kedovi review status · mark [--repo R] [--by "<누가>"] · skip --reason "<사유>" [--repo R]   리뷰 확인(commit · push 전에 리뷰를 거쳤나): 대상 repo 마다 리뷰 안 된 줄 수 · 지금 상태를 리뷰했다고 기록 · 한 번 생략(사용자 승인 뒤). 켜기는 team-mode enforce review
  *   kedovi team-mode enforce review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] [--team]   commit · push 전 리뷰 확인 (기본 꺼짐. Claude Code). 대상 · 기준 줄 수 · 경로는 팀 값(--team)
  *   kedovi import <폴더> [--json]   기존 AI 작업 폴더 훑기 (읽기만): 지침 · 룰 · 스킬 · 메모 · 핸드오프 · 스크립트 · 큰 폴더 분류, 문서 속 절대경로, 비밀값 의심 줄(값은 가림). 옮기기는 채팅에서 import 스킬로 (계획 → 승인 → 반영)
@@ -65,7 +68,7 @@
  *   kedovi team-mode enforce name off|warn|block · roster off|warn [--team]   훅 강제 수준. name: 팀 모드(Claude Code agent teams)에서 역할 에이전트를 이름 없이 띄우면 막기(기본) · 경고 · 끄기. roster: 한 요청의 첫 역할 에이전트 때 실행 방식 · 구성표를 알렸는지 한 줄(기본) · 끄기. 이 PC 값은 팀 값보다 세게만
  *   kedovi sync | check | doctor | packs   생성물 다시 만들기 · 생성물 검사 · 환경 진단 · 팩 목록
  *   kedovi upgrade [--add 팩]   이 킷 버전으로 워크스페이스의 bin·팩을 갱신
- *   kedovi upgrade --all [--scan <폴더>] [--yes]   이 PC 의 워크스페이스(kedovi list)를 설치된 킷 버전으로 한꺼번에 올린다. 관리자 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이 있으면 건너뛴다. --scan 은 폴더 아래 워크스페이스를 찾아 목록에 더한다
+ *   kedovi upgrade --all [--scan <폴더>] [--yes]   이 PC 의 워크스페이스(kedovi list)를 설치된 킷 버전으로 한꺼번에 올린다. 팀장 아님 · 원격에 받지 않은 커밋 · 커밋 안 한 변경이 있으면 건너뛴다. --scan 은 폴더 아래 워크스페이스를 찾아 목록에 더한다
  *   kedovi help [번호|명령|--all]   명령 도움말: 인자 없이 = 자주 쓰는 명령 · 분류 목록 (터미널이면 분류를 골라 보기) · 번호 = 그 분류의 명령 · --all = 전체
  */
 'use strict';
@@ -435,9 +438,9 @@ function wsVersion(root) {
   try { return (JSON.parse(read(path.join(root, 'workspace.json'))).kit || {}).version || null; } catch { return null; }
 }
 
-/** 지금 올리면 안 되는 이유 (없으면 null): 관리자 아님 · 원격에 받지 않은 커밋(팀원이 먼저 올렸을 수 있다) · 커밋 안 한 변경 */
+/** 지금 올리면 안 되는 이유 (없으면 null): 팀장 아님 · 원격에 받지 않은 커밋(팀원이 먼저 올렸을 수 있다) · 커밋 안 한 변경 */
 function upgradeBlocker(root) {
-  try { if (!kit.lockState(root, kit.loadWorkspace(root)).admin) return '관리자만 올릴 수 있음 (팀원 설정 수정이 막혀 있음)'; } catch { /* 옛 킷 */ }
+  try { if (!kit.lockState(root, kit.loadWorkspace(root)).admin) return '팀장만 올릴 수 있음 (팀원 설정 수정이 막혀 있음)'; } catch { /* 옛 킷 */ }
   const git = (...a) => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8', timeout: 6000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
   if (git('rev-parse', '--is-inside-work-tree').status !== 0) return null;
   if (git('rev-parse', '--abbrev-ref', '@{u}').status === 0) {
@@ -1413,10 +1416,10 @@ async function cmdInit(argv) {
   if (leadId) {
     const f = path.join(dir, 'handoffs', leadId, 'TODO.md');
     if (!fs.existsSync(f)) { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, `# TODO (${leadId})\n`); }
-    // 만든 사람이 관리자 — 팀원 설정 수정을 막을 때(kedovi team edit deny) 이 사람만 설정을 바꾼다
+    // 만든 사람이 팀장 — 팀원 설정 수정을 막을 때(kedovi team edit deny) 이 사람만 설정을 바꾼다
     const wsFile = path.join(dir, 'workspace.json');
     const raw = JSON.parse(read(wsFile));
-    if (!(raw.team && (raw.team.admins || []).length)) { raw.team = { ...(raw.team || {}), admins: [leadId] }; fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n'); }
+    if (!(raw.team && ((raw.team.admins || []).length || (raw.team.leads || []).length))) { const acct = detectAccount(dir); raw.team = { ...(raw.team || {}), leads: [acct ? { username: acct.username } : { username: leadId, source: 'git' }] }; if (acct) { writeLocal(dir, { me: { ...acct, checked: new Date().toISOString().slice(0, 10) } }); fs.writeFileSync(path.join(dir, 'handoffs', leadId, '.account'), `${acct.username}\n`); } fs.writeFileSync(wsFile, JSON.stringify(raw, null, 2) + '\n'); }
   }
   // repo 별 상태: clone 실패 · 빠진 repo 는 질문 화면들 뒤로 밀려 안 보이므로 끝에 다시 보인다 (다시 받기 = kedovi install, sync 는 받지 않는다)
   const repoNote = repoStatus(dir, res.repos || []);
@@ -1590,49 +1593,128 @@ function teamOf(root) {
   try { return JSON.parse(read(path.join(root, 'workspace.json'))).team || {}; } catch { return {}; }
 }
 
-/** 설정 잠금(팀원 설정 수정 불가)일 때 관리자만. 아니면 멈춘다. soft 면 경고하고 false */
+/** 설정 잠금(팀원 설정 수정 불가)일 때 팀장만. 아니면 멈춘다. soft 면 경고하고 false */
 function requireAdmin(root, what, { soft = false } = {}) {
   let st = { admin: true };
   try { st = kit.lockState(root, kit.loadWorkspace(root)); } catch { /* 옛 킷 */ }
   if (st.admin) return true;
-  const msg = `팀원 설정 수정이 막혀 있습니다 (관리자: ${(teamOf(root).admins || []).join(', ')}). ${what} 은(는) 관리자에게 요청하세요`;
+  const t = teamOf(root);
+  const leads = [...(t.leads || []), ...(t.admins || [])].map((x) => (typeof x === 'string' ? x : x.nickname || x.username));
+  const msg = `팀원 설정 수정이 막혀 있습니다 (팀장: ${leads.join(', ')}). ${what} 은(는) 팀장에게 요청하세요`;
   if (soft) { p.log.warn(msg); return false; }
   fail(msg);
 }
 
+// 이 PC 사용자 확인 — 워크스페이스 repo 원격의 저장소 계정 username. ssh 면 ssh -T 인사말, https 면 gh · glab · git credential 의 사용자 이름
+const NOT_USER = new Set(['oauth2', 'x-access-token', 'gitlab-ci-token', 'personalaccesstoken', 'token', 'git']);
+function detectAccount(root) {
+  const url = (spawnSync('git', ['-C', root, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).stdout || '').trim();
+  if (!url) return null;
+  const ssh = url.match(/^ssh:\/\/([\w.-]+)@([^:/]+)(?::(\d+))?\//) || url.match(/^([\w.-]+)@([^:/]+):/);
+  // 로그인 창 · 브라우저가 뜨지 않게 (Git Credential Manager · askpass)
+  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' };
+  delete env.GIT_ASKPASS; delete env.SSH_ASKPASS;
+  const run = (cmd, args, input) => { try { const r = spawnSync(cmd, args, { encoding: 'utf8', timeout: 8000, input, env }); return `${r.stdout || ''}\n${r.stderr || ''}`; } catch { return ''; } };
+  if (ssh && !/^https?:/.test(url)) {
+    const [, user, host, port] = ssh;
+    const out = run('ssh', ['-T', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=accept-new', ...(port ? ['-p', port] : []), `${user}@${host}`]);
+    const m = out.match(/Hi ([\w.-]+)!/) || out.match(/Welcome to GitLab, @([\w.-]+)!/) || out.match(/logged in as ([\w.-]+)/i);
+    return m ? { username: m[1], host, source: 'ssh' } : null;
+  }
+  let host = '';
+  try { host = new URL(url).hostname; } catch { return null; }
+  if (/github/.test(host)) {
+    const u = run('gh', ['api', 'user', '--hostname', host, '--jq', '.login']).trim().split('\n')[0];
+    if (/^[\w.-]+$/.test(u)) return { username: u, host, source: 'gh' };
+  } else {
+    const j = run('glab', ['api', 'user', '--hostname', host]);
+    const m = j.match(/"username"\s*:\s*"([\w.-]+)"/);
+    if (m) return { username: m[1], host, source: 'glab' };
+  }
+  const cred = run('git', ['-C', root, 'credential', 'fill'], `protocol=https\nhost=${host}\n\n`).match(/^username=(.+)$/m);
+  if (cred && !NOT_USER.has(cred[1].trim().toLowerCase())) return { username: cred[1].trim(), host, source: 'git credential' };
+  return null;
+}
+
+/** 이 PC 사용자 저장 (.agents/local.json me). 이미 있고 refresh 가 아니면 그대로. 못 찾으면 화면에서 한 번 묻는다 */
+async function ensureAccount(root, { refresh = false, ask = process.stdin.isTTY } = {}) {
+  const cur = readLocal(root).me;
+  const today = new Date().toISOString().slice(0, 10);
+  if (cur && cur.username && !refresh) return cur;
+  // 못 찾은 기록이 있으면 7일 동안 다시 묻지 않는다 (start 마다 느려지지 않게. 다시: kedovi team whoami --refresh)
+  if (cur && cur.source === 'none' && !refresh && (Date.now() - Date.parse(cur.checked || 0)) < 7 * 864e5) return null;
+  const found = detectAccount(root);
+  let me = found ? { ...found, checked: today } : null;
+  if (!me && ask) {
+    p.log.info('워크스페이스 원격에서 저장소 계정을 읽지 못했습니다. 팀장 · 담당 repo 판정에 쓰니 직접 적어 주세요 (나중에 다시 확인: kedovi team whoami --refresh)');
+    const v = await clack().text({ message: '저장소 계정 username', placeholder: '예: hong01' });
+    if (!clack().isCancel(v) && String(v || '').trim()) me = { username: String(v).trim(), host: '', source: 'input', checked: today };
+  }
+  if (!me) { if (ask) writeLocal(root, { me: { source: 'none', checked: today } }); return null; } // 물을 수 없던 실행(화면 없음)은 기록하지 않는다
+  writeLocal(root, { me });
+  return me;
+}
+
+/**
+ * 계정을 찾으면: (1) 핸드오프 폴더에 계정을 적는다 (팀 현황이 git user.name 폴더 ↔ username 을 잇는다. 합류 기록 · 다음 핸드오프와 함께 커밋된다)
+ * (2) 팀 설정에 이 PC 가 git user.name 으로 적혀 있으면 계정으로 바꾸는 명령을 알린다 (자동으로 고치지 않는다: 다른 사람이 이름만 바꿔 그 자리를 가져가지 못하게)
+ */
+function adoptAccount(root, username) {
+  const gitName = memberId(root);
+  if (!gitName || !username) return;
+  const dir = path.join(root, 'handoffs', gitName);
+  try { if (fs.existsSync(dir) && (fs.existsSync(path.join(dir, '.account')) ? read(path.join(dir, '.account')).trim() : '') !== username) fs.writeFileSync(path.join(dir, '.account'), `${username}\n`); } catch { /* 편의 */ }
+  if (gitName === username) return;
+  const t = teamOf(root);
+  const all = [...(t.leads || []), ...(t.admins || []), ...(t.members || [])];
+  if (all.some((x) => sameUser(x, username)) || !all.some((x) => sameUser(x, gitName))) return;
+  const lead = [...(t.leads || []), ...(t.admins || [])].some((x) => sameUser(x, gitName));
+  p.log.info(lead
+    ? `팀 설정의 팀장 ${gitName} 이(가) git user.name 으로 적혀 있습니다. 저장소 계정으로 바꾸세요: kedovi team lead add ${username} --nick <이름> 뒤 kedovi team lead remove ${gitName}`
+    : `팀 설정에 ${gitName} 이(가) git user.name 으로 적혀 있습니다. 팀장에게 저장소 계정 ${username} 으로 바꿔 달라고 요청하세요 (kedovi team add ${username} --nick <이름> --repos …)`);
+}
+
+/** 사람 항목 다루기 — 문자열(옛 형식)도 객체로 맞춘다 */
+const personOf = (x) => (typeof x === 'string' ? { username: x } : { ...x });
+const sameUser = (x, u) => personOf(x).username === u;
+function optVal(args, name) { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; }
+
 /** 리더용 — 명단 추가·삭제·보기, 명단 제한 켜기·끄기. workspace.json 을 고치고 commit · push 를 안내한다 */
 function cmdTeamAdmin(root, [sub, ...ids]) {
+  if (sub === 'whoami') return cmdWhoami(root, ids);
+  if (['lead', 'leads', 'repos', 'nick'].includes(sub) || (sub === 'add' && (ids.includes('--nick') || ids.includes('--repos')))) return cmdTeamPeople(root, [sub, ...ids]);
   const file = path.join(root, 'workspace.json');
   const raw = JSON.parse(read(file));
   const team = raw.team || {};
   team.members = team.members || [];
   if (sub !== 'members' && !(sub === 'admins' && !ids.length)) requireAdmin(root, `kedovi team ${sub}`);
   if (sub === 'edit') {
-    // 팀원 설정 수정 허용·불가. deny 면 관리자만 workspace.json·팩·생성물을 바꾸고, 팀원은 자기 handoffs/ 와 로드맵(handoffs/PLAN.md)만 커밋한다
+    // 팀원 설정 수정 허용·불가. deny 면 팀장만 workspace.json·팩·생성물을 바꾸고, 팀원은 자기 handoffs/ 와 로드맵(handoffs/PLAN.md)만 커밋한다
     const v = ids[0];
     if (!['allow', 'deny'].includes(v)) fail('사용법: kedovi team edit allow|deny');
-    const me = memberId(root);
-    team.admins = team.admins && team.admins.length ? team.admins : me ? [me] : [];
-    if (v === 'deny' && !team.admins.length) fail('관리자가 없습니다. 먼저 git config user.name 을 설정하거나 kedovi team admins <id…>');
+    const me = (readLocal(root).me || {}).username || memberId(root);
+    if (!(team.leads || []).length && !(team.admins || []).length && me) team.leads = [{ username: me, ...((readLocal(root).me || {}).username ? {} : { source: 'git' }) }];
+    const leadNames = [...(team.leads || []), ...(team.admins || [])].map((x) => personOf(x).nickname || personOf(x).username);
+    if (v === 'deny' && !leadNames.length) fail('팀장이 없습니다. 먼저 kedovi team lead add <username>');
     team.lock = v === 'deny';
     raw.team = team;
     fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
     runWorkspaceKit(root, ['sync', '--quiet']);
-    console.log(v === 'deny' ? `✔ 팀원 설정 수정: 불가. 관리자(${team.admins.join(', ')})만 workspace.json · 팩 · 생성물을 바꾸고, 팀원은 자기 handoffs/ 와 로드맵(handoffs/PLAN.md)만 커밋한다` : '✔ 팀원 설정 수정: 허용 (누구나)');
+    console.log(v === 'deny' ? `✔ 팀원 설정 수정: 불가. 팀장(${leadNames.join(', ')})만 workspace.json · 팩 · 생성물을 바꾸고, 팀원은 자기 handoffs/ 와 로드맵(handoffs/PLAN.md)만 커밋한다` : '✔ 팀원 설정 수정: 허용 (누구나)');
     console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다. 서버에서 확실히 막으려면 README 의 GitLab 설정 참고');
     return;
   }
   if (sub === 'admins') {
-    if (!ids.length) { console.log(`관리자: ${(team.admins || []).join(', ') || '(없음)'} · 팀원 설정 수정: ${team.lock ? '불가' : '허용'}`); return; }
+    if (!ids.length) { console.log(`팀장: ${[...(team.leads || []), ...(team.admins || [])].map((x) => personOf(x).nickname || personOf(x).username).join(', ') || '(없음)'} · 팀원 설정 수정: ${team.lock ? '불가' : '허용'}`); return; }
     team.admins = [...new Set(ids)];
     raw.team = team;
     fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
     runWorkspaceKit(root, ['sync', '--quiet']);
-    console.log(`✔ 관리자: ${team.admins.join(', ')}. workspace.json 을 commit · push 하면 팀에 적용됩니다`);
+    console.log(`✔ 팀장: ${team.admins.join(', ')}. workspace.json 을 commit · push 하면 팀에 적용됩니다`);
     return;
   }
   if (sub === 'members') {
-    console.log(team.members.length ? `팀 명단 (${team.members.length}명): ${team.members.join(', ')}${team.restrict ? '\n명단 제한: 켜짐. 명단 밖 사람은 kedovi start 가 멈춘다' : ''}` : '팀 명단이 비어 있습니다. kedovi team add <id> (id = 그 사람 워크스페이스의 git user.name)');
+    console.log(team.members.length ? `팀 명단 (${team.members.length}명): ${team.members.map((x) => { const q = personOf(x); return `${q.nickname ? `${q.nickname}(${q.username})` : q.username}${q.repos ? ` · 담당 ${q.repos.join(', ')}` : ''}`; }).join(', ')}${team.restrict ? '\n명단 제한: 켜짐. 명단 밖 사람은 kedovi start 가 멈춘다' : ''}` : '팀 명단이 비어 있습니다. kedovi team add <id> (id = 그 사람 워크스페이스의 git user.name)');
     return;
   }
   if (sub === 'restrict') {
@@ -1643,15 +1725,90 @@ function cmdTeamAdmin(root, [sub, ...ids]) {
   } else {
     if (!ids.length) fail(`사용법: kedovi team ${sub} <id…>`);
     for (const id of ids) {
-      if (sub === 'add' && !team.members.includes(id)) team.members.push(id);
-      if (sub === 'remove') team.members = team.members.filter((x) => x !== id);
+      if (sub === 'add' && !team.members.some((x) => sameUser(x, id))) team.members.push({ username: id }); // 새로 넣는 사람은 계정 username 항목 (문자열은 옛 git user.name 형식)
+      if (sub === 'remove') team.members = team.members.filter((x) => !sameUser(x, id));
     }
     if (!team.members.length) delete team.restrict;
   }
   raw.team = team;
   fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
-  console.log(`✔ 팀 명단: ${team.members.join(', ') || '(없음)'}${team.restrict ? ' · 명단 제한 켜짐' : ''}`);
+  console.log(`✔ 팀 명단: ${team.members.map((x) => personOf(x).nickname || personOf(x).username).join(', ') || '(없음)'}${team.restrict ? ' · 명단 제한 켜짐' : ''}`);
   console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다');
+}
+
+/** 팀 판정 모듈: 워크스페이스 것, 옛 워크스페이스면 킷 것 */
+function teamMod(root) {
+  const own = path.join(root, 'packs', 'core', 'lib', 'team.js');
+  return require(fs.existsSync(own) ? own : path.join(KIT_ROOT, 'packs', 'core', 'lib', 'team.js'));
+}
+
+async function cmdWhoami(root, args) {
+  if (args.includes('--refresh')) {
+    const before = (readLocal(root).me || {}).username;
+    const me = await ensureAccount(root, { refresh: true });
+    if (me && me.username) adoptAccount(root, me.username);
+    if ((me || {}).username !== before) runWorkspaceKit(root, ['sync', '--quiet']);
+  }
+  const ws = kit.loadWorkspace(root);
+  const T = teamMod(root);
+  const w = T.whoAmI(root, ws);
+  const blocked = T.blockedRepos(root, ws);
+  console.log(`이 PC 사용자: ${w.nickname ? `${w.nickname} · ` : ''}${w.username || '(모름)'} (확인: ${w.source})`);
+  console.log(`역할: ${w.lead ? '팀장 (모든 repo · 설정 수정)' : w.person ? `팀원 · 담당 ${(w.repos || []).join(', ') || '없음'}` : '명단에 없음'}`);
+  if (blocked.length) console.log(`고칠 수 없는 repo: ${blocked.join(', ')} (담당자 · 팀장에게 요청)`);
+  if (w.source === 'git user.name') console.log('  저장소 계정을 아직 확인하지 못했습니다: kedovi team whoami --refresh');
+}
+
+/** 팀장 · 팀원 · 담당 repo · 부를 이름 (workspace.json team.leads · members) */
+function cmdTeamPeople(root, [sub, ...args]) {
+  const file = path.join(root, 'workspace.json');
+  const raw = JSON.parse(read(file));
+  const team = raw.team || {};
+  const ws = kit.loadWorkspace(root);
+  const repoNames = new Set(ws.repos.map((r) => r.name));
+  const nick = optVal(args, '--nick');
+  const reposArg = optVal(args, '--repos');
+  const pos = args.filter((a, i) => !a.startsWith('--') && !['--nick', '--repos'].includes(args[i - 1]));
+  const show = () => {
+    const T = teamMod(root);
+    const { leads, members } = T.roster({ team });
+    console.log(`팀장: ${leads.map((x) => `${T.callName(x)}(${x.username})`).join(', ') || '(없음)'}`);
+    for (const m of members) console.log(`  팀원 ${T.callName(m)}(${m.username}) · 담당 ${(m.repos || []).join(', ') || '-'}`);
+  };
+  if (sub === 'leads') return show();
+  requireAdmin(root, `kedovi team ${sub}`);
+  const save = (msg) => { raw.team = team; fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n'); runWorkspaceKit(root, ['sync', '--quiet']); console.log(`✔ ${msg}`); show(); console.log('  workspace.json 이 바뀌었습니다. commit · push 하면 팀에 적용됩니다'); };
+  const checkRepos = (list) => { const bad = list.filter((x) => !repoNames.has(x)); if (bad.length) fail(`repos 에 없는 이름: ${bad.join(', ')} (있는 repo: ${[...repoNames].join(', ')})`); return list; };
+  if (sub === 'lead') {
+    const [act, user] = pos;
+    if (!['add', 'remove'].includes(act) || !user) fail('사용법: kedovi team lead add|remove <username> [--nick 이름]');
+    team.leads = (team.leads || []).map(personOf).filter((x) => x.username !== user);
+    team.admins = (team.admins || []).filter((x) => x !== user);
+    if (!team.admins.length) delete team.admins;
+    if (act === 'add') team.leads.push({ username: user, ...(nick ? { nickname: nick } : {}) });
+    if (act === 'remove' && !team.leads.length && !(team.admins || []).length && team.lock) fail('마지막 팀장은 뺄 수 없습니다 (설정 잠금이 켜져 있음). 다른 팀장을 먼저 넣으세요');
+    return save(act === 'add' ? `팀장 추가: ${nick || user}` : `팀장에서 뺌: ${user}`);
+  }
+  const [user, val] = pos;
+  if (!user) fail(`사용법: kedovi team ${sub === 'nick' ? 'nick <username> <이름>' : sub === 'repos' ? 'repos <username> <a,b|->' : 'add <username> [--nick 이름] [--repos a,b]'}`);
+  team.members = (team.members || []).map(personOf);
+  let m = team.members.find((x) => x.username === user);
+  if (!m && sub !== 'nick') { m = { username: user }; team.members.push(m); }
+  if (sub === 'nick') {
+    if (!val) fail('사용법: kedovi team nick <username> <이름>');
+    if ((team.admins || []).includes(user)) { team.admins = team.admins.filter((x) => x !== user); if (!team.admins.length) delete team.admins; team.leads = [...(team.leads || []), { username: user }]; } // 옛 팀장 → 팀장 항목으로
+    const l = (team.leads || []).map(personOf).find((x) => x.username === user);
+    if (l) { team.leads = team.leads.map((x) => (sameUser(x, user) ? { ...personOf(x), nickname: val } : x)); return save(`부를 이름: ${user} → ${val}`); }
+    if (!m) fail(`${user} 은(는) 팀장 · 팀원 명단에 없습니다. 먼저 kedovi team add ${user} --nick ${val}`);
+    m.nickname = val;
+    return save(`부를 이름: ${user} → ${val}`);
+  }
+  if (nick) m.nickname = nick;
+  const rv = sub === 'repos' ? val : reposArg;
+  if (rv !== undefined) {
+    if (rv === '-' || rv === '') delete m.repos; else m.repos = checkRepos(String(rv).split(',').map((x) => x.trim()).filter(Boolean));
+  }
+  return save(sub === 'repos' ? `${m.nickname || user} 담당: ${(m.repos || []).join(', ') || '없음'}` : `팀원: ${m.nickname || user}${m.repos ? ` · 담당 ${m.repos.join(', ')}` : ''}`);
 }
 
 /** 합류 기록 — install 때 묻고, 예면 handoffs/<id>/TODO.md 를 만들어 워크스페이스 repo 에 push. 팀 현황에 바로 보인다 */
@@ -1660,7 +1817,8 @@ async function joinTeam(root) {
   if (!me) { p.log.warn('워크스페이스의 git user.name 이 없어 팀 합류 기록을 남기지 못했습니다. git config user.name <id> 후 kedovi install'); return; }
   const git = (...a) => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8' });
   const team = teamOf(root);
-  if ((team.members || []).length && !team.members.includes(me)) {
+  const meAcct = (readLocal(root).me || {}).username;
+  if ((team.members || []).length && !team.members.some((x) => sameUser(x, me) || (meAcct && sameUser(x, meAcct))) && ![...(team.leads || []), ...(team.admins || [])].some((x) => sameUser(x, me) || (meAcct && sameUser(x, meAcct)))) {
     p.log.warn(`${me} 은(는) 팀 명단에 없습니다. 리더에게 명단 추가(kedovi team add ${me})를 요청하세요${team.restrict ? ' (명단 제한이 켜져 있어 그 전에는 kedovi start 가 멈춥니다)' : ''}`);
   }
   const rel = `handoffs/${me}/TODO.md`;
@@ -1674,7 +1832,12 @@ async function joinTeam(root) {
   const file = path.join(root, rel);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   if (!fs.existsSync(file)) fs.writeFileSync(file, `# TODO (${me})\n`);
-  const steps = [['add', '--', rel], ['commit', '-q', '-m', `docs: ${me} 팀 합류`, '--', rel], ['pull', '-q', '--rebase', '--autostash'], ['push', '-q']];
+  // 저장소 계정도 함께 (팀 현황이 git user.name 폴더 ↔ 명단 username 을 잇는다)
+  const acct = (readLocal(root).me || {}).username;
+  const accRel = `handoffs/${me}/.account`;
+  if (acct) fs.writeFileSync(path.join(root, accRel), `${acct}\n`);
+  const paths = acct ? [rel, accRel] : [rel];
+  const steps = [['add', '--', ...paths], ['commit', '-q', '-m', `docs: ${me} 팀 합류`, '--', ...paths], ['pull', '-q', '--rebase', '--autostash'], ['push', '-q']];
   for (const st of steps) {
     const r = git(...st);
     if (r.status !== 0) { p.log.warn(`합류 기록을 올리지 못했습니다 (git ${st[0]}): ${(r.stderr || '').trim().split('\n').pop()}. 나중에 첫 핸드오프 때 함께 올라갑니다`); return; }
@@ -2112,7 +2275,7 @@ function migrateModels(root) {
  * 화면 없이 모델 바꾸기 (AI 가 대신 실행할 때) — 반환: 처리했으면 true
  *   kedovi models profile [rich|standard|lean|team] [--team]         프로필 (team = 이 PC 값 지우고 팀 기본 따름, 호환: - · 팀). 이 PC 값은 팀보다 낮은 것만. 인자 없이 실행하면 화면에서 고른다
  *   kedovi models set <main|crossReview|역할> <claude|codex> <모델|-> [--team] [--effort <e>]   모델 (- = 직접 지정 지우기, 위임은 codex:<모델>)
- *   kedovi models allow-higher on|off                                 팀원이 팀보다 높은 프로필을 둘 수 있게 (workspace.json agents.allowHigherProfile, 관리자)
+ *   kedovi models allow-higher on|off                                 팀원이 팀보다 높은 프로필을 둘 수 있게 (workspace.json agents.allowHigherProfile, 팀장)
  */
 async function modelsCommand(root, argv) {
   const [sub, ...rest] = argv;
@@ -2162,7 +2325,7 @@ async function modelsCommand(root, argv) {
     const clear = CLEAR.includes(v);
     if (!team && !clear && !profileAllowed(root, cat, v)) {
       const { profile } = kit.resolveModels(root, kit.loadWorkspace(root));
-      fail(`이 PC 프로필은 팀 프로필(${kit.profileLabel(cat, profile.team)})과 같거나 낮은 것만 됩니다. 팀 값을 올리려면 kedovi models profile ${v} --team, 팀원에게 높은 프로필을 허용하려면 kedovi models allow-higher on (관리자)`);
+      fail(`이 PC 프로필은 팀 프로필(${kit.profileLabel(cat, profile.team)})과 같거나 낮은 것만 됩니다. 팀 값을 올리려면 kedovi models profile ${v} --team, 팀원에게 높은 프로필을 허용하려면 kedovi models allow-higher on (팀장)`);
     }
     saveProfile(root, team ? 'team' : 'local', clear ? '' : v);
   } else {
@@ -2329,7 +2492,7 @@ function cmdApproach(argv) {
 }
 
 /**
- * 유형 바꾸기 (관리자): 분석·설계를 끝내고 같은 워크스페이스에서 구축 · 고도화로 넘어갈 때 등.
+ * 유형 바꾸기 (팀장): 분석·설계를 끝내고 같은 워크스페이스에서 구축 · 고도화로 넘어갈 때 등.
  * 유형 팩 교체 · 필수 repo(현행 repo 중 고칠 것을 개발 repo 로) · 진행 방식 · 로드맵(새 뼈대, 지난 로드맵은 아래에 남김) → sync
  */
 async function cmdType(argv) {
@@ -2422,7 +2585,7 @@ function cmdTimestamp(argv) {
     const m = val(readLocal(root));
     const now = m !== undefined ? m : t !== undefined ? t : true;
     console.log(`답변 첫 줄 시각 표시 (Claude Code): ${now ? '켜짐' : '꺼짐'}  (이 PC ${word(m)} · 팀 ${word(t)} · 기본 켜짐)`);
-    console.log('  바꾸기: kedovi timestamp on|off · 팀 기본값: --team (관리자) · 이 PC 값 지우기: kedovi timestamp team');
+    console.log('  바꾸기: kedovi timestamp on|off · 팀 기본값: --team (팀장) · 이 PC 값 지우기: kedovi timestamp team');
   };
   if (!want) return show();
   if (!['on', 'off', 'team'].includes(want) || (want === 'team' && team)) fail('사용법: kedovi timestamp [on|off] [--team] · team (이 PC 값을 지워 팀 값을 따름)');
@@ -2475,7 +2638,7 @@ function showPrefs(root) {
   console.log(`대화 스타일: ${S(r.style)} (${where[r.from.style]})  · 이 PC ${S(r.local.style)} · 팀 ${S(r.team.style)}`);
   const m = mermaidInstalled();
   console.log(`그림 미리보기(claude-mermaid): ${m === null ? '확인 못 함 (Claude Code 없음)' : m ? '설치됨: 세션에 mermaid_preview 가 있으면 브라우저로 띄움' : '없음: 텍스트 그림으로 (설치: kedovi prefs mermaid install)'}`);
-  console.log('  바꾸기: kedovi prefs language ko|en · kedovi prefs style learn|normal|expert · 이 PC 값 지우기: team · 팀 기본값: --team (관리자)');
+  console.log('  바꾸기: kedovi prefs language ko|en · kedovi prefs style learn|normal|expert · 이 PC 값 지우기: team · 팀 기본값: --team (팀장)');
 }
 
 /** 저장 → sync. key = language | style, value = 값 | 'team'(이 PC 값 지우기) */
@@ -2594,7 +2757,7 @@ function cmdTeamMode(argv) {
     const lv = (v) => kit.ENFORCE_LEVELS.indexOf(v);
     if (!key || lv(a2) < 0 || lv(a2) > lv(kit.ENFORCE_DEFAULTS[key].max)) fail('사용법: kedovi team-mode enforce name off|warn|block · roster off|warn · review off|warn|block [--repos a,b|*] [--min-lines N] [--paths p1,p2] · idle off|warn|block [--after 분] [--remind 분] · status off|block · ask off|block · run off|warn|block [--after 분] · check off|warn|block · plan off|warn|block [--team]  (name: 팀 모드에서 이름 없는 역할 에이전트 · roster: 첫 역할 에이전트 때 구성표 알림 · review: commit · push 전 리뷰 확인 · idle: 대기로 오래 남은 팀원 알림 · status: 남은 것이 있는 채 멈출 때 상태 줄 · ask: 결정 질문을 글로 끝낼 때 · run: 오래 일하는 팀원 · 위임 · check: 리뷰 전 검사 · plan: 코드 수정 전 착수 전 확인)');
     const teamNow = kit.resolveModels(root, JSON.parse(read(wsFile))).teamEnforce[key];
-    if (!team && lv(a2) < lv(teamNow)) fail(`이 PC 값은 팀 값(${teamNow})보다 세게만 둘 수 있습니다. 팀 값을 바꾸려면 관리자가 kedovi team-mode enforce ${a1} ${a2} --team`);
+    if (!team && lv(a2) < lv(teamNow)) fail(`이 PC 값은 팀 값(${teamNow})보다 세게만 둘 수 있습니다. 팀 값을 바꾸려면 팀장이 kedovi team-mode enforce ${a1} ${a2} --team`);
     // 리뷰 확인의 대상 · 기준은 팀 값만
     const extra = {};
     if (a1 === 'review') {
@@ -2602,7 +2765,7 @@ function cmdTeamMode(argv) {
       if (optAt('--repos') !== undefined) extra.reviewRepos = list(optAt('--repos'));
       if (optAt('--min-lines') !== undefined) { const n = Number(optAt('--min-lines')); if (!Number.isInteger(n) || n < 0) fail('--min-lines 는 0 이상의 정수'); extra.reviewMinLines = n; }
       if (optAt('--paths') !== undefined) extra.reviewPaths = optAt('--paths') === '-' ? [] : list(optAt('--paths'));
-      if (Object.keys(extra).length && !team) fail('리뷰 확인의 대상(--repos) · 기준 줄 수(--min-lines) · 경로(--paths)는 팀 값입니다. --team 을 붙이세요 (관리자)');
+      if (Object.keys(extra).length && !team) fail('리뷰 확인의 대상(--repos) · 기준 줄 수(--min-lines) · 경로(--paths)는 팀 값입니다. --team 을 붙이세요 (팀장)');
       const known = (JSON.parse(read(wsFile)).repos || []).map((r) => r.name);
       const bad = (extra.reviewRepos || []).filter((n) => n !== '*' && !known.includes(n));
       if (bad.length) fail(`workspace.json repos 에 없는 이름: ${bad.join(', ')} (있는 것: ${known.join(', ') || '없음'})`);
@@ -2614,12 +2777,12 @@ function cmdTeamMode(argv) {
         if (!Number.isInteger(n) || n < 1) fail(`${opt} 는 1 이상의 정수(분)`);
         extra[field] = n;
       }
-      if (Object.keys(extra).length && !team) fail('대기 상한(--after) · 다시 알리는 간격(--remind)은 팀 값입니다. --team 을 붙이세요 (관리자)');
+      if (Object.keys(extra).length && !team) fail('대기 상한(--after) · 다시 알리는 간격(--remind)은 팀 값입니다. --team 을 붙이세요 (팀장)');
     }
     if (a1 === 'run' && optAt('--after') !== undefined) {
       const n = Number(optAt('--after'));
       if (!Number.isInteger(n) || n < 1) fail('--after 는 1 이상의 정수(분)');
-      if (!team) fail('실행 상한(--after)은 팀 값입니다. --team 을 붙이세요 (관리자)');
+      if (!team) fail('실행 상한(--after)은 팀 값입니다. --team 을 붙이세요 (팀장)');
       extra.runMinutes = n;
     }
     edit((x) => ({ ...x, enforce: { ...(x.enforce || {}), [key]: a2, ...extra } }));
@@ -2832,6 +2995,7 @@ async function cmdInstall() {
     clack();
     ask(await chooseAgent(root, { force: !readLocal(root).agent ? true : false, progress: true }));
     await choosePrefs(root, { onlyMissing: true });
+    await ensureAccount(root);
     await joinTeam(root);
     const cur = readLocal(root);
     p.outro(`메인 에이전트: ${AGENTS[cur.agent].label}${cur.args && cur.args.length ? ` (${cur.args.join(' ')})` : ''}: 바꾸려면 kedovi agent`);
@@ -2843,10 +3007,21 @@ async function cmdStart(argv) {
   const root = locateWorkspace();
   // 리더가 명단 제한을 켰으면 명단에 없는 사람은 시작하지 않는다 (안전장치 — 권한 통제는 GitLab·GitHub 멤버로)
   const team = teamOf(root);
+  // 팀이 있으면 이 PC 사용자(저장소 계정)를 한 번 확인해 둔다 — 팀장 · 담당 repo 판정과 nickname 부르기에 쓴다
+  if ((team.leads || []).length || (team.members || []).length || (team.admins || []).length) {
+    const before = (readLocal(root).me || {}).username;
+    const acct = await ensureAccount(root);
+    if (acct && acct.username) adoptAccount(root, acct.username); // 핸드오프 폴더의 .account 가 없으면 만든다
+    // 계정이 새로 잡혔거나 팀 설정(담당 repo 등)이 git pull 로 바뀌었으면 이 PC 의 편집 금지 · 지침을 다시 맞춘다
+    const hash = require('crypto').createHash('sha1').update(JSON.stringify(team)).digest('hex').slice(0, 12);
+    if ((acct && acct.username !== before) || readLocal(root).teamHash !== hash) { runWorkspaceKit(root, ['sync', '--quiet']); writeLocal(root, { teamHash: hash }); }
+  }
   if (team.restrict && (team.members || []).length) {
     const me = memberId(root);
-    if (!me) fail('이 워크스페이스는 팀 명단에 있는 사람만 시작합니다. 먼저 git config user.name <id> 를 설정하세요');
-    if (!team.members.includes(me)) fail(`${me} 은(는) 이 워크스페이스 팀 명단에 없습니다. 리더에게 명단 추가(kedovi team add ${me})를 요청하세요 (명단: ${team.members.join(', ')})`);
+    const acct = (readLocal(root).me || {}).username;
+    if (!me && !acct) fail('이 워크스페이스는 팀 명단에 있는 사람만 시작합니다. 먼저 kedovi team whoami --refresh 로 저장소 계정을 확인하세요');
+    const listed = [...team.members, ...(team.leads || []), ...(team.admins || [])].some((x) => sameUser(x, me) || (acct && sameUser(x, acct)));
+    if (!listed) fail(`${acct || me} 은(는) 이 워크스페이스 팀 명단에 없습니다. 팀장에게 명단 추가(kedovi team add ${acct || me} --nick 이름)를 요청하세요 (명단: ${team.members.map((x) => personOf(x).nickname || personOf(x).username).join(', ')})`);
   }
   const dash = argv.indexOf('--');
   const extra = dash >= 0 ? argv.slice(dash + 1) : [];
@@ -3179,7 +3354,7 @@ const NOTIFY_USAGE = `사용법
   kedovi notify my channel on [--new]|off|status   양방향 대화 (기본 꺼짐. 이 프로젝트 전용 봇 → Claude Code 세션. 봇 토큰은 숨김 입력)
   kedovi notify my channel ask dialog|text   질문 방식: 선택지 창(기본) · 텔레그램 버튼 질문(= 자리 비움)
   kedovi notify my channel progress <분|off>   입력 없이 오래 작업하면 진행 현황 (기본 5분)
-  kedovi notify team setup [--new]      팀 봇 연결 (관리자에게 받은 토큰을 숨김 입력에)
+  kedovi notify team setup [--new]      팀 봇 연결 (팀장에게 받은 토큰을 숨김 입력에)
   kedovi notify team chat <그룹방 ID|off>   팀 방 지정 (팀 설정: commit · push)
   kedovi notify team announce "<내용>" · test`;
 
@@ -3277,7 +3452,7 @@ async function cmdNotifySetup() {
       }
     } else if (pick === 'team') {
       const tm = await choose({ message: '팀 방 알림', hint: '핸드오프 push · 설정 변경 push · 공지를 팀 그룹방으로.', initialValue: team.token ? 'chat' : 'bot', options: [
-        { value: 'bot', label: '팀 봇 연결', hint: '관리자에게 받은 팀 봇 토큰' },
+        { value: 'bot', label: '팀 봇 연결', hint: '팀장에게 받은 팀 봇 토큰' },
         { value: 'chat', label: '팀 방 지정', hint: '팀 설정 (workspace.json, commit · push)' },
         { value: 'off', label: '팀 방 알림 끄기', hint: '팀 설정' },
         ...(team.token ? [{ value: 'remove', label: '팀 봇 제거', hint: '이 PC 의 팀 봇 토큰을 지운다' }] : [])] });
@@ -3286,7 +3461,7 @@ async function cmdNotifySetup() {
       else if (tm === 'remove') runTool(['remove', '--team']);
       else {
         const v = await input(tm === 'bot'
-          ? { message: '팀 봇 토큰', hint: '관리자에게 받은 토큰. 봇을 팀 방에 초대하고 방에서 아무 말이나 해 두면 방 ID 를 보여 준다. 입력은 가려집니다.', placeholder: '123456789:AA…', secret: true }
+          ? { message: '팀 봇 토큰', hint: '팀장에게 받은 토큰. 봇을 팀 방에 초대하고 방에서 아무 말이나 해 두면 방 ID 를 보여 준다. 입력은 가려집니다.', placeholder: '123456789:AA…', secret: true }
           : { message: '팀 방 ID', hint: '팀 봇 연결 때 보여 준 그룹방 ID (-100…).', placeholder: '-100…' });
         if (v !== BACK && String(v || '').trim()) { if (tm === 'bot') runTool(['setup', '--team', '--new'], String(v).trim()); else runTool(['team-chat', String(v).trim()]); }
       }
@@ -3528,7 +3703,7 @@ async function main() {
       const root = locateWorkspace();
       const tool = path.join(root, 'packs', 'core', 'bin', 'team-status.js');
       if (!fs.existsSync(tool)) fail('이 워크스페이스에는 팀 현황 도구가 없습니다. kedovi upgrade 후 다시 하세요');
-      if (['add', 'remove', 'restrict', 'members', 'edit', 'admins'].includes(rest[0])) return cmdTeamAdmin(root, rest);
+      if (['add', 'remove', 'restrict', 'members', 'edit', 'admins', 'lead', 'leads', 'repos', 'nick', 'whoami'].includes(rest[0])) return cmdTeamAdmin(root, rest);
       const [id, ...more] = rest;
       const toolArgs = !id || id.startsWith('--') ? rest : more.includes('--take') ? ['--take', id, '--items', more[more.indexOf('--take') + 1] || ''] : ['--id', id, ...more];
       const r = spawnSync(process.execPath, [tool, ...toolArgs], { cwd: root, stdio: 'inherit' });

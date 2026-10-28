@@ -11,6 +11,8 @@ kedovi 은 팀이 같은 규칙으로 AI 에이전트(Claude Code · Codex)와 �
 | 에이전트 CLI | 쓰는 AI 에 맞게: Claude 구독·게이트웨이 = Claude Code `npm i -g @anthropic-ai/claude-code`, GPT 구독 = Codex `npm i -g @openai/codex` |
 | kedovi | [설치](../README.md#설치-pc-마다-1번) 절을 따른다 (확인 → registry → 로그인 → 설치) |
 | git 인증 | 회사 GitLab·GitHub 주소로 `git clone` 을 한 번 해 두면 된다 (호스트마다 한 번) |
+| 저장소 로그인 (팀) | `gh auth login` · `glab auth login` 또는 SSH 키. 이 PC 사용자(팀장 · 담당 repo)를 확인한다 |
+| 플러그인 · MCP | 권장 claude-mermaid · Playwright MCP, 선택 telegram · pixel-agents. 목록과 설치 명령은 [README 의 플러그인 · MCP · 도구](../README.md#플러그인--mcp--도구). `kedovi doctor` 가 빠진 것을 알린다 |
 
 Claude·GPT 를 모두 구독하거나 AI 게이트웨이를 쓰면 역할마다 두 회사 모델을 섞어 쓸 수 있다 ([AI 연결 방식](team-models.md#ai-연결-방식)).
 

@@ -241,9 +241,18 @@ function validateProject(ws, errors, warnings) {
   }
   if (ws.team !== undefined) {
     const t = ws.team || {};
-    if (t.members !== undefined && (!Array.isArray(t.members) || t.members.some((m) => typeof m !== 'string' || !m.trim()))) errors.push('workspace.json team.members 는 개발자 id(워크스페이스의 git user.name) 문자열 목록이어야 합니다');
-    if (t.admins !== undefined && (!Array.isArray(t.admins) || t.admins.some((m) => typeof m !== 'string' || !m.trim()))) errors.push('workspace.json team.admins 는 관리자 id(워크스페이스의 git user.name) 문자열 목록이어야 합니다');
-    if (t.lock && !(t.admins || []).length) warnings.push('workspace.json team.lock 이 켜져 있지만 관리자(team.admins)가 없어 잠금이 적용되지 않습니다 (kedovi team admins <id>)');
+    // 사람 항목: 문자열(옛 형식, username) 또는 { username, nickname, repos } (repos 는 members 만)
+    const badPerson = (m, repos) => typeof m === 'string' ? !m.trim()
+      : !m || typeof m !== 'object' || typeof m.username !== 'string' || !m.username.trim() || (m.nickname !== undefined && typeof m.nickname !== 'string')
+        || (m.repos !== undefined && (!repos || !Array.isArray(m.repos) || m.repos.some((x) => typeof x !== 'string')));
+    if (t.members !== undefined && (!Array.isArray(t.members) || t.members.some((m) => badPerson(m, true)))) errors.push('workspace.json team.members 는 username 문자열 또는 { "username", "nickname", "repos": [repo 이름…] } 목록이어야 합니다');
+    if (t.admins !== undefined && (!Array.isArray(t.admins) || t.admins.some((m) => badPerson(m, false)))) errors.push('workspace.json team.admins 는 팀장 username 목록이어야 합니다 (새 형식은 team.leads 의 { "username", "nickname" })');
+    if (t.leads !== undefined && (!Array.isArray(t.leads) || t.leads.some((m) => badPerson(m, false)))) errors.push('workspace.json team.leads 는 { "username", "nickname" } 목록이어야 합니다 (팀장은 모든 repo 를 고치므로 repos 를 적지 않는다)');
+    const names = new Set(ws.repos.map((r) => r.name));
+    for (const m of Array.isArray(t.members) ? t.members : []) for (const x of (m && m.repos) || []) if (!names.has(x)) warnings.push(`workspace.json team.members ${m.username} 의 담당 repo '${x}' 가 repos 에 없습니다 (repo 이름으로 적는다)`);
+    const leadsN = [...(Array.isArray(t.leads) ? t.leads : []), ...(Array.isArray(t.admins) ? t.admins : [])].length;
+    if (t.lock && !leadsN) warnings.push('workspace.json team.lock 이 켜져 있지만 팀장(team.leads)이 없어 잠금이 적용되지 않습니다 (kedovi team lead add <username>)');
+    if (!leadsN && (Array.isArray(t.members) ? t.members : []).some((m) => m && (m.repos || []).length)) warnings.push('workspace.json team.members 에 담당 repo 가 있지만 팀장(team.leads)이 없습니다. 담당 밖 repo 를 고칠 사람이 없습니다 (kedovi team lead add <username>)');
     if (t.restrict && !(t.members || []).length) warnings.push('workspace.json team.restrict 가 켜져 있지만 명단이 비어 있습니다. 제한이 적용되지 않습니다 (kedovi team add <id>)');
   }
   const legacy = ws.repos.filter((r) => r.kind === 'legacy');
@@ -527,7 +536,7 @@ function fillGuides(root) {
   try { raw = JSON.parse(read(file)); } catch { return []; }
   const filled = [];
   let changed = false;
-  // 설정 수정이 잠긴 팀의 팀원 PC 에서는 적지 않는다 (workspace.json · AGENTS.md 를 커밋할 수 없다). 관리자가 sync 하면 적힌다
+  // 설정 수정이 잠긴 팀의 팀원 PC 에서는 적지 않는다 (workspace.json · AGENTS.md 를 커밋할 수 없다). 팀장이 sync 하면 적힌다
   const locked = !lockState(root, raw).admin;
   for (const r of raw.repos || []) {
     if (!['code', 'issues'].includes(r.kind || 'code') || Array.isArray(r.guides)) continue;
@@ -1900,7 +1909,7 @@ function cmdSync(root, { quiet, soft } = {}) {
   const guidesNew = guidesFilled.filter((x) => !x.locked);
   const guidesHeld = guidesFilled.filter((x) => x.locked);
   if (guidesNew.length) console.log(`✔ repo 안의 AI 지침을 찾아 workspace.json 에 적었습니다: ${guidesNew.map((x) => `${x.name} ${x.guides.length}개`).join(' · ')}. 기본은 repo 지침 우선이고, 바꾸려면 kedovi repo guides <이름> kit|ignore`);
-  if (guidesHeld.length && !quiet) console.log(`… repo 안의 AI 지침이 있지만 설정 수정이 잠겨 있어 기록하지 않았습니다: ${guidesHeld.map((x) => x.name).join(', ')}. 관리자가 sync 하면 기록됩니다`);
+  if (guidesHeld.length && !quiet) console.log(`… repo 안의 AI 지침이 있지만 설정 수정이 잠겨 있어 기록하지 않았습니다: ${guidesHeld.map((x) => x.name).join(', ')}. 팀장이 sync 하면 기록됩니다`);
   const generated = generate(root);
   const { ws, files, errors, warnings, stats } = generated;
   for (const c of guideChanges(root, ws)) warnings.push(`repo '${c.name}' 의 AI 지침이 기록과 다릅니다${c.added.length ? ` (새로 생김: ${c.added.join(', ')})` : ''}${c.removed.length ? ` (없어짐: ${c.removed.join(', ')})` : ''}. 맞으면 kedovi repo guides --rescan ${c.name}`);
@@ -1937,6 +1946,8 @@ function cmdSync(root, { quiet, soft } = {}) {
 
   const hookSkipped = installCommitMsgHooks(root, ws);
   if (hookSkipped.length) warnings.push(`AI 서명 제거 훅을 넣지 못한 repo: ${hookSkipped.join(', ')}. 그 훅에서 node packs/core/bin/strip-ai-trailers.js "$1" 을 부르게 하세요`);
+  const repoHookSkipped = installRepoHooks(root, ws);
+  if (repoHookSkipped.length) warnings.push(`담당 검사 커밋 훅을 넣지 못한 repo: ${repoHookSkipped.join(', ')}. 그 repo 의 pre-commit 에서 node packs/core/bin/repo-check.js <repo 폴더> 를 부르게 하세요 (에이전트 편집은 훅이 막는다)`);
   const docsAll = installDocsHooks(root, ws);
   const docsLinked = docsAll.filter((x) => x.startsWith('링크:')).map((x) => x.slice(3));
   const docsSkipped = docsAll.filter((x) => !x.startsWith('링크:'));
@@ -2012,7 +2023,7 @@ function cmdCheck(root) {
 }
 
 const COMMIT_MSG_MARK = '# kedovi commit-msg';
-// 커밋 전 검사 — 생성물 어긋남 · 죽은 참조 · 워크스페이스 잠금(관리자가 아니면 자기 handoffs/ 밖 변경 거부)
+// 커밋 전 검사 — 생성물 어긋남 · 죽은 참조 · 워크스페이스 잠금(팀장이 아니면 자기 handoffs/ 밖 변경 거부)
 const PRE_COMMIT_HOOK = `#!/usr/bin/env sh
 # ${'생성 파일'}: node bin/kit.js sync 가 만든다. 직접 고치지 말 것
 ROOT=$(git rev-parse --show-toplevel)
@@ -2036,14 +2047,19 @@ if [ -f "$ROOT/packs/core/bin/check-refs.js" ]; then
 fi
 `;
 
-/** 워크스페이스 잠금 — team.lock 이 켜져 있으면 관리자(team.admins)만 설정을 바꾼다. 반환 { locked, me, admin } */
+/** 워크스페이스 잠금 — team.lock 이 켜져 있으면 팀장(team.admins)만 설정을 바꾼다. 반환 { locked, me, admin } */
 function lockState(root, ws) {
   const t = ws.team || {};
-  let me = '';
-  try { me = execFileSync('git', ['-C', root, 'config', 'user.name'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { /* 없음 */ }
-  const locked = !!t.lock && (t.admins || []).length > 0;
-  return { locked, me, admin: !locked || (t.admins || []).includes(me) };
+  const T = teamLib();
+  const who = T.whoAmI(root, ws);
+  const leads = T.roster(ws).leads;
+  const locked = !!t.lock && leads.length > 0;
+  // me = 핸드오프 폴더 이름 (git user.name, 예전과 같게). 팀장 판정은 저장소 계정 username 과 git user.name 을 모두 본다
+  return { locked, me: who.gitName || who.username, username: who.username, nickname: who.nickname, lead: who.lead, leads, admin: !locked || who.lead };
 }
+
+/** 팀 판정 모듈 (packs/core/lib/team.js, 이 킷과 워크스페이스에 같은 것이 있다) */
+function teamLib() { return require(path.join(__dirname, '..', 'packs', 'core', 'lib', 'team.js')); }
 
 /** 잠금이어도 팀원이 커밋할 수 있는 팀 공용 기록: 로드맵 · 모델 조사 */
 const TEAM_SHARED = ['handoffs/PLAN.md', 'handoffs/MODELS.md'];
@@ -2067,7 +2083,7 @@ function secretHits(text) {
   return out;
 }
 
-/** pre-commit: (1) 올리려는 파일에 비밀값 모양이 있으면 막는다 (handoffs 작업 기록 · workspace.json 포함, 관리자도). (2) 잠금이 켜져 있고 관리자가 아니면, 자기 handoffs/ 밖 변경은 커밋하지 못한다 */
+/** pre-commit: (1) 올리려는 파일에 비밀값 모양이 있으면 막는다 (handoffs 작업 기록 · workspace.json 포함, 팀장도). (2) 잠금이 켜져 있고 팀장이 아니면, 자기 handoffs/ 밖 변경은 커밋하지 못한다 */
 function cmdGuard(root) {
   const ws = loadWorkspace(root);
   let staged = [];
@@ -2089,23 +2105,40 @@ function cmdGuard(root) {
   if (st.admin) return true;
   const bad = staged.filter((f) => !f.startsWith(`handoffs/${st.me}/`) && !TEAM_SHARED.includes(f)); // 팀 공용 기록: 단계를 끝낸 사람 · 모델을 조사한 사람이 고친다
   if (!bad.length) return true;
-  console.error(`✖ 워크스페이스 잠금: ${st.me || '(git user.name 없음)'} 은(는) 관리자가 아니라 자기 handoffs/ 밖의 파일을 커밋할 수 없습니다`);
+  console.error(`✖ 워크스페이스 잠금: ${st.me || '(git user.name 없음)'} 은(는) 팀장이 아니라 자기 handoffs/ 밖의 파일을 커밋할 수 없습니다`);
   for (const f of bad.slice(0, 10)) console.error(`  - ${f}`);
-  console.error(`  관리자: ${(ws.team.admins || []).join(', ')}. 설정 변경은 관리자에게 요청하세요. 이 파일을 커밋에서 빼려면: git restore --staged <파일>`);
+  console.error(`  팀장: ${st.leads.map((x) => teamLib().callName(x)).join(', ')}. 설정 변경은 팀장에게 요청하세요. 이 파일을 커밋에서 빼려면: git restore --staged <파일>`);
   return false;
 }
 
-/** 이 PC 의 Claude 편집 금지 — 잠금이고 관리자가 아니면 .claude/settings.local.json 에 보호 경로 Edit·Write 금지를 넣는다 (킷이 넣은 줄만 관리) */
+/** 이 PC 의 Claude 편집 금지 — 잠금이고 팀장이 아니면 .claude/settings.local.json 에 보호 경로 Edit·Write 금지를 넣는다 (킷이 넣은 줄만 관리) */
 function applyEditGuard(root, ws) {
   const st = lockState(root, ws);
   const file = path.join(root, '.claude', 'settings.local.json');
   const abs = `//${root.replace(/^\//, '')}`;
-  const want = st.admin ? [] : LOCKED_PATHS.map((p) => `Edit(${abs}/${p})`); // Edit 경로 규칙이 쓰기 포함 모든 파일 편집 도구를 막는다
+  // 담당 아닌 repo (팀원) — 훅(repo-guard)이 이름과 함께 막고, 이 줄은 훅이 꺼진 경우의 뒷받침
+  const repoPaths = teamLib().blockedRepos(root, ws).map((n) => `${(ws.repos.find((r) => r.name === n) || {}).dir || `repos/${n}`}/**`);
+  const want = [...(st.admin ? [] : LOCKED_PATHS), ...repoPaths].map((p) => `Edit(${abs}/${p})`); // Edit 경로 규칙이 쓰기 포함 모든 파일 편집 도구를 막는다
   // 킷이 넣는 줄은 형식이 정해져 있다 (예전 Write(...) 줄 포함) — 그 줄들만 지우고 새로 넣는다. 사용자가 넣은 줄은 그대로
+  // repo 줄은 모양으로 지운다 (이름이 바뀌거나 빠진 repo · 옮긴 워크스페이스의 옛 줄도)
   const ours = new Set(LOCKED_PATHS.flatMap((p) => [`Edit(${abs}/${p})`, `Write(${abs}/${p})`]));
+  // repo 줄은 킷이 넣은 줄을 이 PC 기록(.agents/local.json editGuard)에 두고 그 줄만 지운다 (사용자가 넣은 줄은 그대로)
+  const localFile = path.join(root, LOCAL_CONFIG);
+  let local = {};
+  try { local = JSON.parse(read(localFile)); } catch { /* 없음 */ }
+  const prevRepo = new Set(Array.isArray(local.editGuard) ? local.editGuard : []);
+  const wantRepo = repoPaths.map((p) => `Edit(${abs}/${p})`);
+  if (JSON.stringify([...prevRepo]) !== JSON.stringify(wantRepo) && (prevRepo.size || wantRepo.length)) {
+    local.editGuard = wantRepo;
+    if (!wantRepo.length) delete local.editGuard;
+    fs.mkdirSync(path.dirname(localFile), { recursive: true });
+    fs.writeFileSync(localFile, JSON.stringify(local, null, 2) + '\n');
+  }
   let conf = {};
   try { conf = JSON.parse(read(file)); } catch { if (!want.length) return; }
-  const deny = ((conf.permissions || {}).deny || []).filter((x) => !ours.has(x));
+  // 기록이 지워졌어도: 지금 repo 의 킷 형식 줄(Edit(//<루트>/<repo 폴더>/**))은 킷 것으로 본다
+  for (const r of ws.repos) prevRepo.add(`Edit(${abs}/${r.dir}/**)`);
+  const deny = ((conf.permissions || {}).deny || []).filter((x) => !ours.has(x) && !prevRepo.has(x) && !want.includes(x)); // 같은 줄이 겹치지 않게
   conf.permissions = { ...(conf.permissions || {}), deny: [...deny, ...want] };
   if (!conf.permissions.deny.length) delete conf.permissions.deny;
   if (!Object.keys(conf.permissions).length) delete conf.permissions;
@@ -2142,12 +2175,38 @@ function applyChatPrefs(root, ws) {
   return lib.headSection(p, { codeLanguage: ((ws.vars || {}).language || {}).code });
 }
 
-/** 잠금 지침 — 관리자가 아닌 PC 의 개인 지침에 넣는다 (Codex 는 경로별 편집 금지가 없어 이 지침과 pre-commit 이 막는다) */
+/** 잠금 지침 — 팀장이 아닌 PC 의 개인 지침에 넣는다 (Codex 는 경로별 편집 금지가 없어 이 지침과 pre-commit 이 막는다) */
 function lockSection(root, ws) {
+  return [teamSection2(root, ws), lockOnly(root, ws)].filter(Boolean).join('\n');
+}
+
+/** 팀 · 담당 안내 — 이 PC 사용자를 nickname 으로 부르고, 담당 아닌 repo 는 고치지 않게 (team 이 있을 때만) */
+function teamSection2(root, ws) {
+  const T = teamLib();
+  const { leads, members } = T.roster(ws);
+  if (!leads.length && !members.length) return '';
+  const who = T.whoAmI(root, ws);
+  const name = who.nickname || who.username;
+  const role = who.lead ? '팀장' : who.person ? '팀원' : '명단 밖';
+  const owners = ws.repos.map((r) => [r.name, T.ownersOf(ws, r.name)]).filter(([, o]) => o.length);
+  const blocked = T.blockedRepos(root, ws);
+  const lines = ['## 팀과 담당', '',
+    `- 이 PC 사용자: **${name}** (${who.username || 'username 모름'}, ${role}). 부를 때는 "${name}님".${who.source === 'git user.name' ? ' (저장소 계정을 아직 확인하지 못해 git user.name 으로 판정했다. kedovi team whoami)' : ''}`,
+    `- 팀장: ${leads.map((p) => `${T.callName(p)}(${p.username})`).join(', ') || '없음'}. 다른 사람도 nickname 으로 부른다.`];
+  if (owners.length) {
+    lines.push('', '| repo | 담당 |', '|---|---|', ...owners.map(([n, o]) => `| ${n} | ${o.map((p) => T.callName(p)).join(' · ')} |`));
+    lines.push('', '담당이 없는 repo 는 누구나 고친다. 팀장은 모든 repo 를 고친다.');
+  }
+  if (blocked.length) lines.push('', `**${blocked.join(' · ')}** 는 ${name}님 담당이 아니다. 읽기만 하고 고치거나 커밋하지 않는다 (훅이 막는다). 고칠 일이 생기면 사용자에게 담당자나 팀장에게 요청하도록 안내한다.`);
+  return lines.join('\n') + '\n';
+}
+
+/** 설정 잠금 지침 — 팀장이 아닌 PC */
+function lockOnly(root, ws) {
   const st = lockState(root, ws);
   if (st.admin) return '';
-  return ['## 워크스페이스 잠금 (관리자가 아닌 팀원)', '',
-    `이 워크스페이스는 설정이 잠겨 있다 (관리자: ${(ws.team.admins || []).join(', ')}). **아래 파일은 고치지 않는다.** 바꿔야 하면 사용자에게 알리고 관리자에게 요청하게 한다.`, '',
+  return ['## 워크스페이스 잠금 (팀장이 아닌 팀원)', '',
+    `이 워크스페이스는 설정이 잠겨 있다 (팀장: ${st.leads.map((x) => teamLib().callName(x)).join(', ')}). **아래 파일은 고치지 않는다.** 바꿔야 하면 사용자에게 알리고 팀장에게 요청하게 한다.`, '',
     ...LOCKED_PATHS.map((p) => `- \`${p}\``), '',
     `- 커밋할 수 있는 것은 자기 핸드오프(\`handoffs/${st.me}/\`)와 팀 공용 기록(\`handoffs/PLAN.md\` 로드맵 · \`handoffs/MODELS.md\` 모델 조사)뿐이다. 개발 repo(\`repos/*\`)의 작업은 그 repo 에서 평소대로 한다.`, ''].join('\n');
 }
@@ -2196,8 +2255,52 @@ const DOCS_HOOK = (script) => `#!/bin/sh
 ${DOCS_HOOK_MARK}: md 와 문서 사이트(docs-site/)가 어긋나면 커밋을 막는다 (kedovi docs build 로 만든 적이 없으면 통과). ${GEN_NOTE}
 S=${script}
 [ -f "$S" ] && command -v node >/dev/null 2>&1 || exit 0
-node "$S" hook "$(git rev-parse --show-toplevel)"
+node "$S" hook "$(git rev-parse --show-toplevel)" || exit 1
+G="$(dirname "$S")/repo-check.js"
+[ ! -f "$G" ] || node "$G" "$(git rev-parse --show-toplevel)"
 `;
+
+const REPO_HOOK_MARK = '# kedovi repo pre-commit';
+// 개발 repo 의 pre-commit: 담당이 아닌 사람의 커밋을 막는다 (팀 담당이 없으면 그냥 통과)
+const REPO_HOOK = (script) => `#!/bin/sh
+${REPO_HOOK_MARK}: 이 repo 담당이 아니면 커밋을 막는다 (workspace.json team.members[].repos). ${GEN_NOTE}
+S=${script}
+[ -f "$S" ] && command -v node >/dev/null 2>&1 || exit 0
+node "$S" "$(git rev-parse --show-toplevel)"
+`;
+
+/** 개발 repo(기획 repo 제외)에 담당 검사 pre-commit 을 둔다. 자기 훅을 쓰는 repo 는 건드리지 않고, 담당이 정해진 repo 만 알린다 */
+function installRepoHooks(root, ws) {
+  const skipped = [];
+  const script = path.join(root, 'packs', 'core', 'bin', 'repo-check.js');
+  if (!exists(script)) return skipped;
+  const T = teamLib();
+  for (const r of ws.repos.filter((x) => x.kind !== 'docs')) {
+    const dir = path.join(root, r.dir);
+    if (!isDir(dir)) continue;
+    // 로컬 폴더를 링크한 repo 도 넣는다 (검사 스크립트는 이 워크스페이스의 담당표를 본다). 다른 워크스페이스 안의 repo 를 빌려 온 것이면 그쪽 훅을 둔다
+    let foreign = false;
+    try {
+      const real = fs.realpathSync(dir);
+      if (!real.startsWith(fs.realpathSync(root) + path.sep)) for (let d = path.dirname(real); d !== path.dirname(d); d = path.dirname(d)) if (exists(path.join(d, 'workspace.json'))) { foreign = true; break; }
+    } catch { /* 그대로 */ }
+    if (foreign) continue;
+    const owned = T.ownersOf(ws, r.name).length > 0;
+    const git = (...a) => { try { return execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } };
+    if (git('rev-parse', '--show-toplevel') === null) continue;
+    if (git('config', 'core.hooksPath')) { if (owned) skipped.push(`${r.name}(core.hooksPath 사용)`); continue; }
+    const hooks = git('rev-parse', '--git-path', 'hooks');
+    if (!hooks) continue;
+    const file = path.resolve(dir, hooks, 'pre-commit');
+    const body = REPO_HOOK(JSON.stringify(script));
+    if (exists(file) && !read(file).includes(REPO_HOOK_MARK)) { if (owned) skipped.push(`${r.name}(pre-commit 훅이 이미 있음)`); continue; }
+    if (exists(file) && read(file) === body) continue;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, body, { mode: 0o755 });
+    fs.chmodSync(file, 0o755);
+  }
+  return skipped;
+}
 
 /** 기획 repo(kind: docs)의 git 에 pre-commit 훅을 둔다. 자기 훅을 쓰는 repo 는 건드리지 않고, 문서 사이트를 쓰는 repo 만 알린다 */
 function installDocsHooks(root, ws) {
