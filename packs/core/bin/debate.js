@@ -222,6 +222,11 @@ function start() {
   const rounds = Math.min(4, Math.max(2, Number(opt('rounds', 3)) || 3));
   const task = readTask();
   if (!task.trim()) throw new Error('작업 지시서가 비었습니다. stdin 이나 --task-file 로 주세요');
+  // Codex 샌드박스 안이면 회차마다 부르는 위임이 모두 네트워크에서 막힌다: 시작 전에 멈춰 샌드박스 밖 실행 승인을 받게 한다
+  if (process.env.CODEX_SANDBOX_NETWORK_DISABLED === '1') {
+    console.log('✖ Codex 샌드박스 안이라 네트워크가 막혀 토론 모델을 부를 수 없습니다. 이 start 명령을 샌드박스 밖에서 실행하도록 사용자 승인을 요청해 다시 실행하세요 (wait · status 는 샌드박스 안에서 된다)');
+    process.exit(4);
+  }
   const missing = [...new Set(panel.map((p) => p.tool))].filter((t) => !findCli(t));
   if (missing.length) { console.log(`✖ ${missing.join(' · ')} 가 이 PC 에 없어 토론을 시작하지 않습니다. 패널에서 빼거나 설치 · 로그인한 뒤 다시 (같은 회사 모델로 대신하지 않는다. 쓸 수 있는 모델: node packs/core/bin/debate.js models)`); process.exit(3); }
   if (REVIEW_ROLE.test(role) && !hasCheckLine(task) && checkLevel(ROOT) === 'block') { console.log(`✖ ${CHECK_MESSAGE}`); process.exit(6); }
@@ -423,7 +428,7 @@ if (MAIN) {
       else if (cmd === 'wait-job') waitJob();
       else if (cmd === 'status') status();
       else if (cmd === 'list') list();
-      else { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(2, 15).map((l) => l.replace(/^ \* ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+      else { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(3, 14).map((l) => l.replace(/^ \* ?/, '')).join('\n')); process.exit(!cmd || /^(?:-h|--help|help)$/.test(cmd) ? 0 : 1); }
     } catch (e) { console.error(`✖ ${e.message}`); process.exit(1); }
   })();
 }

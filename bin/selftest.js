@@ -732,7 +732,7 @@ fs.writeFileSync(a[a.indexOf('-o') + 1], require(${JSON.stringify(brain)})('code
 const p = require('fs').readFileSync(0, 'utf8'); const a = process.argv;
 console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(brain)})('claude-' + a[a.indexOf('--model') + 1], p) }));
 `, { mode: 0o755 });
-  const env = { ...process.env, PATH: `${fakeBin}${path.delimiter}${process.env.PATH}` };
+  const env = { ...process.env, CODEX_SANDBOX_NETWORK_DISABLED: '', PATH: `${fakeBin}${path.delimiter}${process.env.PATH}` };
   const tool = path.join(dir, 'packs', 'core', 'bin', 'debate.js');
   const debate = (panel, extra = {}) => {
     const s = spawnSync(process.execPath, [tool, 'start', '--panel', panel, '--topic', '주문'], { cwd: dir, input: '주문 탭 리뷰\n검사: npm test 통과', encoding: 'utf8', env: { ...env, ...extra } });
@@ -752,9 +752,11 @@ console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(br
   const same = /모두 같은 회사 모델/.test(spawnSync(process.execPath, [tool, 'start', '--panel', 'claude:opus,claude:sonnet', '--dry-run'], { cwd: dir, input: '리뷰\n검사: npm test 통과', encoding: 'utf8', env }).stdout);
   const noCli = spawnSync(process.execPath, [tool, 'start', '--panel', 'codex:x,claude:y'], { cwd: dir, input: '리뷰\n검사: npm test 통과', encoding: 'utf8', env: { ...process.env, PATH: path.dirname(process.execPath), HOME: path.join(tmp, 'no-home') } });
   const blockedStart = noCli.status === 3 && /토론을 시작하지 않습니다/.test(noCli.stdout);
+  const boxed = spawnSync(process.execPath, [tool, 'start', '--panel', 'codex:gpt-6.1-sol,claude:opus'], { cwd: dir, input: '리뷰\n검사: npm test 통과', encoding: 'utf8', env: { ...env, CODEX_SANDBOX_NETWORK_DISABLED: '1' } });
+  const sandboxed = boxed.status === 4 && /샌드박스 밖에서 실행하도록/.test(boxed.stdout) && !/토론 id/.test(boxed.stdout);
   const models = spawnSync(process.execPath, [tool, 'models', '--task', 'docs'], { cwd: dir, encoding: 'utf8', env }).stdout;
   const listed = /✔ codex:gpt-6\.1-sol/.test(models) && /패널 예시 \(다른 회사 먼저\): --panel /.test(models) && /언어 \d/.test(models);
-  record('토론 모드 (1차 따로 · 2차 판정 · 3차 갈린 것만 · 근거 없는 동의 · 큰 패널 · 빠진 모델 · 모델 목록)', counts && lazy && rounds && big && dropped && same && blockedStart && listed, `합의 · 갈림 수 ${counts} · 근거 없는 동의 보류 · 양쪽 근거 · 놓친 것 ${lazy} · 3회 · 회차 원문 ${rounds} · 동시 상한보다 큰 패널 ${big} · 실패는 빠짐으로 ${dropped} · 같은 회사 경고 ${same} · 없는 도구면 시작 안 함 ${blockedStart} · 쓸 수 있는 모델 ${listed}`);
+  record('토론 모드 (1차 따로 · 2차 판정 · 3차 갈린 것만 · 근거 없는 동의 · 큰 패널 · 빠진 모델 · Codex 샌드박스 · 모델 목록)', counts && lazy && rounds && big && dropped && same && blockedStart && sandboxed && listed, `합의 · 갈림 수 ${counts} · 근거 없는 동의 보류 · 양쪽 근거 · 놓친 것 ${lazy} · 3회 · 회차 원문 ${rounds} · 동시 상한보다 큰 패널 ${big} · 실패는 빠짐으로 ${dropped} · 같은 회사 경고 ${same} · 없는 도구면 시작 안 함 ${blockedStart} · 샌드박스면 시작 전 멈춤 ${sandboxed} · 쓸 수 있는 모델 ${listed}`);
 }
 
 // 화면 문구에 장식용 대시(—)를 쓰지 않는다 — 킷 코드의 문자열 안 " — " (주석·테스트 제외)
