@@ -219,7 +219,7 @@ Codex 는 역할 파일(`.codex/agents`)을 하위 에이전트에 적용하지 
 | 설계 | Opus 5.5 (Claude 위임 · max) | GPT-6.1 Sol (xhigh) | GPT-6.1 Sol (high) |
 | 설계 문서 | GPT-6.1 Sol (xhigh) | GPT-6.1 Sol (high) | GPT-6.1 Sol (medium) |
 | 구현 | Opus 5.5 (Claude 위임 · xhigh) | Opus 5.5 (Claude 위임 · high) | GPT-6.1 Sol (medium) |
-| 리뷰 | GPT-6.1 Sol (high) | GPT-6.1 Sol (high) | GPT-6.1 Sol (high) |
+| 리뷰 | Opus 5.5 (Claude 위임 · xhigh) | Opus 5.5 (Claude 위임 · high) | Sonnet 5.5 (Claude 위임 · high) |
 | 테스트 | GPT-6.1 Sol (high) | GPT-6 Luna (max) | GPT-6 Luna (max) |
 | 문서화 | GPT-6 Luna (high) | GPT-6 Luna (medium) | GPT-6 Luna (medium) |
 | 교차 검토 → Claude | Opus 5.5 (xhigh) | Opus 5.5 (high) | Sonnet 5.5 |
@@ -382,6 +382,7 @@ flowchart TD
 | `kedovi docs build [repo]` | 기획 repo 의 md · 화면설계서 장 → 같은 경로 구조의 `docs-site/` (정의 ID 앵커 · 근거 색인 · 정의서 폴더마다 ERD). 묶음 · 포함 범위는 `docs-site.json`, 옛 `html/` 은 처음 build 때 옮긴다. `check` 는 md 와 어긋났는지. 둘 다 문서 점검 경고와 mermaid 문법 오류를 낸다. 자세히는 [문서 사이트](docs-site.md) |
 | `kedovi docs show <ID>` · `refs <ID>` | 기획 문서를 ID 단위로: 정의 부분만 출력 · 그 ID 가 나오는 곳(기획 · 코드 · 이슈 repo, 파일:줄, ★ 정의 · [동결]) |
 | `kedovi delegate watch [id]` · `status [id]` · `list` | 다른 도구에 맡긴 작업(위임)의 진행: 상대 에이전트가 읽고 실행하는 것을 줄마다 · 지금 현황 한 번 · 목록 |
+| `kedovi debate list` · `status [id]` · `models` | 토론 모드: 목록 · 지금 회차와 모델별 상태 · 쓸 수 있는 모델과 패널 예시 (시작은 채팅에서 "토론해줘") |
 | `kedovi docs serve [repo]` | `docs-site/` 를 이 PC 에서 웹 주소(`http://127.0.0.1:8000/`)로 보기. 전체 인쇄와 새로고침 없는 이동까지 된다 |
 | `kedovi docs pages [on\|off] [repo]` | 문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태. on = 원격(GitLab · GitHub)에 맞는 CI 파일(`.gitlab-ci.yml` · `.github/workflows/pages.yml`)을 두고 `docs-site/` 를 커밋 대상으로(원격이 없으면 둘 다), off = `.gitignore` 에 `/docs-site/` (CI 는 두어도 돌지 않는다) |
 | `kedovi docs refs-quote <파일…>` | 본문 괄호 속 근거(파일:줄)를 그 문단 · 목록 · 표 아래 「> 근거:」 인용구로 옮긴다 (`--dry` = 수만) |

@@ -71,7 +71,7 @@
 | 설계 | Opus 5.5 (Claude 위임 · max) | GPT-6.1 Sol (xhigh) | GPT-6.1 Sol (high) |
 | 설계 문서 | GPT-6.1 Sol (xhigh) | GPT-6.1 Sol (high) | GPT-6.1 Sol (medium) |
 | 구현 | Opus 5.5 (Claude 위임 · xhigh) | Opus 5.5 (Claude 위임 · high) | GPT-6.1 Sol (medium) |
-| 리뷰 | GPT-6.1 Sol (high) | GPT-6.1 Sol (high) | GPT-6.1 Sol (high) |
+| 리뷰 | Opus 5.5 (Claude 위임 · xhigh) | Opus 5.5 (Claude 위임 · high) | Sonnet 5.5 (Claude 위임 · high) |
 | 테스트 | GPT-6.1 Sol (high) | GPT-6 Luna (max) | GPT-6 Luna (max) |
 | 문서화 | GPT-6 Luna (high) | GPT-6 Luna (medium) | GPT-6 Luna (medium) |
 | 교차 검토 → Claude | Opus 5.5 (xhigh) | Opus 5.5 (high) | Sonnet 5.5 |
@@ -184,8 +184,9 @@ flowchart LR
     L1 --> T1["테스트: 서브에이전트 (Haiku 5.5)"]
   end
   subgraph CX["Codex 로 실행 (표준)"]
-    L2["리드: GPT-6.1 Sol"] --> A2["분석 · 설계 · 리뷰<br/>Codex 에이전트 (6.1 Sol)"]
+    L2["리드: GPT-6.1 Sol"] --> A2["분석 · 설계<br/>Codex 에이전트 (6.1 Sol)"]
     L2 -->|"claude -p · 쓰기"| I2["구현: Opus"]
+    L2 -->|"claude -p · 읽기"| R2["리뷰: Opus"]
     L2 --> T2["테스트: Codex 에이전트 (Luna)"]
   end
 ```
@@ -202,3 +203,27 @@ flowchart LR
 | 사용량 한도(429) | 결과 머리에 「상대 도구로 다시: …」 명령 한 줄이 나온다. 같은 지시서(`task.md`)로 다른 도구에 맡긴다 |
 
 **교차 검토** (`cross-review` 스킬): 변경을 상대 회사 모델에게 읽기 전용으로 검토받아 두 의견을 대조한다. 모델은 `kedovi models` 의 "교차 검토 모델".
+
+## 토론 모드
+
+평소 리뷰는 다른 회사 모델 하나가 본다. 사용자가 "토론해줘" 라고 하거나 결과가 미덥다는 말("마음에 안 들어" · "맞아?" · "다시 봐")을 하면, 에이전트가 토론을 제안하고 확인받은 뒤 여러 모델(2~4개, 다른 회사 모델 포함)이 같은 문제를 본다. 코드 리뷰 · 설계 · 요구 · 문서 · 원인 분석 어떤 작업이든 된다 (`debate` 스킬).
+
+```mermaid
+flowchart LR
+  A["평소: 모델 1개"] -->|"토론해줘 · 결과가 미덥다"| B["1차: 따로 보기<br/>모델마다 주장 · 근거"]
+  B --> C["2차: 서로 판정<br/>이름을 가린 주장 목록에 동의 · 반대 + 놓친 것"]
+  C -->|"갈린 것만"| D["3차: 다시 판정"]
+  C --> E["리더가 직접 확인 · 보고"]
+  D --> E
+```
+
+| 항목 | 내용 |
+|---|---|
+| 패널 고르기 | 이 PC 에서 쓸 수 있는 모델(설치된 CLI · `kedovi ai` 설정 · 로그인 요금제) 중 작업에 맞는 것을 에이전트가 고른다. 다른 회사 모델을 꼭 넣고, 작업 강점(코드 = 코딩 점수, 설계 = 추론, 문서 = 언어)을 보고, 가장 비싼 급은 하나만. 목록: `kedovi debate models --task code` |
+| 판정 | 근거(파일:줄 · 확인한 내용) 없는 동의 · 반대는 보류로 센다. 누가 냈는지 가려 자기 주장 편들기를 줄인다 |
+| 결과 | 합의 · 갈림(양쪽 근거) · 기각 · 한 모델만. 리더가 발견마다 직접 확인해 판정하고, 갈린 것은 근거를 놓고 정하거나 사용자에게 묻는다 |
+| 실패 | 사용량 한도 · 로그인으로 빠진 모델은 다른 모델로 대신하지 않고 「빠진 모델」로 적는다. 2개 미만이면 멈춘다 |
+| 비용 | 모델 수 × 회차라 보통 평소 리뷰의 5~7배. 요청할 때만 돈다. 읽기 전용이다 |
+| 보기 | `kedovi debate list` · `kedovi debate status [id]` |
+
+> 근거: 같은 모델끼리의 토론은 비슷한 답으로 다수결이 되고, 다른 회사 모델을 섞을 때 정확도가 오른다 ([arXiv 2502.08788](https://arxiv.org/abs/2502.08788v3) · [2410.12853](https://arxiv.org/abs/2410.12853v1) · [2601.05746](https://arxiv.org/abs/2601.05746)). 진행 방식은 공개 프로젝트를 참고했다: 따로 답한 뒤 이름을 가려 서로 평가(karpathy/llm-council), 모두 동의할 때까지 비판하고 근거 없는 동의를 다시 묻기(spec-debate), 빠진 모델 기록(claude-octopus).

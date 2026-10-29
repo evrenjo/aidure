@@ -5,7 +5,8 @@
  *   codex : codex exec --sandbox <read-only|workspace-write> -C <워크스페이스> [-m] [-c model_reasoning_effort=] -o <결과> -
  *   claude: claude -p [--model] [--effort] --permission-mode <plan|acceptEdits> --allowedTools … --disallowedTools git commit·push
  * 오래 걸리므로 백그라운드 작업으로 돈다:
- *   start --to codex|claude --role <역할> [--model m] [--effort e] [--mode write|read] [--scope <라벨>]   작업 지시서는 stdin (또는 --task-file)
+ *   start --to codex|claude --role <역할> [--model m] [--effort e] [--mode write|read] [--scope <라벨>] [--group <묶음>]   작업 지시서는 stdin (또는 --task-file)
+ *        --group: 토론(debate.js)처럼 한 번에 여러 모델을 돌리는 묶음. 묶음 안끼리는 동시 상한에 세지 않고 끝 알림도 묶음 단위
  *        리뷰 역할에 --scope 를 주면 같은 범위의 차수를 센다: 앞 차수 블로커를 지시서에 붙이고, 3차부터 시작할 때 경고한다
  *        → 작업 id 를 출력하고 바로 끝난다
  *   wait <id> [--timeout 초(기본 480)]   끝날 때까지(또는 timeout 까지) 기다린다. 끝났으면 결과(보고 · 바뀐 파일 · 종료 코드), 아니면 경과 시간 · 마지막 로그 한 줄
@@ -183,7 +184,7 @@ function parseJobArgs() {
   if (!role) throw new Error('--role <역할> 이 필요합니다');
   const mode = opt('mode', 'write');
   if (!['write', 'read'].includes(mode)) throw new Error('--mode 는 write | read');
-  return { to, role, mode, model: opt('model'), effort: opt('effort'), scope: opt('scope') };
+  return { to, role, mode, model: opt('model'), effort: opt('effort'), scope: opt('scope'), group: opt('group') };
 }
 
 function readTask() {
@@ -220,7 +221,9 @@ function start() {
     process.exit(3);
   }
   // 동시 상한 — 역할 에이전트 상한(kedovi ai show 의 limits.parallel)을 위임에도 적용한다
-  const busy = runningJobs().filter((x) => x !== id);
+  // 같은 묶음(--group: 토론 한 번)의 작업은 서로 세지 않는다. 묶음 밖 작업만 상한에 센다
+  const groupOf = (x) => { try { return JSON.parse(fs.readFileSync(path.join(JOBS, x, 'meta.json'), 'utf8')).group || null; } catch { return null; } };
+  const busy = runningJobs().filter((x) => x !== id && !(job.group && groupOf(x) === job.group));
   let parallel = 2;
   try { const kit = require(path.join(ROOT, 'bin', 'kit.js')); parallel = kit.resolveModels(ROOT, kit.loadWorkspace(ROOT)).limits.parallel || parallel; } catch { /* 옛 워크스페이스 */ }
   if (busy.length >= parallel) {
@@ -304,6 +307,7 @@ async function notifyDone(meta, code, endedAt) {
     const notify = require('../lib/notify');
     const cfg = notify.personal(ROOT, ws);
     const sec = (endedAt - meta.startedAt) / 1000;
+    if (meta.group) return; // 토론 같은 묶음은 묶음이 끝날 때 한 번 (debate.js)
     if (!notify.wantsProgress(cfg) || !cfg.token || !cfg.chat || sec < cfg.minSeconds || notify.atDesk(cfg)) return;
     const mins = (sec / 60).toFixed(1);
     await notify.send(`🤖 [${notify.projectName(ROOT, ws)}] 위임 ${code === 0 ? '끝' : `실패(${code})`}: ${meta.role} → ${meta.to} · ${mins}분\n결과: node packs/core/bin/delegate.js wait ${meta.id}`, cfg);
@@ -423,6 +427,6 @@ function list() {
     else if (cmd === 'status') status();
     else if (cmd === 'watch') await watch();
     else if (cmd === 'list') list();
-    else { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(2, 16).map((l) => l.replace(/^ \* ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+    else { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(2, 18).map((l) => l.replace(/^ \* ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
   } catch (e) { console.error(`✖ ${e.message}`); process.exit(1); }
 })();

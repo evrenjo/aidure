@@ -177,7 +177,9 @@ for (const c of cases) {
     const codexEffort = (role) => (fs.readFileSync(path.join(dir, '.codex', 'agents', `${role}.toml`), 'utf8').match(/^model_reasoning_effort = "(.+)"$/m) || [])[1];
     const cross = run(process.execPath, ['packs/core/bin/cross-review.js', '--to', 'codex', '--dry-run'], dir).out || '';
     const rich = agentModel('architect') === 'opus' && effortOf('architect') === 'max' && agentModel('implementer') === 'opus' && agentModel('tester') === 'opus'
-      && effortOf('implementer') === 'xhigh' && codexEffort('reviewer') === 'high' && codexEffort('documenter') === 'high'
+      && effortOf('implementer') === 'xhigh' && codexEffort('analyst') === 'xhigh' && codexEffort('documenter') === 'high'
+      // Codex 세션 리뷰는 Claude 위임 (claude CLI 가 없는 PC 는 대체 모델 파일)
+      && (!fs.existsSync(path.join(dir, '.codex', 'agents', 'reviewer.toml')) || /gpt-6\.1-sol/.test(fs.readFileSync(path.join(dir, '.codex', 'agents', 'reviewer.toml'), 'utf8')))
       && /-m gpt-6\.1-sol -c model_reasoning_effort="high"/.test(cross);
     got.push(`팀 최고(설계 Opus max·구현 Opus·교차 검토 6.1 Sol high) + 직접 지정 ${rich}`);
     fs.writeFileSync(wsFile, wsRaw);
@@ -647,11 +649,13 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   const noCli = kitLib.buildAgentFiles(roles, models, { cliFor: () => false, warnings: warn });
   // 위임 역할은 그 도구의 서브에이전트 파일이 없고, 위임 표(PC 별 지침)에 오른다
   const dc = withCli.delegations;
-  const delegated = !withCli.files.has('.claude/agents/reviewer.md') && withCli.files.has('.codex/agents/reviewer.toml')
+  // 리뷰는 두 도구 모두 상대 회사 모델 (Claude 세션 → Codex, Codex 세션 → Claude)
+  const delegated = !withCli.files.has('.claude/agents/reviewer.md') && !withCli.files.has('.codex/agents/reviewer.toml')
     && !withCli.files.has('.codex/agents/implementer.toml') && withCli.files.has('.claude/agents/implementer.md')
+    && dc.codex.some((d) => d.role === 'reviewer' && d.tool === 'claude' && d.model === 'opus' && d.mode === 'read')
     && dc.claude.some((d) => d.role === 'reviewer' && d.tool === 'codex' && d.model === 'gpt-6.1-sol' && d.mode === 'read')
     && dc.codex.some((d) => d.role === 'implementer' && d.tool === 'claude' && d.model === 'opus' && d.mode === 'write');
-  const fellBack = /model: opus/.test(noCli.files.get('.claude/agents/reviewer.md')) && /model = "gpt-6\.1-sol"/.test(noCli.files.get('.codex/agents/implementer.toml')) && warn.length === 2;
+  const fellBack = /model: opus/.test(noCli.files.get('.claude/agents/reviewer.md')) && /model = "gpt-6\.1-sol"/.test(noCli.files.get('.codex/agents/implementer.toml')) && /model = "gpt-6\.1-sol"/.test(noCli.files.get('.codex/agents/reviewer.toml') || '') && warn.length === 3;
   // 실제 워크스페이스 sync — PC 별 지침에 위임 표
   const localMd = fs.existsSync(path.join(tmp, 'team-lead', 'CLAUDE.local.md')) ? fs.readFileSync(path.join(tmp, 'team-lead', 'CLAUDE.local.md'), 'utf8') : '';
   const section = !kitLib.splitModel || /역할 위임/.test(localMd) || !require('../packs/core/lib/cli.js').findCli('codex');
@@ -704,6 +708,53 @@ fs.writeFileSync(out, mode === 'repeat' ? '결론: 블로커 1\\n1. [블로커][
   const nc = del('nocheck');
   const checkGate = nc.status === 6 && /검사: <명령> 통과/.test(nc.start) && /회귀는 머리로 판정하지 않는다/.test(r1.prompt);
   record('리뷰 위임 (블로커 기준 · 차수 · 반복 · 실패 원인 · 실행 중 변경 · 검사 줄)', bar && prior && third && other && failed && readShell && stale && checkGate && quoted, `블로커 기준 · 1차 ${bar} · 2차에 앞 블로커 · [반복] ${prior} · 인용한 [반복] 은 안 셈 ${quoted} · 3차 경고 ${third} · 다른 범위는 따로 ${other} · 429 원인과 상대 도구로 다시 ${failed} · claude 읽기 리뷰어 셸 ${readShell} · 실행 중 변경 ${stale} · 검사 줄 없으면 막음 ${checkGate}`);
+}
+
+// 토론 모드: 가짜 codex · claude 로 1차 따로 → 2차 판정(근거 없는 동의는 보류 · 놓친 것) → 3차 갈린 것만 · 동시 상한보다 큰 패널 · 실패한 모델은 빠짐으로 · 없는 도구면 시작 안 함
+{
+  const dir = path.join(tmp, 'team-lead');
+  const fakeBin = path.join(tmp, 'fake-debate-bin');
+  fs.mkdirSync(fakeBin, { recursive: true });
+  const brain = path.join(fakeBin, 'brain.js');
+  fs.writeFileSync(brain, `module.exports = (who, p) => {
+  const ids = (sec) => [...p.split(sec)[1].matchAll(/^- ([A-DN]\\d+) \\[[^\\]]+\\] (.+)$/gm)].map((m) => ({ id: m[1], text: m[2] }));
+  if (/# 토론 1차/.test(p)) return who === 'codex' ? '## 주장\\n- [블로커] 주문 상태 덮어씀 — order.js:3\\n- [권장] 함수 이름 바꾸기 — a.js:1' : '## 주장\\n- [블로커] 저장 전 상태 바뀜 — order.js:3\\n- [참고] 로그 많음 — log.js:2';
+  if (/# 토론 2차/.test(p)) return '## 판정\\n' + ids('# 주장 목록').map((c) => (who === 'codex' && /로그/.test(c.text) ? '- ' + c.id + ': 반대 — 디버그 전용이라 운영에서 꺼짐' : who !== 'codex' && /이름/.test(c.text) ? '- ' + c.id + ': 반대 — 요청 범위 밖의 이름 변경' : who !== 'codex' && /덮어씀/.test(c.text) ? '- ' + c.id + ': 동의' : '- ' + c.id + ': 동의 — order.js:3 직접 확인')).join('\\n') + '\\n## 놓친 것\\n' + (who === 'codex' ? '없음' : '- [권장] 재시도 없음 — order.js:9');
+  if (/# 토론 3차/.test(p)) return '## 판정\\n' + ids('# 갈린 주장').map((c) => (who !== 'codex' && /이름/.test(c.text) ? '- ' + c.id + ': 반대 — 여전히 범위 밖 a.js:1' : '- ' + c.id + ': 동의 — 다시 확인함 해당 줄')).join('\\n');
+  return '';
+};`);
+  fs.writeFileSync(path.join(fakeBin, 'codex'), `#!/usr/bin/env node
+const fs = require('fs'); const a = process.argv; const p = fs.readFileSync(0, 'utf8');
+if (process.env.FAKE_DEBATE_FAIL === 'codex') { process.stderr.write('429 Too Many Requests usage limit'); process.exit(1); }
+fs.writeFileSync(a[a.indexOf('-o') + 1], require(${JSON.stringify(brain)})('codex', p));
+`, { mode: 0o755 });
+  fs.writeFileSync(path.join(fakeBin, 'claude'), `#!/usr/bin/env node
+const p = require('fs').readFileSync(0, 'utf8'); const a = process.argv;
+console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(brain)})('claude-' + a[a.indexOf('--model') + 1], p) }));
+`, { mode: 0o755 });
+  const env = { ...process.env, PATH: `${fakeBin}${path.delimiter}${process.env.PATH}` };
+  const tool = path.join(dir, 'packs', 'core', 'bin', 'debate.js');
+  const debate = (panel, extra = {}) => {
+    const s = spawnSync(process.execPath, [tool, 'start', '--panel', panel, '--topic', '주문'], { cwd: dir, input: '주문 탭 리뷰\n검사: npm test 통과', encoding: 'utf8', env: { ...env, ...extra } });
+    const id = (s.stdout.match(/토론 id: (\S+)/) || [])[1];
+    const w = id ? spawnSync(process.execPath, [tool, 'wait', id, '--timeout', '120'], { cwd: dir, encoding: 'utf8', env: { ...env, ...extra } }) : { stdout: '' };
+    return { start: s.stdout, status: s.status, out: w.stdout, id };
+  };
+  const two = debate('codex:gpt-6.1-sol:high,claude:opus:high:보안');
+  const counts = /주장 5개: 합의 4 · 갈림 1 · 기각 0 · 한 모델만 0/.test(two.out);
+  const lazy = /근거 없는 동의 · 반대는 보류로 셈: \w 1건/.test(two.out) && /함수 이름 바꾸기[^\n]*(?:\n {2}- [^\n]*)*\n {2}- \w 반대: 여전히 범위 밖/.test(two.out) && /N1 \[권장\] 재시도 없음/.test(two.out);
+  const raw = (two.out.match(/원문: (\S+) /) || [])[1] || '';
+  const rounds = /· 3회 ·/.test(two.out) && !!raw && fs.existsSync(path.join(raw, 'round-3-A.md')) && fs.existsSync(path.join(raw, 'round-1-B.task.md'));
+  const three = debate('codex:gpt-6.1-sol,claude:opus,claude:sonnet');
+  const big = /패널 A=[^\n]*C=/.test(three.out) && !/빠진 모델/.test(three.out);
+  const failed = debate('codex:gpt-6.1-sol,claude:opus', { FAKE_DEBATE_FAIL: 'codex' });
+  const dropped = /⚠ 빠진 모델 \(다른 모델로 대신하지 않았다\): \w=codex:gpt-6\.1-sol 1차: 사용량 한도\(429\)/.test(failed.out) && /2개가 안 돼 토론이 중간에 멈췄습니다/.test(failed.out);
+  const same = /모두 같은 회사 모델/.test(spawnSync(process.execPath, [tool, 'start', '--panel', 'claude:opus,claude:sonnet', '--dry-run'], { cwd: dir, input: '리뷰\n검사: npm test 통과', encoding: 'utf8', env }).stdout);
+  const noCli = spawnSync(process.execPath, [tool, 'start', '--panel', 'codex:x,claude:y'], { cwd: dir, input: '리뷰\n검사: npm test 통과', encoding: 'utf8', env: { ...process.env, PATH: path.dirname(process.execPath), HOME: path.join(tmp, 'no-home') } });
+  const blockedStart = noCli.status === 3 && /토론을 시작하지 않습니다/.test(noCli.stdout);
+  const models = spawnSync(process.execPath, [tool, 'models', '--task', 'docs'], { cwd: dir, encoding: 'utf8', env }).stdout;
+  const listed = /✔ codex:gpt-6\.1-sol/.test(models) && /패널 예시 \(다른 회사 먼저\): --panel /.test(models) && /언어 \d/.test(models);
+  record('토론 모드 (1차 따로 · 2차 판정 · 3차 갈린 것만 · 근거 없는 동의 · 큰 패널 · 빠진 모델 · 모델 목록)', counts && lazy && rounds && big && dropped && same && blockedStart && listed, `합의 · 갈림 수 ${counts} · 근거 없는 동의 보류 · 양쪽 근거 · 놓친 것 ${lazy} · 3회 · 회차 원문 ${rounds} · 동시 상한보다 큰 패널 ${big} · 실패는 빠짐으로 ${dropped} · 같은 회사 경고 ${same} · 없는 도구면 시작 안 함 ${blockedStart} · 쓸 수 있는 모델 ${listed}`);
 }
 
 // 화면 문구에 장식용 대시(—)를 쓰지 않는다 — 킷 코드의 문자열 안 " — " (주석·테스트 제외)

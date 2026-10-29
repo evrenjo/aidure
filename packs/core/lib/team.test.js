@@ -1,4 +1,4 @@
-// 팀장 · 팀원 · 담당 repo 판정 (team.js) · 담당 밖 수정 막기 훅 (repo-guard.js) · 설정 안내 (settings-hint.js)
+// 팀장 · 팀원 · 담당 repo 판정 (team.js) · 담당 밖 수정 막기 훅 (repo-guard.js) · 설정 안내 · 토론 제안 (settings-hint.js)
 'use strict';
 const assert = require('assert');
 const fs = require('fs');
@@ -118,6 +118,18 @@ const out1 = hook('settings-hint.js', { session_id: 's1', prompt: '알림이 너
 const out2 = hook('settings-hint.js', { session_id: 's1', prompt: '알림이 너무 많아 귀찮아' });
 assert.ok(/kedovi notify my level/.test(out1) && /팀장\(길동 · old-admin\)/.test(out1), out1);
 assert.strictEqual(out2.trim(), '', '같은 세션에서 다시 넣지 않는다');
+
+// 토론 제안: 결과 불만 · 의심이면 후보, 작업 요청은 아님. 같은 세션 30분에 한 번, 토론을 직접 말하면 매번
+const { debateHint } = require('../hooks/settings-hint');
+for (const q of ['이거 마음에 안 들어', '이 설계 맞아?', '다시 검토해줘', '결과가 별로야']) assert.strictEqual(debateHint(q, map), 'ask', q);
+for (const q of ['토론해줘', '다른 모델들한테도 봐 달라고 해']) assert.strictEqual(debateHint(q, map), 'explicit', q);
+for (const q of ['이 함수 고쳐줘', '왜 이 테스트가 실패해?', '자꾸 테스트가 깨지는데 리뷰 좀 해줘', '로그인 할 수 있게 권한 체크 추가']) assert.strictEqual(debateHint(q, map), null, q);
+const d1 = hook('settings-hint.js', { session_id: 's2', prompt: '이 설계 맞아? 마음에 안 들어' });
+const d2 = hook('settings-hint.js', { session_id: 's2', prompt: '그래도 별로야' });
+const d3 = hook('settings-hint.js', { session_id: 's2', prompt: '토론해줘' });
+assert.ok(/토론 모드 안내/.test(d1) && /debate 스킬/.test(d1), d1);
+assert.strictEqual(d2.trim(), '', '30분 안에는 다시 제안하지 않는다');
+assert.ok(/사용자가 토론/.test(d3), '토론을 말하면 매번');
 
 fs.rmSync(dir, { recursive: true, force: true });
 console.log('team.test.js ✔');

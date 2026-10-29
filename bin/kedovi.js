@@ -45,6 +45,7 @@
  *   kedovi docs pages [on|off] [repo|폴더]   문서 사이트를 Pages 로 올리기 켜고 끄기 · 상태 (원격에 맞는 CI 파일 · .gitignore 의 /docs-site/)
  *   kedovi docs serve [repo|폴더] [--port 8000] [--open]   docs-site/ 를 이 PC 에서 웹 주소로 보기 (전체 인쇄 · 새로고침 없는 이동까지. Ctrl+C 로 끝)
  *   kedovi delegate list · status [<id>] · watch [<id>]   다른 도구에 맡긴 작업(위임: Claude Code ↔ Codex 리뷰 등): 목록 · 지금 진행 현황 · 상대 에이전트가 읽고 실행하는 것을 줄마다 보기 (id 를 빼면 마지막 실행 중 작업)
+ *   kedovi debate list · status [<id>] · models [--task code|design|docs]   토론 모드(여러 모델이 따로 보고 서로 반박): 목록 · 지금 회차와 모델별 상태 · 이 PC 에서 쓸 수 있는 모델과 패널 예시. 시작은 채팅에서 "토론해줘" (debate 스킬)
  *   kedovi board [--no-open] [--no-fetch]   워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽 (.agents/board/, 이 PC 만 · 보기 전용)
  *   kedovi screens check [repo|폴더]   화면설계서 검사: 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락 (screens 팩)
  *   kedovi datamodel check [repo|폴더]   데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
@@ -3576,7 +3577,7 @@ const HELP_GROUPS = [
   ['프로젝트 설정', '유형 · 진행 방식 · repo · 스택 · 규칙 · 생성물', ['type', 'approach', 'repo', 'detect', 'rules', 'sync', 'check', 'doctor', 'packs', 'reset']],
   ['팀', '팀 현황 · 명단 · 팀 구성', ['team', 'team-mode']],
   ['팀 규칙 점검', '리뷰 확인 · 훅이 알리거나 막는 수준', ['review', 'team-mode enforce']],
-  ['진행 · 기록', '로드맵 · 핸드오프 · 현황판 · 위임 · 옛 작업 가져오기', ['plan', 'handoff', 'board', 'delegate', 'import', 'tidy']],
+  ['진행 · 기록', '로드맵 · 핸드오프 · 현황판 · 위임 · 토론 · 옛 작업 가져오기', ['plan', 'handoff', 'board', 'delegate', 'debate', 'import', 'tidy']],
   ['문서', '문서 사이트 · ID 찾기 · 화면설계서 · 데이터 설계 검사', ['docs', 'screens', 'datamodel']],
   ['알림 · 연동', '텔레그램 · 비밀값 · GitLab', ['notify', 'secret', 'gitlab']],
 ];
@@ -3803,6 +3804,7 @@ async function main() {
     case 'plan': return runWsTool('plan.js', rest);
     case 'docs': return runWsTool('docs-site.js', rest);
     case 'delegate': return runWsTool('delegate.js', rest.length ? rest : ['list']);
+    case 'debate': return runWsTool('debate.js', rest.length ? rest : ['list']);
     case 'board': return runWsTool('board.js', rest);
     case 'tidy': return runWsTool('tidy.js', rest);
     case 'screens': return runWsTool('check-screens.js', rest.filter((x) => x !== 'check'), 'screens');
