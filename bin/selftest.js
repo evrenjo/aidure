@@ -629,7 +629,11 @@ record('금지 문자열(프로젝트 이름)', hits.length === 0, hits.length ?
   const rosterOk = blocked.status !== 0 && /팀 명단에 없습니다/.test(blocked.stderr) && roster.restrict === true
     && st('ghost').joined === false && st('ghost').inRoster === true && st('mate').inRoster === false && st('mate').joined === true;
   got.push(`명단 · 제한 · 미합류 표시 ${rosterOk}`);
-  record('인수인계 (팀 현황 · 인수 · 세션 시작 알림 · 명단)', seen && took && marked && briefOk && rosterOk, got.join(' · '));
+  // 화면 없는 실행(에이전트)의 whoami --refresh: 죽지 않고, 계정을 못 읽은 이유를 한 줄 알린다 (원격이 로컬 경로라 계정을 못 읽음)
+  const who = kedovi('team', 'whoami', '--refresh');
+  const whoOk = who.status === 0 && /이 PC 사용자: lead/.test(who.stdout) && /저장소 계정을 읽지 못했습니다: 원격 주소를 읽지 못함/.test(`${who.stdout}${who.stderr}`);
+  got.push(`화면 없는 whoami 이유 안내 ${whoOk}`);
+  record('인수인계 (팀 현황 · 인수 · 세션 시작 알림 · 명단)', seen && took && marked && briefOk && rosterOk && whoOk, got.join(' · '));
 }
 
 // 역할 위임 — 표준 프로필: Claude 세션의 리뷰 → Codex, Codex 세션의 구현 → Claude. 상대 CLI 가 있으면 전달자 에이전트, 없으면 fallback 모델

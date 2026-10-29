@@ -79,8 +79,10 @@ const { spawnSync, execFileSync } = require('child_process');
 const kit = require('./kit.js');
 const gateway = require('./gateway.js');
 
-let p;
-const clack = () => (p = p || require('@clack/prompts'));
+let clackMod;
+const clack = () => (clackMod = clackMod || require('@clack/prompts'));
+// p.log 등을 어디서 먼저 쓰든 화면 라이브러리를 불러온다 (늦게 불러오기 때문에 생기던 "undefined (reading 'log')" 방지)
+const p = new Proxy({}, { get: (_, k) => clack()[k] });
 
 const BACK = Symbol('kedovi:back');
 
@@ -1620,32 +1622,39 @@ function requireAdmin(root, what, { soft = false } = {}) {
 
 // 이 PC 사용자 확인 — 워크스페이스 repo 원격의 저장소 계정 username. ssh 면 ssh -T 인사말, https 면 gh · glab · git credential 의 사용자 이름
 const NOT_USER = new Set(['oauth2', 'x-access-token', 'gitlab-ci-token', 'personalaccesstoken', 'token', 'git']);
-function detectAccount(root) {
+/** why: 못 찾았을 때 이유를 쌓는다 (화면 없는 실행에서 한 줄로 알린다) */
+function detectAccount(root, why = []) {
   const url = (spawnSync('git', ['-C', root, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).stdout || '').trim();
-  if (!url) return null;
+  if (!url) { why.push('워크스페이스 repo 에 origin 원격이 없음'); return null; }
   const ssh = url.match(/^ssh:\/\/([\w.-]+)@([^:/]+)(?::(\d+))?\//) || url.match(/^([\w.-]+)@([^:/]+):/);
   // 로그인 창 · 브라우저가 뜨지 않게 (Git Credential Manager · askpass)
   const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' };
   delete env.GIT_ASKPASS; delete env.SSH_ASKPASS;
-  const run = (cmd, args, input) => { try { const r = spawnSync(cmd, args, { encoding: 'utf8', timeout: 8000, input, env }); return `${r.stdout || ''}\n${r.stderr || ''}`; } catch { return ''; } };
+  const missing = new Set();
+  const run = (cmd, args, input) => { try { const r = spawnSync(cmd, args, { encoding: 'utf8', timeout: 8000, input, env }); if (r.error && r.error.code === 'ENOENT') missing.add(cmd); return `${r.stdout || ''}\n${r.stderr || ''}`; } catch { return ''; } };
   if (ssh && !/^https?:/.test(url)) {
     const [, user, host, port] = ssh;
     const out = run('ssh', ['-T', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=accept-new', ...(port ? ['-p', port] : []), `${user}@${host}`]);
     const m = out.match(/Hi ([\w.-]+)!/) || out.match(/Welcome to GitLab, @([\w.-]+)!/) || out.match(/logged in as ([\w.-]+)/i);
-    return m ? { username: m[1], host, source: 'ssh' } : null;
+    if (m) return { username: m[1], host, source: 'ssh' };
+    why.push(`ssh -T ${user}@${host}${port ? ` -p ${port}` : ''} 이 계정 이름을 돌려주지 않음 (키 등록 · 접속 확인)`);
+    return null;
   }
   let host = '';
-  try { host = new URL(url).hostname; } catch { return null; }
+  try { host = new URL(url).hostname; } catch { why.push(`원격 주소를 읽지 못함 (${url})`); return null; }
   if (/github/.test(host)) {
     const u = run('gh', ['api', 'user', '--hostname', host, '--jq', '.login']).trim().split('\n')[0];
     if (/^[\w.-]+$/.test(u)) return { username: u, host, source: 'gh' };
+    why.push(missing.has('gh') ? 'gh 없음' : `gh 로그인 안 됨 (gh auth login --hostname ${host})`);
   } else {
     const j = run('glab', ['api', 'user', '--hostname', host]);
     const m = j.match(/"username"\s*:\s*"([\w.-]+)"/);
     if (m) return { username: m[1], host, source: 'glab' };
+    why.push(missing.has('glab') ? 'glab 없음' : `glab 로그인 안 됨 (glab auth login --hostname ${host})`);
   }
   const cred = run('git', ['-C', root, 'credential', 'fill'], `protocol=https\nhost=${host}\n\n`).match(/^username=(.+)$/m);
   if (cred && !NOT_USER.has(cred[1].trim().toLowerCase())) return { username: cred[1].trim(), host, source: 'git credential' };
+  why.push(cred ? `git credential 의 사용자가 토큰 이름(${cred[1].trim()})` : 'git credential 에 저장된 사용자 없음');
   return null;
 }
 
@@ -1656,10 +1665,13 @@ async function ensureAccount(root, { refresh = false, ask = process.stdin.isTTY 
   if (cur && cur.username && !refresh) return cur;
   // 못 찾은 기록이 있으면 7일 동안 다시 묻지 않는다 (start 마다 느려지지 않게. 다시: kedovi team whoami --refresh)
   if (cur && cur.source === 'none' && !refresh && (Date.now() - Date.parse(cur.checked || 0)) < 7 * 864e5) return null;
-  const found = detectAccount(root);
+  const why = [];
+  const found = detectAccount(root, why);
   let me = found ? { ...found, checked: today } : null;
+  // 화면 없는 실행(에이전트 등)은 물을 수 없으니 이유를 한 줄 알린다
+  if (!me && !ask) clack().log.warn(`저장소 계정을 읽지 못했습니다: ${why.join(' · ') || '이유 모름'}. 터미널에서 kedovi team whoami --refresh 를 직접 실행하면 입력해 적을 수 있습니다`);
   if (!me && ask) {
-    p.log.info('워크스페이스 원격에서 저장소 계정을 읽지 못했습니다. 팀장 · 담당 repo 판정에 쓰니 직접 적어 주세요 (나중에 다시 확인: kedovi team whoami --refresh)');
+    clack().log.info('워크스페이스 원격에서 저장소 계정을 읽지 못했습니다. 팀장 · 담당 repo 판정에 쓰니 직접 적어 주세요 (나중에 다시 확인: kedovi team whoami --refresh)');
     const v = await clack().text({ message: '저장소 계정 username', placeholder: '예: hong01' });
     if (!clack().isCancel(v) && String(v || '').trim()) me = { username: String(v).trim(), host: '', source: 'input', checked: today };
   }
@@ -1682,7 +1694,7 @@ function adoptAccount(root, username) {
   const all = [...(t.leads || []), ...(t.admins || []), ...(t.members || [])];
   if (all.some((x) => sameUser(x, username)) || !all.some((x) => sameUser(x, gitName))) return;
   const lead = [...(t.leads || []), ...(t.admins || [])].some((x) => sameUser(x, gitName));
-  p.log.info(lead
+  clack().log.info(lead
     ? `팀 설정의 팀장 ${gitName} 이(가) git user.name 으로 적혀 있습니다. 저장소 계정으로 바꾸세요: kedovi team lead add ${username} --nick <이름> 뒤 kedovi team lead remove ${gitName}`
     : `팀 설정에 ${gitName} 이(가) git user.name 으로 적혀 있습니다. 팀장에게 저장소 계정 ${username} 으로 바꿔 달라고 요청하세요 (kedovi team add ${username} --nick <이름> --repos …)`);
 }
@@ -1769,7 +1781,7 @@ async function cmdWhoami(root, args) {
   console.log(`이 PC 사용자: ${w.nickname ? `${w.nickname} · ` : ''}${w.username || '(모름)'} (확인: ${w.source})`);
   console.log(`역할: ${w.lead ? '팀장 (모든 repo · 설정 수정)' : w.person ? `팀원 · 담당 ${(w.repos || []).join(', ') || '없음'}` : '명단에 없음'}`);
   if (blocked.length) console.log(`고칠 수 없는 repo: ${blocked.join(', ')} (담당자 · 팀장에게 요청)`);
-  if (w.source === 'git user.name') console.log('  저장소 계정을 아직 확인하지 못했습니다: kedovi team whoami --refresh');
+  if (w.source === 'git user.name' && !args.includes('--refresh')) console.log('  저장소 계정을 아직 확인하지 못했습니다: kedovi team whoami --refresh');
 }
 
 /** 팀장 · 팀원 · 담당 repo · 부를 이름 (workspace.json team.leads · members) */
