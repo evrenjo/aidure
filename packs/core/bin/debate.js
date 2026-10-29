@@ -7,6 +7,8 @@
  *        rounds = 최대 회차 (기본 3, 2~4): 1차 따로 보기 → 2차 서로 판정 → 3차부터 갈린 주장만
  *        → 토론 id 를 출력하고 바로 끝난다. 패널이 이 PC 에 없으면 시작하지 않는다 (같은 회사 모델로 몰래 바꾸지 않는다)
  *   wait <id> [--timeout 초(기본 900)]    끝날 때까지 기다려 결과(합의 · 갈림 · 기각 · 한 모델만 · 빠진 모델)를 보여 준다
+ *   wait <id> --round [--timeout 초(기본 540)]   (리더 중계용) 회차가 끝날 때마다 돌아와 그 회차의 주장 · 판정을 보여 준다. 끝났으면 결과까지
+ *   watch [<id>]                          (사용자용) 다른 터미널에서 모델별 주장 · 판정 · 회차 정리를 실시간으로 본다
  *   status [<id>]                         지금 회차 · 모델별 상태
  *   list                                  이 워크스페이스의 토론
  *   run …                                 (내부) start 가 떼어 낸 진행 프로세스
@@ -136,9 +138,10 @@ function sectionLines(text, title) {
 function parseVotes(text) {
   const out = {};
   for (const l of sectionLines(text, '판정')) {
-    const m = l.match(/^\s*(?:[-*]|\d+\.)?\s*\**([A-DN]\d+)\**\s*[:：]\s*\**(동의|반대|보류)\**\s*(?:[—–\-/|]+\s*(.*))?$/);
+    // 판정 뒤 괄호(「보류 (강도는 권장)」)와 구분 기호 없이 이어 쓴 근거도 읽는다
+    const m = l.match(/^\s*(?:[-*]|\d+\.)?\s*\**([A-DN]\d+)\**\s*[:：]\s*\**(동의|반대|보류)\**\s*(?:[(（]([^)）]*)[)）])?\s*(?:[—–\-/|:：]+\s*)?(.*)$/);
     if (!m) continue;
-    const why = (m[3] || '').trim();
+    const why = [m[3], m[4]].map((x) => (x || '').trim()).filter(Boolean).join(' / ');
     let stance = STANCES[m[2]];
     if (stance !== 'hold' && why.replace(/\s/g, '').length < 8) stance = 'hold';
     out[m[1]] = { stance, why: why.slice(0, 300), lazy: STANCES[m[2]] !== 'hold' && stance === 'hold' };
@@ -216,6 +219,54 @@ function readTask() {
 const save = (id, name, data) => fs.writeFileSync(path.join(DIR, id, name), typeof data === 'string' ? data : JSON.stringify(data, null, 2));
 const readJson = (id, name) => { try { return JSON.parse(fs.readFileSync(path.join(DIR, id, name), 'utf8')); } catch { return null; } };
 
+// ───────── 진행 기록 (events.jsonl): watch 가 실시간으로 보여 주고, wait --round 가 회차마다 리더에게 돌려준다 ─────────
+
+const event = (id, ev) => { try { fs.appendFileSync(path.join(DIR, id, 'events.jsonl'), `${JSON.stringify({ t: Date.now(), ...ev })}\n`); } catch { /* 기록은 부가 기능 */ } };
+const events = (id) => { try { return fs.readFileSync(path.join(DIR, id, 'events.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)); } catch { return []; } };
+const short = (s, n = 110) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); return t.length > n ? `${t.slice(0, n - 1)}…` : t; };
+const STANCE_TEXT = { agree: '동의', oppose: '반대', hold: '보류' };
+
+/** 모델 하나의 회차 보고 → 화면에 보일 요약 (1차 = 주장, 2차부터 = 판정 · 놓친 것) */
+function summarize(n, out) {
+  if (n === 1) return { claims: parseClaims(out, '주장').map((c) => ({ level: c.level, text: short(c.text) })) };
+  const votes = Object.entries(parseVotes(out)).map(([cid, v]) => ({ id: cid, stance: v.stance, lazy: !!v.lazy, why: short(v.why, 80) }));
+  return { votes, missed: n === 2 ? parseClaims(out, '놓친 것').map((c) => ({ level: c.level, text: short(c.text) })) : [] };
+}
+
+/** 진행 기록 한 줄 → 사람이 읽는 줄들 */
+function formatEvent(ev, meta) {
+  const name = (who) => { const m = (meta.members || []).find((x) => x.who === who); return m ? `${who} ${m.tool}:${m.model}${m.view ? `(${m.view})` : ''}` : who; };
+  const at = `${(((ev.t || Date.now()) - meta.startedAt) / 60000).toFixed(1)}분`;
+  if (ev.type === 'start') return [`▶ 토론 시작${meta.topic ? `: ${meta.topic}` : ''} · 패널 ${meta.members.map((m) => name(m.who)).join(' · ')} · 최대 ${meta.rounds}회`];
+  if (ev.type === 'round') {
+    const what = ev.n === 1 ? '각자 따로 보고 주장을 낸다' : ev.n === 2 ? `이름을 가린 주장 ${ev.open}개에 서로 동의 · 반대 (근거 필수) + 놓친 것` : `갈린 주장 ${ev.open}개만 다시 판정`;
+    return ['', `── ${ev.n}차 시작 (${at}): ${what} · ${ev.active.map(name).join(' · ')}`];
+  }
+  if (ev.type === 'member') {
+    if (!ev.ok) return [`  ✖ ${name(ev.who)} ${ev.n}차 빠짐 (${at}): ${ev.fail || '실패'} · 다른 모델로 대신하지 않는다`];
+    const L = [];
+    if (ev.claims) {
+      L.push(`  ● ${name(ev.who)} ${ev.n}차 끝 (${at}): 주장 ${ev.claims.length}개`);
+      ev.claims.forEach((c, i) => L.push(`      ${ev.who}${i + 1} [${c.level}] ${c.text}`));
+    } else {
+      const k = (s) => ev.votes.filter((v) => v.stance === s).length;
+      L.push(`  ● ${name(ev.who)} ${ev.n}차 끝 (${at}): 판정 ${ev.votes.length}개 (동의 ${k('agree')} · 반대 ${k('oppose')} · 보류 ${k('hold')})${ev.missed && ev.missed.length ? ` · 놓친 것 ${ev.missed.length}개` : ''}`);
+      for (const v of ev.votes.filter((x) => x.stance !== 'agree' || x.lazy)) L.push(`      ${v.id}: ${STANCE_TEXT[v.stance]}${v.lazy ? ' (근거 없어 보류로 셈)' : ''}${v.why ? ` / ${v.why}` : ''}`);
+      for (const c of ev.missed || []) L.push(`      + [${c.level}] ${c.text}`);
+    }
+    return L;
+  }
+  if (ev.type === 'roundEnd') {
+    const c = ev.tally;
+    const L = [`  ═ ${ev.n}차 정리 (${at}): 주장 ${ev.claims}개${ev.n === 1 ? '' : `: 합의 ${c.agreed} · 갈림 ${c.split} · 기각 ${c.rejected} · 한 모델만 ${c.single}`}`];
+    for (const s of ev.splits || []) L.push(`      갈림 ${s.id} [${s.level}] ${s.text} · ${s.votes}`);
+    if (ev.next) L.push(`      다음: ${ev.next}`);
+    return L;
+  }
+  if (ev.type === 'end') return ['', `■ 토론 끝 (${at}): ${ev.summary}`];
+  return [];
+}
+
 function start() {
   const panel = parsePanel(opt('panel'));
   const role = opt('role', 'reviewer');
@@ -243,12 +294,14 @@ function start() {
   fs.mkdirSync(path.join(DIR, id), { recursive: true });
   save(id, 'meta.json', meta);
   save(id, 'task.md', task);
+  event(id, { type: 'start' });
   const child = spawn(process.execPath, [__filename, 'run', '--debate', id], { cwd: ROOT, detached: true, stdio: 'ignore' });
   child.unref();
   console.log(`토론 시작: ${members.map((m) => `${m.tool}:${m.model}${m.effort ? `·${m.effort}` : ''}${m.view ? `(${m.view})` : ''}`).join(' · ')} · 역할 ${role} · 최대 ${rounds}회`);
   if (warn) console.log(warn);
   console.log(`토론 id: ${id}`);
-  console.log(`다음: node packs/core/bin/debate.js wait ${id} (회차마다 모델들이 동시에 돈다. 진행: node packs/core/bin/debate.js status ${id})`);
+  console.log(`다음 (리더): node packs/core/bin/debate.js wait ${id} --round 를 회차마다 다시 불러 끝난 회차를 사용자에게 중계한다 (회차마다 모델들이 동시에 돈다)`);
+  console.log(`사용자에게 알린다: 다른 터미널에서 kedovi debate watch ${id} 로 모델별 주장 · 판정을 실시간으로 볼 수 있다`);
 }
 
 /** 위임 하나 시작 → 작업 id */
@@ -271,23 +324,29 @@ function delegateWait(job) {
 }
 
 /** 한 회차: 살아 있는 모델에게 동시에 → 모델별 보고 */
-async function runRound(id, n, active, textFor) {
+async function runRound(id, n, active, textFor, open = null) {
   const meta = readJson(id, 'meta.json');
   const st = readJson(id, 'state.json');
   st.round = n;
   save(id, 'state.json', st);
+  event(id, { type: 'round', n, active, open: open == null ? undefined : open });
   const started = active.map((who) => {
     const m = meta.members.find((x) => x.who === who);
     return { who, ...delegateStart(id, m, textFor(m), n) };
   });
   const results = {};
   await Promise.all(started.map((s) => new Promise((ok) => {
-    if (s.error) { results[s.who] = { ok: false, fail: s.error }; ok(); return; }
+    if (s.error) { results[s.who] = { ok: false, fail: s.error }; event(id, { type: 'member', n, who: s.who, ok: false, fail: s.error }); ok(); return; }
     // wait 는 동기 실행이라 하위 프로세스로 돌려 회차 안의 모델이 동시에 끝나기를 기다린다
     const c = spawn(process.execPath, [__filename, 'wait-job', '--job', s.job], { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] });
     let buf = '';
     c.stdout.on('data', (d) => { buf += d; });
-    c.on('close', () => { try { results[s.who] = { ...JSON.parse(buf), job: s.job }; } catch { results[s.who] = { ok: false, fail: '결과를 읽지 못함', job: s.job }; } ok(); });
+    c.on('close', () => {
+      try { results[s.who] = { ...JSON.parse(buf), job: s.job }; } catch { results[s.who] = { ok: false, fail: '결과를 읽지 못함', job: s.job }; }
+      const r = results[s.who];
+      event(id, { type: 'member', n, who: s.who, ok: !!r.ok, fail: r.ok ? undefined : r.fail, ...(r.ok ? summarize(n, r.out) : {}) });
+      ok();
+    });
   })));
   for (const [who, r] of Object.entries(results)) fs.writeFileSync(path.join(DIR, id, `round-${n}-${who}.md`), r.out || `(실패: ${r.fail})`);
   return results;
@@ -310,12 +369,13 @@ async function run() {
   for (const [who, r] of Object.entries(r1)) if (r.ok) parseClaims(r.out, '주장').forEach((c, i) => st.claims.push({ id: `${who}${i + 1}`, by: who, round: 1, ...c, votes: {} }));
   st.history.push({ round: 1, active: [...active], claims: st.claims.length });
   save(id, 'state.json', st);
+  roundEnd(id, 1, st, active, meta);
   // 2차 ~ : 판정 (2차는 전부, 3차부터 갈린 것 · 새로 나온 것만)
   let newCount = 0;
   for (let n = 2; n <= meta.rounds && active.length >= 2; n++) {
     const open = n === 2 ? st.claims : st.claims.filter((c) => verdict(c, active) === 'split' || verdict(c, active) === 'single');
     if (!open.length) break;
-    const rn = await runRound(id, n, active, () => (n === 2 ? round2(task, open) : roundN(task, open, n)));
+    const rn = await runRound(id, n, active, () => (n === 2 ? round2(task, open) : roundN(task, open, n)), open.length);
     Object.assign(st, { round: n });
     drop(rn, n);
     for (const [who, r] of Object.entries(rn)) {
@@ -326,10 +386,36 @@ async function run() {
     }
     st.history.push({ round: n, active: [...active], open: open.length });
     save(id, 'state.json', st);
+    roundEnd(id, n, st, active, meta);
   }
   const endedAt = Date.now();
-  save(id, 'result.json', { endedAt, active, report: report(meta, st, active, endedAt) });
+  const rep = report(meta, st, active, endedAt);
+  save(id, 'result.json', { endedAt, active, report: rep });
+  event(id, { type: 'end', summary: rep.split('\n')[1] });
   notifyDone(meta, active, endedAt);
+}
+
+/** 회차 끝: 집계 · 갈린 주장 · 다음 회차를 기록하고 (알림을 켰으면) 한 줄 알린다 */
+function roundEnd(id, n, st, active, meta) {
+  const tally = { agreed: 0, split: 0, rejected: 0, single: 0 };
+  for (const c of st.claims) tally[verdict(c, active)]++;
+  const votesOf = (c) => Object.entries(c.votes).map(([w, v]) => `${w} ${STANCE_TEXT[v.stance]}`).join(' · ');
+  const splits = n === 1 ? [] : st.claims.filter((c) => verdict(c, active) === 'split').map((c) => ({ id: c.id, level: c.level, text: short(c.text, 80), votes: votesOf(c) }));
+  const openNext = st.claims.filter((c) => ['split', 'single'].includes(verdict(c, active))).length;
+  const next = active.length < 2 ? '판정할 모델이 2개가 안 돼 멈춘다' : n >= meta.rounds ? '최대 회차라 끝낸다' : n === 1 ? (st.claims.length ? `2차: 주장 ${st.claims.length}개를 서로 판정` : '주장이 없어 끝낸다') : openNext ? `${n + 1}차: 갈린 · 한 모델만 주장 ${openNext}개` : '모두 판정이 맞아 끝낸다';
+  event(id, { type: 'roundEnd', n, claims: st.claims.length, tally, splits, next });
+  if (/끝낸다|멈춘다/.test(next)) return; // 마지막 회차는 토론 끝 알림 하나로
+  notifyRound(meta, n, st.claims.length, tally, next);
+}
+
+async function notifyRound(meta, n, claims, tally, next) {
+  try {
+    const notify = require('../lib/notify');
+    const cfg = notify.personal(ROOT, ws);
+    if (!notify.wantsProgress(cfg) || !cfg.token || !cfg.chat || notify.atDesk(cfg)) return;
+    const mins = ((Date.now() - meta.startedAt) / 60000).toFixed(1);
+    await notify.send(`🤖 [${notify.projectName(ROOT, ws)}] 토론 ${n}차 끝 (${mins}분): 주장 ${claims}개${n === 1 ? '' : ` · 합의 ${tally.agreed} · 갈림 ${tally.split}`} · 다음 ${next}`, cfg);
+  } catch { /* 알림은 부가 기능 */ }
 }
 
 function report(meta, st, active, endedAt) {
@@ -381,6 +467,7 @@ function waitJob() {
 async function wait() {
   const id = argv[1];
   if (!id || !readJson(id, 'meta.json')) throw new Error(`토론 id 가 없습니다: ${id} (목록: node packs/core/bin/debate.js list)`);
+  if (has('round')) return waitRound(id);
   const limit = Number(opt('timeout', 900)) * 1000;
   const t0 = Date.now();
   while (!readJson(id, 'result.json')) {
@@ -388,6 +475,58 @@ async function wait() {
     await new Promise((r) => setTimeout(r, 3000));
   }
   console.log(readJson(id, 'result.json').report);
+}
+
+/** 회차가 끝날 때마다 돌아온다: 지난번 뒤로 생긴 진행을 보여 주고 (리더가 사용자에게 중계), 끝났으면 결과까지 */
+async function waitRound(id) {
+  const meta = readJson(id, 'meta.json');
+  const cur = path.join(DIR, id, 'relay.json');
+  let from = 0;
+  try { from = JSON.parse(fs.readFileSync(cur, 'utf8')).seen || 0; } catch { /* 처음 */ }
+  const limit = Number(opt('timeout', 540)) * 1000;
+  const t0 = Date.now();
+  for (;;) {
+    const evs = events(id);
+    const fresh = evs.slice(from);
+    const done = !!readJson(id, 'result.json');
+    const stop = fresh.some((e) => e.type === 'roundEnd' || e.type === 'end') || done || Date.now() - t0 > limit;
+    if (stop) {
+      for (const e of fresh) for (const l of formatEvent(e, meta)) console.log(l);
+      fs.writeFileSync(cur, JSON.stringify({ seen: evs.length }));
+      if (done) { console.log(`\n${readJson(id, 'result.json').report}`); return; }
+      if (!fresh.some((e) => e.type === 'roundEnd')) statusOf(id);
+      console.log(`\n(리더) 위 진행을 사용자에게 몇 줄로 중계한 뒤 다시: node packs/core/bin/debate.js wait ${id} --round`);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+}
+
+/** 사용자용 실시간 보기: 지금까지의 진행을 보여 주고 끝날 때까지 새 진행을 이어 붙인다 */
+async function watch() {
+  const ids = fs.readdirSync(DIR).sort();
+  const id = (argv[1] && !argv[1].startsWith('--') ? argv[1] : null) || ids.filter((x) => !readJson(x, 'result.json')).slice(-1)[0] || ids.slice(-1)[0];
+  if (!id || !readJson(id, 'meta.json')) return console.log('토론 없음');
+  const meta = readJson(id, 'meta.json');
+  console.log(`토론 ${id} 보기 (끝나면 저절로 닫힌다. 그만 보기: Ctrl+C)`);
+  let seen = 0;
+  let quiet = Date.now();
+  for (;;) {
+    const evs = events(id);
+    for (const e of evs.slice(seen)) for (const l of formatEvent(e, meta)) console.log(l);
+    if (evs.length > seen) quiet = Date.now();
+    seen = evs.length;
+    const res = readJson(id, 'result.json');
+    if (res) { console.log(`결과 전체: kedovi debate wait ${id}`); return; }
+    if (Date.now() - quiet > 120000) {
+      const st = readJson(id, 'state.json') || { round: 0, dropped: {} };
+      const doneWho = meta.members.filter((m) => fs.existsSync(path.join(DIR, id, `round-${st.round}-${m.who}.md`)) || evs.some((e) => e.type === 'member' && e.n === st.round && e.who === m.who)).map((m) => m.who);
+      const running = meta.members.filter((m) => !doneWho.includes(m.who) && !st.dropped[m.who]).map((m) => `${m.who} ${m.tool}:${m.model}`);
+      console.log(`  … ${st.round}차 진행 중 (${((Date.now() - meta.startedAt) / 60000).toFixed(1)}분)${running.length ? ` · 아직 도는 모델: ${running.join(' · ')}` : ''}`);
+      quiet = Date.now();
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
 }
 
 function statusOf(id) {
@@ -427,10 +566,11 @@ if (MAIN) {
       else if (cmd === 'wait') await wait();
       else if (cmd === 'wait-job') waitJob();
       else if (cmd === 'status') status();
+      else if (cmd === 'watch') await watch();
       else if (cmd === 'list') list();
-      else { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(3, 14).map((l) => l.replace(/^ \* ?/, '')).join('\n')); process.exit(!cmd || /^(?:-h|--help|help)$/.test(cmd) ? 0 : 1); }
+      else { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(3, 16).map((l) => l.replace(/^ \* ?/, '')).join('\n')); process.exit(!cmd || /^(?:-h|--help|help)$/.test(cmd) ? 0 : 1); }
     } catch (e) { console.error(`✖ ${e.message}`); process.exit(1); }
   })();
 }
 
-module.exports = { parseClaims, parseVotes, verdict, parsePanel, suggest };
+module.exports = { parseClaims, parseVotes, verdict, parsePanel, suggest, summarize, formatEvent };

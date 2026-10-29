@@ -40,10 +40,21 @@ node packs/core/bin/debate.js models --task code     # code | design | docs
 node packs/core/bin/debate.js start --panel codex:gpt-6.1-sol:high,claude:opus:high:보안 --role reviewer --topic "주문 탭" <<'EOF'
 <작업 지시서: 무엇을 · 어디를(repo · 파일 · 문서 ID) · 무엇이 쟁점인지 · 검사: <명령> 통과>
 EOF
-node packs/core/bin/debate.js wait <토론 id>      # 오래 걸리면 다시 wait. 진행: status <id>
+node packs/core/bin/debate.js wait <토론 id> --round   # 회차가 끝날 때마다 돌아온다. 끝날 때까지 되풀이
 ```
 
 > Codex: 샌드박스가 네트워크를 막아 `start` 가 멈춘다(종료 코드 4). `start` 명령만 샌드박스 밖 실행 승인을 요청해 다시 실행한다. `wait` · `status` 는 샌드박스 안에서 된다.
+
+### 사회자처럼 중계한다
+
+토론은 백그라운드 CLI 라 사용자 화면에 안 보인다. 리더가 사회자로 진행을 전한다.
+
+1. 시작하면 한 줄로 알린다: 패널 · 최대 회차 · 예상 시간, 그리고 「다른 터미널에서 `kedovi debate watch <id>` 로 모델별 주장 · 판정을 실시간으로 볼 수 있다」.
+2. `wait <id> --round` 가 돌아올 때마다 사용자에게 몇 줄로 중계하고 다시 부른다. 끝날 때까지 한 번에 기다리지 않는다.
+   - 1차 끝: 모델별 주장 수와 블로커 한두 개, 겹친 주장.
+   - 2차부터: 합의 · 갈림 수, 갈린 주장과 누가 어느 쪽인지 한 줄씩, 빠진 모델, 다음 회차에서 볼 것.
+   - 회차 중간에 시간이 다 되어 돌아왔으면: 끝난 모델 · 아직 도는 모델 한 줄.
+3. 중계는 전달이다. 판정(4절)은 끝난 뒤에 한다.
 
 - 지시서가 전부다. 패널은 대화를 모른다. 리뷰 역할은 `검사:` 줄이 필요하다 (리뷰 전 검사).
 - 회차: 1차 따로 보기 → 2차 이름을 가린 주장 목록에 동의 · 반대(근거 필수, 근거 없는 동의는 보류) + 놓친 것 → 3차부터 갈린 주장만. 모두 판정이 맞으면 일찍 끝난다. `--rounds` 로 최대 회차(기본 3).

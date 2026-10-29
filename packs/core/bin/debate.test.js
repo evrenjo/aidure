@@ -1,7 +1,7 @@
 // 토론 모드 판정 (debate.js): 주장 · 판정 읽기 · 근거 없는 동의 · 합의 · 갈림 · 기각 · 패널 형식 · 패널 예시
 'use strict';
 const assert = require('assert');
-const { parseClaims, parseVotes, verdict, parsePanel, suggest } = require('./debate');
+const { parseClaims, parseVotes, verdict, parsePanel, suggest, summarize, formatEvent } = require('./debate');
 
 // 주장: 「## 주장」 절 안의 강도 표시 줄만, 절이 없으면 전체에서
 const r1 = '결론: 2건\n- [블로커] 본문 위쪽 줄은 절 밖\n## 주장\n- [블로커] 주문 상태 덮어씀 — order.js:3\n1. [권장] 이름 — a.js:1\n- 강도 없는 줄\n## 기타\n- [참고] 절 밖';
@@ -16,6 +16,11 @@ assert.strictEqual(v.A1.stance, 'agree');
 assert.strictEqual(v.B1.stance, 'oppose');
 assert.ok(v.A2.stance === 'hold' && v.A2.lazy, '근거 없는 동의는 보류');
 assert.ok(v.N1.stance === 'hold' && !v.N1.lazy);
+const vp = parseVotes('## 판정\n- A2: 보류 (강도는 권장) / calc.js:1 빈 배열은 NaN\n- A4: 동의 (참고) / 저장소 grep 으로 호출부 없음 확인\n- B1: 반대 디버그 전용 로그라 운영에서 꺼짐\n- B2: 동의 (참고)');
+assert.ok(vp.A2.stance === 'hold' && /강도는 권장 \/ calc\.js:1/.test(vp.A2.why), '판정 뒤 괄호');
+assert.strictEqual(vp.A4.stance, 'agree');
+assert.strictEqual(vp.B1.stance, 'oppose', '구분 기호 없이 이어 쓴 근거');
+assert.ok(vp.B2.stance === 'hold' && vp.B2.lazy, '괄호만 있고 근거가 없으면 보류');
 
 // 상태: 판정한 모델 2개 이상이 모두 동의 = 합의, 모두 반대 = 기각, 하나 이하 = 한 모델만, 그 밖 = 갈림. 빠진 모델의 표는 세지 않는다
 const c = (votes) => ({ votes: Object.fromEntries(Object.entries(votes).map(([w, s]) => [w, { stance: s }])) });
@@ -45,5 +50,22 @@ const list = [
 assert.deepStrictEqual(suggest(list, 'code', 'claude').map((m) => m.id), ['sol', 'opus', 'luna']);
 assert.deepStrictEqual(suggest(list, 'docs', 'claude').map((m) => m.id), ['sol', 'haiku', 'luna'], '문서는 언어 · 지시 따르기');
 assert.deepStrictEqual(suggest(list, 'code', 'codex').map((m) => m.id), ['opus', 'sol', 'haiku'], 'Codex 세션이면 Claude 먼저');
+
+// 진행 보기: 모델 하나의 보고 요약 · 화면 줄 (1차 = 주장, 2차 = 동의가 아닌 판정과 놓친 것만 펼친다)
+const s1 = summarize(1, '## 주장\n- [블로커] 주문 상태 덮어씀 / order.js:3\n- [참고] 로그 많음 / log.js:2');
+assert.deepStrictEqual(s1.claims.map((c) => c.level), ['블로커', '참고']);
+const s2 = summarize(2, '## 판정\n- A1: 동의 / order.js:3 직접 확인\n- A2: 반대 / 디버그 전용이라 운영에서 꺼짐\n- B1: 동의\n## 놓친 것\n- [권장] 재시도 없음 / order.js:9');
+assert.strictEqual(s2.votes.length, 3);
+assert.strictEqual(s2.missed.length, 1);
+const meta = { startedAt: 0, topic: '주문', rounds: 3, members: [{ who: 'A', tool: 'claude', model: 'opus' }, { who: 'B', tool: 'codex', model: 'sol' }] };
+const lines = (ev) => formatEvent({ t: 60000, ...ev }, meta).join('\n');
+assert.match(lines({ type: 'start' }), /토론 시작: 주문 · 패널 A claude:opus · B codex:sol/);
+assert.match(lines({ type: 'member', n: 1, who: 'A', ok: true, ...s1 }), /A claude:opus 1차 끝 \(1\.0분\): 주장 2개\n {6}A1 \[블로커\] 주문 상태 덮어씀/);
+const m2 = lines({ type: 'member', n: 2, who: 'B', ok: true, ...s2 });
+assert.match(m2, /판정 3개 \(동의 1 · 반대 1 · 보류 1\) · 놓친 것 1개/);
+assert.ok(/A2: 반대 \/ 디버그/.test(m2) && /B1: 보류 \(근거 없어 보류로 셈\)/.test(m2) && !/A1:/.test(m2), '동의는 접고 반대 · 보류만 펼친다');
+assert.match(lines({ type: 'member', n: 1, who: 'B', ok: false, fail: '사용량 한도(429)' }), /✖ B codex:sol 1차 빠짐.*사용량 한도/);
+assert.match(lines({ type: 'roundEnd', n: 2, claims: 4, tally: { agreed: 2, split: 1, rejected: 1, single: 0 }, splits: [{ id: 'A2', level: '참고', text: '로그 많음', votes: 'A 동의 · B 반대' }], next: '3차: 갈린 · 한 모델만 주장 1개' }),
+  /2차 정리 \(1\.0분\): 주장 4개: 합의 2 · 갈림 1 · 기각 1 · 한 모델만 0\n {6}갈림 A2 \[참고\] 로그 많음 · A 동의 · B 반대\n {6}다음: 3차/);
 
 console.log('debate.test.js ✔');
