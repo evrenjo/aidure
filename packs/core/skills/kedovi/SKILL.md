@@ -78,7 +78,7 @@ description: 워크스페이스 설정을 바꾸거나 확인하는 요청을 ke
 | Codex 웹 검색 끄기 · 켜기 | `workspace.json` 의 `agents.webSearch` 를 `false` 로 (지우면 켬. `kedovi start` 가 Codex 에 `--search` 를 붙인다) | 팀 |
 | 워크스페이스 현황판 | `kedovi board` (로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽을 `.agents/board/` 에 만들어 브라우저로 연다. 보기 전용) | 이 PC |
 | 다른 도구에 맡긴 작업(위임) 진행 보기 | `kedovi delegate watch [작업 id]` (상대 에이전트가 읽고 실행하는 것이 줄마다) · `kedovi delegate status [작업 id]` (지금 현황 한 번) · `kedovi delegate list` | 워크스페이스 |
-| 토론 모드 보기 · 쓸 수 있는 모델 | `kedovi debate list` · `kedovi debate watch [토론 id]` (실시간: 모델별 주장 · 판정 · 회차 정리) · `kedovi debate status [토론 id]` · `kedovi debate models [--task code\|design\|docs]` (토론 시작은 debate 스킬: "토론해줘") | 워크스페이스 |
+| 토론 모드 보기 · 쓸 수 있는 모델 | `kedovi debate list` · `kedovi debate watch [토론 id]` (실시간: 모델별 주장 · 판정 · 회차 정리. 터미널용이라 끝날 때까지 안 닫힌다. 채팅에서 "토론 어디까지 됐어?" 는 `--once`: 지금까지만 보여 주고 끝) · `kedovi debate status [토론 id]` · `kedovi debate models [--task code\|design\|docs]` (토론 시작은 debate 스킬: "토론해줘") | 워크스페이스 |
 | 문서 사이트를 이 PC 에서 웹 주소로 보기 | `kedovi docs serve [repo]` (`http://127.0.0.1:8000/`, `--open` 이면 브라우저도 연다. 끝내기 Ctrl+C) | 기획 repo |
 | 문서 사이트 메뉴 묶음 · 이름 · 버전 바꾸기 | 기획 repo 의 `docs-site.json` 을 고치고 `kedovi docs build` (README 의 「문서 사이트」 절 형식) | 기획 repo |
 | 기획 문서 ID 하나 보기 · 쓰는 곳 찾기 | `kedovi docs show <ID> [--in <파일 조각>] [--all]` (정의 부분만) · `kedovi docs refs <ID> [--docs]` (기획 · 코드 · 이슈 repo 의 파일:줄). "FN-001 내용" · "이 결정 어디서 써?" 같은 말에 쓴다 | 보기 |

@@ -748,6 +748,8 @@ console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(br
   // 진행 보기: watch 는 끝난 토론이면 전체 진행을 다시 보여 주고 닫힌다. wait --round 는 본 데까지 기억해 두 번째는 결과만
   const watchOut = spawnSync(process.execPath, [tool, 'watch', two.id], { cwd: dir, encoding: 'utf8', env, timeout: 30000 }).stdout;
   const watched = ['▶ 토론 시작', '── 1차 시작', '1차 끝', '── 2차 시작', '2차 정리', '── 3차 시작', '■ 토론 끝'].every((k) => watchOut.includes(k)) && /갈림 \w+ \[권장\] 함수 이름 바꾸기/.test(watchOut);
+  const onceRun = spawnSync(process.execPath, [tool, 'watch', two.id, '--once'], { cwd: dir, encoding: 'utf8', env, timeout: 15000 });
+  const once = onceRun.status === 0 && onceRun.stdout.includes('■ 토론 끝') && !onceRun.stdout.includes('Ctrl+C');
   const relay1 = spawnSync(process.execPath, [tool, 'wait', two.id, '--round'], { cwd: dir, encoding: 'utf8', env }).stdout;
   const relay2 = spawnSync(process.execPath, [tool, 'wait', two.id, '--round'], { cwd: dir, encoding: 'utf8', env }).stdout;
   const relayed = relay1.includes('── 1차 시작') && relay1.includes('# 토론 결과') && !relay2.includes('── 1차 시작') && relay2.includes('# 토론 결과') && /kedovi debate watch/.test(two.start);
@@ -762,7 +764,7 @@ console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(br
   const sandboxed = boxed.status === 4 && /샌드박스 밖에서 실행하도록/.test(boxed.stdout) && !/토론 id/.test(boxed.stdout);
   const models = spawnSync(process.execPath, [tool, 'models', '--task', 'docs'], { cwd: dir, encoding: 'utf8', env }).stdout;
   const listed = /✔ codex:gpt-6\.1-sol/.test(models) && /패널 예시 \(다른 회사 먼저\): --panel /.test(models) && /언어 \d/.test(models);
-  record('토론 모드 (1차 따로 · 2차 판정 · 3차 갈린 것만 · 근거 없는 동의 · 큰 패널 · 빠진 모델 · Codex 샌드박스 · 진행 보기 · 모델 목록)', counts && lazy && rounds && big && dropped && same && blockedStart && sandboxed && watched && relayed && listed, `합의 · 갈림 수 ${counts} · 근거 없는 동의 보류 · 양쪽 근거 · 놓친 것 ${lazy} · 3회 · 회차 원문 ${rounds} · 동시 상한보다 큰 패널 ${big} · 실패는 빠짐으로 ${dropped} · 같은 회사 경고 ${same} · 없는 도구면 시작 안 함 ${blockedStart} · 샌드박스면 시작 전 멈춤 ${sandboxed} · 실시간 보기 ${watched} · 회차 중계 ${relayed} · 쓸 수 있는 모델 ${listed}`);
+  record('토론 모드 (1차 따로 · 2차 판정 · 3차 갈린 것만 · 근거 없는 동의 · 큰 패널 · 빠진 모델 · Codex 샌드박스 · 진행 보기 · 모델 목록)', counts && lazy && rounds && big && dropped && same && blockedStart && sandboxed && watched && once && relayed && listed, `합의 · 갈림 수 ${counts} · 근거 없는 동의 보류 · 양쪽 근거 · 놓친 것 ${lazy} · 3회 · 회차 원문 ${rounds} · 동시 상한보다 큰 패널 ${big} · 실패는 빠짐으로 ${dropped} · 같은 회사 경고 ${same} · 없는 도구면 시작 안 함 ${blockedStart} · 샌드박스면 시작 전 멈춤 ${sandboxed} · 실시간 보기 ${watched} · 채팅용 한 번 보기 ${once} · 회차 중계 ${relayed} · 쓸 수 있는 모델 ${listed}`);
 }
 
 // 화면 문구에 장식용 대시(—)를 쓰지 않는다 — 킷 코드의 문자열 안 " — " (주석·테스트 제외)

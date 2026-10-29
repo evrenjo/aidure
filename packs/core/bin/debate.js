@@ -8,7 +8,7 @@
  *        → 토론 id 를 출력하고 바로 끝난다. 패널이 이 PC 에 없으면 시작하지 않는다 (같은 회사 모델로 몰래 바꾸지 않는다)
  *   wait <id> [--timeout 초(기본 900)]    끝날 때까지 기다려 결과(합의 · 갈림 · 기각 · 한 모델만 · 빠진 모델)를 보여 준다
  *   wait <id> --round [--timeout 초(기본 540)]   (리더 중계용) 회차가 끝날 때마다 돌아와 그 회차의 주장 · 판정을 보여 준다. 끝났으면 결과까지
- *   watch [<id>]                          (사용자용) 다른 터미널에서 모델별 주장 · 판정 · 회차 정리를 실시간으로 본다
+ *   watch [<id>] [--once]                 (사용자용) 다른 터미널에서 모델별 주장 · 판정 · 회차 정리를 실시간으로 본다. --once = 지금까지만 보여 주고 끝 (채팅용)
  *   status [<id>]                         지금 회차 · 모델별 상태
  *   list                                  이 워크스페이스의 토론
  *   run …                                 (내부) start 가 떼어 낸 진행 프로세스
@@ -508,7 +508,8 @@ async function watch() {
   const id = (argv[1] && !argv[1].startsWith('--') ? argv[1] : null) || ids.filter((x) => !readJson(x, 'result.json')).slice(-1)[0] || ids.slice(-1)[0];
   if (!id || !readJson(id, 'meta.json')) return console.log('토론 없음');
   const meta = readJson(id, 'meta.json');
-  console.log(`토론 ${id} 보기 (끝나면 저절로 닫힌다. 그만 보기: Ctrl+C)`);
+  const once = has('once');
+  if (!once) console.log(`토론 ${id} 보기 (끝나면 저절로 닫힌다. 그만 보기: Ctrl+C)`);
   let seen = 0;
   let quiet = Date.now();
   for (;;) {
@@ -518,6 +519,7 @@ async function watch() {
     seen = evs.length;
     const res = readJson(id, 'result.json');
     if (res) { console.log(`결과 전체: kedovi debate wait ${id}`); return; }
+    if (once) { console.log(''); statusOf(id); return; } // 채팅용: 지금까지만 보여 주고 끝낸다
     if (Date.now() - quiet > 120000) {
       const st = readJson(id, 'state.json') || { round: 0, dropped: {} };
       const doneWho = meta.members.filter((m) => fs.existsSync(path.join(DIR, id, `round-${st.round}-${m.who}.md`)) || evs.some((e) => e.type === 'member' && e.n === st.round && e.who === m.who)).map((m) => m.who);
