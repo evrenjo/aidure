@@ -1,4 +1,4 @@
-// gitlab-mr.js pipeline 점검 (로컬 가짜 API): 목록 · 단계별 작업 · 실패 로그 · MR 머지 커밋 · --repo 생략 · 출력에 토큰 없음. 실행: node gitlab-mr.test.js
+// gitlab-mr.js pipeline 점검 (로컬 가짜 API): 목록 · 단계별 작업 · 실패 로그 · MR 머지 커밋 · --repo 생략 · 수동 작업 실행 · 다시 실행 · remove_source 제안 · 출력에 토큰 없음. 실행: node gitlab-mr.test.js
 'use strict';
 const assert = require('assert');
 const fs = require('fs');
@@ -23,9 +23,30 @@ const routes = {
   '/projects/7/merge_requests/5/pipelines': () => [],
   '/projects/7/merge_requests/5': () => ({ iid: 5, merge_commit_sha: 'aaa1111bbb', sha: 'eee' }),
 };
+// 수동 작업: deploy(202) 는 앞 작업(build 201)이 끝나기 전 created → 끝나면 manual → play 뒤 pending → running → success. 21 은 앞이 실패해 skipped
+const jobState = { buildPolls: 0, deployPolls: 0, played: false, retried: false, newPolls: 0 };
+const deployJob = () => ({ id: 202, stage: 'deploy', name: 'deploy', status: jobState.played ? (jobState.deployPolls++ < 1 ? 'pending' : jobState.deployPolls < 3 ? 'running' : 'success') : jobState.buildPolls >= 2 ? 'manual' : 'created', duration: 42, web_url: 'http://git.test/j/202' });
+Object.assign(routes, {
+  '/projects/7/pipelines/20': () => pipe(20, 'running', 'release', 'fff3333aaa'),
+  '/projects/7/pipelines/20/jobs': () => { jobState.buildPolls += 1; return [{ id: 201, stage: 'build', name: 'build', status: jobState.buildPolls >= 2 ? 'success' : 'running' }, deployJob()]; },
+  '/projects/7/jobs/202': () => deployJob(),
+  '/projects/7/pipelines/21': () => pipe(21, 'failed', 'release', 'fff4444aaa'),
+  '/projects/7/pipelines/21/jobs': () => [{ id: 211, stage: 'build', name: 'build', status: 'failed' }, { id: 212, stage: 'deploy', name: 'deploy', status: 'skipped' }],
+  '/projects/7/jobs/104': () => ({ id: 104, stage: 'deploy', name: 'publish', status: jobState.newPolls++ < 1 ? 'running' : 'failed', duration: 5, web_url: 'http://git.test/j/104' }),
+});
+const posts = {
+  '/projects/7/jobs/202/play': () => { if (deployJob().status !== 'manual') return [400, { message: '400 Unplayable Job' }]; jobState.played = true; return [200, deployJob()]; },
+  '/projects/7/jobs/102/retry': () => { jobState.retried = true; return [201, { id: 104, stage: 'deploy', name: 'publish', status: 'pending' }]; },
+};
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
-  seen.push({ path: u.pathname, token: req.headers['private-token'] });
+  seen.push({ path: u.pathname, token: req.headers['private-token'], method: req.method });
+  if (req.method === 'POST') {
+    const ph = posts[u.pathname.replace(/^\/api\/v4/, '')];
+    const [code, body] = ph ? ph() : [404, { message: '404 Not Found' }];
+    res.writeHead(code, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(body));
+  }
   const h = routes[u.pathname.replace(/^\/api\/v4/, '')];
   if (!h) { res.writeHead(404); return res.end('{"message":"404 Not Found"}'); }
   const body = h(u.searchParams);
@@ -35,7 +56,7 @@ const server = http.createServer((req, res) => {
 
 function run(args, cwd) {
   return new Promise((resolve) => {
-    const env = { ...process.env, GITLAB_TOKEN: TOKEN, KEDOVI_CONFIG_DIR: path.join(tmp, 'config'), KEDOVI_SECRETS_BACKEND: 'file' };
+    const env = { ...process.env, KEDOVI_POLL_MS: '200', GITLAB_TOKEN: TOKEN, KEDOVI_CONFIG_DIR: path.join(tmp, 'config'), KEDOVI_SECRETS_BACKEND: 'file' };
     delete env.CLAUDE_PROJECT_DIR;
     const c = spawn(process.execPath, [path.join(__dirname, 'gitlab-mr.js'), ...args], { cwd, env });
     let out = '';
@@ -84,7 +105,31 @@ server.listen(0, '127.0.0.1', async () => {
     r = await run(['pipeline', '--repo', 'web', '--limit', '1'], two);
     assert.strictEqual(r.code, 0, r.out);
 
-    // 토큰은 헤더로만 가고 출력에 없다. 읽기만 한다
+    // 수동 작업 실행: --yes 없으면 확인 문구만 (끝 코드 3, POST 없음) → --yes 면 created 동안 기다렸다가 manual 이 되면 play → 끝까지 상태
+    r = await run(['pipeline', '--id', '20', '--play', 'deploy'], one);
+    assert.ok(r.code === 3 && /사용자 승인/.test(r.out) && /--yes/.test(r.out) && !seen.some((x) => x.method === 'POST'), r.out);
+    jobState.buildPolls = 0;
+    r = await run(['pipeline', '--id', '20', '--play', 'deploy', '--yes'], one);
+    assert.ok(r.code === 0 && /앞 작업을 기다림 \(created\): build running/.test(r.out) && /▶ 실행 요청/.test(r.out) && /▶ running/.test(r.out) && /✔ deploy 성공/.test(r.out), r.out);
+    assert.ok(seen.filter((x) => x.method === 'POST').length === 1, 'play 는 manual 이 된 뒤 한 번만');
+    // 앞 작업 실패로 skipped · 없는 작업 · --id 없음
+    r = await run(['pipeline', '--id', '21', '--play', 'deploy', '--yes'], one);
+    assert.ok(r.code === 1 && /skipped/.test(r.out) && /실행할 수 없습니다/.test(r.out), r.out);
+    r = await run(['pipeline', '--id', '21', '--play', 'nope', '--yes'], one);
+    assert.ok(r.code === 1 && /있는 작업: build, deploy/.test(r.out), r.out);
+    r = await run(['pipeline', '--play', 'deploy', '--yes'], one);
+    assert.ok(r.code === 1 && /--id/.test(r.out), r.out);
+    // 다시 실행: 실패한 작업 → 새 작업을 끝까지 보고 실패면 끝 코드 1 · 로그 안내
+    r = await run(['pipeline', '--id', '12', '--retry', 'publish', '--yes'], one);
+    assert.ok(r.code === 1 && jobState.retried && /새 작업 104/.test(r.out) && /✖ publish failed/.test(r.out) && /--log/.test(r.out), r.out);
+
+    // remove_source_branch 제안: 설정의 영구 브랜치 · 원격 기본 브랜치만 지키고 main · master 를 늘 지키지 않는다
+    const { defaultRemoveSource } = require('./gitlab-mr.js');
+    const wsv = { vars: { branch: { develop: 'dev', release: 'rel' }, gitlab: { persistentBranches: ['keep'] } } };
+    assert.deepStrictEqual(['dev', 'rel', 'keep', 'main', 'master', 'hotfix/x', 'feature/a'].map((b) => defaultRemoveSource(wsv, b, 'main')), [false, false, false, false, true, false, true]);
+    assert.strictEqual(defaultRemoveSource(wsv, 'main', null), true);
+
+    // 토큰은 헤더로만 가고 출력에 없다
     assert.ok(seen.length && seen.every((s) => s.token === TOKEN));
     const all = (await Promise.all([run(['pipeline', '--log'], one), run(['pipeline', '--json'], one), run(['pipeline', '--id', '999'], one)])).map((x) => x.out).join('\n');
     assert.ok(!all.includes(TOKEN) && /HTTP 404/.test(all));

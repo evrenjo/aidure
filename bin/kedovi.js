@@ -48,6 +48,7 @@
  *   kedovi debate list · watch [<id>] [--once] · status [<id>] · models [--task code|design|docs]   토론 모드(여러 모델이 따로 보고 서로 반박): 목록 · 모델별 주장 · 판정을 실시간으로 보기(--once = 지금까지만, 채팅용) · 지금 회차와 모델별 상태 · 이 PC 에서 쓸 수 있는 모델과 패널 예시. 시작은 채팅에서 "토론해줘" (debate 스킬)
  *   kedovi board [--no-open] [--no-fetch]   워크스페이스 현황판: 로드맵 · 팀원별 마지막 핸드오프 · 미완 작업 · 공지 + 기록 쪽 (.agents/board/, 이 PC 만 · 보기 전용)
  *   kedovi screens check [repo|폴더]   화면설계서 검사: 근거 ID 가 색인에 있는지 · 화면 ID 중복 · 기능 ID 누락 (screens 팩)
+ *   kedovi screens compare <화면 ID> [--proto 파일|주소] [--impl 주소|/경로] [--widths 1280,390] [--storage 상태.json] [--find]   프로토타입과 구현 화면을 같은 폭(PC · 폰)으로 찍어 나란히 보는 compare.html (screens 팩, Playwright). 구현 주소는 @spec 줄의 @route
  *   kedovi datamodel check [repo|폴더]   데이터 설계 검사: 참조 · 기본키 · 중복 · 표 형식 · 컨벤션 · 기능 ID 대조 (datamodel 팩)
  *   kedovi secret set <이름> [--global] · list [--all] · test <이름> · rm <이름> [--global] · import [--global|--project] · exec [--only A,B] -- <명령>   비밀값(토큰): OS 저장소(키체인 · 자격 증명 팀장 · libsecret)에 프로젝트별 · 전역으로. 값은 숨김 입력, 어디에도 출력하지 않는다
  *   kedovi gitlab pipeline [--repo R] [--ref 브랜치 | --mr 번호 | --id ID] [--limit N] [--log [줄 수]] [--json]   GitLab 파이프라인 조회 (gitlab 팩, 읽기만): 최근 목록 · 단계별 작업 상태 · 실패한 작업의 로그 끝부분. MR 은 머지 커밋의 파이프라인도 찾는다
@@ -3807,7 +3808,7 @@ async function main() {
     case 'debate': return runWsTool('debate.js', rest.length ? rest : ['list']);
     case 'board': return runWsTool('board.js', rest);
     case 'tidy': return runWsTool('tidy.js', rest);
-    case 'screens': return runWsTool('check-screens.js', rest.filter((x) => x !== 'check'), 'screens');
+    case 'screens': return rest[0] === 'compare' ? runWsTool('compare-screens.js', rest.slice(1), 'screens') : runWsTool('check-screens.js', rest.filter((x) => x !== 'check'), 'screens');
     case 'datamodel': return runWsTool('check-datamodel.js', rest.filter((x) => x !== 'check'), 'datamodel');
     case 'team-mode': return cmdTeamMode(rest);
     case 'approach': return cmdApproach(rest);

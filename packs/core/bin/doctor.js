@@ -112,6 +112,31 @@ const hooksPath = git(ROOT, ['config', 'core.hooksPath']);
 const hasHooks = fs.existsSync(path.join(ROOT, '.githooks'));
 if (hasHooks) add(hooksPath === '.githooks' ? OK : FAIL, 'git core.hooksPath', hooksPath || '미설정', 'kedovi install (또는 git config core.hooksPath .githooks)');
 
+/** 원격 기본 브랜치와 원격 브랜치 목록. 원격에 물어보고(10초), 안 되면 이 PC 의 origin/HEAD 기록 */
+function remoteBranches(dir) {
+  const r = spawnSync('git', ['-C', dir, 'ls-remote', '--symref', 'origin', 'HEAD', 'refs/heads/*'], { encoding: 'utf8', timeout: 10000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_SSH_COMMAND: process.env.GIT_SSH_COMMAND || 'ssh -o BatchMode=yes' } });
+  if (r.status === 0) {
+    const head = (/^ref: refs\/heads\/(\S+)\s+HEAD$/m.exec(r.stdout) || [])[1] || '';
+    const heads = new Set([...r.stdout.matchAll(/\trefs\/heads\/(\S+)$/gm)].map((m) => m[1]));
+    return { head, heads, live: true, why: head ? '' : '원격이 HEAD 를 알려 주지 않음' };
+  }
+  const local = (git(dir, ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']) || '').replace(/^origin\//, '');
+  const heads = new Set((git(dir, ['for-each-ref', '--format=%(refname:short)', 'refs/remotes/origin']) || '').split('\n').map((x) => x.replace(/^origin\//, '')).filter((x) => x && x !== 'HEAD' && x !== 'origin'));
+  return { head: local, heads, live: false, why: `원격에 닿지 못함${local ? '' : ' · 이 PC 에 origin/HEAD 기록도 없음'}` };
+}
+
+/** 기본 브랜치 바꾸기 · 낡은 브랜치 지우기 안내 (GitLab · GitHub · 그 밖) */
+function branchFix(r, origin, dev) {
+  const gl = r.gitlab && r.gitlab.host;
+  const gh = /github\.com[:/]/.test(origin);
+  const setDefault = gl
+    ? `GitLab ${r.name}: Settings > Repository > Branch defaults 에서 Default branch 를 ${dev} 로 (API: PUT /projects/${r.gitlab.projectId}?default_branch=${dev}). 이 PC 기록도 맞추기: git -C ${repoRel(r)} remote set-head origin -a`
+    : gh ? `GitHub ${r.name}: gh repo edit <owner/repo> --default-branch ${dev} (또는 Settings > General > Default branch). 이 PC 기록도 맞추기: git -C ${repoRel(r)} remote set-head origin -a`
+      : `${r.name}: 저장소 설정에서 기본 브랜치를 ${dev} 로 바꾼 뒤 git -C ${repoRel(r)} remote set-head origin -a`;
+  const removeOld = (b) => `${r.name} 의 ${b}: 필요 없으면 ${gl ? '보호 해제(Settings > Repository > Protected branches) 뒤 ' : gh ? '브랜치 보호 규칙을 확인한 뒤 ' : ''}git -C ${repoRel(r)} push origin --delete ${b} (기본 브랜치를 먼저 ${dev} 로 바꾼다. 상시로 둘 브랜치면 vars.${gh ? 'github' : 'gitlab'}.persistentBranches 에 적는다)`;
+  return { setDefault, removeOld };
+}
+
 /** 이 repo 가 workspace.json 과 다른 그룹 위치(repos/<이름> · repos/<다른 그룹>/<이름>)에 있으면 그 경로 */
 function otherPlace(r) {
   const cands = [`repos/${r.name}`];
@@ -132,6 +157,35 @@ for (const r of ws.repos) {
   const inRepo = git(dir, ['rev-parse', '--is-inside-work-tree']) === 'true';
   add(inRepo || r.kind !== 'code' ? OK : FAIL, `repo: ${r.name}`, inRepo ? `${rel} (${r.kind || 'code'})` : `${rel}: git 저장소 아님`, 'git clone 으로 받았는지 확인');
   if (inRepo && r.local && !r.remote && !git(dir, ['remote', 'get-url', 'origin'])) add(WARN, `repo: ${r.name}`, '원격 없음: 팀원이 받을 수 없다', `원격 저장소를 만들고 git -C ${rel} remote add origin <주소> && git -C ${rel} push -u origin HEAD → kedovi sync 가 workspace.json 에 기록`);
+}
+
+// 5-1. 원격 기본 브랜치 · 낡은 main/master (브랜치 규칙이 있는 워크스페이스: vars.branch). 안내만 하고 바꾸거나 지우지 않는다
+const branchVars = (ws.vars && ws.vars.branch) || null;
+if (branchVars && branchVars.develop) {
+  const dev = branchVars.develop;
+  const permanent = new Set([dev, branchVars.release, ...(((ws.vars.gitlab || {}).persistentBranches) || []), ...(((ws.vars.github || {}).persistentBranches) || [])].filter(Boolean));
+  for (const r of ws.repos.filter((x) => (x.kind || 'code') === 'code')) {
+    const dir = path.join(ROOT, repoRel(r));
+    if (!fs.existsSync(dir) || git(dir, ['rev-parse', '--is-inside-work-tree']) !== 'true') continue;
+    const origin = git(dir, ['remote', 'get-url', 'origin']);
+    if (!origin) continue;
+    const st = remoteBranches(dir);
+    if (!st.head) { add(WARN, `기본 브랜치: ${r.name}`, `원격 기본 브랜치를 읽지 못함 (${st.why})`, ''); continue; }
+    const how = branchFix(r, origin, dev);
+    const src = st.live ? '' : ' (네트워크가 안 돼 이 PC 의 기록으로 봄)';
+    if (st.head !== dev) add(WARN, `기본 브랜치: ${r.name}`, `원격 기본 브랜치: ${st.head}${src}. 통합 브랜치(${dev})가 아니라서 repo 첫 화면 · clone · MR 대상 기본값이 이 브랜치를 본다`, how.setDefault);
+    else add(OK, `기본 브랜치: ${r.name}`, `${dev}${src}`);
+    // 영구 브랜치가 아닌 main · master 가 원격에 남아 통합 브랜치보다 뒤처졌으면 (고유 커밋 수와 함께)
+    for (const b of ['main', 'master'].filter((x) => !permanent.has(x) && st.heads.has(x) && st.heads.has(dev))) {
+      const cnt = (range) => { const n = parseInt(git(dir, ['rev-list', '--count', range]), 10); return Number.isFinite(n) ? n : null; };
+      const behind = cnt(`origin/${b}..origin/${dev}`);
+      const only = cnt(`origin/${dev}..origin/${b}`);
+      if (behind == null || only == null) { add(WARN, `낡은 브랜치: ${r.name} ${b}`, `원격에 영구 브랜치가 아닌 ${b} 있음 (커밋 비교는 git -C ${repoRel(r)} fetch 뒤)`, how.removeOld(b)); continue; }
+      if (!behind) continue;
+      const last = git(dir, ['log', '-1', '--format=%cs', `origin/${b}`]);
+      add(WARN, `낡은 브랜치: ${r.name} ${b}`, `영구 브랜치가 아닌 ${b}: ${dev} 보다 ${behind}커밋 뒤처짐 · ${b} 에만 있는 커밋 ${only}개 · 마지막 커밋 ${last || '?'}${only ? ` (지우기 전에 git -C ${repoRel(r)} log origin/${dev}..origin/${b} 로 고유 커밋을 확인)` : ''}`, how.removeOld(b));
+    }
+  }
 }
 
 // 워크스페이스 repo 공개 여부: 작업 기록(handoffs/) · workspace.json 이 올라가므로 비공개여야 한다 (로그인 없이 받아지면 공개)

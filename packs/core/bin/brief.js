@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { load, devId, localDate } = require('../lib/workspace');
-const { activeTopics, listTopics, isOpen } = require('../lib/topics');
+const { activeTopics, listTopics, isOpen, dueTopics } = require('../lib/topics');
 const { referenceStatus, describe } = require('../lib/refs');
 
 function briefText() {
@@ -47,6 +47,10 @@ if (!latest) {
   const topics = activeTopics(ROOT, id, Date.now() - 14 * 86400000, localDate()).slice(0, 3);
   const openN = listTopics(ROOT, id).filter(isOpen).length;
   if (topics.length || openN) out.push('', `미완 작업 ${openN}건 (topics/ 진행 중 + 완료 조건 [ ]. 남은 일의 정본)${topics.length ? ':' : ''}`, ...topics.map((t) => `  ${t.name}: ${t.summary || t.status}${t.todo.length ? ` · 미완 ${t.todo.length}: ${t.todo.slice(0, 3).join('; ')}` : ''}${(t.waiting || []).length ? ` · 결정 대기 ${t.waiting.length}: ${t.waiting.slice(0, 2).join('; ')}` : ''}`));
+  const due = dueTopics(ROOT, id);
+  const dueLines = due.flatMap((t) => [...t.dueToday.map((x) => `  📅 오늘 예정 · ${t.name}: ${x.text}`), ...t.overdue.map((x) => `  ⚠ 지난 예약 ${x.date} · ${t.name}: ${x.text} (했으면 [x], 미루면 날짜를 고친다)`)]);
+  const next = listTopics(ROOT, id).filter((t) => t.status === '진행 중').flatMap((t) => t.later.map((x) => ({ ...x, name: t.name }))).sort((a, b) => (a.date < b.date ? -1 : 1));
+  if (dueLines.length || next.length) out.push('', '날짜 예약 ([>])', ...dueLines.slice(0, 5), ...(next.length ? [`  다음 예약: ${next.slice(0, 3).map((x) => `${x.date} ${x.name}: ${x.text}`).join(' · ')}`] : []));
   const todo = read(path.join(hdir, 'TODO.md')).split('\n').filter((l) => /^\s*[-*]\s+/.test(l)).map((l) => l.replace(/^\s*[-*]\s+/, '').trim());
   out.push('', `내 TODO ${todo.length}건 (사용자가 등록한 것)${todo.length ? ':' : ''}`, ...todo.slice(0, 5).map((l) => `  - ${l}`), ...(todo.length > 5 ? [`  … 외 ${todo.length - 5}건`] : []));
 }

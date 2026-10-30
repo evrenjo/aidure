@@ -14,7 +14,7 @@
 <header>
   <div class="left"><button class="menu-btn" id="menu" type="button" aria-label="메뉴" aria-expanded="false" aria-controls="side-nav">☰</button><a class="brand" href="../index.html"><span class="logo">ai</span>kedovi 문서</a></div>
   <div class="search"><input id="q" placeholder="검색 (제목 · 본문 · ID)" autocomplete="off"><kbd>⌘K</kbd><div class="results" id="results"></div></div>
-  <div class="tools"><span>v0.79.1</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
+  <div class="tools"><span>v0.80.0</span><button id="ink" type="button" title="펜 필기 (끝내기: Esc)" aria-label="펜 필기" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></button><button id="print" type="button" title="인쇄 (이 문서 · 전체 문서)" aria-label="인쇄" aria-haspopup="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg></button><button id="theme" type="button" title="테마" aria-label="테마"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg></button></div>
 </header>
 <div class="layout">
   <nav class="side" id="side-nav" data-page="docs/workflow--9-인수인계.html"><noscript><a class="nav-link" href="../index.html">문서 목록</a></noscript></nav><div class="nav-backdrop" id="nav-backdrop"></div>
@@ -38,8 +38,8 @@
       HP --&gt; HC[&quot;kedovi handoff archive · index · check&lt;br/&gt;(LATEST 4KB · 하루 3KB · 진행 중인데 완료 조건 없음 ✖ · 로드맵 갱신 누락 ⚠)&quot;]
       H5 --&gt; H6
       HC --&gt; H7[&quot;git pull --rebase → push (워크스페이스 repo)&quot;]
-      H7 --&gt; HR{&quot;보고 끝: 로드맵을 볼까요?&quot;}
-      HR --&gt;|&quot;예&quot;| HM[&quot;kedovi plan 블록&lt;br/&gt;(흐름도 · 지금 단계 표 · 이번에 생긴 것 · 다음)&quot;]
+      H7 --&gt; HR{&quot;보고 끝: 로드맵을 볼까요? (선택지 질문)&quot;}
+      HR --&gt;|&quot;보기&quot;| HM[&quot;kedovi plan 블록&lt;br/&gt;(흐름도 · 지금 단계 표 · 이번에 생긴 것 · 다음)&quot;]
     end
     subgraph B[&quot;김팀장 · 새 팀원&quot;]
       T1[&quot;팀 현황 · kedovi team&quot;] --&gt; T2[&quot;git fetch → 원격의 모든 handoffs/*/ 를 읽기만&quot;]
@@ -59,9 +59,9 @@
   <aside class="toc"><div class="toc-title">이 페이지</div><div id="toc"><div class="empty">9. 인수인계</div></div></aside>
 </div>
 </div>
-<script type="application/json" id="ds-page">{"page":"docs/workflow--9-인수인계.html","kind":"doc","title":"9. 인수인계","head":"9. 인수인계 · kedovi 문서","crumb":"쓰는 법","status":"","h1":"9. 인수인계","lead":"","src":{"href":"https://github.com/evrenjo/kedovi/blob/main/docs/workflow.md","name":"workflow.md"},"toc":[],"prev":{"p":"docs/workflow--8-바꿀-때.html","t":"8. 바꿀 때","g":"쓰는 법"},"next":{"p":"docs/workflow--10-저장-위치.html","t":"10. 저장 위치","g":"쓰는 법"},"site":{"title":"kedovi 문서","logo":"ai","version":"v0.79.1","ink":true}}</script>
+<script type="application/json" id="ds-page">{"page":"docs/workflow--9-인수인계.html","kind":"doc","title":"9. 인수인계","head":"9. 인수인계 · kedovi 문서","crumb":"쓰는 법","status":"","h1":"9. 인수인계","lead":"","src":{"href":"https://github.com/evrenjo/kedovi/blob/main/docs/workflow.md","name":"workflow.md"},"toc":[],"prev":{"p":"docs/workflow--8-바꿀-때.html","t":"8. 바꿀 때","g":"쓰는 법"},"next":{"p":"docs/workflow--10-저장-위치.html","t":"10. 저장 위치","g":"쓰는 법"},"site":{"title":"kedovi 문서","logo":"ai","version":"v0.80.0","ink":true}}</script>
 <script src="../assets/search.js?v=b47c3f5d"></script>
-<script src="../assets/nav.js?v=4bafd28b"></script>
+<script src="../assets/nav.js?v=3a3181a4"></script>
 <script src="../assets/vendor.js?v=93f62565"></script>
 <script src="../assets/site.js?v=d425b1d1"></script>
 </body>

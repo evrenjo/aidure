@@ -27,7 +27,7 @@ const path = require('path');
 const { spawn, spawnSync } = require('child_process');
 const { load, git, stateDir } = require('../lib/workspace');
 const { findCli } = require('../lib/cli');
-const { REVIEW_ROLE, hasCheckLine, CHECK_MESSAGE, checkLevel } = require('../lib/review');
+const { REVIEW_ROLE, hasCheckLine, CHECK_MESSAGE, checkLevel, prototypeGap } = require('../lib/review');
 const P = require('../lib/delegate-progress');
 
 const argv = process.argv.slice(2);
@@ -208,6 +208,7 @@ function start() {
   const checkLv = REVIEW_ROLE.test(job.role) && !hasCheckLine(task) ? checkLevel(ROOT) : 'off';
   if (checkLv === 'block') { fs.rmSync(dir, { recursive: true, force: true }); console.log(`✖ ${CHECK_MESSAGE}`); process.exit(6); }
   if (checkLv === 'warn') console.log(`⚠ ${CHECK_MESSAGE}`);
+  if (REVIEW_ROLE.test(job.role)) { const gap = prototypeGap(ROOT, task); if (gap) console.log(`⚠ ${gap}`); }
   const prior = priorReviews(job.role, job.scope);
   const meta = { id, ...job, cli: exe, args, startedAt: Date.now(), dir, round: prior ? prior.round : undefined };
   if (has('dry-run')) { console.log(JSON.stringify({ ...meta, prompt: `${buildPrompt({ ...job, task, prior }).slice(0, 300)}…` }, null, 2)); fs.rmSync(dir, { recursive: true, force: true }); return; }

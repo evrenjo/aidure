@@ -1142,7 +1142,7 @@ console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(br
   // 세션 시작 표식 (SessionStart 훅이 남긴다). 이번 세션에 손댄 작업만 점검한다
   const sdir = (() => { try { return require(path.join(dir, 'packs', 'core', 'lib', 'workspace.js')).stateDir(dir); } catch { return path.join(tmp, 'state'); } })();
   const started = (session, ms) => { fs.mkdirSync(sdir, { recursive: true }); fs.writeFileSync(path.join(sdir, `${session}.start`), String(ms)); };
-  for (const sid of ['selftest-task-1', 'selftest-task-2', 'selftest-task-4', 'selftest-task-6']) started(sid, Date.now() - 60000);
+  for (const sid of ['selftest-task-1', 'selftest-task-2', 'selftest-task-4', 'selftest-task-6', 'selftest-task-7', 'selftest-task-8', 'selftest-task-9']) started(sid, Date.now() - 60000);
   started('selftest-task-5', Date.now() + 60000); // 이 세션은 작업 기록에 손대지 않았다
   const untouchedQuiet = !hook('task-check.js', 'selftest-task-5');
   const first = hook('task-check.js', 'selftest-task-1');
@@ -1155,6 +1155,24 @@ console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(br
   const compact = /주문-목록/.test(again) && /앞과 같음/.test(again) && !/응답 봉투/.test(again);
   fs.writeFileSync(topic, body(false).replace(/- \[ \] /g, '- [~] '));
   const waitingQuiet = !hook('task-check.js', 'selftest-task-6');
+  // 날짜 예약 [>] YYYY-MM-DD: 그날 전에는 조용 · 그날은 「오늘 예정」 으로 막고 세션 시작 줄에 · 지나면 「지난 예약」 (check ⚠) · 날짜 없으면 check ✖
+  const today = require(path.join(dir, 'packs', 'core', 'lib', 'workspace.js')).localDate();
+  const sched = (d) => fs.writeFileSync(topic, body(false).replace('- [ ] 화면 연결', `- [>] ${d} 장중 측정`).replace('- [ ] 핸드오프 갱신', '- [~] 핸드오프 갱신'));
+  sched('2099-01-02');
+  const futureQuiet = !hook('task-check.js', 'selftest-task-7') && /예약 1: 2099-01-02 장중 측정/.test(hook('task-focus.js', 'selftest-task-10'));
+  sched(today);
+  const todayOut = hook('task-check.js', 'selftest-task-8');
+  fs.writeFileSync(path.join(dir, 'handoffs', id || 'kim', 'LATEST.md'), `# 마지막 핸드오프 (${today})\n`);
+  const startLine = spawnSync(process.execPath, [path.join(dir, 'packs', 'core', 'hooks', 'handoff-brief.js'), '--agent=claude'], { cwd: dir, encoding: 'utf8', input: '{}', env: { ...process.env, CLAUDE_PROJECT_DIR: dir } }).stdout;
+  fs.rmSync(path.join(dir, 'handoffs', id || 'kim', 'LATEST.md'), { force: true }); // 뒤 세션 브리핑 시험은 첫 세션부터 본다
+  const dueToday = /"decision":"block"/.test(todayOut) && /\[오늘 예정\] 장중 측정/.test(todayOut) && /📅 오늘 예정 1건/.test(startLine);
+  sched('2020-01-02');
+  const pastOut = hook('task-check.js', 'selftest-task-9');
+  const pastChk = run(process.execPath, ['packs/core/bin/handoff.js', 'check'], dir).out;
+  const overdue = /지난 예약 01-02/.test(pastOut) && /⚠ topics\/주문-목록\.md: 지난 예약 1개/.test(pastChk) && !/✖ topics/.test(pastChk);
+  sched('언젠가');
+  const badDate = /✖ topics\/주문-목록\.md: 날짜 예약 \[>\] 에 날짜/.test(run(process.execPath, ['packs/core/bin/handoff.js', 'check'], dir).out);
+  got.push(`날짜 예약: 전 조용 ${futureQuiet} · 그날 막음 · 시작 줄 ${dueToday} · 지난 예약 ${overdue} · 날짜 없음 막음 ${badDate}`);
   fs.writeFileSync(topic, body(true));
   const doneQuiet = !hook('task-check.js', 'selftest-task-4');
   const chk = run(process.execPath, ['packs/core/bin/handoff.js', 'check'], dir);
@@ -1164,7 +1182,7 @@ console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(br
   const codexHooks = fs.readFileSync(path.join(dir, '.codex', 'hooks.json'), 'utf8');
   const wired = /task-check/.test(claudeHooks) && /task-focus/.test(claudeHooks) && /task-check/.test(codexHooks) && !/task-focus/.test(codexHooks);
   got.push(`id ${!!id}`, `미완이면 막음 ${blocked}`, `세션당 한 번 ${once}`, `루프 방지 ${loopSafe}`, `요청마다 주입 ${focused}`, `같으면 한 줄 ${compact}`, `손대지 않은 세션 조용 ${untouchedQuiet}`, `[~] 제외 ${waitingQuiet}`, `다 끝나면 조용 ${doneQuiet}`, `check 경고 ${warned}`, `훅 연결(Claude 둘 · Codex Stop 만) ${wired}`);
-  record('작업 완료 조건 (Stop 훅 · 요청마다 주입 · check)', !!id && blocked && once && loopSafe && focused && compact && untouchedQuiet && waitingQuiet && doneQuiet && warned && wired, got.join(' · '));
+  record('작업 완료 조건 (Stop 훅 · 요청마다 주입 · check · 날짜 예약)', !!id && blocked && once && loopSafe && focused && compact && untouchedQuiet && waitingQuiet && futureQuiet && dueToday && overdue && badDate && doneQuiet && warned && wired, got.join(' · '));
   // 답변 첫 줄 시각 (UserPromptSubmit): 기본 켜짐 · 팀 값 · 이 PC 값이 먼저 · kedovi timestamp · Claude 에만
   {
     const ts = () => hook('prompt-time.js', 'selftest-time-1');
@@ -1897,6 +1915,65 @@ console.log(JSON.stringify({ type: 'result', result: require(${JSON.stringify(br
     for (const id of m.languages || []) if (!(st.languages || []).some((l) => l.id === id && l.pack === n)) bad.push(`${n}: stacks.json languages 의 ${id} 에 "pack": "${n}" 필요`);
   }
   record('언어 ↔ 언어 팩 (stacks.json languages · pack.json languages)', !bad.length, bad.join(' | '));
+}
+
+// 프로토타입대로 구현: 화면 비교 도구가 프로토타입(화면 목록 칸 · 파일 이름)과 구현 주소(@spec 줄의 @route)를 찾고, 리뷰 지시서에 비교표가 없으면 알린다 · doctor 원격 기본 브랜치
+{
+  const ws = path.join(tmp, 'plan-flow');
+  const docs = path.join(ws, 'repos', 'plans');
+  const app = path.join(ws, 'repos', 'app');
+  fs.mkdirSync(path.join(docs, '30-screens', 'prototype'), { recursive: true });
+  fs.writeFileSync(path.join(docs, '30-screens', 'prototype', 'orders.html'), '<!doctype html><title>주문</title><div data-screen="SCR-ORD-01">주문</div>');
+  fs.writeFileSync(path.join(docs, '30-screens', 'prototype', 'SCR-ORD-02.html'), '<!doctype html><title>상세</title>');
+  const readme = path.join(docs, '30-screens', 'README.md');
+  fs.writeFileSync(readme, fs.readFileSync(readme, 'utf8').replace(/^\| SCR-<영역>-01 .*$/m, '| SCR-ORD-01 | 주문 목록 | 주문 | FN-ORD-001 | prototype/orders.html | - |\n| SCR-ORD-03 | 통계 | 주문 | FN-ORD-001 | - | - |'));
+  fs.writeFileSync(path.join(app, 'src', 'OrdersPage.tsx'), '// @spec SCR-ORD-01 FN-ORD-001 @route /orders\nexport default function OrdersPage() {}\n');
+  fs.writeFileSync(path.join(app, 'src', 'OrderDetail.tsx'), '/**\n * @spec SCR-ORD-02 FN-ORD-001\n * @route /orders/:id\n */\n');
+  spawnSync('git', ['-C', app, 'add', '-A']);
+  const cmp = (...a) => spawnSync(process.execPath, [path.join(ws, 'packs', 'screens', 'bin', 'compare-screens.js'), ...a, '--find'], { cwd: ws, encoding: 'utf8' });
+  const json = (r) => { try { return JSON.parse(r.stdout); } catch { return { prototype: {}, implementation: {}, widths: [] }; } };
+  const r1 = cmp('SCR-ORD-01');
+  const f1 = json(r1);
+  const listed = r1.status === 0 && /prototype\/orders\.html$/.test(f1.prototype.url) && /화면 목록/.test(f1.prototype.how) && f1.implementation.url === 'http://localhost:5173/orders' && f1.widths.join() === '1280,390';
+  const r2 = cmp('SCR-ORD-02');
+  const byName = r2.status === 1 && /@route \/orders\/:id 에 자리 값이 있습니다\. 실제 값으로 --impl \/orders\/<id>/.test(r2.stderr);
+  const r3 = cmp('SCR-ORD-02', '--impl', '/orders/7', '--base', 'http://127.0.0.1:9');
+  const f3 = json(r3);
+  const impl = r3.status === 0 && /SCR-ORD-02\.html$/.test(f3.prototype.url) && f3.implementation.url === 'http://127.0.0.1:9/orders/7';
+  const r4 = cmp('SCR-ORD-09');
+  const missing = r4.status === 1 && /SCR-ORD-09 의 프로토타입을 찾지 못했습니다/.test(r4.stderr);
+  const R = require(path.join(ws, 'packs', 'core', 'lib', 'review.js'));
+  const gap = /SCR-ORD-01/.test(R.prototypeGap(ws, '검사: npm test 통과\n주문 목록 화면(SCR-ORD-01) 리뷰')) && !R.prototypeGap(ws, 'SCR-ORD-01 리뷰\n| 프로토타입 요소 | 구현 | 다른 이유 |') && !R.prototypeGap(ws, 'SCR-ORD-03 리뷰') && !R.prototypeGap(ws, 'API 리뷰');
+  const agentsMd = fs.readFileSync(path.join(ws, 'AGENTS.md'), 'utf8');
+  const rule = /프로토타입이 있는 화면 구현/.test(agentsMd) && /kedovi screens compare/.test(fs.readFileSync(path.join(ws, '.agents', 'rules', 'core--21-verification.md'), 'utf8'));
+  // doctor: 원격 기본 브랜치가 통합 브랜치가 아니면 · 영구 브랜치가 아닌 main 이 뒤처졌으면 알린다 (안내만)
+  const remote = path.join(tmp, 'branch-remote.git');
+  const seed = path.join(tmp, 'branch-seed');
+  const g = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: tmp, encoding: 'utf8' });
+  g('init', '-q', '-b', 'main', seed);
+  g('-C', seed, 'commit', '-q', '--allow-empty', '-m', 'a');
+  g('-C', seed, 'switch', '-q', '-c', 'develop');
+  g('-C', seed, 'commit', '-q', '--allow-empty', '-m', 'b');
+  g('-C', seed, 'commit', '-q', '--allow-empty', '-m', 'c');
+  g('clone', '-q', '--bare', seed, remote);
+  g('-C', remote, 'symbolic-ref', 'HEAD', 'refs/heads/main');
+  g('clone', '-q', remote, path.join(ws, 'repos', 'svc'));
+  const wsFile = path.join(ws, 'workspace.json');
+  const w = JSON.parse(fs.readFileSync(wsFile, 'utf8'));
+  w.repos.push({ name: 'svc', kind: 'code', remote });
+  w.vars.branch = { develop: 'develop', release: 'release' };
+  fs.writeFileSync(wsFile, JSON.stringify(w, null, 2));
+  const doc = () => spawnSync(process.execPath, [path.join(ws, 'packs', 'core', 'bin', 'doctor.js')], { cwd: ws, encoding: 'utf8', env: { ...process.env, KEDOVI_VERSION: '0.0.0' } }).stdout;
+  const d1 = doc();
+  const warnMain = /△ 기본 브랜치: svc\. 원격 기본 브랜치: main\. 통합 브랜치\(develop\)/.test(d1) && /△ 낡은 브랜치: svc main\. 영구 브랜치가 아닌 main: develop 보다 2커밋 뒤처짐 · main 에만 있는 커밋 0개/.test(d1) && /push origin --delete main/.test(d1);
+  g('-C', remote, 'symbolic-ref', 'HEAD', 'refs/heads/develop');
+  const d2 = doc();
+  const okDev = /✓ 기본 브랜치: svc\. develop/.test(d2) && /낡은 브랜치: svc main/.test(d2);
+  g('-C', remote, 'branch', '-D', 'main');
+  const d3 = doc();
+  const cleaned = /✓ 기본 브랜치: svc\. develop/.test(d3) && !/낡은 브랜치/.test(d3);
+  record('프로토타입대로 구현 (화면 비교 · 지시서 비교표 · 규칙) · doctor 원격 기본 브랜치', listed && byName && impl && missing && gap && rule && warnMain && okDev && cleaned,
+    `목록 칸 · @route ${listed} · 자리 값 경로 막음 ${byName} · 파일 이름 · --impl ${impl} · 없음 ${missing} · 지시서 비교표 알림 ${gap} · 상시 규칙 · 검증 규칙 ${rule} · 기본 브랜치 main 알림 ${warnMain} · develop 정상 ${okDev} · main 지우면 조용 ${cleaned}`);
 }
 
 // 업무 흐름 문서 — 선택 화면의 질문 문구와 kedovi 명령이 docs/workflow.md 에 모두 있어야 한다 (화면을 고치면 문서도 같이)

@@ -8,7 +8,7 @@ argument-hint: "<source 브랜치> [target 브랜치]"
 
 **source → target** MR 을 만든다. **생성까지만** — 머지·auto-merge 는 하지 않는다(사람이 GitLab 에서 직접).
 
-도우미: `node packs/gitlab/bin/gitlab-mr.js` (`preview` · `create` · `repos`, `--dry-run` 지원). 만든 뒤 파이프라인은 `pipeline --mr <번호>` 로 본다 (읽기만. 재실행 · 취소는 사람이).
+도우미: `node packs/gitlab/bin/gitlab-mr.js` (`preview` · `create` · `repos`, `--dry-run` 지원). 만든 뒤 파이프라인은 `pipeline --mr <번호>` 로 본다. 수동 작업 실행 · 실패한 작업 다시 실행은 `pipeline --id <ID> --play <작업>` · `--retry <작업>` 이고, 사용자 승인을 받은 뒤에만 `--yes` 를 붙인다 (운영 배포 작업은 반드시). 파이프라인 취소는 사람이 한다.
 설정: `workspace.json` 의 `repos[].gitlab = {"host": "...", "projectId": 12}`, 토큰은 환경변수 `GITLAB_TOKEN`
 (이름은 `vars.gitlab.tokenEnv` 로 변경) 또는 `git credential fill`. 설정이 없으면 만들지 말고 무엇을 채워야 하는지 안내한다.
 
@@ -70,6 +70,7 @@ argument-hint: "<source 브랜치> [target 브랜치]"
 
      해당 Change Type 만 `[x]`(커밋 prefix 기준). Related Issues 에는 **MR 을 받는 쪽이 열어볼 수 있는 이슈 키만** 적는다 —
      내부 트래커 번호(`#132` 등)는 그 repo 의 다른 이슈로 자동 링크되므로 쓰지 않는다. 없으면 `N/A`.
+   - 프로토타입이 있는 화면을 바꿨으면 Summary 아래에 `### 프로토타입과 다른 곳` 소제목과 `| 프로토타입 요소 | 구현 | 다른 이유 |` 표를 둔다 (다른 곳이 없으면 「없음 (kedovi screens compare 로 확인)」 한 줄).
    - QA 승격 MR 은 Summary 를 repo 가 아니라 **화면·기능·배치 단위** 소제목으로 나눈다.
 5. **미리보기 → 멈춤** — 사용자의 언어로 무엇이 들어가는지 설명하고, 실제 등록될 title/description 원문은 코드블록으로 보여준다. 함께 표시:
    `source → target` · 커밋 수 · `remove_source_branch` · assignee(기본 **비움**, 사용자가 사람을 지정할 때만).

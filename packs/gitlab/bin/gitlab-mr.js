@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// GitLab MR 미리보기·생성 · 파이프라인 조회 도우미 (머지 · 재실행은 하지 않는다). 사용: node packs/gitlab/bin/gitlab-mr.js <preview|create|pipeline|repos> --repo <name> … (파이프라인은 kedovi gitlab pipeline 으로도)
+// GitLab MR 미리보기·생성 · 파이프라인 조회 · 작업 실행 도우미 (머지는 하지 않는다). 사용: node packs/gitlab/bin/gitlab-mr.js <preview|create|pipeline|repos> --repo <name> … (파이프라인은 kedovi gitlab pipeline 으로도)
 'use strict';
 
 /*
@@ -9,13 +9,16 @@
  *          [--assignee <username>] [--remove-source true|false] [--dry-run]
  *     MR 을 만든다. --dry-run 이면 보낼 요청만 출력한다 (토큰은 가린다).
  * pipeline [--repo R] [--ref 브랜치 | --mr 번호 | --id 파이프라인ID] [--limit N] [--log [줄 수]] [--json]
- *     최근 파이프라인 목록(기본 5개)과 맨 위(또는 --id) 파이프라인의 단계별 작업 상태. 읽기만 한다 (재실행 · 취소 없음).
+ *     최근 파이프라인 목록(기본 5개)과 맨 위(또는 --id) 파이프라인의 단계별 작업 상태. 읽기만 한다 (작업 실행은 아래 --play · --retry).
  *     --repo 는 gitlab 설정이 있는 repo 가 하나면 생략. --log 는 실패한 작업의 로그 끝부분(기본 40줄).
+ * pipeline --id ID --play <작업> | --retry <작업> [--repo R] [--yes] [--timeout 분]
+ *     수동 작업 실행(--play: 앞 작업이 끝나 manual 이 될 때까지 기다린 뒤) · 실패한 작업 다시 실행(--retry). 끝날 때까지 상태를 보여 준다.
+ *     --yes 가 없으면 무엇을 실행할지와 확인 문구만 보이고 멈춘다 (끝 코드 3). 운영 배포 작업은 사용자 승인 뒤에만 --yes 로 부른다.
  * repos    workspace.json repos 중 gitlab 설정이 있는 것 목록
  *
  * 설정: workspace.json repos[].gitlab = { host, projectId, apiBase? }
  * 토큰: 환경변수 GITLAB_TOKEN (vars.gitlab.tokenEnv 로 이름 변경) → 비밀값 저장소(kedovi secret: 프로젝트 > 전역 > 옛 ~/.config/kedovi/gitlab-token) → 없으면 git credential fill.
- * 토큰은 어떤 출력에도 찍지 않는다. 머지·auto-merge API 는 이 도구에 없다.
+ * 토큰은 어떤 출력에도 찍지 않는다. 머지·auto-merge · 파이프라인 취소 API 는 이 도구에 없다.
  * 의존성 없음 (Node 18+ fetch).
  */
 
@@ -118,13 +121,19 @@ async function api(ws, r, method, p, body) {
   return data;
 }
 
-function defaultRemoveSource(ws, source) {
+/** 머지 뒤 source 를 지울지 (제안값). 지우지 않는 것: 영구 브랜치(vars.branch) · 상시 작업 브랜치(vars.gitlab.persistentBranches) · 원격 기본 브랜치 · hotfix/* */
+function defaultRemoveSource(ws, source, defaultBranch) {
   const b = (ws.vars && ws.vars.branch) || {};
-  const permanent = [b.develop || 'develop', b.release || 'release', 'main', 'master'];
+  const permanent = [b.develop || 'develop', b.release || 'release', defaultBranch].filter(Boolean);
   const persistent = vars(ws).persistentBranches || [];
   if (permanent.includes(source) || persistent.includes(source)) return false;
   if (source.startsWith('hotfix/')) return false; // MR 2건(release·develop)이 같은 source 를 쓴다
   return true;
+}
+
+/** 원격 기본 브랜치 (GitLab 프로젝트 설정). 못 읽으면 null */
+async function defaultBranchOf(ws, r) {
+  try { return (await api(ws, r, 'GET', '')).default_branch || null; } catch { return null; }
 }
 
 function commits(r, source, target) {
@@ -146,7 +155,8 @@ async function cmdPreview(ws, a) {
   const list = commits(r, source, target);
   console.log(`repo: ${r.name} (project ${r.gitlab.projectId} @ ${r.gitlab.host})`);
   console.log(`방향: ${source} → ${target}`);
-  console.log(`remove_source_branch(제안): ${defaultRemoveSource(ws, source)}`);
+  const defBranch = await defaultBranchOf(ws, r);
+  console.log(`remove_source_branch(제안): ${defaultRemoveSource(ws, source, defBranch)}${defBranch && defBranch !== ((ws.vars && ws.vars.branch && ws.vars.branch.develop) || 'develop') ? ` · ⚠ 원격 기본 브랜치가 ${defBranch} (통합 브랜치가 아님: kedovi doctor)` : ''}`);
   const ahead = unpushed(r, source);
   if (ahead) console.log(`⚠ 로컬 ${source} 에 push 안 된 커밋 ${ahead}개`);
   console.log(`커밋 ${list.length}개 (머지 제외, 오래된 순):`);
@@ -169,7 +179,7 @@ async function cmdCreate(ws, a) {
   if (!a.title || a.title === true) die('--title 이 필요합니다');
   if (!a['description-file']) die('--description-file 이 필요합니다');
   const description = fs.readFileSync(a['description-file'], 'utf8');
-  const remove = a['remove-source'] === undefined ? defaultRemoveSource(ws, source) : String(a['remove-source']) === 'true';
+  const remove = a['remove-source'] === undefined ? defaultRemoveSource(ws, source, a['dry-run'] ? null : await defaultBranchOf(ws, r)) : String(a['remove-source']) === 'true';
   const body = { source_branch: source, target_branch: target, title: a.title, description, remove_source_branch: remove };
 
   if (a['dry-run']) {
@@ -258,6 +268,70 @@ async function cmdPipeline(ws, a) {
   if (failed.length && !wantLog) console.log(`실패한 작업의 로그 끝부분: --id ${detail.id} --log`);
 }
 
+const DONE = new Set(['success', 'failed', 'canceled', 'skipped']);
+const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
+const clock = () => { const d = new Date(); return `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}`; };
+
+/** 수동 작업 실행(--play) · 다시 실행(--retry): 실행할 수 있을 때까지 기다리고, 실행한 뒤 끝날 때까지 상태를 보인다 */
+async function cmdJobRun(ws, a) {
+  const r = repoOrOnly(ws, a.repo);
+  const act = a.play !== undefined ? 'play' : 'retry';
+  const name = a[act];
+  if (!name || name === true) die(`--${act} <작업 이름> 이 필요합니다`);
+  const id = a.id && a.id !== true ? String(a.id).replace(/^#/, '') : null;
+  if (!id) die(`--${act} 는 --id <파이프라인 ID> 와 함께 씁니다 (어느 파이프라인의 작업인지 정확히 정한다)`);
+  const poll = Math.max(200, Number(process.env.KEDOVI_POLL_MS) || 5000);
+  const until = Date.now() + Math.max(1, Number(a.timeout) || 30) * 60000;
+  const detail = await api(ws, r, 'GET', `/pipelines/${encodeURIComponent(id)}`);
+  const jobsOf = async () => api(ws, r, 'GET', `/pipelines/${encodeURIComponent(id)}/jobs?per_page=100`);
+  const pick = (jobs) => jobs.filter((j) => j.name === name).sort((x, y) => y.id - x.id)[0];
+  let jobs = await jobsOf();
+  let job = pick(jobs);
+  if (!job) die(`파이프라인 #${id} 에 '${name}' 작업이 없습니다. 있는 작업: ${[...new Set(jobs.map((j) => j.name))].join(', ') || '없음'}`);
+  console.log(`⚠ 작업 ${act === 'play' ? '실행 (수동 작업)' : '다시 실행'}: ${r.name} · 파이프라인 #${id} (${detail.ref} ${String(detail.sha || '').slice(0, 7)}) · ${job.stage}/${job.name} · 지금 ${job.status}`);
+  console.log('  운영 배포 · 데이터를 바꾸는 작업은 사용자 승인을 받은 뒤에만 실행한다.');
+  if (!a.yes) { console.log('  실행하지 않았습니다. 사용자 승인을 받았으면 같은 명령에 --yes 를 붙여 다시 실행합니다'); process.exit(3); }
+
+  if (act === 'play') {
+    // 앞 작업이 끝나기 전에는 created 다 (그때 play 하면 HTTP 400 Unplayable Job). manual 이 될 때까지 기다린다
+    let shown = '';
+    while (job.status === 'created' || job.status === 'waiting_for_resource' || job.status === 'preparing') {
+      const ahead = jobs.filter((j) => j.id !== job.id && ['running', 'pending', 'created', 'waiting_for_resource', 'preparing'].includes(j.status) && j.stage !== job.stage).map((j) => `${j.name} ${j.status}`);
+      const line = `앞 작업을 기다림 (${job.status})${ahead.length ? `: ${ahead.slice(0, 4).join(' · ')}` : ''}`;
+      if (line !== shown) { console.log(`  ${clock()} ${line}`); shown = line; }
+      if (Date.now() > until) { console.log(`✖ 시간이 지나 멈춥니다 (지금 ${job.status}). 다시 보기: kedovi gitlab pipeline --id ${id}`); process.exit(4); }
+      await sleep(poll);
+      jobs = await jobsOf();
+      job = pick(jobs) || job;
+    }
+    if (job.status === 'skipped' || job.status === 'canceled') die(`${name} 이(가) ${job.status} 입니다. 앞 작업이 실패 · 취소돼 실행할 수 없습니다 (kedovi gitlab pipeline --id ${id} --log)`);
+    if (job.status === 'manual') {
+      job = await api(ws, r, 'POST', `/jobs/${job.id}/play`);
+      console.log(`  ${clock()} ▶ 실행 요청 (작업 ${job.id})`);
+    } else if (DONE.has(job.status)) die(`${name} 은(는) 이미 ${job.status} 입니다${job.status === 'success' ? '' : `. 다시 실행: --retry ${name} --yes`}`);
+    else console.log(`  ${clock()} 이미 시작됨 (${job.status}). 끝날 때까지 봅니다`);
+  } else {
+    if (job.status === 'manual') die(`${name} 은(는) 아직 실행하지 않은 수동 작업입니다. --play ${name} --yes`);
+    if (!DONE.has(job.status) || job.status === 'skipped') die(`${name} 은(는) ${job.status} 라 다시 실행할 수 없습니다 (끝난 작업만: failed · canceled · success)`);
+    job = await api(ws, r, 'POST', `/jobs/${job.id}/retry`);
+    console.log(`  ${clock()} ▶ 다시 실행 요청 (새 작업 ${job.id})`);
+  }
+
+  // 끝날 때까지 상태가 바뀔 때마다 한 줄
+  let last = job.status;
+  console.log(`  ${clock()} ${mark(last)} ${last}`);
+  while (!DONE.has(job.status) && job.status !== 'manual') {
+    if (Date.now() > until) { console.log(`✖ 시간이 지나 멈춥니다 (지금 ${job.status}, 작업은 계속 돈다). 다시 보기: kedovi gitlab pipeline --id ${id}`); process.exit(4); }
+    await sleep(poll);
+    job = await api(ws, r, 'GET', `/jobs/${job.id}`);
+    if (job.status !== last) { last = job.status; console.log(`  ${clock()} ${mark(last)} ${last}`); }
+  }
+  if (job.status === 'success') { console.log(`✔ ${name} 성공 (${took(job.duration)}) ${job.web_url || ''}`.trim()); return; }
+  console.log(`✖ ${name} ${job.status} ${job.web_url || ''}`.trim());
+  console.log(`  로그 끝부분: kedovi gitlab pipeline --id ${id} --log${job.status === 'failed' ? ` · 다시 실행: --id ${id} --retry ${name} --yes` : ''}`);
+  process.exit(1);
+}
+
 function cmdRepos(ws) {
   const list = ws.repos.filter((r) => r.gitlab);
   if (!list.length) { console.log('gitlab 설정이 있는 repo 가 없습니다. workspace.json repos[].gitlab = {host, projectId}'); return; }
@@ -268,16 +342,16 @@ async function main() {
   const a = parseArgs(process.argv.slice(2));
   const cmd = a._[0];
   if (!['preview', 'create', 'pipeline', 'repos'].includes(cmd)) {
-    console.log(fs.readFileSync(__filename, 'utf8').split("\n").slice(5, 19).map((l) => l.replace(/^ \* ?/, '')).join('\n'));
+    console.log(fs.readFileSync(__filename, 'utf8').split("\n").slice(5, 22).map((l) => l.replace(/^ \* ?/, '')).join('\n'));
     process.exit(cmd ? 1 : 0);
   }
   const ws = loadWs();
   if (cmd === 'repos') return cmdRepos(ws);
-  if (cmd === 'pipeline') return cmdPipeline(ws, a);
+  if (cmd === 'pipeline') return a.play !== undefined || a.retry !== undefined ? cmdJobRun(ws, a) : cmdPipeline(ws, a);
   if (cmd === 'preview') return cmdPreview(ws, a);
   return cmdCreate(ws, a);
 }
 
 if (require.main === module) main().catch((e) => die(e.message));
 
-module.exports = { loadWs, parseArgs, die, token, api, apiBase, repoOf, repoOrOnly };
+module.exports = { loadWs, parseArgs, die, token, api, apiBase, repoOf, repoOrOnly, defaultRemoveSource };

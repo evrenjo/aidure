@@ -128,8 +128,11 @@ function cmdCheck() {
     const name = `topics/${path.basename(f)}`;
     if (!t.hasStatus) bad(`${name}: "상태:" 줄이 없다. 머리(관련 · 상태 · 마지막 · 한 줄)를 쓴다 (진행 중 | 완료 | 보류)`);
     else if (t.status === '진행 중' && !t.hasCriteria) bad(`${name}: 진행 중인데 "## 완료 조건" 이 없다. 끝낸 기준을 3~7개 적고 남은 것은 [ ] 로 둔다`);
-    else if (t.status === '진행 중' && !t.todo.length && !t.checked.length && !t.waiting.length) bad(`${name}: 진행 중인데 완료 조건이 비어 있다. 남은 일을 [ ] 로 적는다`);
-    else if (t.status === '진행 중' && !t.todo.length && !t.waiting.length) warn(`${name}: 완료 조건이 모두 [x] 다. 끝났으면 상태를 완료로 바꾼다`);
+    else if (t.status === '진행 중' && !t.todo.length && !t.checked.length && !t.waiting.length && !t.scheduled.length) bad(`${name}: 진행 중인데 완료 조건이 비어 있다. 남은 일을 [ ] 로 적는다`);
+    else if (t.status === '진행 중' && !t.todo.length && !t.waiting.length && !t.later.length && !t.badSchedule.length) warn(`${name}: 완료 조건이 모두 [x] 다. 끝났으면 상태를 완료로 바꾼다`);
+    // 날짜 예약 [>] YYYY-MM-DD: 날짜가 없거나 없는 날이면 언제 다시 볼지 알 수 없어 막는다. 지났으면 했는지 · 미룰지 정하게 알린다
+    if (t.badSchedule && t.badSchedule.length) bad(`${name}: 날짜 예약 [>] 에 날짜(YYYY-MM-DD)가 없거나 잘못됐다: ${t.badSchedule.map((x) => x.raw).slice(0, 3).join(' / ')}. 「- [>] 2026-11-02 할 일」 꼴로 쓴다`);
+    if (t.status === '진행 중' && t.overdue && t.overdue.length) warn(`${name}: 지난 예약 ${t.overdue.length}개 (${t.overdue.map((x) => `${x.date} ${x.text}`).slice(0, 2).join(' / ')}). 했으면 [x], 미루면 날짜를 고친다`);
   }
   const stray = ls(d).filter((e) => !KNOWN.has(e.name) && !(e.isFile() && WEEK_RE.test(e.name))).map((e) => e.name);
   if (stray.length) warn(`흩어진 파일 ${stray.length}개 (${stray.slice(0, 4).join(', ')}${stray.length > 4 ? ' …' : ''}): 작업 메모면 topics/ 로 옮긴다`);
@@ -142,7 +145,7 @@ function cmdCheck() {
   if (!out.length) console.log(`✔ 핸드오프 기록 크기 정상 (${ID})`);
   for (const [k, m] of out) console.log(`${k} ${m}`);
   // 보고 끝 질문 (스킬 지시를 놓치기 쉬워 검사 출력 끝에 둔다)
-  if (fs.existsSync(path.join(ROOT, 'handoffs', 'PLAN.md'))) console.log('→ 핸드오프 보고 맨 끝에 「로드맵을 볼까요?」 한 줄을 묻는다. 예면 node packs/core/bin/plan.js 출력을 그대로 붙인다');
+  if (fs.existsSync(path.join(ROOT, 'handoffs', 'PLAN.md'))) console.log('→ 핸드오프 보고 맨 끝에 「로드맵을 볼까요?」 를 선택지 질문(보기 · 안 보기)으로 묻는다. 보기면 node packs/core/bin/plan.js 출력을 그대로 붙인다');
   process.exit(out.some(([k]) => k === '✖') ? 1 : 0);
 }
 

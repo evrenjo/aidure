@@ -2,8 +2,8 @@
   "name": "gitlab",
   "title": "GitLab 팀 워크플로",
   "category": "workflow",
-  "summary": "브랜치 전략 · MR 생성 · 이슈 등록 · 파이프라인 조회 · 커밋 규칙",
-  "description": "GitLab 협업: 브랜치 전략(작업 브랜치 → MR, 머지는 사람만), 커밋 메시지, 이슈·MR 어조, MR 생성 스킬, 이슈 찾기 · 읽기 · 등록 · 조치 보고 댓글 스킬, 파이프라인 조회(kedovi gitlab pipeline)",
+  "summary": "브랜치 전략 · MR 생성 · 이슈 등록 · 파이프라인 조회 · 수동 작업 실행 · 커밋 규칙",
+  "description": "GitLab 협업: 브랜치 전략(작업 브랜치 → MR, 머지는 사람만), 커밋 메시지, 이슈·MR 어조, MR 생성 스킬, 이슈 찾기 · 읽기 · 등록 · 조치 보고 댓글 스킬, 파이프라인 조회(kedovi gitlab pipeline) · 수동 작업 실행 · 다시 실행(--play · --retry: manual 이 될 때까지 기다린 뒤 실행하고 끝날 때까지 상태, --yes 없이는 확인 문구만)",
   "requires": [
     "core"
   ],

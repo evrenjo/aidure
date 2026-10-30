@@ -149,9 +149,37 @@ function markWarned(ROOT, repoName, tree) { const d = read(ROOT); d.warned[repoN
 /** 리뷰 전 검사: 지시서에 「검사: <명령> 통과」(검사가 없는 변경은 「검사: 없음 (사유)」) 줄이 있나 */
 const hasCheckLine = (text) => /^[\s>*-]*\**검사\**\s*[:：]\s*\S/m.test(String(text || ''));
 const CHECK_MESSAGE = '지시서에 검사 줄이 없습니다. 둘 중 하나를 넣습니다: 「검사: <명령> 통과」(빌드 · 테스트 · 회귀 검사를 돌려 통과시킨 뒤) 또는 「검사: 없음 (사유)」(문서만 바꾼 변경 등 검사할 것이 없을 때). 리뷰어가 회귀를 머리로 판정하지 않게 하려는 것입니다. 순서: 구현 → 해당 검사 → 리뷰 → 수정 → 해당 검사. 수준 바꾸기: kedovi team-mode enforce check off|warn|block';
+/**
+ * 화면 비교표: 리뷰 지시서가 프로토타입이 있는 화면(기획 repo 화면 목록 표의 화면 ID 중 「프로토타입」 칸이 찬 것)을 다루는데
+ * 「프로토타입 요소 | 구현 | 다른 이유」 표가 없으면 알릴 말. 해당 없으면 ''. 막지 않는다 (screens 팩 「프로토타입대로 구현」)
+ */
+function prototypeGap(ROOT, text) {
+  const t = String(text || '');
+  if (/프로토타입\s*요소/.test(t)) return '';
+  let ws;
+  try { ws = require('./workspace').load(ROOT); } catch { return ''; }
+  if (!(ws.packs || []).includes('screens')) return '';
+  const ids = [];
+  for (const r of (ws.repos || []).filter((x) => x.kind === 'docs')) {
+    for (const d of ['30-screens', '02-screens']) {
+      let md = '';
+      try { md = fs.readFileSync(path.join(r.dir, d, 'README.md'), 'utf8'); } catch { continue; }
+      let col = -1;
+      for (const l of md.split('\n').filter((x) => /^\s*\|/.test(x))) {
+        const cells = l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim().replace(/[`*]/g, ''));
+        const at = cells.indexOf('프로토타입');
+        if (at >= 0) { col = at; continue; }
+        if (col >= 0 && /^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$/.test(cells[0]) && cells[col] && !/^(<.*>|-|없음)$/.test(cells[col])) ids.push(cells[0]);
+      }
+    }
+  }
+  const hit = ids.filter((id) => new RegExp(`(?<![\\w-])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`).test(t));
+  if (!hit.length) return '';
+  return `지시서가 프로토타입이 있는 화면(${hit.slice(0, 4).join(' · ')})을 다루는데 비교표가 없습니다. 「| 프로토타입 요소 | 구현 | 다른 이유 |」 표와 스크린샷 경로(kedovi screens compare <화면 ID>)를 넣어 리뷰어가 구성 · 스타일 차이를 보게 합니다`;
+}
 /** 수준 (off | warn | block, 기본 block) */
 function checkLevel(ROOT) {
   try { const kit = require(path.join(ROOT, 'bin', 'kit.js')); return (kit.resolveModels(ROOT, kit.loadWorkspace(ROOT)).enforce || {}).checkBeforeReview || 'block'; } catch { return 'block'; }
 }
 
-module.exports = { hasCheckLine, CHECK_MESSAGE, checkLevel, when, REVIEW_ROLE, settings, scope, repoOf, workTree, headTree, pushedTree, lines, snapshot, record, addSkip, takeSkip, measure, warnedAlready, markWarned, read };
+module.exports = { hasCheckLine, CHECK_MESSAGE, prototypeGap, checkLevel, when, REVIEW_ROLE, settings, scope, repoOf, workTree, headTree, pushedTree, lines, snapshot, record, addSkip, takeSkip, measure, warnedAlready, markWarned, read };

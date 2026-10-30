@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const assert = require('assert');
-const { parseTopic, listTopics, activeTopics } = require('./topics');
+const { parseTopic, parseTopicText, listTopics, activeTopics, dueTopics, isOpen } = require('./topics');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kedovi-topics-'));
 const dir = path.join(tmp, 'handoffs', 'kim', 'topics');
@@ -67,6 +67,28 @@ it('진행 중이고 최근에 손댄 것만 고른다 (완료 · 오래된 것 
   // 마지막: 이 오늘이면 수정 시각이 오래돼도 포함
   assert.deepStrictEqual(activeTopics(tmp, 'kim', Date.now() + 1000, '2026-09-30').map((t) => t.name), ['주문-목록']);
   assert.deepStrictEqual(activeTopics(tmp, 'kim', Date.now() + 1000, '2026-10-01').map((t) => t.name), []);
+});
+it('날짜 예약 [>]: 그날 전에는 미완이 아니고, 그날은 오늘 예정 · 지나면 지난 예약, 날짜 오류는 따로', () => {
+  const body = '# 측정\n상태: 진행 중\n\n## 완료 조건\n- [x] 준비\n- [>] 2026-11-02(월) 장중에 측정\n- [>] 2026-11-09 다시 측정\n- [>] 다음 주쯤\n- [>] 2026-02-30 없는 날\n';
+  const before = parseTopicText(body, '측정', '2026-11-01');
+  assert.deepStrictEqual(before.todo, []);
+  assert.deepStrictEqual(before.later.map((x) => x.date), ['2026-11-02', '2026-11-09']);
+  assert.deepStrictEqual(before.badSchedule.map((x) => x.raw), ['다음 주쯤', '2026-02-30 없는 날']);
+  assert.strictEqual(isOpen(before), false);
+  const day = parseTopicText(body, '측정', '2026-11-02');
+  assert.deepStrictEqual(day.todo, ['[오늘 예정] 장중에 측정']);
+  assert.strictEqual(isOpen(day), true);
+  const after = parseTopicText(body, '측정', '2026-11-10');
+  assert.deepStrictEqual(after.todo, ['[지난 예약 11-02] 장중에 측정', '[지난 예약 11-09] 다시 측정']);
+  assert.deepStrictEqual(after.later, []);
+});
+it('날짜가 된 예약은 손댄 지 오래된 작업도 고른다 (dueTopics)', () => {
+  write('측정', '# 측정\n상태: 진행 중\n\n## 완료 조건\n- [>] 2026-11-02 장중에 측정\n');
+  fs.utimesSync(path.join(dir, '측정.md'), new Date(Date.now() - 40 * 86400000), new Date(Date.now() - 40 * 86400000));
+  assert.deepStrictEqual(dueTopics(tmp, 'kim', '2026-11-01').map((t) => t.name), []);
+  assert.deepStrictEqual(dueTopics(tmp, 'kim', '2026-11-02').map((t) => t.name), ['측정']);
+  assert.deepStrictEqual(dueTopics(tmp, 'kim', '2026-11-05').map((t) => t.overdue.length), [1]);
+  fs.rmSync(path.join(dir, '측정.md'));
 });
 
 let failed = 0;

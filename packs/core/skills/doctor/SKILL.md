@@ -26,6 +26,8 @@ description: 워크스페이스 셋업·환경(Node·git·repos/ 의 repo·훅 �
 | 개발자 ID | 루트 `git config user.name` (핸드오프 폴더·호칭에 쓴다) | `git config user.name <id>` |
 | git core.hooksPath | `.githooks` 로 설정됐는가 (pre-commit 검사) | `kedovi install` |
 | repo: {이름} | `workspace.json` repos 가 `repos/<이름>` 에 있고 git 저장소인가. `local: true`(원격 없이 새로 만든 repo)면 원격이 생겼는가 | `kedovi install` · 원격 없음이면 만든 사람이 origin 을 달고 push |
+| 기본 브랜치: {repo} | 브랜치 규칙이 있는 워크스페이스(`vars.branch`)에서 코드 repo 의 원격 기본 브랜치가 통합 브랜치(`vars.branch.develop`)인가. 원격에 물어보고, 안 되면 이 PC 기록으로 본다 | 안내된 GitLab 설정 경로 · API 또는 `gh repo edit --default-branch`. 바꾸는 것은 사용자가 한다 |
+| 낡은 브랜치: {repo} {main·master} | 영구 브랜치가 아닌 main · master 가 원격에 남아 통합 브랜치보다 뒤처졌는가 (뒤처진 커밋 수 · 고유 커밋 수 · 마지막 커밋) | 고유 커밋을 확인한 뒤 사용자가 지운다. 상시로 둘 브랜치면 `persistentBranches` 에 적는다 |
 | kit check | 생성물이 정본(`packs/`·`workspace.json`)과 같은가 | 정본을 고치고 `node bin/kit.js sync` |
 | 죽은 참조 | 문서가 없는 경로를 가리키는가 | `node packs/core/bin/check-refs.js` 로 목록 확인 |
 | CLI: Claude Code / Codex | 에이전트 CLI 설치 여부 (둘 중 하나 이상 필요) | 쓸 도구 설치 |

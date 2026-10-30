@@ -53,6 +53,7 @@ run(() => {
       if (lv === 'block') return deny(R.CHECK_MESSAGE);
       if (lv === 'warn') warns.push(R.CHECK_MESSAGE);
     }
+    if (kitRole && R.REVIEW_ROLE.test(type) && R.prototypeGap) { const gap = R.prototypeGap(ws, ti.prompt); if (gap) warns.push(gap); }
   } catch { /* 옛 워크스페이스 */ }
   if (st.turn >= limits.total) {
     return deny(`역할 에이전트 상한: 이번 요청에 이미 ${st.turn}개를 불렀습니다 (한 요청 ${limits.total}개). 새로 부르지 말고 앞 에이전트에게 이어서 맡기거나 직접 하세요. 꼭 더 필요하면 이유와 함께 사용자에게 물어보세요 (사용자가 답하면 다시 셉니다). 상한은 kedovi ai show 의 limits`);
